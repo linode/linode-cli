@@ -21,6 +21,7 @@ would make sense to include here.
 Before setting up, be sure to have the dependencies:
 
   * python3
+  * linode-api (latest) - `pip3 install --upgrade linode-api`
   * colorclass - `pip3 install colorclass`
   * terminaltables - `pip3 install terminaltables`
 
@@ -29,7 +30,7 @@ Right now, I recommend installing like so:
 ```bash
 git clone <this_repo>
 cd python-linode-cli
-ln -s /usr/local/bin/linode-next cli.py
+ln -s `pwd`/cli.py /usr/local/bin/linode-next
 linode-next configure
 ````
 
@@ -47,13 +48,13 @@ with the current Linode CLI's configuration in `~/.linodecli`
 In general, you can use the [docs for the current Linode CLI](https://www.linode.com/docs/platform/linode-cli#using-the-cli)
 as a reference.  At time of writing, only the `linode` series of commands is done.  Some examples follow:
 
-###### Show Linodes
-
-`linode-next list`
-
 ###### Create a Linode
 
 `linode-next create -l label -g group -P password`
+
+###### Show Linodes
+
+`linode-next list`
 
 ###### Boot a Linode
 
