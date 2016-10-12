@@ -97,10 +97,21 @@ class Linode:
         
         args = parser.parse_args(args=unparsed, namespace=args)
 
-        l = client.linode.create_instance(args.plan, args.location, distribution=args.distribution,
-                group=args.group, stackscipt=args.stackscript, root_pass=args.password, root_ssh_key=args.pubkey_file,
-                label=args.label, stackscript_udf_responses=args.stackscriptjson, backup=args.restore_backup,
-                with_backups=args.with_backups)
+        params = {
+            "distribution": args.distribution,
+            "group": args.group,
+            "stackscipt": args.stackscript,
+            "root_pass": args.password,
+            "label": args.label,
+            "stackscript_udf_responses": args.stackscriptjson,
+            "backup": args.restore_backup,
+            "with_backups": args.with_backups,
+        }
+
+        if args.pubkey_file:
+            params['root_ssh_key'] = args.pubkey_file
+
+        l = client.linode.create_instance(args.plan, args.location, **params)
 
         l.boot()
 
