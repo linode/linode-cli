@@ -1,4 +1,5 @@
 import os
+import sys
 import argparse
 import configparser
 
@@ -40,13 +41,19 @@ def _default_thing_input(ask, api_call, prompt, error, optional=True):
                 print(error)
     return ret
 
-def configure():
+def _get_config():
+    conf = configparser.ConfigParser()
+    conf.read(_get_config_path())
+    return conf
+
+def configure(username=None):
     """
     This assumes we're running interactively, and prompts the user
     for a series of defaults in order to make future CLI calls
     easier.  This also sets up the config file.
     """
     config = {}
+    is_default = username == None
 
     # get the token
     login_client = linode.LinodeLoginClient('','')
@@ -65,11 +72,15 @@ Tokens" and "Generate Access Token."
 
         client = linode.LinodeClient(config['token'])
         try:
-            client.linode.get_instances()
+            u = client.account.get_current_user()
+            if not username:
+                username = u.username
+            elif not u.username == username:
+                print("That is a token for {}, not {}\n".format(u.username, username))
+                continue
             break
         except:
-            print("""That token didn't work, please enter a working Personal Access Token.
-""")
+            print("That token didn't work, please enter a working Personal Access Token.\n")
 
     # get the preferred things
     config['location'] = _default_thing_input('Default Datacenter for deploying Linodes.', client.get_datacenters,
@@ -101,7 +112,13 @@ Tokens" and "Generate Access Token."
             break
 
     conf = configparser.ConfigParser()
-    conf.read_dict({'DEFAULT': config})
+
+    cdict = _get_config()
+    cdict[username]=config
+    if is_default:
+        cdict['DEFAULT'] = config
+
+    conf.read_dict(cdict)
     with open(_get_config_path(), 'w') as f:
         conf.write(f)
 
@@ -120,7 +137,7 @@ def update_namespace(namespace, new_dict):
     return argparse.Namespace(**ns_dict)
     
 
-def update(namespace):
+def update(namespace, username=None):
     """
     This updates a Namespace (as returned by ArgumentParser) with config values
     if they aren't present in the Namespace already.
@@ -128,7 +145,13 @@ def update(namespace):
     if not os.path.isfile(_get_config_path()):
         return namespace
 
-    conf = configparser.ConfigParser()
-    conf.read(_get_config_path())
+    if not username:
+        username = "DEFAULT"
 
-    return update_namespace(namespace, conf['DEFAULT'])
+    conf = _get_config()
+
+    if not username in conf:
+        print("User {} is not configured.".format(username))
+        sys.exit(1)
+
+    return update_namespace(namespace, conf[username])

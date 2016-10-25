@@ -12,15 +12,17 @@ parser.add_argument('-o','--object', metavar='TYPE', type=str,
         help="the type of object to act on", default='linode')
 parser.add_argument('-t','--token', metavar='TOKEN', type=str,
         help="the Personal Access Token to use when talking to Linode.")
+parser.add_argument('-u','--username', metavar='USERNAME', type=str,
+        help="the User to act as.  Uses default user if omitted")
 
 args, unparsed = parser.parse_known_args()
 sys.argv = sys.argv[:1] # clean up sys.argv so future parsers works as expected
 
 if args.command == 'configure':
-    config.configure()
+    config.configure(username=args.username)
     sys.exit(0)
 
-args = config.update(args)
+args = config.update(args, username=args.username)
 
 if not args.token:
     print("No Personal Access Token provided!  Please run configure or "
