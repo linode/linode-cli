@@ -34,7 +34,10 @@ client = linode.LinodeClient(args.token)
 if hasattr(resources, args.object):
     obj = getattr(resources, args.object)
     if hasattr(obj, args.command):
-        getattr(obj, args.command)(args, client, unparsed=unparsed)
+        try:
+            getattr(obj, args.command)(args, client, unparsed=unparsed)
+        except linode.ApiError as e:
+            print("Error: {}".format(e))
     else:
         print("Command not found - options are: {}".format(', '.join([ c for c in dir(obj) if not c.startswith('__') ])))
 else:
