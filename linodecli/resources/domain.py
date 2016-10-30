@@ -22,6 +22,14 @@ def _make_domain_row(d):
             d.soa_email,
         ]
 
+def _make_domain_record_row(r):
+    return [
+        r.type,
+        r.name,
+        r.target,
+        r.port
+    ]
+
 class Domain:
     def list(args, client, unparsed=None):
         zones = client.dns.get_zones()
@@ -168,7 +176,7 @@ master ips: {}
 
         z.save()
 
-    def delete(client, args, unparsed=None):
+    def delete(args, client, unparsed=None):
         parser = argparse.ArgumentParser(description="Create a Domain.")
         parser.add_argument('label', metavar='LABEL', type=str,
                 help="The Domain to delete.")
@@ -179,7 +187,7 @@ master ips: {}
 
         z.delete()
 
-    def record_list(client, args, unparsed=None):
+    def record_list(args, client, unparsed=None):
         parser = argparse.ArgumentParser(description="Create a Domain.")
         parser.add_argument('label', metavar='LABEL', type=str,
                 help="The Domain to delete.")
@@ -196,9 +204,14 @@ master ips: {}
             print("No records to list.")
             return
 
+        data = []
         for r in z.records:
             if args.type and not r.zone_record_type == args.type:
                 continue
 
-            # TODO - find existing output and match it
-            print(r)
+            data.push(_make_domain_record_row(r))
+
+        data = [ ['type', 'name', 'target', 'port' ] ] + data
+
+        tab = SingleTable(data)
+        print(tab.table)
