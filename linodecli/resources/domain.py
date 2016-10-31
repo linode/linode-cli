@@ -215,3 +215,66 @@ master ips: {}
 
         tab = SingleTable(data)
         print(tab.table)
+
+    def record_create(args, client, unparsed=None):
+        parser = argparse.ArgumentParser(description="Create a Domain record.")
+        parser.add_argument('label', metavar='LABEL', type=str,
+                help="The Domain to add the record to.")
+        parser.add_argument('-t','--type', metavar='TYPE', type=str,
+                help="One of: NS, MX, A, AAAA, CNAME, TXT, or SRV")
+        parser.add_argument('-n','--name', metavar='NAME', type=str,
+                help="Optional.  The hostname or FQDN.  When Type=MX the subdomain "
+                        "to delegate to the Target MX server.  Default: blank")
+        parser.add_argument('-p','--port', metavar='PORT', type=int,
+                help="Optional.  Default: 80")
+        parser.add_argument('-R','--target', metavar='TARGET', type=str,
+                help="Optional.  When Type=MX the hostname.  When Type=CNAME the "
+                        "target of the alias. When Type=TXT the value of the record. "
+                        "When Type=A or AAAA the token of '[remote_addr]' will be "
+                        "substituted with the IP address of the request.")
+        parser.add_argument('-P','--priority', metavar='PRI', type=int,
+                help="Optional. Priority for MX and SRV records, 0-255.  Default: 10")
+        parser.add_argument('-W','--weight', metavar='WEI', type=int,
+                help="Optional.  Default: 5")
+        parser.add_argument('-L','--protocol', metavar='PRO', type=str,
+                help="Optional.  The protocol to append to an SRV record.  Ignored "
+                        "on other record types. Default: blank.")
+        parser.add_argument('-T','--ttl', metavar='TTL', type=int,
+                help="Optional.  Default: 0")
+
+        args = parser.parse_args(args=unparsed, namespace=args)
+
+        z = _get_domain_or_die(client, args.label)
+
+        z.add_record(args.type, name=args.name, port=args.port, target=args.target,
+                priority=args.priority, weight=args.weight, protocol=args.protocol,
+                ttl_sec=args.ttl)
+
+    def record_update(args, client, unparsed=None):
+        pass
+
+    def record_delete(args, client, unparsed=None):
+        parser = argparse.ArgumentParser(description="Create a Domain.")
+        parser.add_argument('label', metavar='LABEL', type=str,
+                help="The Domain containing the record to delete.")
+        parser.add_argument('type', metavar='TYPE', type=str,
+                help="The type of record to delete.  One of: NS, MX, A, AAA "
+                        "CNAME, TXT, or SRV")
+        parser.add_argumnet('match', metavar='MATCH', type=str,
+                help="The match for the recor to delete.  Match to a name or target")
+
+        args = parser.parse_args(args=unparsed, namespace=args)
+
+        z = _get_domain_or_die(client, args.label)
+
+        to_delete = [ r for r in z.records if r.type == args.type and \
+                ( r.target == args.match or r.name == args.match ) ]
+
+        if not len(to_delete) == 1:
+            print("Ambiguous criteria - found {} records instead of 1".format(len(to_delete)))
+
+        to_delete = to_delete[0]
+        to_delete.delete()
+
+    def record_show(args, client, unparsed=None):
+        pass
