@@ -251,7 +251,67 @@ master ips: {}
                 ttl_sec=args.ttl)
 
     def record_update(args, client, unparsed=None):
-        pass
+        parser = argparse.ArgumentParser(description="Create a Domain record.")
+        parser.add_argument('label', metavar='LABEL', type=str,
+                help="The Domain to add the record to.")
+        parser.add_argument('-t','--type', metavar='TYPE', type=str,
+                help="One of: NS, MX, A, AAAA, CNAME, TXT, or SRV")
+        parser.add_argument('-n','--name', metavar='NAME', type=str,
+                help="Optional.  The hostname or FQDN.  When Type=MX the subdomain "
+                        "to delegate to the Target MX server.  Default: blank")
+        parser.add_argument('-p','--port', metavar='PORT', type=int,
+                help="Optional.  Default: 80")
+        parser.add_argument('-R','--target', metavar='TARGET', type=str,
+                help="Optional.  When Type=MX the hostname.  When Type=CNAME the "
+                        "target of the alias. When Type=TXT the value of the record. "
+                        "When Type=A or AAAA the token of '[remote_addr]' will be "
+                        "substituted with the IP address of the request.")
+        parser.add_argument('-P','--priority', metavar='PRI', type=int,
+                help="Optional. Priority for MX and SRV records, 0-255.  Default: 10")
+        parser.add_argument('-W','--weight', metavar='WEI', type=int,
+                help="Optional.  Default: 5")
+        parser.add_argument('-L','--protocol', metavar='PRO', type=str,
+                help="Optional.  The protocol to append to an SRV record.  Ignored "
+                        "on other record types. Default: blank.")
+        parser.add_argument('-T','--ttl', metavar='TTL', type=int,
+                help="Optional.  Default: 0")
+        parser.add_argumnet('match', metavar='MATCH', type=str,
+                help="The match for the recor to delete.  Match to a name or target")
+
+        args = parser.parse_args(args=unparsed, namespace=args)
+
+        z = _get_domain_or_die(client, args.label)
+
+        to_update = [ r for r in z.records if r.type == args.type and \
+                ( r.target == args.match or r.name == args.match ) ]
+
+        if not len(to_update) == 1:
+            print("Ambiguous criteria - found {} records instead of 1".format(len(to_update)))
+
+        to_update = to_update[0]
+
+        if args.name:
+            to_update.name=args.name
+
+        if args.port:
+            to_update.port=args.port
+
+        if args.target:
+            to_update.target=args.target,
+
+        if args.priority:
+            to_update.priority=args.priority
+
+        if args.weight:
+            to_update.weight=args.weight
+
+        if args.protocol:
+            to_update.protocol=args.protocol
+
+        if args.ttl:
+            to_update.ttl_sec=args.ttl
+
+        to_update.save()
 
     def record_delete(args, client, unparsed=None):
         parser = argparse.ArgumentParser(description="Create a Domain.")
@@ -277,4 +337,34 @@ master ips: {}
         to_delete.delete()
 
     def record_show(args, client, unparsed=None):
-        pass
+        parser = argparse.ArgumentParser(description="Create a Domain.")
+        parser.add_argument('label', metavar='LABEL', type=str,
+                help="The Domain containing the record to delete.")
+        parser.add_argument('type', metavar='TYPE', type=str,
+                help="The type of record to delete.  One of: NS, MX, A, AAA "
+                        "CNAME, TXT, or SRV")
+        parser.add_argumnet('match', metavar='MATCH', type=str,
+                help="The match for the recor to delete.  Match to a name or target")
+
+        args = parser.parse_args(args=unparsed, namespace=args)
+
+        z = _get_domain_or_die(client, args.label)
+
+        to_show = [ r for r in z.records if r.type == args.type and \
+                ( r.target == args.match or r.name == args.match ) ]
+
+        if not len(to_show) == 1:
+            print("Ambiguous criteria - found {} records instead of 1".format(len(to_show)))
+
+        to_show = to_show[0]
+
+        print("""domain: {}
+
+    type: {}
+    name: {}
+  target: {}
+    port: {}
+  weight: {}
+priority: {}
+     ttl: {}""".format(z.dnszone, to_show.type, to_show.name, to_show.target, to_show.port, to_show.weight,
+                        to_show.priority, to_show.ttl_sec))
