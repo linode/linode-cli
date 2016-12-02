@@ -11,7 +11,7 @@ from linodecli.config import update_namespace
 def _colorize_status(status):
     if status in ('running'):
         return Color('{green}'+status+'{/green}')
-    if status in ('booting','shutting_down'):
+    if status in ('booting','shutting_down','rebooting'):
         return Color('{yellow}'+status+'{/yellow}')
     return Color('{red}'+status+'{/red}')
 
