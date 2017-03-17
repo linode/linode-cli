@@ -72,7 +72,7 @@ Tokens" and "Generate Access Token."
 
         client = linode.LinodeClient(config['token'])
         try:
-            u = client.account.get_current_user()
+            u = client.account.get_profile()
             if not username:
                 username = u.username
             elif not u.username == username:
