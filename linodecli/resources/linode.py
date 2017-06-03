@@ -24,10 +24,21 @@ def _make_linode_row(linode):
     return [
         linode.label,
         _colorize_status(linode.status),
-        linode.datacenter.label,
+        linode.region.label,
         _colorize_yesno(linode.backups.enabled),
-        linode.type[0].storage,
-        linode.type[0].ram
+        linode.type.storage,
+        linode.type.ram
+    ]
+
+def _make_raw_linode_row(group, linode):
+    return  [
+        group,
+        linode.label,
+        linode.status,
+        linode.region.label,
+        str(linode.backups.enabled),
+        str(linode.type.storage),
+        str(linode.type.ram)
     ]
 
 def _get_linode_or_die(client, label):
@@ -62,11 +73,15 @@ class Linode:
         header = [ "label", "status", "location", "backups", "storage", "ram" ]        
 
         for k in sorted(groups.keys()):
-            print(k if k else 'Linode')
-            data = [ _make_linode_row(l) for l in groups[k] ] 
-            data = [ header ] + data
-            tab = SingleTable(data)
-            print(tab.table)
+            if args.raw:
+                for l in groups[k]:
+                    print(args.separator.join(_make_raw_linode_row(k,l)))
+            else:
+                print(k if k else 'Linode')
+                data = [ _make_linode_row(l) for l in groups[k] ] 
+                data = [ header ] + data
+                tab = SingleTable(data)
+                print(tab.table)
 
     def create(args, client, unparsed=None):
         parser = argparse.ArgumentParser(description="CLI Linode Manipulation")
@@ -187,16 +202,22 @@ class Linode:
             linodes.append(_get_linode_or_die(client, label))
 
         for l in linodes:
-            print("""   label: {}
+            if args.raw:
+                form = args.separator.join([ '{}' for i in range(0,7) ])
+            else:
+                form = """   label: {}
   status: {}
 location: {}
  backups: {}
     disk: {}
      ram: {}
-     ips: {}""".format(l.label, l.status, l.datacenter.label, 'yes ' if l.backups.enabled else 'no', l.type[0].storage,
-                l.type[0].ram, ', '.join([ ip.address for ip in l.ips.ipv4 ])))
+     ips: {}"""
 
-            if len(linodes) > 1 and not l == linodes[-1]:
+
+            print(form.format(l.label, l.status, l.region.label, 'yes' if l.backups.enabled else 'no', l.type.storage,
+                    l.type.ram, ', '.join([ ip.address for ip in l.ips.ipv4 ])))
+
+            if not args.raw and len(linodes) > 1 and not l == linodes[-1]:
                 print()
 
     def delete(args, client, unparsed=None):
@@ -296,10 +317,13 @@ location: {}
         # make sure they didn't send up junk
         args = parser.parse_args(args=unparsed, namespace=args)
 
-        datacenters = client.get_datacenters()
+        regions = client.get_regions()
 
-        for dc in datacenters:
-            print("{} {}".format(dc.id, Color('{green}(Default){/green}') if dc.id == args.location else ''))
+        if args.raw:
+            print(args.separator.join([ r.id for r in regions ]))
+        else:
+            for r in regions:
+                print("{} {}".format(r.id, Color('{green}(Default){/green}') if r.id == args.location else ''))
 
     def distros(args, client, unparsed=None):
         parser = argparse.ArgumentParser(description="List all available Linode types.")
@@ -309,8 +333,11 @@ location: {}
         
         distros = client.linode.get_distributions()
 
-        for d in distros:
-            print("{} {}".format(d.label, Color('{green}(Default){/green}') if d.id == args.distribution else ''))
+        if args.raw:
+            print(args.separator.join([ d.label for d in distros ]))
+        else:
+            for d in distros:
+                print("{} {}".format(d.label, Color('{green}(Default){/green}') if d.id == args.distribution else ''))
 
     def plans(args, client, unparsed=None):
         parser = argparse.ArgumentParser(description="List all available Linode types.")
@@ -320,5 +347,8 @@ location: {}
 
         types = client.linode.get_types()
 
-        for t in types:
-            print("{} {}".format(t.id, Color('{green}(Default){/green}') if t.id == args.plan else ''))
+        if args.raw:
+            print(args.separator.join([ t.id for t in types ]))
+        else:
+            for t in types:
+                print("{} {}".format(t.id, Color('{green}(Default){/green}') if t.id == args.plan else ''))

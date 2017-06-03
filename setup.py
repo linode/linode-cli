@@ -9,4 +9,8 @@ setup(name="linode-next",
         author_email="wsmith@linode.com",
         url="https://www.linode.com/docs/platform/linode-cli",
         scripts=["cli.py"],
-        install_requires=["linode-api","terminaltables","colorclass"])
+        packages=["linodecli","linodecli.resources"],
+        install_requires=["linode-api","terminaltables","colorclass"],
+        entry_points={
+            "console_scripts": [ "linode-next = cli" ],
+        })

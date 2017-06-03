@@ -14,6 +14,10 @@ parser.add_argument('-t','--token', metavar='TOKEN', type=str,
         help="the Personal Access Token to use when talking to Linode.")
 parser.add_argument('-u','--username', metavar='USERNAME', type=str,
         help="the User to act as.  Uses default user if omitted")
+parser.add_argument('--raw', action='store_true',
+        help="return output in a machine-readable format")
+parser.add_argument('--separator', metavar='SEPARATOR', type=str, default=':',
+        help="the field separator when using raw output")
 
 args, unparsed = parser.parse_known_args()
 sys.argv = sys.argv[:1] # clean up sys.argv so future parsers works as expected
@@ -41,4 +45,4 @@ if hasattr(resources, args.object):
     else:
         print("Command not found - options are: {}".format(', '.join([ c for c in dir(obj) if not c.startswith('__') ])))
 else:
-    print("noep") # TODO
+    print("Resource not found - options are: {}".format(', '.join([ r for r in dir(resources) if not '__' in r ])))

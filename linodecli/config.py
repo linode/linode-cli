@@ -83,8 +83,8 @@ Tokens" and "Generate Access Token."
             print("That token didn't work, please enter a working Personal Access Token.\n")
 
     # get the preferred things
-    config['location'] = _default_thing_input('Default Datacenter for deploying Linodes.', client.get_datacenters,
-            'Default Datacenter (Optional): ', 'Please select a valid datacenter, or press Enter to skip')
+    config['location'] = _default_thing_input('Default Region for deploying Linodes.', client.get_regions,
+            'Default Datacenter (Optional): ', 'Please select a valid region, or press Enter to skip')
                 
     config['plan'] = _default_thing_input('Default type of Linode to deploy.', client.linode.get_types,
             'Default type of Linode (Optional): ', 'Please select a valid Type, or press Enter to skip')

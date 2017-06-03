@@ -10,14 +10,14 @@ from linodecli.config import update_namespace
 
 def _get_domain_or_die(client, label):
         try:
-            return client.dns.get_zones(linode.DnsZone.dnszone == label).only()
+            return client.get_zones(linode.Domain.domain == label).only()
         except:
             print("No Domain found for {}".format(label))
             sys.exit(1)
 
 def _make_domain_row(d):
     return [
-            d.dnszone,
+            d.domain,
             d.type,
             d.soa_email,
         ]
@@ -27,18 +27,22 @@ def _make_domain_record_row(r):
         r.type,
         r.name,
         r.target,
-        r.port
+        str(r.port)
     ]
 
 class Domain:
     def list(args, client, unparsed=None):
-        zones = client.dns.get_zones()
+        zones = client.get_domains()
 
         data = [ _make_domain_row(d) for d in zones ]
-        data = [ [ 'domain', 'type', 'soa email' ] ] + data
+        if args.raw:
+            for d in data:
+                print(args.separator.join(d))
+        else:
+            data = [ [ 'domain', 'type', 'soa email' ] ] + data
 
-        tab = SingleTable(data)
-        print(tab.table)
+            tab = SingleTable(data)
+            print(tab.table)
 
     def show(args, client, unparsed=None):
         parser = argparse.ArgumentParser(description="Shows detailed information about one or more Domains")
@@ -52,14 +56,19 @@ class Domain:
             domains.append(_get_domain_or_die(client, label))
 
         for d in domains:
-            print("""    domain: {}
+            if args.raw:
+                form = args.separator.join([ '{}' for i in range(0, 7) ])
+            else:
+                form = """    domain: {}
       type: {}
  soa email: {}
 master ips: {}
      retry: {}
     expire: {}
    refresh: {}
-       ttl: {}""".format(d.dnszone, d.type, d.soa_email, d.master_ips, d.retry_sec,
+       ttl: {}"""
+
+            print(form.format(d.domain, d.type, d.soa_email, d.master_ips, d.retry_sec,
             d.expire_sec, d.refresh_sec, d.ttl_sec))
 
             if len(domains) > 1 and not d == domains[-1]:
@@ -97,7 +106,7 @@ master ips: {}
 
         args = parser.parse_args(args=unparsed, namespace=args)
 
-        z = client.dns.create_zone(args.label, master=(args.type == 'master'),
+        z = client.create_domain(args.label, master=(args.type == 'master'),
                 display_group=args.group, description=args.description,
                 soa_email=args.email, refresh_sec=args.refresh, master_ips=args.masterip,
                 axfr_ips=args.axfrip, expire_sec=args.expire, retry_sec=args.retry,
@@ -139,7 +148,7 @@ master ips: {}
         z = _get_domain_or_die(client, args.label)
 
         if args.new_label:
-            z.dnszone = args.new_label
+            z.domain = args.new_label
 
         if args.type:
             z.type = args.type
@@ -199,7 +208,8 @@ master ips: {}
 
         z = _get_domain_or_die(client, args.label)
 
-        print("Domain records for {}".format(z.dnszone))
+        if not args.raw:
+            print("Domain records for {}".format(z.domain))
         if not z.records:
             print("No records to list.")
             return
@@ -211,10 +221,14 @@ master ips: {}
 
             data.append(_make_domain_record_row(r))
 
-        data = [ ['type', 'name', 'target', 'port' ] ] + data
+        if args.raw:
+            for d in data:
+                print(args.separator.join(d))
+        else:
+            data = [ ['type', 'name', 'target', 'port' ] ] + data
 
-        tab = SingleTable(data)
-        print(tab.table)
+            tab = SingleTable(data)
+            print(tab.table)
 
     def record_create(args, client, unparsed=None):
         parser = argparse.ArgumentParser(description="Create a Domain record.")
@@ -359,7 +373,10 @@ master ips: {}
 
         to_show = to_show[0]
 
-        print("""domain: {}
+        if args.raw:
+            form = args.separator.join([ '{}' for i in range(0, 8) ])
+        else:
+            form = """domain: {}
 
     type: {}
     name: {}
@@ -367,5 +384,7 @@ master ips: {}
     port: {}
   weight: {}
 priority: {}
-     ttl: {}""".format(z.dnszone, to_show.type, to_show.name, to_show.target, to_show.port, to_show.weight,
+     ttl: {}"""
+
+        print(form.format(z.domain, to_show.type, to_show.name, to_show.target, to_show.port, to_show.weight,
                         to_show.priority, to_show.ttl_sec))
