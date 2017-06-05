@@ -29,9 +29,9 @@ def _colorize_status(status):
 
 def _colorize_seen(seen):
     if seen == '!':
-        return Color('{green}!{/green}')
+        return Color('{green}●{/green}')
     if seen == '*':
-        return Color('{yellow}*{/yellow}')
+        return Color('{yellow}●{/yellow}')
     return seen
 
 class Event:
