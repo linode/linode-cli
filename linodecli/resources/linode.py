@@ -215,7 +215,7 @@ location: {}
 
 
             print(form.format(l.label, l.status, l.region.label, 'yes' if l.backups.enabled else 'no', l.type.storage,
-                    l.type.ram, ', '.join([ ip.address for ip in l.ips.ipv4 ])))
+                    l.type.ram, ', '.join(l.ipv4)))
 
             if not args.raw and len(linodes) > 1 and not l == linodes[-1]:
                 print()
