@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="linode-cli",
-    version="4.0.7a",
+    version="1.0.0b",
     description="CLI for Linode API v4",
     author="Linode",
     author_email="wsmith@linode.com",
