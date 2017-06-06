@@ -30,16 +30,16 @@ Right now, I recommend installing like so:
 ```bash
 git clone <this_repo>
 cd python-linode-cli
-ln -s `pwd`/cli.py /usr/local/bin/linode-next
-linode-next configure
+ln -s `pwd`/cli.py /usr/local/bin/linode-beta
+linode-beta configure
 ````
 
-I recommend using the name `linode-next` to avoid conflicts with the current Linode CLI,
+I recommend using the name `linode-beta` to avoid conflicts with the current Linode CLI,
 which is installed to `/usr/local/bin/linode`.
 
 ### Configuration
 
-As was mentioned in Setup, simply run `linode-next configure` to enter your Personal Access
+As was mentioned in Setup, simply run `linode-beta configure` to enter your Personal Access
 Token and select defaults.  Configuration values are saved to `~/.linode-cli` as to not conflict
 with the current Linode CLI's configuration in `~/.linodecli`
 
@@ -50,20 +50,20 @@ as a reference.  At time of writing, only the `linode` series of commands is don
 
 ###### Create a Linode
 
-`linode-next create -l label -g group -P password`
+`linode-beta create -l label -g group -P password`
 
 ###### Show Linodes
 
-`linode-next list`
+`linode-beta list`
 
 ###### Boot a Linode
 
-`linode-next start <linode-label>`
+`linode-beta start <linode-label>`
 
 ###### Shutdown a Linode
 
-`linode-next stop <linode-label>`
+`linode-beta stop <linode-label>`
 
 ###### Show Datacenters
 
-`linode-next locations`
+`linode-beta locations`
