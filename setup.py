@@ -9,10 +9,10 @@ setup(
     author="Linode",
     author_email="wsmith@linode.com",
     url="https://www.linode.com/docs/platform/linode-cli",
-    scripts=["cli.py"],
-    packages=find_packages(exclude=['contrib', 'docs', 'tests']),
+    packages=['linodecli','linodecli.resources'],
     install_requires=["linode-api","terminaltables","colorclass"],
     entry_points={
-        "console_scripts": [ "linode-beta = cli" ],
-    }
+        "console_scripts": [ "linode-beta = linodecli.cli:main" ],
+    },
+    python_requires=">=3.4"
 )
