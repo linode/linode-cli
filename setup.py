@@ -11,7 +11,7 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 
 setup(
     name="linode-cli",
-    version="1.0.0b",
+    version="1.0.1b",
     description="CLI for Linode API v4",
     long_description=long_description,
     author="Linode",
