@@ -81,3 +81,26 @@ throttle: {}"""
 
             if not args.raw and len(nodebalancers) > 1 and not n == nodebalancers[-1]:
                 print()
+
+    def throttle(args, client, unparsed=None):
+        parser = argparse.ArgumentParser(description="Adjust the connections per second allowed per client IP for a NodeBalancer, to help mitigate abuse.")
+        parser.add_argument('label', metavar='LABEL', type=str,
+                help="The NodeBalancer whose throttle is to be changed")
+        parser.add_argument('connections', metavar='CONNECTIONS', type=int,
+                help="The help mitigate abuse, throttle connections per second, per client IP.  0 to disable.")
+
+        args = parser.parse_args(args=unparsed, namespace=args)
+
+        n = _get_nodebalancer_or_die(client, args.label)
+        n.client_conn_throttle = args.connections
+        n.save()
+
+    def delete(args, client, unparsed=None):
+        parser = argparse.ArgumentParser(description="Delete a NodeBalancer")
+        parser.add_argument('label', metavar='LABEL', type=str,
+                help="Thre NodeBalancer to delete.")
+
+        args = parser.parse_args(args=unparsed, namespace=args)
+
+        n = _get_nodebalancer_or_die(client, args.label)
+        n.delete()
