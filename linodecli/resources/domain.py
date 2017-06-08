@@ -10,7 +10,7 @@ from linodecli.config import update_namespace
 
 def _get_domain_or_die(client, label):
         try:
-            return client.get_zones(linode.Domain.domain == label).only()
+            return client.get_domains(linode.Domain.domain == label).only()
         except:
             print("No Domain found for {}".format(label))
             sys.exit(1)

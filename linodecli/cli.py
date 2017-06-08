@@ -5,12 +5,24 @@ import sys
 
 from linodecli import config, resources
 
+def preparse():
+    avail_resources = [ r for r in dir(resources) if not '__' in r ]
+
+    args = sys.argv
+    if len(args) > 1:
+        if args[1] not in avail_resources:
+            args.insert(1, 'linode')
+            return args
+    return args
+
 def main():
+    sys.argv = preparse()
+
     parser = argparse.ArgumentParser(description="Command Line Interface for Linode API v4")
+    parser.add_argument('object', metavar='TYPE', type=str,
+            help="the type of object to act on (linode if omitted)", default='linode')
     parser.add_argument('command', metavar='CMD', type=str,
             help="the command to run on the given objects")
-    parser.add_argument('-o','--object', metavar='TYPE', type=str,
-            help="the type of object to act on", default='linode')
     parser.add_argument('-t','--token', metavar='TOKEN', type=str,
             help="the Personal Access Token to use when talking to Linode.")
     parser.add_argument('-u','--username', metavar='USERNAME', type=str,

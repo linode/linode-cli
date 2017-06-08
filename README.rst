@@ -33,8 +33,8 @@ use `the existing CLI docs`_ for reference.
 
 In addition, the following commands have been added:
 
-- ``linode-beta -o event list`` - lists recent Events
-- ``linode-beta -o event seen`` - marks all Events as seen
+- ``linode-beta event list`` - lists recent Events
+- ``linode-beta event seen`` - marks all Events as seen
 
 Examples
 --------
@@ -54,11 +54,11 @@ Shut down your new linode:
 
 List your domains:
 
-``linode-beta -o domain list``
+``linode-beta domain list``
 
 Show recent events:
 
-``linode-beta -o event list``
+``linode-beta event list``
 
 .. _API v4: https://developers.linode.com
 .. _Linode CLI: https://linode.com/cli
