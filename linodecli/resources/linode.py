@@ -1,4 +1,5 @@
 import sys
+import json
 import argparse
 from time import sleep
 from colorclass import Color
@@ -112,6 +113,14 @@ class Linode:
         
         args = parser.parse_args(args=unparsed, namespace=args)
 
+        stackscript_data=None
+        if args.stackscriptjson:
+            try:
+                stackscript_data = json.loads(args.stackscriptjson)
+            except:
+                print("Invalid JSON for stackscript data!")
+                sys.exit(2)
+
         params = {
             "distribution": args.distribution,
             "group": args.group,
@@ -119,7 +128,7 @@ class Linode:
             "root_pass": args.password,
             "label": args.label,
             "stackscript": args.stackscript,
-            "stackscript_udf_responses": args.stackscriptjson,
+            "stackscript_data": stackscript_data,
             "backup": args.restore_backup,
             "with_backups": args.with_backups,
         }
@@ -284,10 +293,18 @@ location: {}
         
         args = parser.parse_args(args=unparsed, namespace=args)
 
+        stackscript_data=None
+        if args.stackscriptjson:
+            try:
+                stackscript_data = json.loads(args.stackscriptjson)
+            except:
+                print("Invalid JSON for stackscript data!")
+                sys.exit(2)
+
         l = _get_linode_or_die(client, args.label)
 
         l.rebuild(args.distribution, root_pass=args.password, root_ssh_key=args.pubkey_file,
-                stackscript=args.stackscript, stackscript_udf_response=args.stackscriptjson)
+                stackscript=args.stackscript, stackscript_data=stackscript_data)
         l.boot()
 
         if args.wait:
