@@ -50,9 +50,10 @@ def main():
 
     if hasattr(resources, args.object):
         obj = getattr(resources, args.object)
-        if hasattr(obj, args.command):
+        cmd = args.command.replace('-','_')
+        if hasattr(obj, cmd):
             try:
-                getattr(obj, args.command)(args, client, unparsed=unparsed)
+                getattr(obj, cmd)(args, client, unparsed=unparsed)
             except linode.ApiError as e:
                 print("Error: {}".format(e))
         else:
