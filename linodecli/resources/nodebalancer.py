@@ -119,10 +119,10 @@ throttle: {}"""
             print("{} has no configs".format(n.label))
             sys.exit(0)
 
-        data = [ [ "port", "protocol", "algorithm", "stickiness", "check" ] ]
+        data = [ [ "port", "protocol", "algorithm", "stickiness", "check", "node_status" ] ]
 
         for c in configs:
-            data.append([ c.port, c.protocol, c.algorithm, c.stickiness, c.check ])
+            data.append([ c.port, c.protocol, c.algorithm, c.stickiness, c.check, "{} UP, {} DOWN".format(c.nodes_status.up, c.nodes_status.down) ])
 
         tab = SingleTable(data)
         print(tab.table)
@@ -153,11 +153,13 @@ check-interval: {}
  check-timeout: {}
 check-attempts: {}
     check-path: {}
-   check: body: {}
+    check body: {}
+   node status: {}
 """
 
         print(form.format(config.port, config.protocol, config.algorithm, config.stickiness, config.check,
-            config.check_interval, config.check_timeout, config.check_attempts, config.check_path, config.check_body))
+            config.check_interval, config.check_timeout, config.check_attempts, config.check_path, config.check_body,
+            "{} UP, {} DOWN".format(config.nodes_status.up, config.nodes_status.down)))
 
     def config_create(args, client, unparsed=None):
         parser = argparse.ArgumentParser(description="Create a NodeBalancer Config (port)")
