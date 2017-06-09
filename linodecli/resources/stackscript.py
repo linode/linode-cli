@@ -95,7 +95,7 @@ active deployments: {}""".format(s.label, s.id, "yes" if s.is_public else "no", 
                 help="Optional.  Whether this StackScript is published in the Library, for everyone to use. "
                         "If included, the StackScript is public.  Otherwise, it is private.")
         parser.add_argument('-D','--description', metavar='DESC', type=str,
-                help="Optinoal.  Notes describing details about the StackScript")
+                help="Optional.  Notes describing details about the StackScript")
         parser.add_argument('-r','--revnote', metavar='NOTE', type=str,
                 help="Optional.  Note for describing the version.")
 
@@ -115,7 +115,7 @@ active deployments: {}""".format(s.label, s.id, "yes" if s.is_public else "no", 
         parser.add_argument('-c','--codefile', metavar='FILE', type=str,
                 help="Optional.  Path to the new script file.")
         parser.add_argument('-p','--ispublic', action='store_true',
-                help="Makes this StackScript public if included.  This is not a reversable operation")
+                help="Makes this StackScript public if included.  This is not a reversible operation")
         parser.add_argument('-D','--description', metavar='DESC', type=str,
                 help="Optional.  Notes describing details about the StackScript.")
         parser.add_argument('-r','--revnote', metavar='NOTE', type=str,

@@ -98,10 +98,10 @@ master ips: {}
         parser.add_argument('-s','--status', metavar='STS', type=str, default='active',
                 help="Optional.  Statuses are active, edit, or disabled. Default: active")
         parser.add_argument('-m','--masterip', metavar='IP', type=str, nargs='+',
-                help="Optional.  May be provided multiple times.  When teh domain is "
+                help="Optional.  May be provided multiple times.  When the domain is "
                         "a slave, this is the zone's master DNS servers list.")
         parser.add_argument('-x','--axfrip', metavar='AXFRIP', type=str, nargs='+',
-                help="Optional.  May be provided mutliple times.  IP addresses allowed "
+                help="Optional.  May be provided multiple times.  IP addresses allowed "
                         "to AXFR the entire zone.")
 
         args = parser.parse_args(args=unparsed, namespace=args)
@@ -137,10 +137,10 @@ master ips: {}
         parser.add_argument('-s','--status', metavar='STS', type=str,
                 help="Optional.  Statuses are active, edit, or disabled. Default: active")
         parser.add_argument('-m','--masterip', metavar='IP', type=str, nargs='+',
-                help="Optional.  May be provided multiple times.  When teh domain is "
+                help="Optional.  May be provided multiple times.  When the domain is "
                         "a slave, this is the zone's master DNS servers list.")
         parser.add_argument('-x','--axfrip', metavar='AXFRIP', type=str, nargs='+',
-                help="Optional.  May be provided mutliple times.  IP addresses allowed "
+                help="Optional.  May be provided multiple times.  IP addresses allowed "
                         "to AXFR the entire zone.")
 
         args = parser.parse_args(args=unparsed, namespace=args)
@@ -291,7 +291,7 @@ master ips: {}
                 help="The type of record to delete.  One of: NS, MX, A, AAA "
                         "CNAME, TXT, or SRV")
         parser.add_argument('match', metavar='MATCH', type=str,
-                help="The match for the recor to delete.  Match to a name or target")
+                help="The match for the record to delete.  Match to a name or target")
 
         args = parser.parse_args(args=unparsed, namespace=args)
 
@@ -336,7 +336,7 @@ master ips: {}
                 help="The type of record to delete.  One of: NS, MX, A, AAA "
                         "CNAME, TXT, or SRV")
         parser.add_argument('match', metavar='MATCH', type=str,
-                help="The match for the recor to delete.  Match to a name or target")
+                help="The match for the record to delete.  Match to a name or target")
 
         args = parser.parse_args(args=unparsed, namespace=args)
 
@@ -359,7 +359,7 @@ master ips: {}
                 help="The type of record to delete.  One of: NS, MX, A, AAA "
                         "CNAME, TXT, or SRV")
         parser.add_argument('match', metavar='MATCH', type=str,
-                help="The match for the recor to delete.  Match to a name or target")
+                help="The match for the record to delete.  Match to a name or target")
 
         args = parser.parse_args(args=unparsed, namespace=args)
 

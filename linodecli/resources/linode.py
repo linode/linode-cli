@@ -90,7 +90,7 @@ class Linode:
                 help="the label for the Linode")
         parser.add_argument('-L', '--location', metavar='LOCATION', type=str,
                 help="the location for deployment.")
-        parser.add_argument('-d', '--distribution', metavar='DISTRIBTUION', type=str,
+        parser.add_argument('-d', '--distribution', metavar='DISTRIBUTION', type=str,
                 help="the Distribution label to deploy")
         parser.add_argument('-p', '--plan', metavar='PLAN', type=str,
                 help="the plan to deploy.")
@@ -124,7 +124,7 @@ class Linode:
         params = {
             "distribution": args.distribution,
             "group": args.group,
-            "stackscipt": args.stackscript,
+            "stackscript": args.stackscript,
             "root_pass": args.password,
             "label": args.label,
             "stackscript": args.stackscript,
@@ -148,7 +148,7 @@ class Linode:
         parser.add_argument('label', metavar='LABEL', type=str, nargs='+',
             help="The Linode to boot")
         parser.add_argument('-w', '--wait', metavar='TIME', type=int, nargs='?', const=5,
-            help="The amount of minutes to wait for boot.  If given with no argument, defautls to 5")
+            help="The amount of minutes to wait for boot.  If given with no argument, defaults to 5")
 
         args = parser.parse_args(args=unparsed, namespace=args)
 
@@ -201,9 +201,9 @@ class Linode:
             _wait_for_state(args.wait, linodes, 'running')
 
     def show(args, client, unparsed=None):
-        parser = argparse.ArgumentParser(description="Shows infomration about a Linode")
+        parser = argparse.ArgumentParser(description="Shows information about a Linode")
         parser.add_argument('label', metavar='LABEL', type=str, nargs='+',
-                help="THe Linode to show")
+                help="The Linode to show")
 
         args = parser.parse_args(args=unparsed, namespace=args)
 
@@ -278,7 +278,7 @@ location: {}
         parser = argparse.ArgumentParser('Rebuild an existing Linode.')
         parser.add_argument('label', metavar='LABEL', type=str,
                 help="the Linode to rebuild")
-        parser.add_argument('-d', '--distribution', metavar='DISTRIBTUION', type=str,
+        parser.add_argument('-d', '--distribution', metavar='DISTRIBUTION', type=str,
                 help="the Distribution label to deploy")
         parser.add_argument('-P', '--password', metavar='PASSWORD', type=str,
                 help="the root password for the new deployment", required=True)

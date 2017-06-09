@@ -91,7 +91,7 @@ on your account to work correctly.
             'Default type of Linode (Optional): ', 'Please select a valid Type, or press Enter to skip')
 
     config['distribution'] = _default_thing_input('Default Distribution to deploy to new Linodes.', client.linode.get_distributions,
-            'Default Distribution (Optional): ', 'Please select a valid Distrubtion, or press Enter to skip')
+            'Default Distribution (Optional): ', 'Please select a valid Distribution, or press Enter to skip')
 
     config['pubkey_file'] = ''
     print()
