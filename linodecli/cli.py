@@ -1,9 +1,13 @@
 #!/usr/local/bin/python3
-import argparse
-import linode
 import sys
+import argparse
+import pkg_resources
+
+import linode
 
 from linodecli import config, resources
+
+package_version = pkg_resources.require("linode-cli")[0].version,
 
 def preparse():
     avail_resources = [ r for r in dir(resources) if not '__' in r ]
@@ -46,7 +50,7 @@ def main():
                 "provide a token with the --token argument.")
         sys.exit(1)
 
-    client = linode.LinodeClient(args.token)
+    client = linode.LinodeClient(args.token, user_agent='linode-cli/{}'.format(package_version))
 
     if hasattr(resources, args.object):
         obj = getattr(resources, args.object)
