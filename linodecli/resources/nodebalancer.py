@@ -361,10 +361,79 @@ address: {}
 
 
     def node_create(args, client, unparsed=None):
-        raise NotImplementedError("This feature is coming soon!")
+        parser = argparse.ArgumentParser(description="Create a NodeBalancer Node.")
+        parser.add_argument('label', metavar='LABEL', type=str,
+                help="The NodeBalancer name.")
+        parser.add_argument('port', metavar='PORT', type=int,
+                help="The NodeBalancer port or config port.")
+        parser.add_argument('name', metavar='NAME', type=str,
+                help="The Node name.")
+        parser.add_argument('address', metavar='ADDRESS', type=str,
+                help="The address:port combination used to communicate with this Node.")
+        parser.add_argument('-W', '--weight', metavar='WEIGHT', type=int, default=100,
+                help="Load balancing weight, 1-255.  Higher means more connections.")
+        parser.add_argument('-M', '--mode', metavar='MODE', type=str, default="accept",
+                help="The connections mode to use.  Options are 'accept', 'reject', and 'drain'.")
+
+        args = parser.parse_args(args=unparsed, namespace=args)
+
+        n = _get_nodebalancer_or_die(client, args.label)
+        config = [ c for c in n.configs if c.port == args.port ]
+
+        if not config:
+            print("{} has no config on port {}".format(args.label, args.port))
+            sys.exit(0)
+        config = config[0]
+
+        node = config.create_node(args.name, args.address, weight=args.weight, mode=args.mode)
+
+        print("Created node {}".format(node.label))
 
     def node_update(args, client, unparsed=None):
-        raise NotImplementedError("This feature is coming soon!")
+        parser = argparse.ArgumentParser(description="Update a NodeBalancer Node.")
+        parser.add_argument('label', metavar='LABEL', type=str,
+                help="The NodeBalancer name.")
+        parser.add_argument('port', metavar='PORT', type=int,
+                help="The NodeBalancer port or config port.")
+        parser.add_argument('name', metavar='NAME', type=str,
+                help="The Node name ot update.")
+        parser.add_argument('-N', '--new-name', metavar='NEWNAME', type=str,
+                help="New name for the Node (rename).")
+        parser.add_argument('-A', '--address', metavar='ADDRESS', type=str,
+                help="The address:port combination used to communicate with this Node.")
+        parser.add_argument('-W', '--weight', metavar='WEIGHT', type=int,
+                help="Load balancing weight, 1-255.  Higher means more connections.")
+        parser.add_argument('-M', '--mode', metavar='MODE', type=str,
+                help="The connections mode to use.  Options are 'accept', 'reject', and 'drain'.")
+
+        args = parser.parse_args(args=unparsed, namespace=args)
+
+        n = _get_nodebalancer_or_die(client, args.label)
+        config = [ c for c in n.configs if c.port == args.port ]
+
+        if not config:
+            print("{} has no config on port {}".format(args.label, args.port))
+            sys.exit(0)
+        config = config[0]
+
+        node = [ n for n in config.nodes if n.label == args.name ]
+
+        if not node:
+            print("{} port {} has no node named {}".format(args.label, args.port, args.name))
+            sys.exit(0)
+        node = node[0]
+
+        if args.new_name:
+            node.label = args.new_name
+
+        if args.weight:
+            node.weight = args.weight
+
+        if args.mode:
+            node.mode = args.mode
+
+        node.save()
+        print("Updated Node {}".format(node.label))
 
     def node_delete(args, client, unparsed=None):
         parser = argparse.ArgumentParser(description="Delete a NodeBalancer Node.")
