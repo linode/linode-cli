@@ -200,10 +200,100 @@ check-attempts: {}
                 ssl_cert=args.sslcert, ssl_key=args.sslkey)
 
     def config_update(args, client, unparsed=None):
-        raise NotImplementedError("This feature is coming soon!")
+        parser = argparse.ArgumentParser(description="Update a NodeBalancer config (port).")
+        parser.add_argument('label', metavar='LABEL', type=str,
+                help="The NodeBalancer name.")
+        parser.add_argument('port', metavar='PORT', type=int,
+                help="The NodeBalancer config port.")
+        parser.add_argument('-N', '--new-port', metavar='NEWPORT', type=int,
+                help="Changes the config port to bind on (1-65534).")
+        parser.add_argument('-L', '--protocol', metavar='PROTOCOL', type=str, default='http',
+                help="One of 'tcp', 'http', and 'https'")
+        parser.add_argument('-A', '--algorithm', metavar='ALGORITHM', type=str, default='roundrobin',
+                help="Balancing algorithm.  Options are 'roundrobin', 'leastconn', and 'source'")
+        parser.add_argument('-S', '--stickiness', metavar='STICKINESS', type=str, default='table',
+                help="Session persistence.  One of 'none', 'table', 'http_cookie'")
+        parser.add_argument('-H', '--check-health', metavar='CHECKHEALTH', type=str, default='connection',
+                help="Perform active health checks on the backend nodes.  One of 'connection', 'http', or 'http_body'")
+        parser.add_argument('-I', '--check-interval', metavar="CHECKINTERVAL", type=int, default=5,
+                help="Seconds between health check probes (2-3600)")
+        parser.add_argument('-T', '--check-timeout', metavar='CHECKTIMEOUT', type=int, default=3,
+                help="Seconds to wait before considering the probe a failure (1-30)")
+        parser.add_argument('-X', '--check-attempts', metavar='CHECKATTEMPTS', type=int, default=2,
+                help="Number of failed probes before taking a node out of rotation (1-30)")
+        parser.add_argument('-P', '--check-path', metavar='CHECKPATH', type=str, default='/',
+                help="When check-health='http', the path to request.")
+        parser.add_argument('-B', '--check-body', metavar="CHECKBODY", type=str,
+                help="When check-health='http_body', a regex against the expected result body.")
+        parser.add_argument('-C', '--ssl-cert', metavar="SSLCERT", type=str,
+                help="SSL certificate served by the NodeBalancer when the protocol is 'https'")
+        parser.add_argument('-K', '--ssl-key', metavar="SSLKEY", type=str,
+                help="Unpassphrased private key for the SSL certificate when protocol is 'https'")
+
+        args = parser.parse_args(args=unparsed, namespace=args)
+
+        n = _get_nodebalancer_or_die(client, args.label)
+        config = [ c for c in n.configs if c.port == args.port ]
+
+        if not config:
+            print("{} has no config on port {}".format(args.label, args.port))
+            sys.exit(0)
+        config = config[0]
+
+        if args.protocol == 'https':
+            if not args.ssl_cert or not args.ssl_key:
+                print("SSL Cert and Key are required if setting the protocol to https!")
+                sys.exit(1)
+
+            raise NotImplementedError("This feature is coming soon!") # TODO - python library does not support this
+
+        if args.new_port:
+            config.port = args.new_port
+
+        if args.protocol:
+            config.protocol = args.protocol
+
+        if args.algorithm:
+            config.algorithm = args.algorithm
+
+        if args.stickiness:
+            config.stickiness = args.stickiness
+
+        if args.check_health:
+            config.check = args.check_health
+
+        if args.check_interval:
+            config.check_interval = args.check_interval
+
+        if args.check_timeout:
+            config.check_timeout = args.check_timeout
+
+        if args.check_path:
+            config.check_path = args.check_path
+
+        if args.check_body:
+            config.check_body = args.check_body
+
+        config.save()
 
     def config_delete(args, client, unparsed=None):
-        raise NotImplementedError("This feature is coming soon!")
+        parser = argparse.ArgumentParser(description="Delete a NodeBalancer config (port).")
+        parser.add_argument('label', metavar='LABEL', type=str,
+                help="The NodeBalancer name.")
+        parser.add_argument('port', metavar='PORT', type=int,
+                help="The NodeBalancer config port to delete.")
+
+        args = parser.parse_args(args=unparsed, namespace=args)
+
+        n = _get_nodebalancer_or_die(client, args.label)
+        config = [ c for c in n.configs if c.port == args.port ]
+
+        if not config:
+            print("{} has no config on port {}".format(args.label, args.port))
+            sys.exit(0)
+        config = config[0]
+
+        config.delete()
 
     def node_list(args, client, unparsed=None):
         parser = argparse.ArgumentParser(description="List all Nodes for a specific NodeBalancer port.")
@@ -226,6 +316,7 @@ check-attempts: {}
 
         if not nodes:
             print("{} has no Nodes for port {}".format(args.label, args.port))
+            sys.exit(0)
 
         data = [ [ "name", "status", "address" ] ]
         for n in nodes:
@@ -276,4 +367,29 @@ address: {}
         raise NotImplementedError("This feature is coming soon!")
 
     def node_delete(args, client, unparsed=None):
-        raise NotImplementedError("This feature is coming soon!")
+        parser = argparse.ArgumentParser(description="Delete a NodeBalancer Node.")
+        parser.add_argument('label', metavar='LABEL', type=str,
+                help="The NodeBalancer name.")
+        parser.add_argument('port', metavar='PORT', type=int,
+                help="The NodeBalancer port or config port.")
+        parser.add_argument('name', metavar='NAME', type=str,
+                help="The specific Node name to delete.")
+
+        args = parser.parse_args(args=unparsed, namespace=args)
+
+        n = _get_nodebalancer_or_die(client, args.label)
+        config = [ c for c in n.configs if c.port == args.port ]
+
+        if not config:
+            print("{} has no config on port {}".format(args.label, args.port))
+            sys.exit(0)
+        config = config[0]
+
+        node = [ n for n in config.nodes if n.label == args.name ]
+
+        if not node:
+            print("{} port {} has no node named {}".format(args.label, args.port, args.name))
+            sys.exit(0)
+        node = node[0]
+
+        node.delete()
