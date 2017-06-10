@@ -13,14 +13,21 @@ def preparse():
     avail_resources = [ r for r in dir(resources) if not '__' in r ]
 
     args = sys.argv
+    held_help = False
+    if '-h' in args:
+        if len(args) > 1 and args[1] in avail_resources:
+            held_help = True
+            args.remove('-h')
+
     if len(args) > 1:
         if args[1] not in avail_resources:
             args.insert(1, 'linode')
-            return args
-    return args
+            return args, held_help
+
+    return args, held_help
 
 def main():
-    sys.argv = preparse()
+    sys.argv, add_help = preparse()
 
     parser = argparse.ArgumentParser(description="Command Line Interface for Linode API v4")
     parser.add_argument('object', metavar='TYPE', type=str,
@@ -38,6 +45,8 @@ def main():
 
     args, unparsed = parser.parse_known_args()
     sys.argv = sys.argv[:1] # clean up sys.argv so future parsers works as expected
+    if add_help:
+        unparsed.insert(0, '-h')
 
     if args.command == 'configure':
         config.configure(username=args.username)
@@ -61,6 +70,6 @@ def main():
             except linode.ApiError as e:
                 print("Error: {}".format(e))
         else:
-            print("Command not found - options are: {}".format(', '.join([ c for c in dir(obj) if not c.startswith('__') ])))
+            print("Command not found - options are: {}".format(', '.join([ c.replace('_', '-') for c in dir(obj) if not c.startswith('__') ])))
     else:
         print("Resource not found - options are: {}".format(', '.join([ r for r in dir(resources) if not '__' in r ])))
