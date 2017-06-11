@@ -40,6 +40,7 @@ In addition, the following commands have been added:
 - ``linode-beta backups-restore LINODE BACKUPID -l TARGET -f`` - restore a backup
 - ``linode-beta backups-enable LINODE`` - enable backups for a Linode
 - ``linode-beta backups-cancel LINODE`` - cancel backups for a Linode
+- ``linode-beta ticket list`` - list tickets open on your account
 
 Examples
 --------
@@ -68,6 +69,10 @@ List your domains:
 Show recent events:
 
 ``linode-beta event list``
+
+Show open tickets:
+
+``linode-beta ticket list``
 
 .. _API v4: https://developers.linode.com
 .. _Linode CLI: https://linode.com/cli
