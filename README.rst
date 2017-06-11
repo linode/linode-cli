@@ -38,6 +38,8 @@ In addition, the following commands have been added:
 - ``linode-beta backups-show LINODE`` - show backups for a Linode
 - ``linode-beta snapshot LINODE`` - create a snapshot of a Linode
 - ``linode-beta backups-restore LINODE BACKUPID -l TARGET -f`` - restore a backup
+- ``linode-beta backups-enable LINODE`` - enable backups for a Linode
+- ``linode-beta backups-cancel LINODE`` - cancel backups for a Linode
 
 Examples
 --------

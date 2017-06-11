@@ -458,3 +458,33 @@ location: {}
         b.restore_to(target, overwrite=args.force)
 
         print("Restore in progress.")
+
+    def backups_enable(args, client, unparsed=None):
+        parser = argparse.ArgumentParser(description="Enable Backups on a Linode.")
+        parser.add_argument('label', metavar='LABEL', type=str,
+                help="The Linode we are enabling Backups on.")
+
+        args = parser.parse_args(args=unparsed, namespace=args)
+
+        l = _get_linode_or_die(client, args.label)
+
+        if l.backups.enabled:
+            print("Backups already enabled on {}".format(l.label))
+            sys.exit(0)
+
+        l.enable_backups()
+
+    def backups_cancel(args, client, unparsed=None):
+        parser = argparse.ArgumentParser(description="Cancel Backups on a Linode.")
+        parser.add_argument('label', metavar='LABEL', type=str,
+                help="The Linode we are cancelling Backups on.")
+
+        args = parser.parse_args(args=unparsed, namespace=args)
+
+        l = _get_linode_or_die(client, args.label)
+
+        if not l.backups.enabled:
+            print("Backups are not enabled on {}".format(l.label))
+            sys.exit(0)
+
+        l.cancel_backups()
