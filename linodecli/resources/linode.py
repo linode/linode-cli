@@ -393,7 +393,10 @@ location: {}
 
         b = l.available_backups
 
-        for cur in [ b.daily ] + b.weekly + [ b.snapshot.current ]:
+        if b.snapshot.in_progress:
+            b.snapshot.in_progress._set('type', "in progress")
+
+        for cur in [ b.daily ] + b.weekly + [ b.snapshot.current ] + [ b.snapshot.in_progress ]:
             if not cur:
                 continue # we might not have all of these
             data.append([ cur.id, _colorize_type(cur.type),
@@ -401,3 +404,21 @@ location: {}
 
         tab = SingleTable(data)
         print(tab.table)
+
+    def snapshot(args, client, unparsed=None):
+        parser = argparse.ArgumentParser(description="Take a snapshot of a Linode.")
+        parser.add_argument('label', metavar='LABEL', type=str,
+                help="The Linode we are taking a snapshot of.")
+        parser.add_argument('-l', '--snapshot-label', metavar='SNAPLABEL', type=str,
+                help="The label for the Snapshot we're taking")
+
+        args = parser.parse_args(args=unparsed, namespace=args)
+
+        l = _get_linode_or_die(client, args.label)
+        if not l.backups.enabled:
+            print("Backups are not enabled for {}".format(l.label))
+            sys.exit(0)
+
+        s = l.snapshot(label=args.snapshot_label)
+
+        print("Snapshot {} in progress for {}".format(s.id, l.label))

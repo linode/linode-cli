@@ -1,7 +1,7 @@
 linode-cli
 ==========
 
-A reimplementaion of the `Linode CLI`_ using the `Python Library`_ and
+A reimplementation of the `Linode CLI`_ using the `Python Library`_ and
 `API V4`_.
 
 Installation
@@ -10,7 +10,7 @@ Installation
 
     pip3 install linode-cli
 
-Builing from Source
+Building from Source
 -------------------
 
 To build this package from source:
@@ -35,6 +35,8 @@ In addition, the following commands have been added:
 
 - ``linode-beta event list`` - lists recent Events
 - ``linode-beta event seen`` - marks all Events as seen
+- ``linode-beta backups-show LINODE`` - show backups for a Linode
+- ``linode-beta snapshot LINODE`` - create a snapshot of a Linode
 
 Examples
 --------
@@ -51,6 +53,10 @@ in your default region with your default type:
 Shut down your new linode:
 
 ``linode-beta stop cli-test-1``
+
+Show a Linode's Backups
+
+``linode-beta backups-show cli-test-1``
 
 List your domains:
 
