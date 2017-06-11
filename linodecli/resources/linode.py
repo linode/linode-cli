@@ -1,5 +1,6 @@
 import sys
 import json
+import getpass
 import argparse
 from time import sleep
 from colorclass import Color
@@ -107,7 +108,7 @@ class Linode:
                 help="the public key file to install at `/root/.ssh/authorized_keys` when creating this Linode")
         parser.add_argument('-S', '--stackscript', metavar='STACKSCRIPT_ID', type=int,
                 help="the personal or public StackScript ID to use for deployment")
-        parser.add_argument('-J', '--stackscriptjson', metavar='STACKSCRIPT_JSON', type=str, default='{}',
+        parser.add_argument('-J', '--stackscriptjson', metavar='STACKSCRIPT_JSON', type=str, default=None,
                 help="The JSON encoded name/value pairs, answering the StackScript's User Defined Fields (UDFs).")
         parser.add_argument('-b', '--with-backups', action='store_true',
                 help="If true, enable backups on the new Linode")
@@ -126,11 +127,15 @@ class Linode:
                 print("Invalid JSON for stackscript data!")
                 sys.exit(2)
 
+        password = args.password
+        if not password:
+            password = getpass.getpass("Root Password: ")
+
         params = {
             "distribution": args.distribution,
             "group": args.group,
             "stackscript": args.stackscript,
-            "root_pass": args.password,
+            "root_pass": password,
             "label": args.label,
             "stackscript": args.stackscript,
             "stackscript_data": stackscript_data,
@@ -291,7 +296,7 @@ location: {}
                 help="the public key file to install at `/root/.ssh/authorized_keys` when creating this Linode")
         parser.add_argument('-S', '--stackscript', metavar='STACKSCRIPT_ID', type=int,
                 help="the personal or public StackScript ID to use for deployment")
-        parser.add_argument('-J', '--stackscriptjson', metavar='STACKSCRIPT_JSON', type=str, default='{}',
+        parser.add_argument('-J', '--stackscriptjson', metavar='STACKSCRIPT_JSON', type=str, default=None,
                 help="The JSON encoded name/value pairs, answering the StackScript's User Defined Fields (UDFs).")
         parser.add_argument('-w', '--wait', metavar='TIME', type=int, nargs='?', const=5,
             help="The amount of minutes to wait for boot.  If given with no argument, defaults to 5")
