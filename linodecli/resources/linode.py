@@ -21,6 +21,11 @@ def _colorize_yesno(yesno):
         return Color('{green}yes{/green}')
     return Color('{red}no{/red}')
 
+def _colorize_type(backup_type):
+    if backup_type == 'auto':
+        return Color('{yellow}auto{/yellow}')
+    return Color('{green}'+backup_type+'{/green}')
+
 def _make_linode_row(linode):
     return [
         linode.label,
@@ -370,3 +375,29 @@ location: {}
         else:
             for t in types:
                 print("{} {}".format(t.id, Color('{green}(Default){/green}') if t.id == args.plan else ''))
+
+
+    def backups_show(args, client, unparsed=None):
+        parser = argparse.ArgumentParser(description="Show information about a Linode's backups.")
+        parser.add_argument('label', metavar='LABEL', type=str,
+                help="The Linode whose backups we are viewing.")
+
+        args = parser.parse_args(args=unparsed, namespace=args)
+
+        l = _get_linode_or_die(client, args.label)
+        if not l.backups.enabled:
+            print("Backups are not enabled for {}".format(l.label))
+            sys.exit(0)
+
+        data = [ [ "id", "type", "label", "date" ] ]
+
+        b = l.available_backups
+
+        for cur in [ b.daily ] + b.weekly + [ b.snapshot.current ]:
+            if not cur:
+                continue # we might not have all of these
+            data.append([ cur.id, _colorize_type(cur.type),
+                cur.availability if cur.type == 'auto' else cur.label , cur.create_dt if hasattr(cur, 'create_dt') else cur.created ])
+
+        tab = SingleTable(data)
+        print(tab.table)
