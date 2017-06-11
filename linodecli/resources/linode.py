@@ -422,3 +422,39 @@ location: {}
         s = l.snapshot(label=args.snapshot_label)
 
         print("Snapshot {} in progress for {}".format(s.id, l.label))
+
+    def backups_restore(args, client, unparsed=None):
+        parser = argparse.ArgumentParser(description="Restores a Backup to a Linode.")
+        parser.add_argument('label', metavar='LABEL', type=str,
+                help="The Linode whose Backup we are restoring.")
+        parser.add_argument('backup', metavar='BACKUPID', type=int,
+                help="The Backup to restore.")
+        parser.add_argument('-l', '--restore-to-linode', metavar='RESTORE_TO_LINODE', type=str,
+                help="The Linode we are restoring the Backup to.  "
+                        "If omitted, restores to the linode the Backup was taken of.")
+        parser.add_argument('-f', '--force', action='store_true',
+                help="Overwrites all existing disks and configs on the target Linode.")
+
+        args = parser.parse_args(args=unparsed, namespace=args)
+
+        l = _get_linode_or_die(client, args.label)
+        if not l.backups.enabled:
+            print("Backups are not enabled for {}".format(l.label))
+            sys.exit(0)
+
+        b = linode.Backup(client, args.backup, l.id)
+
+        # ensure this backup exists
+        try:
+            b.label
+        except linode.ApiError:
+            print("Not backup {} found for linode {}".format(args.backup, l.label))
+            sys.exit(0)
+
+        target = l
+        if args.restore_to_linode:
+            target = _get_linode_or_die(client, args.restore_to_linode)
+
+        b.restore_to(target, overwrite=args.force)
+
+        print("Restore in progress.")

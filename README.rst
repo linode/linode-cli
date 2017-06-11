@@ -37,6 +37,7 @@ In addition, the following commands have been added:
 - ``linode-beta event seen`` - marks all Events as seen
 - ``linode-beta backups-show LINODE`` - show backups for a Linode
 - ``linode-beta snapshot LINODE`` - create a snapshot of a Linode
+- ``linode-beta backups-restore LINODE BACKUPID -l TARGET -f`` - restore a backup
 
 Examples
 --------
@@ -54,7 +55,7 @@ Shut down your new linode:
 
 ``linode-beta stop cli-test-1``
 
-Show a Linode's Backups
+Show a Linode's Backups:
 
 ``linode-beta backups-show cli-test-1``
 
