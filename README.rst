@@ -41,6 +41,7 @@ In addition, the following commands have been added:
 - ``linode-beta backups-enable LINODE`` - enable backups for a Linode
 - ``linode-beta backups-cancel LINODE`` - cancel backups for a Linode
 - ``linode-beta ticket list`` - list tickets open on your account
+- ``linode-beta ticket show TICKETID`` - show a ticket and its replies
 
 Examples
 --------

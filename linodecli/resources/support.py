@@ -27,3 +27,31 @@ class Support:
 
         tab = SingleTable(data)
         print(tab.table)
+
+    def show(args, client, unparsed=None):
+        parser = argparse.ArgumentParser(description="Show a ticket and its replies.")
+        parser.add_argument('ticketid', metavar='TICKETID', type=int,
+            help="The ticket to show.")
+
+        args = parser.parse_args(args=unparsed, namespace=args)
+
+        t = linode.SupportTicket(client, args.ticketid)
+
+        try:
+            t.summary
+        except:
+            print("No ticket found with ID {}".format(args.ticketid))
+            sys.exit(0)
+
+        print(t.summary)
+        print("{}; Status: {}".format(t.opened, t.status))
+        if t.entity:
+            print("Regarding {}".format(t.entity.label))
+        print("=================================")
+        print('| ' + '\n| '.join(t.description.split('\n')))
+
+        for r in t.replies:
+            print("+================================")
+            print("| Reply {}: {}".format(r.created, r.created_by))
+            print("+--------------------------------")
+            print('| ' + '\n| '.join(r.description.split('\n')))
