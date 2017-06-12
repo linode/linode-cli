@@ -43,15 +43,12 @@ class Support:
             print("No ticket found with ID {}".format(args.ticketid))
             sys.exit(0)
 
-        print(t.summary)
-        print("{}; Status: {}".format(t.opened, t.status))
-        if t.entity:
-            print("Regarding {}".format(t.entity.label))
-        print("=================================")
-        print('| ' + '\n| '.join(t.description.split('\n')))
+        data = [ [ t.summary, t.opened ] ]
+        data.append([ "Regrading {}".format(t.entity.label) if t.entity else '', "Status: {}".format(t.status) ])
+        data.append([ t.description ])
+        print(SingleTable(data).table)
 
         for r in t.replies:
-            print("+================================")
-            print("| Reply {}: {}".format(r.created, r.created_by))
-            print("+--------------------------------")
-            print('| ' + '\n| '.join(r.description.split('\n')))
+            data = [ [ "Reply from {}".format(r.created_by), r.created ] ]
+            data.append([ r.description ])
+            print(SingleTable(data).table)
