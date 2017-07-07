@@ -27,6 +27,9 @@ def preparse():
     return args, held_help
 
 def main():
+    if not sys.stdout.isatty():
+        sys.argv.append('--raw')
+
     sys.argv, add_help = preparse()
 
     parser = argparse.ArgumentParser(description="Command Line Interface for Linode API v4")
@@ -39,7 +42,8 @@ def main():
     parser.add_argument('-u','--username', metavar='USERNAME', type=str,
             help="the User to act as.  Uses default user if omitted")
     parser.add_argument('--raw', action='store_true',
-            help="return output in a machine-readable format")
+            help="return output in a machine-readable format, assumed when "
+                 "stdout is not a tty device")
     parser.add_argument('--separator', metavar='SEPARATOR', type=str, default=':',
             help="the field separator when using raw output")
 
