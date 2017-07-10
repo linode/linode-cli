@@ -291,7 +291,7 @@ location: {}
         parser.add_argument('-d', '--distribution', metavar='DISTRIBUTION', type=str,
                 help="the Distribution label to deploy")
         parser.add_argument('-P', '--password', metavar='PASSWORD', type=str,
-                help="the root password for the new deployment", required=True)
+                help="the root password for the new deployment")
         parser.add_argument('-K', '--pubkey-file', metavar='KEYFILE', type=str, default=argparse.SUPPRESS,
                 help="the public key file to install at `/root/.ssh/authorized_keys` when creating this Linode")
         parser.add_argument('-S', '--stackscript', metavar='STACKSCRIPT_ID', type=int,
@@ -311,9 +311,13 @@ location: {}
                 print("Invalid JSON for stackscript data!")
                 sys.exit(2)
 
+        password = args.password
+        if not password:
+            password = getpass.getpass("Root Password: ")
+
         l = _get_linode_or_die(client, args.label)
 
-        l.rebuild(args.distribution, root_pass=args.password, root_ssh_key=args.pubkey_file,
+        l.rebuild(args.distribution, root_pass=password, root_ssh_key=args.pubkey_file,
                 stackscript=args.stackscript, stackscript_data=stackscript_data)
         l.boot()
 

@@ -2,6 +2,8 @@
 import sys
 import argparse
 import pkg_resources
+from colorclass import Color
+from terminaltables import SingleTable
 
 import linode
 
@@ -25,6 +27,16 @@ def preparse():
             return args, held_help
 
     return args, held_help
+
+def warn():
+    """
+    Deprecation warning for old way to invoke script
+    """
+    msg = [ [ Color('{yellow}WARNING{/yellow}') ], [ "The 'linode-beta' command has been deprecated and renamed to "
+            "'linode-cli'.  Please invoke with that command to hide this warning." ] ]
+
+    print(SingleTable(msg).table)
+    main()
 
 def main():
     if not sys.stdout.isatty():

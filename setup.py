@@ -11,7 +11,7 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 
 setup(
     name="linode-cli",
-    version="1.0.3b4",
+    version="1.0.4b0",
     description="CLI for Linode API v4",
     long_description=long_description,
     author="Linode",
@@ -20,7 +20,10 @@ setup(
     packages=['linodecli','linodecli.resources'],
     install_requires=["linode-api>=4.1.0b0","terminaltables","colorclass"],
     entry_points={
-        "console_scripts": [ "linode-beta = linodecli.cli:main" ],
+        "console_scripts": [
+            "linode-cli = linodecli.cli:main",
+            "linode-beta = linodecli.cli:warn",
+        ],
     },
     python_requires=">=3.4"
 )
