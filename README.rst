@@ -44,6 +44,11 @@ In addition, the following commands have been added:
 - ``linode-cli ticket show TICKETID`` - show a ticket and its replies
 - ``linode-cli volume list`` - list all Block Storage Volumes
 - ``linode-cli volume show VOLUME`` - show information about a Volume
+- ``linode-cli volume create LABEL -l LINODE`` - create a volume attached to a Linode
+- ``linode-cli volume rename LABEL NEW_LABEL`` - rename a volume
+- ``linode-cli volume attach LABEL LINODE`` - attach a volume to a Linode 
+- ``linode-cli volume detach LABEL`` - detach a volume
+- ``linode-cli volume delete LABEL`` - delete a volume
 
 Examples
 --------
@@ -76,6 +81,14 @@ Show recent events:
 Show open tickets:
 
 ``linode-cli ticket list``
+
+See all volumes and their attachments:
+
+``linode-cli volume list``
+
+Create a new 100 GB volume attached to a linode:
+
+``linode-cli volume create cli-test-volume -l cli-test -s 100``
 
 .. _API v4: https://developers.linode.com
 .. _Linode CLI: https://linode.com/cli
