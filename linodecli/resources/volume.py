@@ -65,3 +65,34 @@ attached to: {}"""
 
             if not args.raw and len(volumes) > 1 and not v == volumes[-1]:
                 print()
+
+    def attach(args, client, unparsed=None):
+        parser = argparse.ArgumentParser(description="Attach this volume to a Linode")
+        parser.add_argument('label', metavar='LABEL', type=str,
+            help="The volume to attach")
+        parser.add_argument('linode', metavar='LINODE', type=str,
+            help="The Linode label to attach this volume to.")
+
+        args = parser.parse_args(args=unparsed, namespace=args)
+
+        volume = _get_volume_or_die(client, args.label)
+        try:
+            to_linode = client.linode.get_instances(linode.Linode.label == args.linode).only()
+        except:
+            print("No linode found for label {}".format(args.linode))
+            sys.exit(1)
+
+        volume.attach(to_linode)
+        print("{} attached to {}".format(args.label, to_linode.label))
+
+    def detach(args, client, unparsed=None):
+        parser = argparse.ArgumentParser(description="Attach this volume to a Linode")
+        parser.add_argument('label', metavar='LABEL', type=str,
+            help="The volume to attach")
+
+        args = parser.parse_args(args=unparsed, namespace=args)
+
+        volume = _get_volume_or_die(client, args.label)
+
+        volume.detach()
+        print("{} has been detached".format(args.label))
