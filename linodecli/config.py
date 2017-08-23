@@ -73,7 +73,7 @@ on your account to work correctly.
 
         client = linode.LinodeClient(config['token'])
         try:
-            u = client.account.get_profile()
+            u = client.get_profile()
             if not username:
                 username = u.username
             elif not u.username == username:
