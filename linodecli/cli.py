@@ -44,7 +44,8 @@ def main():
 
     sys.argv, add_help = preparse()
 
-    parser = argparse.ArgumentParser(description="Command Line Interface for Linode API v4")
+    parser = argparse.ArgumentParser(description="Command Line Interface for Linode API v4",
+            add_help=False)
     parser.add_argument('object', metavar='TYPE', type=str,
             help="the type of object to act on (linode if omitted)", default='linode')
     parser.add_argument('command', metavar='CMD', type=str,
