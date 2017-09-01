@@ -70,8 +70,6 @@ def main():
 
     args, unparsed = parser.parse_known_args()
     sys.argv = sys.argv[:1] # clean up sys.argv so future parsers works as expected
-    if add_help:
-        unparsed.insert(0, '-h')
 
     if args.command == 'configure':
         config.configure(username=args.username)
