@@ -16,15 +16,23 @@ def preparse():
 
     args = sys.argv
     held_help = False
-    if '-h' in args:
-        if len(args) > 1 and args[1] in avail_resources:
-            held_help = True
-            args.remove('-h')
 
+    if len(args) == 1:
+        return args, held_help
+
+    # Print main CLI help
+    if len(args) == 2 and args[1] in ('-h', '--help'):
+        held_help = True
+        return args, held_help
+
+    # Otherwise, delegate help to resource
+    if '-h' in args or '--help' in args:
+        held_help = False
+
+    # Default to "linode" resource
     if len(args) > 1:
         if args[1] not in avail_resources:
             args.insert(1, 'linode')
-            return args, held_help
 
     return args, held_help
 
@@ -45,7 +53,7 @@ def main():
     sys.argv, add_help = preparse()
 
     parser = argparse.ArgumentParser(description="Command Line Interface for Linode API v4",
-            add_help=False)
+            add_help=add_help)
     parser.add_argument('object', metavar='TYPE', type=str,
             help="the type of object to act on (linode if omitted)", default='linode')
     parser.add_argument('command', metavar='CMD', type=str,
