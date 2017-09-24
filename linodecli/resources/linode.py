@@ -31,10 +31,10 @@ def _make_linode_row(linode):
     return [
         linode.label,
         _colorize_status(linode.status),
-        linode.region.label,
+        linode.region.id,
         _colorize_yesno(linode.backups.enabled),
-        linode.type.storage,
-        linode.type.ram
+        linode.disk,
+        linode.memory,
     ]
 
 def _make_raw_linode_row(group, linode):
@@ -42,10 +42,10 @@ def _make_raw_linode_row(group, linode):
         group,
         linode.label,
         linode.status,
-        linode.region.label,
+        linode.region.id,
         str(linode.backups.enabled),
-        str(linode.type.storage),
-        str(linode.type.ram)
+        str(linode.disk),
+        str(linode.memory)
     ]
 
 def _get_linode_or_die(client, label):
@@ -77,7 +77,7 @@ class Linode:
                 groups[l.group] = []
             groups[l.group].append(l)
 
-        header = [ "label", "status", "location", "backups", "storage", "ram" ]        
+        header = [ "label", "status", "location", "backups", "disk", "memory" ]
 
         for k in sorted(groups.keys()):
             if args.raw:
@@ -85,7 +85,7 @@ class Linode:
                     print(args.separator.join(_make_raw_linode_row(k,l)))
             else:
                 print(k if k else 'Linode')
-                data = [ _make_linode_row(l) for l in groups[k] ] 
+                data = [ _make_linode_row(l) for l in groups[k] ]
                 data = [ header ] + data
                 tab = SingleTable(data)
                 print(tab.table)
@@ -116,7 +116,7 @@ class Linode:
                 help="The Backup to restore to the new Linode.")
         parser.add_argument('-w', '--wait', metavar='TIME', type=int, nargs='?', const=5,
             help="The amount of minutes to wait for boot.  If given with no argument, defaults to 5")
-        
+
         args = parser.parse_args(args=unparsed, namespace=args)
 
         stackscript_data=None
@@ -203,7 +203,7 @@ class Linode:
         linodes = []
         for label in args.label:
             linodes.append(_get_linode_or_die(client, label))
-    
+
         for l in linodes:
             l.reboot()
 
@@ -230,12 +230,12 @@ class Linode:
 location: {}
  backups: {}
     disk: {}
-     ram: {}
+  memory: {}
      ips: {}"""
 
 
-            print(form.format(l.label, l.status, l.region.label, 'yes' if l.backups.enabled else 'no', l.type.storage,
-                    l.type.ram, ', '.join(l.ipv4)))
+            print(form.format(l.label, l.status, l.region.id, 'yes' if l.backups.enabled else 'no', l.disk,
+                    l.memory, ', '.join(l.ipv4)))
 
             if not args.raw and len(linodes) > 1 and not l == linodes[-1]:
                 print()
@@ -246,7 +246,7 @@ location: {}
                 help="The Linode to Delete")
 
         args = parser.parse_args(args=unparsed, namespace=args)
-        
+
         linodes = []
         for label in args.label:
             linodes.append(_get_linode_or_die(client, label))
@@ -300,7 +300,7 @@ location: {}
                 help="The JSON encoded name/value pairs, answering the StackScript's User Defined Fields (UDFs).")
         parser.add_argument('-w', '--wait', metavar='TIME', type=int, nargs='?', const=5,
             help="The amount of minutes to wait for boot.  If given with no argument, defaults to 5")
-        
+
         args = parser.parse_args(args=unparsed, namespace=args)
 
         stackscript_data=None
@@ -362,7 +362,7 @@ location: {}
 
         # make sure they didn't send up junk
         args = parser.parse_args(args=unparsed, namespace=args)
-        
+
         distros = client.linode.get_distributions()
 
         if args.raw:

@@ -13,7 +13,7 @@ def _make_volume_row(volume):
         volume.label,
         _colorize_status(volume.status),
         "{} GB".format(volume.size),
-        volume.region.label,
+        volume.region.id,
         volume.linode.label if volume.linode else None,
     ]
 
@@ -61,7 +61,7 @@ class Volume:
 attached to: {}"""
 
 
-            print(form.format(v.label, v.status, v.region.label, v.size, v.linode.label if v.linode else ""))
+            print(form.format(v.label, v.status, v.region.id, v.size, v.linode.label if v.linode else ""))
 
             if not args.raw and len(volumes) > 1 and not v == volumes[-1]:
                 print()

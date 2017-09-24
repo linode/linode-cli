@@ -23,7 +23,7 @@ class NodeBalancer:
 
         data = [ header ]
         for n in nodebalancers:
-            data.append([ n.label, n.region.label ])
+            data.append([ n.label, n.region.id ])
 
         tab = SingleTable(data)
         print(tab.table)
@@ -77,7 +77,7 @@ hostname: {}
 throttle: {}"""
 
 
-            print(form.format(n.label, n.region.label, n.ipv4.address, n.ipv6, n.hostname, n.client_conn_throttle))
+            print(form.format(n.label, n.region.id, n.ipv4.address, n.ipv6, n.hostname, n.client_conn_throttle))
 
             if not args.raw and len(nodebalancers) > 1 and not n == nodebalancers[-1]:
                 print()
