@@ -11,14 +11,14 @@ with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
 
 setup(
     name="linode-cli",
-    version="1.0.6b0",
+    version="1.0.7b0",
     description="CLI for Linode API v4",
     long_description=long_description,
     author="Linode",
     author_email="wsmith@linode.com",
     url="https://www.linode.com/docs/platform/linode-cli",
     packages=['linodecli','linodecli.resources'],
-    install_requires=["linode-api==4.1.3b0","terminaltables","colorclass"],
+    install_requires=["linode-api==4.1.4b0","terminaltables","colorclass"],
     entry_points={
         "console_scripts": [
             "linode-cli = linodecli.cli:main",

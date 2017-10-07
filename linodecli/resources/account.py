@@ -11,9 +11,10 @@ from linodecli.config import update_namespace
 class Account:
     def show(args, client, unparsed=None):
         settings = client.account.get_settings()
+        transfer = client.account.get_transfer()
 
         form = """          managed: {}
-         balancer: {}
+          balance: {}
     transfer pool: {}
     transfer used: {}
 transfer billable: {}
@@ -21,5 +22,5 @@ transfer billable: {}
 """
 
         print(form.format("yes" if settings.managed else "no", "$ {:0.2f}".format(settings.balance),
-            "?", "?", "?", # TODO - transfer pool and used are not returned by the api
+            transfer.max, transfer.used, transfer.billable,
             "metered")) # billing method must be metered

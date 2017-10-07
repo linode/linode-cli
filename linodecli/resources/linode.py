@@ -33,8 +33,8 @@ def _make_linode_row(linode):
         _colorize_status(linode.status),
         linode.region.id,
         _colorize_yesno(linode.backups.enabled),
-        linode.disk,
-        linode.memory,
+        linode.specs.disk,
+        linode.specs.memory,
     ]
 
 def _make_raw_linode_row(group, linode):
@@ -44,8 +44,8 @@ def _make_raw_linode_row(group, linode):
         linode.status,
         linode.region.id,
         str(linode.backups.enabled),
-        str(linode.disk),
-        str(linode.memory)
+        str(linode.specs.disk),
+        str(linode.specs.memory)
     ]
 
 def _get_linode_or_die(client, label):
@@ -144,7 +144,7 @@ class Linode:
         }
 
         if args.pubkey_file:
-            params['root_ssh_key'] = args.pubkey_file
+            params['authorized_keys'] = args.pubkey_file
 
         l = client.linode.create_instance(args.plan, args.location, **params)
 
@@ -234,8 +234,8 @@ location: {}
      ips: {}"""
 
 
-            print(form.format(l.label, l.status, l.region.id, 'yes' if l.backups.enabled else 'no', l.disk,
-                    l.memory, ', '.join(l.ipv4)))
+            print(form.format(l.label, l.status, l.region.id, 'yes' if l.backups.enabled else 'no',
+                l.specs.disk, l.specs.memory, ', '.join(l.ipv4)))
 
             if not args.raw and len(linodes) > 1 and not l == linodes[-1]:
                 print()
@@ -317,7 +317,7 @@ location: {}
 
         l = _get_linode_or_die(client, args.label)
 
-        l.rebuild(args.distribution, root_pass=password, root_ssh_key=args.pubkey_file,
+        l.rebuild(args.distribution, root_pass=password, authorized_keys=args.pubkey_file,
                 stackscript=args.stackscript, stackscript_data=stackscript_data)
         l.boot()
 
