@@ -148,8 +148,6 @@ class Linode:
 
         l = client.linode.create_instance(args.plan, args.location, **params)
 
-        l.boot()
-
         if args.wait:
             _wait_for_state(args.wait, l, 'running')
 
