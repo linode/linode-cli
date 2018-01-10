@@ -317,7 +317,6 @@ location: {}
 
         l.rebuild(args.distribution, root_pass=password, authorized_keys=args.pubkey_file,
                 stackscript=args.stackscript, stackscript_data=stackscript_data)
-        l.boot()
 
         if args.wait:
             _wait_for_state(args.wait, l, 'running')
