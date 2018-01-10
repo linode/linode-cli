@@ -25,7 +25,7 @@ While the Linode API V4 is in beta, this package installs the command
 ``linode-cli``.
 
 When running the CLI for the first time, configure it by running
-``linode-cli configure``.  This will prompt for for your API V4
+``linode-cli configure``.  This will prompt for your API V4
 personal access token and some defaults.
 
 This is intended to be used like the existing Linode CLI, and you can
@@ -53,7 +53,7 @@ In addition, the following commands have been added:
 Examples
 --------
 
-List all linodes and their status:
+List all Linodes and their status:
 
 ``linode-cli list``
 
@@ -62,7 +62,7 @@ in your default region with your default type:
 
 ``linode-cli create -P hunter7 -l cli-test-1``
 
-Shut down your new linode:
+Shut down your new Linode:
 
 ``linode-cli stop cli-test-1``
 
@@ -86,7 +86,7 @@ See all volumes and their attachments:
 
 ``linode-cli volume list``
 
-Create a new 100 GB volume attached to a linode:
+Create a new 100 GB volume attached to a Linode:
 
 ``linode-cli volume create cli-test-volume -l cli-test -s 100``
 
