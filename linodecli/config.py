@@ -162,4 +162,11 @@ def update(namespace, username=None):
         print("User {} is not configured.".format(username))
         sys.exit(1)
 
+    # update old config items to use new names
+    if 'image' not in conf[username] and 'distribution' in conf[username]:
+        conf[username]['image'] = conf[username]['distribution']
+
+        with open(_get_config_path(), 'w') as f:
+            conf.write(f)
+
     return update_namespace(namespace, conf[username])
