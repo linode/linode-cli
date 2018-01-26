@@ -1,3 +1,4 @@
+import textwrap
 import sys
 import argparse
 from time import sleep
@@ -43,12 +44,19 @@ class Support:
             print("No ticket found with ID {}".format(args.ticketid))
             sys.exit(0)
 
-        data = [ [ t.summary, t.opened ] ]
-        data.append([ "Regrading {}".format(t.entity.label) if t.entity else '', "Status: {}".format(t.status) ])
-        data.append([ t.description ])
-        print(SingleTable(data).table)
+        print(t.summary)
+        print("> {}".format(t.opened))
+
+        if t.entity:
+            print("> Regrading {}".format(t.entity.label))
+
+        print("> Status: {}".format(t.status))
+
+        formatter = textwrap.TextWrapper()
+        formatter.initial_indent = formatter.subsequent_indent = ">> "
 
         for r in t.replies:
-            data = [ [ "Reply from {}".format(r.created_by), r.created ] ]
-            data.append([ r.description ])
-            print(SingleTable(data).table)
+            print()
+            print("Reply from {}".format(r.created_by))
+            print("> {}".format(r.created))
+            print('\n'.join(formatter.wrap(r.description)))

@@ -14,7 +14,7 @@ def _make_volume_row(volume):
         _colorize_status(volume.status),
         "{} GB".format(volume.size),
         volume.region.id,
-        volume.linode.label if volume.linode else None,
+        volume.linode.label if volume.linode else '',
     ]
 
 def _colorize_status(status):
@@ -24,14 +24,14 @@ def _colorize_status(status):
 
 def _get_volume_or_die(client, label):
         try:
-            return client.linode.get_volumes(linode.Volume.label == label).only()
+            return client.get_volumes(linode.Volume.label == label).only()
         except:
             print("No volume found with label {}".format(label))
             sys.exit(1)
 
 class Volume:
     def list(args, client, unparsed=None):
-        volumes = client.linode.get_volumes()
+        volumes = client.get_volumes()
 
         header = [ "label", "status", "size", "location", "attached to" ]
 
@@ -99,7 +99,7 @@ attached to: {}"""
         if args.size:
             params['size'] = args.size
 
-        v = client.linode.create_volume(args.label, **params)
+        v = client.create_volume(args.label, **params)
 
         # TODO - linode-api does not support this
         #if args.wait:

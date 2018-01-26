@@ -245,7 +245,7 @@ check-attempts: {}
                 print("SSL Cert and Key are required if setting the protocol to https!")
                 sys.exit(1)
 
-            raise NotImplementedError("This feature is coming soon!") # TODO - python library does not support this
+            config.load_ssl_data(args.ssl_cert, args.ssl_key)
 
         if args.new_port:
             config.port = args.new_port

@@ -96,8 +96,8 @@ class Linode:
                 help="the label for the Linode")
         parser.add_argument('-L', '--location', metavar='LOCATION', type=str,
                 help="the location for deployment.")
-        parser.add_argument('-d', '--distribution', metavar='DISTRIBUTION', type=str,
-                help="the Distribution label to deploy")
+        parser.add_argument('-i', '--image', metavar='IMAGE', type=str,
+                help="the Image to deploy")
         parser.add_argument('-p', '--plan', metavar='PLAN', type=str,
                 help="the plan to deploy.")
         parser.add_argument('-P', '--password', metavar='PASSWORD', type=str,
@@ -132,7 +132,7 @@ class Linode:
             password = getpass.getpass("Root Password: ")
 
         params = {
-            "distribution": args.distribution,
+            "image": args.image,
             "group": args.group,
             "stackscript": args.stackscript,
             "root_pass": password,
@@ -286,8 +286,8 @@ location: {}
         parser = argparse.ArgumentParser('Rebuild an existing Linode.')
         parser.add_argument('label', metavar='LABEL', type=str,
                 help="the Linode to rebuild")
-        parser.add_argument('-d', '--distribution', metavar='DISTRIBUTION', type=str,
-                help="the Distribution label to deploy")
+        parser.add_argument('-i', '--image', metavar='IMAGE', type=str,
+                help="the Image to deploy")
         parser.add_argument('-P', '--password', metavar='PASSWORD', type=str,
                 help="the root password for the new deployment")
         parser.add_argument('-K', '--pubkey-file', metavar='KEYFILE', type=str, default=argparse.SUPPRESS,
@@ -315,7 +315,7 @@ location: {}
 
         l = _get_linode_or_die(client, args.label)
 
-        l.rebuild(args.distribution, root_pass=password, authorized_keys=args.pubkey_file,
+        l.rebuild(args.image, root_pass=password, authorized_keys=args.pubkey_file,
                 stackscript=args.stackscript, stackscript_data=stackscript_data)
 
         if args.wait:
@@ -354,19 +354,20 @@ location: {}
             for r in regions:
                 print("{} {}".format(r.id, Color('{green}(Default){/green}') if r.id == args.location else ''))
 
-    def distros(args, client, unparsed=None):
-        parser = argparse.ArgumentParser(description="List all available Linode types.")
+    def images(args, client, unparsed=None):
+        parser = argparse.ArgumentParser(description="List all available Images.")
 
         # make sure they didn't send up junk
         args = parser.parse_args(args=unparsed, namespace=args)
 
-        distros = client.linode.get_distributions()
+        images = client.get_images(linode.Image.is_public==True)
 
         if args.raw:
-            print(args.separator.join([ d.label for d in distros ]))
+            print(args.separator.join([ i.label for i in images ]))
         else:
-            for d in distros:
-                print("{} {}".format(d.label, Color('{green}(Default){/green}') if d.id == args.distribution else ''))
+            for i in images:
+                print("{} {}".format(i.label,
+                    Color('{green}(Default){/green}') if i.id == args.image else ''))
 
     def plans(args, client, unparsed=None):
         parser = argparse.ArgumentParser(description="List all available Linode types.")
@@ -395,18 +396,18 @@ location: {}
             print("Backups are not enabled for {}".format(l.label))
             sys.exit(0)
 
-        data = [ [ "id", "type", "label", "date" ] ]
+        data = [ [ "id", "status", "label", "date" ] ]
 
         b = l.available_backups
 
         if b.snapshot.in_progress:
             b.snapshot.in_progress._set('type', "in progress")
 
-        for cur in [ b.daily ] + b.weekly + [ b.snapshot.current ] + [ b.snapshot.in_progress ]:
+        for cur in b.automatic + [ b.snapshot.current ] + [ b.snapshot.in_progress ]:
             if not cur:
                 continue # we might not have all of these
             data.append([ cur.id, _colorize_type(cur.type),
-                cur.availability if cur.type == 'auto' else cur.label , cur.create_dt if hasattr(cur, 'create_dt') else cur.created ])
+                "" if cur.type == 'auto' else cur.label , cur.create_dt if hasattr(cur, 'create_dt') else cur.created ])
 
         tab = SingleTable(data)
         print(tab.table)

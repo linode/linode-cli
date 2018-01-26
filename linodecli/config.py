@@ -12,9 +12,8 @@ CONFIG_NAME = '.linode-cli'
 def _get_config_path():
     return "{}/{}".format(CONFIG_DIR, CONFIG_NAME)
 
-def _default_thing_input(ask, api_call, prompt, error, optional=True):
+def _default_thing_input(ask, things, prompt, error, optional=True):
     print('\n{}  Choices are:'.format(ask))
-    things = api_call()
     for ind, thing in enumerate(things):
         print(" {} - {}".format(ind+1, thing.id))
     print()
@@ -84,14 +83,22 @@ on your account to work correctly.
             print("That token didn't work, please enter a working Personal Access Token.\n")
 
     # get the preferred things
-    config['location'] = _default_thing_input('Default Region for deploying Linodes.', client.get_regions,
-            'Default Datacenter (Optional): ', 'Please select a valid region, or press Enter to skip')
+    config['location'] = _default_thing_input(
+        'Default Region for deploying Linodes.',
+        client.get_regions(),
+        'Default Datacenter (Optional): ',
+        'Please select a valid region, or press Enter to skip')
                 
-    config['plan'] = _default_thing_input('Default type of Linode to deploy.', client.linode.get_types,
-            'Default type of Linode (Optional): ', 'Please select a valid Type, or press Enter to skip')
+    config['plan'] = _default_thing_input(
+        'Default type of Linode to deploy.',
+        client.linode.get_types(),
+        'Default type of Linode (Optional): ', 'Please select a valid Type, or press Enter to skip')
 
-    config['distribution'] = _default_thing_input('Default Distribution to deploy to new Linodes.', client.linode.get_distributions,
-            'Default Distribution (Optional): ', 'Please select a valid Distribution, or press Enter to skip')
+    config['image'] = _default_thing_input(
+        'Default Image to deploy to new Linodes.',
+        client.get_images(linode.Image.is_public==True),
+        'Default Image (Optional): ',
+        'Please select a valid Image, or press Enter to skip')
 
     config['pubkey_file'] = ''
     print()
