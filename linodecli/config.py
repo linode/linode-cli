@@ -1,7 +1,7 @@
-import os
-import sys
 import argparse
 import configparser
+import os
+import sys
 
 import linode
 

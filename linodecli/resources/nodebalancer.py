@@ -1,12 +1,14 @@
-import sys
 import argparse
-from time import sleep
-from colorclass import Color
-from terminaltables import SingleTable
+import sys
 from datetime import datetime, timedelta
+from time import sleep
 
 import linode
+from colorclass import Color
+from terminaltables import SingleTable
+
 from linodecli.config import update_namespace
+
 
 def _get_nodebalancer_or_die(client, label):
         try:

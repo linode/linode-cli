@@ -1,12 +1,14 @@
+import argparse
 import os
 import sys
-import argparse
-from colorclass import Color
-from terminaltables import SingleTable
 from datetime import datetime, timedelta
 
 import linode
+from colorclass import Color
+from terminaltables import SingleTable
+
 from linodecli.config import update_namespace
+
 
 def _get_stackscript_or_die(client, label):
         try:

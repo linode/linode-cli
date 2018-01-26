@@ -1,11 +1,11 @@
 #!/usr/local/bin/python3
-import sys
 import argparse
+import sys
+
+import linode
 import pkg_resources
 from colorclass import Color
 from terminaltables import SingleTable
-
-import linode
 
 from linodecli import config, resources
 

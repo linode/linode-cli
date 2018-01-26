@@ -1,14 +1,16 @@
-import sys
-import json
-import getpass
 import argparse
-from time import sleep
-from colorclass import Color
-from terminaltables import SingleTable
+import getpass
+import json
+import sys
 from datetime import datetime, timedelta
+from time import sleep
 
 import linode
+from colorclass import Color
+from terminaltables import SingleTable
+
 from linodecli.config import update_namespace
+
 
 def _colorize_status(status):
     if status in ('running'):
