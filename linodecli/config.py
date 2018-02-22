@@ -61,7 +61,7 @@ def configure(username=None):
 initial setup.
 
 First, we need a Personal Access Token.  To get one, please visit
-https://cloud.linode.com/profile/integrations/tokens and click
+https://cloud.linode.com/profile/tokens and click
 "Create a Personal Access Token".  The CLI needs access to everything
 on your account to work correctly.
 """)
