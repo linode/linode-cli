@@ -18,6 +18,7 @@ setup(
     author_email="wsmith@linode.com",
     url="https://www.linode.com/docs/platform/linode-cli",
     packages=['linodecli','linodecli.resources'],
+    license='BSD 3-Clause License',
     install_requires=["linode-api==4.1.8b1","terminaltables","colorclass"],
     entry_points={
         "console_scripts": [
