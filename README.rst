@@ -4,6 +4,9 @@ linode-cli
 A reimplementation of the `Linode CLI`_ using the `Python Library`_ and
 `API V4`_.
 
+**This CLI is currently experimental, and may change significantly in the near
+future.**
+
 Installation
 ------------
 ::
