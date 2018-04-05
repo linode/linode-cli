@@ -32,6 +32,15 @@ def _make_domain_record_row(r):
         str(r.port)
     ]
 
+def str2bool(v):
+    if v.lower() in ('yes', 'true', 't', 'y', '1'):
+       return True
+    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
+       return False
+    else:
+       raise argparse.ArgumentTypeError('Boolean value expected.')
+
+
 class Domain:
     def list(args, client, unparsed=None):
         zones = client.get_domains()
@@ -340,6 +349,11 @@ master ips: {}
         parser.add_argument('match', metavar='MATCH', type=str,
                 help="The match for the record to delete.  Match to a name or target")
 
+        delete_all = False
+        parser.add_argument("--all", type=str2bool, nargs='?',
+                                const=True, default=delete_all,
+                                help="Delete all records that match.")
+
         args = parser.parse_args(args=unparsed, namespace=args)
 
         z = _get_domain_or_die(client, args.label)
@@ -347,11 +361,14 @@ master ips: {}
         to_delete = [ r for r in z.records if r.type == args.match_type and \
                 ( r.target == args.match or r.name == args.match ) ]
 
-        if not len(to_delete) == 1:
-            print("Ambiguous criteria - found {} records instead of 1".format(len(to_delete)))
+        if not args.all and not len(to_delete) == 1:
+              print("Ambiguous criteria - found {} records instead of 1".format(len(to_delete)))
 
-        to_delete = to_delete[0]
-        to_delete.delete()
+        for record_to_delete in to_delete:
+           record_to_delete.delete()
+
+
+
 
     def record_show(args, client, unparsed=None):
         parser = argparse.ArgumentParser(description="Create a Domain.")
