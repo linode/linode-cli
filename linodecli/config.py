@@ -110,7 +110,7 @@ on your account to work correctly.
             if os.path.isfile(keypath):
                 with open(keypath) as keyfile:
                     k = keyfile.read()
-                    if k.startswith("ssh-rsa"):
+                    if k.startswith(('ssh-dss', 'ssh-rsa', 'ecdsa-sha2-nistp', 'ssh-ed25519')):
                         config['pubkey_file'] = keypath
                         break
                     print("Invalid public key.  Please enter a path to a SSH public key file, or press Enter to skip.")
