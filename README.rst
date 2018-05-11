@@ -1,99 +1,197 @@
 linode-cli
 ==========
 
-A reimplementation of the `Linode CLI`_ using the `Python Library`_ and
-`API V4`_.
-
-**This CLI is currently experimental, and may change significantly in the near
-future.**
+The Linode Command Line Interface
 
 Installation
 ------------
-::
 
-    pip3 install linode-cli
+From pypi::
 
-Building from Source
--------------------
+   pip3 install linode-cli
 
-To build this package from source:
+From source::
 
-- Clone this repository.
-- ``python3 setup.py install``
+   git clone git@github.com:linode/linode-cli.git
+   cd linode-cli
+   make install SPEC=https://developers.linode.com/openapi.yaml
+
+This will need to be repeated on each pull.
 
 Usage
 -----
 
-While the Linode API V4 is in beta, this package installs the command
-``linode-cli``.
+The Linode CLI is invoked with the `linode-cli`.  The CLI accepts two primary
+arguments, *command*  and *action*::
 
-When running the CLI for the first time, configure it by running
-``linode-cli configure``.  This will prompt for your API V4
-personal access token and some defaults.
+   linode-cli <command> <action>
 
-This is intended to be used like the existing Linode CLI, and you can
-use `the existing CLI docs`_ for reference.
+*command* is the part of the CLI you are interacting with, for example "linodes".
+You can see a list of all available commands by using `--help`::
 
-In addition, the following commands have been added:
+   linode-cli --help
 
-- ``linode-cli event list`` - lists recent Events
-- ``linode-cli event seen`` - marks all Events as seen
-- ``linode-cli backups-show LINODE`` - show backups for a Linode
-- ``linode-cli snapshot LINODE`` - create a snapshot of a Linode
-- ``linode-cli backups-restore LINODE BACKUPID -l TARGET -f`` - restore a backup
-- ``linode-cli backups-enable LINODE`` - enable backups for a Linode
-- ``linode-cli backups-cancel LINODE`` - cancel backups for a Linode
-- ``linode-cli ticket list`` - list tickets open on your account
-- ``linode-cli ticket show TICKETID`` - show a ticket and its replies
-- ``linode-cli volume list`` - list all Block Storage Volumes
-- ``linode-cli volume show VOLUME`` - show information about a Volume
-- ``linode-cli volume create LABEL -l LINODE`` - create a volume attached to a Linode
-- ``linode-cli volume rename LABEL NEW_LABEL`` - rename a volume
-- ``linode-cli volume attach LABEL LINODE`` - attach a volume to a Linode 
-- ``linode-cli volume detach LABEL`` - detach a volume
-- ``linode-cli volume delete LABEL`` - delete a volume
+*action* is the action you want to perform on a given command, for example "list".
+You can see a list of all available actions for a command with the `--help` for
+that command::
 
-Examples
---------
+   linode-cli linodes --help
 
-List all Linodes and their status:
+Some actions don't require any parameters, but many do.  To see details on how
+to invoke a specific action, use `--help` for that action::
 
-``linode-cli list``
+   linode-cli linodes create --help
 
-Create a new Linode with a root password of "hunter7" and label "cli-test-1"
-in your default region with your default type:
+The first time you invoke the CLI, you will be asked to configure it with a
+token, and optionally select some default values for "region," "image," and "type."
+If you configure these defaults, you may omit them as parameters to actions
+and the default value will be used.
 
-``linode-cli create -P hunter7 -l cli-test-1``
+Common Operations
+^^^^^^^^^^^^^^^^^
 
-Shut down your new Linode:
+List Linodes::
 
-``linode-cli stop cli-test-1``
+   linode-cli linodes list
 
-Show a Linode's Backups:
+List Linodes in a Region::
 
-``linode-cli backups-show cli-test-1``
+   linode-cli linodes list --region us-east
 
-List your domains:
+Make a Linode::
 
-``linode-cli domain list``
+   linode-cli linodes create --type g5-standard-2 --region us-east --image linode/debian9 --label cli-1 --root_pass hunter7
 
-Show recent events:
+Make a Linode using Default Settings::
 
-``linode-cli event list``
+   linode-cli linodes create --label cli-2 --root_pass hunter7
 
-Show open tickets:
+Reboot a Linode::
 
-``linode-cli ticket list``
+   linode-cli linodes reboot 12345
 
-See all volumes and their attachments:
+View available Linode types::
 
-``linode-cli volume list``
+   linode-cli linodes types
 
-Create a new 100 GB volume attached to a Linode:
+View your Volumes::
 
-``linode-cli volume create cli-test-volume -l cli-test -s 100``
+   linode-cli volumes list
 
-.. _API v4: https://developers.linode.com
-.. _Linode CLI: https://linode.com/cli
-.. _Python Library: https://github.com/linode/python-linode-api
-.. _the existing CLI docs: https://www.linode.com/docs/platform/linode-cli#using-the-cli
+View your Domains::
+
+   linode-cli domains list
+
+View records for a single Domain::
+
+   linode-cli domains records-list 12345
+
+View your user::
+
+   linode-cli profile view
+
+Reconfiguring
+"""""""""""""
+
+If your token expires or you want to otherwise change your configuration, simply
+run the *configure* command::
+
+   linode-cli configure
+
+Suppressing Defaults
+""""""""""""""""""""
+
+If you configured default values for `image`, `region`, and Linode `type`, they
+will be sent for all requests that accept them if you do not specify a different
+value.  If you want to send a request *without* these arguments, you must invoke
+the CLI with the `--no-defaults` option.  For example, to create a Linode with
+no `image` after a default Image has been configured, you would do this::
+
+   linode-cli linodes create --region us-east --type g5-standard-2 --no-defaults
+
+Customizing Output
+------------------
+
+Changing Output Fields
+^^^^^^^^^^^^^^^^^^^^^^
+
+By default, the CLI displays on some pre-selected fields for a given type of
+response.  If you want to see everything, just ask::
+
+   linode-cli linodes list --all
+
+Using `--all` will cause the CLI to display all returned columns of output.
+Note that this will probably be hard to read on normal-sized screens for most
+actions.
+
+If you want even finer control over your output, you can request specific columns
+be displayed::
+
+   linode-cli linodes list --format 'id,region,status,disk,memory,vcpus,transfer'
+
+This will show some identifying information about your Linode as well as the
+resources it has access to.  Some of these fields would be hidden by default -
+that's ok.  If you ask for a field, it'll be displayed.
+
+Output Formatting
+^^^^^^^^^^^^^^^^^
+
+While the CLI by default outputs human-readable tables of data, you can use the
+CLI to generate output that is easier to process.
+
+Machine Readable Output
+"""""""""""""""""""""""
+
+To get more machine-readable output, simply request it::
+
+   linode-cli linodes list --text
+
+If a tab is a bad delimiter, you can configure that as well::
+
+  linode-cli linodes list --text --delimiter ';'
+
+You may also disable header rows (in any output format)::
+
+   linode-cli linodes list --no-headers --text
+
+JSON Output
+"""""""""""
+
+To get JSON output from the CLI, simple request it::
+
+   linode-cli linodes list --json --all
+
+While the `--all` is optional, you probably want to see all output fields in
+your JSON output.  If you want your JSON pretty-printed, we can do that too::
+
+   linode-cli linodes list --json --pretty --all
+
+Contributing
+------------
+
+This CLI is generated based on the OpenAPI specification for Linode's API.  As
+such, many changes are made directly to the spec.
+
+Specification Extensions
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+In order to be more useful, the following `Specification Extensions`_ have been
+added to Linode's OpenAPI spec:
+
++---------------------+----------+-------------------------------------------------------------------------------------------+
+|Attribute            | Location | Purpose                                                                                   |
++---------------------+----------+-------------------------------------------------------------------------------------------+
+|x-linode-cli-display | property | If truthy, displays this as a column in output.  If a number, determines the ordering     |
+|                     |          | (left to right).                                                                          |
++---------------------+----------+-------------------------------------------------------------------------------------------+
+|x-linode-cli-command | path     | The command name for operations under this path. If not present, "default" is used.       |
++---------------------+----------+-------------------------------------------------------------------------------------------+
+|x-linode-cli-action  | method   | The action name for operations under this path. If not present, operationId is used.      |
++---------------------+----------+-------------------------------------------------------------------------------------------+
+|x-linode-cli-color   | property | If present, defines key-value pairs of property value: color.  Colors must be understood  |
+|                     |          | by colorclass.Color.  Must include a default_                                             |
++---------------------+----------+-------------------------------------------------------------------------------------------+
+|x-linode-cli-skip    | path     | If present and truthy, this method will not be available in the CLI.                      |
++---------------------+----------+-------------------------------------------------------------------------------------------+
+
+.. _Specification Extensions: https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#specificationExtensions

@@ -1,0 +1,25 @@
+#!/usr/bin/env python3
+# Usage:
+#   ./bin/version
+#       Prints the current version
+
+from distutils.version import LooseVersion
+import subprocess
+import sys
+import os
+import re
+
+def get_version(ref="HEAD"):
+    describe = call('git describe {}'.format(ref))
+
+    parts = LooseVersion(describe).version[:3]
+    return tuple(parts)
+
+
+def call(cmd):
+    _, output = subprocess.getstatusoutput(cmd)
+    return output
+
+
+major, minor, patch = get_version()
+print("{}.{}.{}".format(major, minor, patch))
