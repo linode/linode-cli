@@ -8,7 +8,7 @@ Installation
 
 From pypi::
 
-   pip3 install linode-cli
+   pip install linode-cli
 
 From source::
 
