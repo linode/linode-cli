@@ -60,11 +60,11 @@ List Linodes in a Region::
 
 Make a Linode::
 
-   linode-cli linodes create --type g5-standard-2 --region us-east --image linode/debian9 --label cli-1 --root_pass hunter7
+   linode-cli linodes create --type g5-standard-2 --region us-east --image linode/debian9 --label cli-1 --root_pass
 
 Make a Linode using Default Settings::
 
-   linode-cli linodes create --label cli-2 --root_pass hunter7
+   linode-cli linodes create --label cli-2 --root_pass
 
 Reboot a Linode::
 
