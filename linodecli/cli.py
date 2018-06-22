@@ -107,7 +107,15 @@ class CLI:
             }
             # handle input lists
             if args[path]['type'] == 'array' and 'items' in info:
-                args[path]['item_type'] = info['items']['type']
+                items = info['items']
+
+                if 'allOf' in items:
+                    # if items contain an "allOf", parse it down and format it
+                    # as is expected here
+                    items = self._resolve_allOf(items['allOf'])
+                    items = {"type":"object","items":items}
+
+                args[path]['item_type'] = items['type']
 
         return args
 
