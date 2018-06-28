@@ -4,6 +4,7 @@ Classes related to OpenAPI-defined operations and their arguments and parameters
 from __future__ import print_function
 
 import argparse
+from getpass import getpass
 import json
 
 
@@ -33,6 +34,26 @@ def parse_dict(value):
         raise argparse.ArgumentTypeError('Expected a JSON string')
 
 
+class PasswordPromptAction(argparse.Action):
+    """
+    A special argparse Action to handle prompting for password.  Also accepts
+    passwords on the terminal to allow for backwards-compatible behavior.
+    """
+    def __init__(self, *args, **kwargs):
+        super(PasswordPromptAction, self).__init__(*args, **kwargs)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        if values:
+            if isinstance(values, str):
+                password = values
+            else:
+                raise argparse.ArgumentTypeError('Expected a string (or leave blank for prompt)')
+        else:
+            prompt = 'Value for {}: '.format(self.dest)
+            password = getpass(prompt)
+        setattr(namespace, self.dest, password)
+
+
 TYPES = {
     "string": str,
     "integer": int,
@@ -48,9 +69,10 @@ class CLIArg:
     An argument passed to the CLI with a flag, such as `--example value`.  These
     are defined in a requestBody in the api spec.
     """
-    def __init__(self, name, arg_type, description, path):
+    def __init__(self, name, arg_type, description, path, arg_format):
         self.name = name
         self.arg_type = arg_type
+        self.arg_format = arg_format
         self.description = description.replace('\n', '').replace('\r', '')
         self.path = path
         self.arg_item_type = None # populated during baking for arrays
@@ -108,8 +130,12 @@ class CLIOperation:
                     parser.add_argument('--'+arg.path, metavar=arg.name,
                                         action='append', type=TYPES[arg.arg_item_type])
                 else:
-                    parser.add_argument('--'+arg.path, metavar=arg.name,
-                                        type=TYPES[arg.arg_type])
+                    if arg.arg_type == 'string' and arg.arg_format == 'password':
+                        # special case - password input
+                        parser.add_argument('--'+arg.path, nargs='?', action=PasswordPromptAction)
+                    else:
+                        parser.add_argument('--'+arg.path, metavar=arg.name,
+                                            type=TYPES[arg.arg_type])
 
         parsed = parser.parse_args(args)
         return parsed

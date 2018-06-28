@@ -104,6 +104,7 @@ class CLI:
                 "type": info.get('type') or 'string',
                 "desc": info.get('description') or '',
                 "name": arg,
+                "format": info.get('format', None),
             }
             # handle input lists
             if args[path]['type'] == 'array' and 'items' in info:
@@ -215,7 +216,8 @@ class CLI:
                     cli_args = []
 
                     for arg, info in args.items():
-                        new_arg = CLIArg(info['name'], info['type'], info['desc'].split('.')[0]+'.', arg)
+                        new_arg = CLIArg(info['name'], info['type'], info['desc'].split('.')[0]+'.',
+                                         arg, info['format'])
 
                         if arg in required_fields:
                             new_arg.required = True
