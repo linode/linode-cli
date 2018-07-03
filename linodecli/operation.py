@@ -6,6 +6,7 @@ from __future__ import print_function
 import argparse
 from getpass import getpass
 import json
+from os import path
 
 
 def parse_boolean(value):
@@ -52,6 +53,25 @@ class PasswordPromptAction(argparse.Action):
             prompt = 'Value for {}: '.format(self.dest)
             password = getpass(prompt)
         setattr(namespace, self.dest, password)
+
+
+class OptionalFromFileAction(argparse.Action):
+    """
+    A special action for handling loading a value from a file.  This will
+    attempt to load the value from a file if the value looks like a path and
+    the file exists, otherwise it will fall back to using the provided value.
+    """
+    def __call__(self, parser, namespace, values, option_string=None):
+        if isinstance(values, str):
+            input_path = path.expanduser(values)
+            if path.exists(input_path) and path.isfile(input_path):
+                with open(input_path) as f:
+                    data = f.read()
+                setattr(namespace, self.dest, data)
+            else:
+                setattr(namespace, self.dest, values)
+        else:
+            raise argparse.ArgumentTypeError('Expected a string')
 
 
 TYPES = {
@@ -133,6 +153,10 @@ class CLIOperation:
                     if arg.arg_type == 'string' and arg.arg_format == 'password':
                         # special case - password input
                         parser.add_argument('--'+arg.path, nargs='?', action=PasswordPromptAction)
+                    elif arg.arg_type == 'string' and arg.arg_format in ('ssl-cert','ssl-key'):
+                        parser.add_argument('--'+arg.path, metavar=arg.name,
+                                            action=OptionalFromFileAction,
+                                            type=TYPES[arg.arg_type])
                     else:
                         parser.add_argument('--'+arg.path, metavar=arg.name,
                                             type=TYPES[arg.arg_type])
