@@ -16,7 +16,10 @@ From source::
    cd linode-cli
    make install SPEC=https://developers.linode.com/openapi.yaml
 
-This will need to be repeated on each pull.
+This will need to be repeated on each pull.  For a build to succeed, see
+`Building from Source`_ below.
+
+.. _Building from Source: #building-from-source
 
 Usage
 -----
@@ -165,6 +168,35 @@ While the `--all` is optional, you probably want to see all output fields in
 your JSON output.  If you want your JSON pretty-printed, we can do that too::
 
    linode-cli linodes list --json --pretty --all
+
+Building from Source
+--------------------
+
+In order to successfully build the CLI, your system will require the following:
+
+ * The ``make`` command
+ * ``python`` and ``python3`` (both versions are required to build a package)
+ * ``pip`` and ``pip3`` (to install ``requirements.txt`` for both python versions)
+
+Before attempting a build, install python dependencies like this::
+
+   make requirements
+
+Once everything is set up, you can initiate a build like so::
+
+    make build SPEC=https://developers.linode.com/openapi.yaml
+
+In this example, ``SPEC`` is being set to the public URL of Linode's OpenAPI
+specification.  This can be replaced with a local version of the spec, and the
+URL replaces with a path to the spec file, if desired.
+
+To install the package as part of the build process, use this command::
+
+   make install SPEC=https://developers.linode.com/openapi.yaml PYTHON=3
+
+When using ``install``, the ``PYCMD`` argument is optional - if provided, it
+will install the CLI for that version of python.  Valid values are ``2`` and
+``3``, and it will default to ``3``.
 
 Contributing
 ------------
