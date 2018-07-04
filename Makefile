@@ -38,6 +38,6 @@ check-prerequisites:
 
 .PHONY: clean
 clean:
-	rm linodecli/data-*
-	rm linode-cli.sh
+	rm -f linodecli/data-*
+	rm -f linode-cli.sh
 	rm -f dist/*
