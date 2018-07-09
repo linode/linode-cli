@@ -7,23 +7,22 @@ SPEC ?= https://developers.linode.com/openapi.yaml
 
 ifeq ($(PYTHON), 3)
 	PYCMD=python3
+	PIPCMD=pip3
 else
 	PYCMD=python
+	PIPCMD=pip
 endif
 
 install: check-prerequisites requirements build
-	$(PYCMD) setup.py install
+	ls dist/ | xargs -I{} $(PIPCMD) install --force dist/{}
 
 .PHONY: build
-build: common
-	$(PYCMD) setup.py bdist_wheel --universal
-
-.PHONY: common
-common:
+build: clean
 	python -m linodecli bake ${SPEC} --skip-config
 	python3 -m linodecli bake ${SPEC} --skip-config
 	cp data-2 linodecli/
 	cp data-3 linodecli/
+	$(PYCMD) setup.py bdist_wheel --universal
 
 .PHONY: requirements
 requirements:
@@ -36,3 +35,9 @@ check-prerequisites:
 	@ pip3 -v >/dev/null
 	@ python -V >/dev/null
 	@ python3 -V >/dev/null
+
+.PHONY: clean
+clean:
+	rm -f linodecli/data-*
+	rm -f linode-cli.sh
+	rm -f dist/*
