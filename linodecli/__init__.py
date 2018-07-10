@@ -98,11 +98,11 @@ def main():
         try:
             if os.path.exists(os.path.expanduser(spec_loc)):
                 with open(os.path.expanduser(spec_loc)) as f:
-                    spec = yaml.load(f.read())
+                    spec = yaml.safe_load(f.read())
             else: # try to GET it
                 resp = requests.get(spec_loc)
                 if resp.status_code == 200:
-                    spec = yaml.load(resp.content)
+                    spec = yaml.safe_load(resp.content)
                 else:
                     raise RuntimeError("Request failed to {}".format(spec_loc))
         except Exception as e:
