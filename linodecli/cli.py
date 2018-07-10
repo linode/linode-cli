@@ -11,6 +11,7 @@ from string import Template
 from sys import exit, prefix, stderr, version_info
 
 import requests
+from openapi3 import OpenAPI
 
 from .operation import CLIArg, CLIOperation, URLParam
 from .response import ModelAttr, ResponseModel
@@ -139,6 +140,47 @@ class CLI:
         return attrs
 
     def bake(self, spec):
+        """
+        Generates ops and bakes them to a pickle using the OpenAPI parser
+        """
+        self.spec = OpenAPI(spec)
+        self.ops = {}
+
+        for path, oapath in self.spec.paths.items():
+            command = oapath.extensions.get('linode-cli-command', 'default')
+
+            if command not in self.ops:
+                self.ops[command] = {}
+
+            params = [URLParam(p.name, p.schema.type) for p in oapath.parameters]
+
+            for m in METHODS:
+                operation = getattr(oapath, m)
+
+                if operation is None or 'linode-cli-skip' in operation.extensions:
+                    # either this method isn't supported or it's explicitly skipped
+                    continue
+
+                action = operation.extensions.get('linode-cli-action') or operation.operationId
+
+                if action is None:
+                    # if we don't have an action or operationId, we can't invoke this
+                    print("warn: no operationId for {} {}".format(m.upper(), path))
+                    continue
+
+                self.ops[command][action] = CLIOperation(m, path, operation.summary,
+                                                         [], None, params)
+
+        # save these off - maybe not necessary?
+        self.ops['_base_url'] = self.spec.servers[0].url
+        self.ops['_spec_version'] = self.spec.info.version
+
+        # finish the baking
+        data_file = self._get_data_file()
+        with open(data_file, 'wb') as f:
+            pickle.dump(self.ops, f)
+
+    def bake_old(self, spec):
         """
         Generates ops and bakes them to a pickle
         """
