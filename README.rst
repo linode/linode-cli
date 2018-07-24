@@ -210,14 +210,15 @@ user.
 Installation
 ^^^^^^^^^^^^
 
-The CLI uses the Bash Automated Testing System (BATS) for testing. To install run the follow:
+The CLI uses the Bash Automated Testing System (BATS) for testing. To install run the following:
 
 OSX users::
+
    brew install bats-core
 
 Installing Bats from source::
 
-Check out a copy of the Bats repository. Then, either add the Bats bin directory to your $PATH, or run the provided install.sh command with the location to the prefix in which you want to install Bats. For example, to install Bats into /usr/local,
+   Check out a copy of the Bats repository. Then, either add the Bats bin directory to your $PATH, or run the provided install.sh command with the location to the prefix in which you want to install Bats. For example, to install Bats into /usr/local,
 
    git clone https://github.com/bats-core/bats-core.git
    cd bats-core
@@ -226,7 +227,7 @@ Check out a copy of the Bats repository. Then, either add the Bats bin directory
 Running the Tests
 ^^^^^^^^^^^^^^^^^
 
-Running the tests is simple. The only requirement is that you have a .linode-cli in your user folder containing your test user token.
+Running the tests is simple. The only requirement is that you have a .linode-cli in your user folder containing your test user token::
 
    bats test/**
 
