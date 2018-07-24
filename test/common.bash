@@ -12,3 +12,7 @@ removeLinodes() {
 if [ -z "$test_image" ]; then
     export test_image=$(linode-cli images list --format id --text --no-header | head -n 1)
 fi
+
+if [  -z "$random_pass" ]; then
+	export random_pass=$(openssl rand -base64 32)
+fi

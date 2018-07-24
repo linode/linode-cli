@@ -5,7 +5,7 @@ load '../test_helper/bats-assert/load'
 load '../common'
 
 @test "it should create linodes with a label" {
-    run linode-cli linodes create --type g6-standard-2 --region us-east --image $test_image --label cli-1 --root_pass badDSFS8942 --text --delimiter "," --no-headers
+    run linode-cli linodes create --type g6-standard-2 --region us-east --image $test_image --label cli-1 --root_pass $random_pass --text --delimiter "," --no-headers
     assert_output --regexp ".*,cli-1,us-east,g6-standard-2,$test_image,.*"
 }
 
@@ -16,7 +16,7 @@ load '../common'
 }
 
 @test "it should create a linode with the minimum required props" {
-    run linode-cli linodes create --type g6-standard-2 --region us-east --root_pass badDSFS8942
+    run linode-cli linodes create --type g6-standard-2 --region us-east --root_pass $random_pass
     [ "$status" -eq 0 ]
 }
 
