@@ -200,6 +200,37 @@ When using ``install``, the ``PYCMD`` argument is optional - if provided, it
 will install the CLI for that version of python.  Valid values are ``2`` and
 ``3``, and it will default to ``3``.
 
+Testing 
+-------
+
+WARNING! Running the CLI tests will remove all linodes and data associated
+with the account. It is only recommended to run these tests if you are an advanced
+user.
+
+Installation
+^^^^^^^^^^^^
+
+The CLI uses the Bash Automated Testing System (BATS) for testing. To install run the follow:
+
+OSX users::
+   brew install bats-core
+
+Installing Bats from source::
+
+Check out a copy of the Bats repository. Then, either add the Bats bin directory to your $PATH, or run the provided install.sh command with the location to the prefix in which you want to install Bats. For example, to install Bats into /usr/local,
+
+   git clone https://github.com/bats-core/bats-core.git
+   cd bats-core
+   ./install.sh /usr/local
+
+Running the Tests
+^^^^^^^^^^^^^^^^^
+
+Running the tests is simple. The only requirement is that you have a .linode-cli in your user folder containing your test user token.
+
+   bats test/**
+
+
 Contributing
 ------------
 
