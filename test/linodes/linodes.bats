@@ -10,18 +10,18 @@ load '../common'
 ##################################################################
 
 @test "it should create linodes with a label" {
-    run linode-cli linodes create --type g6-standard-2 --region us-east --image $test_image --label cli-1 --root_pass $random_pass --text --delimiter "," --no-headers
-    assert_output --regexp ".*,cli-1,us-east,g6-standard-2,$test_image,.*"
+    run linode-cli linodes create --type g6-standard-2 --region us-east --image $test_image --label cli-1 --root_pass $random_pass --text --delimiter "," --no-headers --format 'label,region,type,image' --no-defaults
+    assert_output --regexp "cli-1,us-east,g6-standard-2,$test_image"
 }
 
 @test "it should view the linode configuration" {
     linode_id="$(linode-cli --text --no-headers linodes list | awk '{ print $1 }' | xargs)"
-    run linode-cli linodes view "$linode_id" --text --delimiter "," --no-headers
-    assert_output --regexp "$linode_id,cli-1,us-east,g6-standard-2,$test_image,.*"
+    run linode-cli linodes view "$linode_id" --text --delimiter "," --no-headers --format 'id,label,region,type,image' --no-defaults
+    assert_output --regexp "$linode_id,cli-1,us-east,g6-standard-2,$test_image"
 }
 
 @test "it should create a linode with the minimum required props" {
-    run linode-cli linodes create --type g6-standard-2 --region us-east --root_pass $random_pass
+    run linode-cli linodes create --type g6-standard-2 --region us-east --root_pass $random_pass --no-defaults
     [ "$status" -eq 0 ]
 }
 
