@@ -8,4 +8,11 @@ then
     exit 1
 fi
 
+testsWorkingDir=$(echo $PWD | grep test)
+
+if [[ $? != 0 ]]
+then
+    cd $PWD/test
+fi
+
 bats linodes
