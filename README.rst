@@ -231,7 +231,7 @@ Running the Tests
 
 Running the tests is simple. The only requirement is that you have a .linode-cli in your user folder containing your test user token::
 
-   bats test/**
+   ./test/test-runner.sh
 
 
 Contributing
