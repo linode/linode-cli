@@ -39,6 +39,6 @@ load '../common'
 
 }
 
-@test "it should delete all domains" {
-
+@test "it should delete all slave domains" {
+    run removeDomains
 }
