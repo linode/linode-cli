@@ -9,7 +9,7 @@ removeLinodes() {
 }
 
 removeDomains() {
-    local domain_ids="( $( linode-cli domains list --format "id" --text --no-headers ))"
+    local domain_ids="( $( linode-cli domains list --format "id" --text --no-headers ) )"
     local id
 
     for id in $domain_ids ; do
