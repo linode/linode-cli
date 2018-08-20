@@ -233,6 +233,15 @@ Running the tests is simple. The only requirement is that you have a .linode-cli
 
    ./test/test-runner.sh
 
+**Running Tests via Docker**
+
+Run the following command to build the tests container:
+
+   docker build -f Dockerfile-bats -t linode-cli-tests --build-arg TOKEN=$INSERT_YOUR_TOKEN_HERE .
+
+Run the following command to run the test
+
+   docker run --rm linode-cli-tests
 
 Contributing
 ------------
