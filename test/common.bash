@@ -8,6 +8,16 @@ removeLinodes() {
     done
 }
 
+removeDomains() {
+    local domain_ids="( $( linode-cli domains list --format "id" --text --no-headers ) )"
+    local id
+
+    for id in $domain_ids ; do
+        run bash -c "linode-cli domains delete $id"
+        [ "$status" -eq 0 ]
+    done
+}
+
 # Get an available image and set it as an env variable
 if [ -z "$test_image" ]; then
     export test_image=$(linode-cli images list --format id --text --no-header | egrep "linode\/.*" | head -n 1)
