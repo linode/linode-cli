@@ -40,6 +40,7 @@ setup(
     description="CLI for the Linode API",
     long_description=long_description,
     author="Linode",
+    author_email='developers@linode.com',
     url="https://developers.linode.com/api/v4",
     packages=['linodecli'],
     license="BSD 3-Clause License",
