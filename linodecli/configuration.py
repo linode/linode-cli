@@ -36,6 +36,7 @@ class CLIConfig:
         self.base_url = base_url
         self.username = username
         self.config = self._get_config()
+        self._configured = False
         if not self.config.has_option('DEFAULT', 'token') and not skip_config:
             self.configure()
 
@@ -77,6 +78,8 @@ class CLIConfig:
         for a series of defaults in order to make future CLI calls
         easier.  This also sets up the config file.
         """
+        # If configuration has already been done in this run, don't do it again.
+        if self._configured: return
         config = {}
         is_default = username == None
 
@@ -114,7 +117,7 @@ on your account to work correctly.
             regions,
             'Default Region (Optional): ',
             'Please select a valid Region, or press Enter to skip')
-                    
+
         config['type'] = self._default_thing_input(
             'Default Type of Linode to deploy.',
             types,
@@ -139,6 +142,7 @@ on your account to work correctly.
         with open(self._get_config_path(), 'w') as f:
             self.config.write(f)
         os.chmod(self._get_config_path(), 0o600)
+        self._configured = True
 
         print("\nConfig written to {}".format(self._get_config_path()))
 
