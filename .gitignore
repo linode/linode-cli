@@ -7,4 +7,5 @@ linode-cli.sh
 data-2
 data-3
 .DS_STORE
+Pipfile*
 
