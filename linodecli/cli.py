@@ -33,6 +33,7 @@ class CLI:
         self.version = version
         self.base_url = base_url
         self.spec_version = 'None'
+        self.suppress_warnings = False
 
         self.output_handler = OutputHandler()
         self.config = CLIConfig(self.base_url, skip_config=skip_config)
@@ -373,7 +374,7 @@ complete -F _linode_cli linode-cli""")
         if 'X-Spec-Version' in result.headers:
             spec_version = result.headers.get('X-Spec-Version')
             try:
-                if LooseVersion(spec_version) > LooseVersion(self.spec_version):
+                if LooseVersion(spec_version) > LooseVersion(self.spec_version) and not self.suppress_warnings:
                     print("The API responded with version {}, which is newer than "
                           "the CLI's version of {}.  Please update the CLI to get "
                           "access to the newest features.  You can update with a "
