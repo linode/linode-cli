@@ -1,6 +1,6 @@
 #!/usr/bin/env bats
 
-# THESE TESTS HAVE BEEN DISABLED UNTIL ARB-763 IS ADDRESSED
+# THESE TESTS HAVE BEEN DISABLED UNTIL A BUG IS ADDRESSED
 
 # load '../test_helper/bats-support/load'
 # load '../test_helper/bats-assert/load'
