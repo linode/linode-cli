@@ -58,6 +58,9 @@ def main():
     parser.add_argument('--no-defaults', action='store_true',
                         help="Suppress default values for arguments.  Default values "
                              "are configured on initial setup or with linode-cli configure")
+    parser.add_argument('--suppress-warnings', action='store_true',
+                        help="Suppress warnings that are intended for human users. "
+                             "This is useful for scripting the CLI's behavior.")
     parser.add_argument('--version', '-v', action="store_true",
                         help="Prints version information and exits.")
 
@@ -80,6 +83,7 @@ def main():
         cli.output_handler.columns = parsed.format
 
     cli.defaults = not parsed.no_defaults
+    cli.suppress_warnings = parsed.suppress_warnings
     cli.page = parsed.page
 
     if parsed.version:
