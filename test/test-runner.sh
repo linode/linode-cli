@@ -18,7 +18,7 @@ then
         cd $PWD/test
     fi
 
-    bats linodes domains volumes
+    bats $(ls */*.bats)
 else
     echo -e "\n ####WARNING!#### \n"
     echo -e  "Running the Linode CLI tests requires removing all resources on your account\n"

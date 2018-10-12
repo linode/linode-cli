@@ -13,7 +13,7 @@ load '../common'
     run createVolume
     run linode-cli volumes list --text --no-headers --delimiter=","
     assert_success
-    assert_output --regexp "[0-9]+,A[0-9]+,creating,10,us-east"
+    assert_output --regexp "[0-9]+,A[0-9]+,(creating|active),10,us-east"
 }
 
 @test "it should view a single volume" {
