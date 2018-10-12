@@ -15,6 +15,7 @@ from requests import get
 import os
 import sys
 
+ENV_TOKEN_NAME='LINODE_TOKEN'
 
 CONFIG_DIR = os.path.expanduser('~')
 CONFIG_NAME = '.linode-cli'
@@ -36,8 +37,10 @@ class CLIConfig:
         self.base_url = base_url
         self.username = username
         self.config = self._get_config()
+
         self._configured = False
-        if not self.config.has_option('DEFAULT', 'token') and not skip_config:
+
+        if not self.config.has_option('DEFAULT', 'token') and not skip_config and not os.environ[ENV_TOKEN_NAME]:
             self.configure()
 
     def update_namespace(self, namespace, new_dict):
@@ -70,7 +73,8 @@ class CLIConfig:
         """
         Returns the token for a configured user
         """
-        return self.config.get(username or 'DEFAULT', "token")
+        t = os.environ[ENV_TOKEN_NAME]
+        return t if t else self.config.get(username or 'DEFAULT', "token")
 
     def configure(self, username=None):
         """
@@ -84,28 +88,36 @@ class CLIConfig:
         is_default = username == None
 
         print("""Welcome to the Linode CLI.  This will walk you through some
-initial setup.
+initial setup.""")
 
+        if ENV_TOKEN_NAME in os.environ:
+            print("""Using token from LINODE_TOKEN.
+Note that no token will be saved in your configuration file.
+    * If you lose or remove LINODE_TOKEN, Linode CLI will stop working.
+    * All profiles will use LINODE_TOKEN.""")
+            username = 'DEFAULT'
+
+        else:
+            print("""
 First, we need a Personal Access Token.  To get one, please visit
 {} and click
 "Create a Personal Access Token".  The CLI needs access to everything
-on your account to work correctly.
-""".format(TOKEN_GENERATION_URL))
+on your account to work correctly.""".format(TOKEN_GENERATION_URL))
 
-        while True:
-            config['token'] = input_helper("Personal Access Token: ")
+            while True:
+                config['token'] = input_helper("Personal Access Token: ")
 
-            u = self._do_get_request('/profile', token=config['token'], exit_on_error=False)
-            if "errors" in u:
-                print("That token didn't work: {}".format(','.join([c["reason"] for c in u['errors']])))
-                continue
+                u = self._do_get_request('/profile', token=config['token'], exit_on_error=False)
+                if "errors" in u:
+                    print("That token didn't work: {}".format(','.join([c["reason"] for c in u['errors']])))
+                    continue
 
-            if username is None:
-                username = u['username']
-            elif u['username'] != username:
-                print("That is a token for {}, not {}\n".format(u['username'], username))
-                continue
-            break
+                if username is None:
+                    username = u['username']
+                elif u['username'] != username:
+                    print("That is a token for {}, not {}\n".format(u['username'], username))
+                    continue
+                break
 
         regions = [r['id'] for r in self._do_get_request('/regions')['data']]
         types = [t['id'] for t in self._do_get_request('/linode/types')['data']]
