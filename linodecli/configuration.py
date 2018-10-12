@@ -73,14 +73,8 @@ class CLIConfig:
         """
         Returns the token for a configured user
         """
-        t = os.environ[ENV_TOKEN_NAME]
-
-        try:
-            return t if t else self.config.get(username or 'DEFAULT', "token")
-        except ValueError:
-            print("No token set for user {}.  Please provide a token through the "
-                  "{} environment variable or reconfigure the CLI by running "
-                  "`linode-cli configure`".format((username or 'DEFAULT', ENV_TOKEN_NAME)))
+        t = os.environ.get(ENV_TOKEN_NAME, None)
+        return t if t else self.config.get(username or 'DEFAULT', "token")
 
     def configure(self, username=None):
         """
