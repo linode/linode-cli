@@ -114,6 +114,24 @@ no `image` after a default Image has been configured, you would do this::
 
    linode-cli linodes create --region us-east --type g5-standard-2 --no-defaults
 
+Suppressing Warnings
+""""""""""""""""""""
+
+In some situations, like when the CLI is out of date, it will generate a warning
+in addition to its normal output.  If these warnings can interfere with your
+scripts or you otherwise want them disabled, simply add the `--suppress-warnings`
+flag to prevent them from being emitted.
+
+Environment Variables
+"""""""""""""""""""""
+
+If you prefer, you may store your token in an environment variable named
+`LINODE_CLI TOKEN` instead of using the configuration file.  Doing so allows you
+to bypass the initial configuration, and subsequent calls to `linode-cli configure`
+will allow you to set defaults without having to set a token.  Be aware that if
+the environment variable should be unset, the Linode CLI will stop working until
+it is set again or the CLI is reconfigured with a token.
+
 Customizing Output
 ------------------
 

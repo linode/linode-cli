@@ -15,7 +15,7 @@ from requests import get
 import os
 import sys
 
-ENV_TOKEN_NAME='LINODE_TOKEN'
+ENV_TOKEN_NAME='LINODE_CLI_TOKEN'
 
 CONFIG_DIR = os.path.expanduser('~')
 CONFIG_NAME = '.linode-cli'
@@ -40,7 +40,7 @@ class CLIConfig:
 
         self._configured = False
 
-        if not self.config.has_option('DEFAULT', 'token') and not skip_config and not os.environ[ENV_TOKEN_NAME]:
+        if not self.config.has_option('DEFAULT', 'token') and not skip_config and not os.environ.get(ENV_TOKEN_NAME, None):
             self.configure()
 
     def update_namespace(self, namespace, new_dict):
@@ -74,7 +74,13 @@ class CLIConfig:
         Returns the token for a configured user
         """
         t = os.environ[ENV_TOKEN_NAME]
-        return t if t else self.config.get(username or 'DEFAULT', "token")
+
+        try:
+            return t if t else self.config.get(username or 'DEFAULT', "token")
+        except ValueError:
+            print("No token set for user {}.  Please provide a token through the "
+                  "{} environment variable or reconfigure the CLI by running "
+                  "`linode-cli configure`".format((username or 'DEFAULT', ENV_TOKEN_NAME)))
 
     def configure(self, username=None):
         """
