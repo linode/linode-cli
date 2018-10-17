@@ -16,7 +16,7 @@ From source::
 
    git clone git@github.com:linode/linode-cli.git
    cd linode-cli
-   make install SPEC=https://developers.linode.com/openapi.yaml
+   make install
 
 This will need to be repeated on each pull.  For a build to succeed, see
 `Building from Source`_ below.
@@ -204,17 +204,17 @@ Before attempting a build, install python dependencies like this::
 
 Once everything is set up, you can initiate a build like so::
 
-    make build SPEC=https://developers.linode.com/openapi.yaml
+    make build
 
-In this example, ``SPEC`` is being set to the public URL of Linode's OpenAPI
-specification.  This can be replaced with a local version of the spec, and the
-URL replaces with a path to the spec file, if desired.
+If desired, you may pass in ``SPEC=/path/to/openapi-spec`` when running ``build``
+or ``install``.  This can be a URL or a path to a local spec, and that spec will
+be used when generating the CLI.  A yaml or json file is accepted.
 
 To install the package as part of the build process, use this command::
 
-   make install SPEC=https://developers.linode.com/openapi.yaml PYTHON=3
+   make install PYTHON=3
 
-When using ``install``, the ``PYCMD`` argument is optional - if provided, it
+When using ``install``, the ``PYTHON`` argument is optional - if provided, it
 will install the CLI for that version of python.  Valid values are ``2`` and
 ``3``, and it will default to ``3``.
 

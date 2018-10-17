@@ -3,7 +3,7 @@
 #
 
 PYTHON ?= 3
-SPEC ?= https://developers.linode.com/openapi.yaml
+SPEC ?= https://developers.linode.com/api/v4/openapi.yaml
 
 ifeq ($(PYTHON), 3)
 	PYCMD=python3
