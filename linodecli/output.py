@@ -159,7 +159,7 @@ class OutputHandler:
             content=data
         else:
             for model in data:
-                content.append([attr.render_value(model) for attr in columns])
+                content.append([attr.render_value(model, colorize=False) for attr in columns])
 
         if header:
             print('| ' + ' | '.join([str(c) for c in header]) + ' |')
