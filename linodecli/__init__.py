@@ -14,6 +14,7 @@ from .cli import CLI
 from .response import ModelAttr, ResponseModel
 from .operation import CLIArg, CLIOperation, URLParam
 from .output import OutputMode
+from linodecli import plugins
 
 
 # this might not be installed at the time of building
@@ -159,6 +160,11 @@ def main():
     # special command to bake shell completion script
     if parsed.command == 'bake-bash':
         cli.bake_completions()
+
+    # check for plugin invocation
+    if parsed.command not in cli.ops and parsed.command in plugins.available:
+        plugins.invoke(parsed.command, argv[2:], None)
+        exit(0)
 
     # handle a help for a command - either --help or no action triggers this
     if parsed.command is not None and parsed.action is None:
