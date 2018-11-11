@@ -29,3 +29,27 @@ def call(args, context):
     settings.
     """
 ```
+
+### The PluginContext
+
+The `PluginContext` class, passed as `context` to the `call` function, includes
+all information the plugin is given during invocation.  This includes the following:
+
+ * `token` - The Personal Access Token registered with the CLI to make requests
+ * `client` - The CLI Client object that can make authenticated requests on behalf
+    of the acting user.  This is preferrable to using `requests` or another library
+    directly (see below).
+
+### CLI Client
+
+The CLI Client provided as `context.client` can make authenticated API calls on
+behalf of the user using the provided `call_operation` method.  This method is
+invoked with a command and an action, and executes the given CLI command as if
+it were entered into the command line, returning the resulting status code and
+JSON data.
+
+## TODOs
+
+ - [ ] Test/handle unconfigured invokations
+ - [ ] Fix missing "unkonwn command" error (for example for `linode-cli invalid`)
+ - [ ] Clean up documentation

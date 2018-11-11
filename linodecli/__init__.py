@@ -163,7 +163,13 @@ def main():
 
     # check for plugin invocation
     if parsed.command not in cli.ops and parsed.command in plugins.available:
-        plugins.invoke(parsed.command, argv[2:], None)
+        context = plugins.PluginContext(cli.token, cli)
+
+        # reconstruct arguments to send to the plugin
+        plugin_args = argv[1:] # don't include the program name
+        plugin_args.remove(parsed.command) # don't include the plugin name tho
+
+        plugins.invoke(parsed.command, plugin_args, context)
         exit(0)
 
     # handle a help for a command - either --help or no action triggers this

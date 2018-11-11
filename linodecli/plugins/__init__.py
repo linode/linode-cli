@@ -14,3 +14,17 @@ def invoke(name, args, context):
 
     plugin = import_module('linodecli.plugins.'+name)
     plugin.call(args, context)
+
+
+class PluginContext:
+    """
+    This class contains all context information provided to plugins when invoked.
+    This includes access to the underlying CLI object to access the user's account,
+    and the CLI access token the user has provided.
+    """
+    def __init__(self, token, client):
+        """
+        Constructs a new PluginContext with the given information
+        """
+        self.token = token
+        self.client = client

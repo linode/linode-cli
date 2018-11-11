@@ -435,3 +435,17 @@ complete -F _linode_cli linode-cli""")
         Reconfigure the application
         """
         self.config.configure(username=username)
+
+    def call_operation(self, command, action, args=[]):
+        """
+        This function is used in plguins to retrieve the result of CLI operations
+        in JSON format.  This uses the configured user of the CLI.
+        """
+        if command not in self.ops or action not in self.ops[command]:
+            raise ValueError('Unknown command/action {}/{}'.format(command, action))
+
+        operation = self.ops[command][action]
+
+        result = self.do_request(operation, args)
+
+        return result.status_code, result.json()
