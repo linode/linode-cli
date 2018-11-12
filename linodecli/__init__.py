@@ -172,6 +172,10 @@ def main():
         plugins.invoke(parsed.command, plugin_args, context)
         exit(0)
 
+    if parsed.command not in cli.ops and parsed.command not in plugins.available:
+        # unknown commands
+        print('Unrecognized command {}'.format(parsed.command))
+
     # handle a help for a command - either --help or no action triggers this
     if parsed.command is not None and parsed.action is None:
         if parsed.command in cli.ops:

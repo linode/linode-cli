@@ -51,5 +51,5 @@ JSON data.
 ## TODOs
 
  - [ ] Test/handle unconfigured invokations
- - [ ] Fix missing "unkonwn command" error (for example for `linode-cli invalid`)
+ - [ ] Finish statuspage plugin
  - [ ] Clean up documentation
