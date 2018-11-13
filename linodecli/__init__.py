@@ -154,8 +154,8 @@ def main():
 
         for i in range(0,len(plugin_content),3):
             plugin_proc.append(plugin_content[i:i+3])
-        if content[i+3:]:
-            plugin_proc.append(content[i+3:])
+        if plugin_content[i+3:]:
+            plugin_proc.append(plugin_content[i+3:])
 
         plugin_table = SingleTable(plugin_proc)
         plugin_table.inner_heading_row_border = False
