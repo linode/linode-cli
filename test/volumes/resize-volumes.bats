@@ -12,7 +12,11 @@ load '../common'
 @test "it should fail to resize a volume smaller" {
     createVolume
     volume_id=$(linode-cli volumes list --text --no-headers --format="id")
-    run linode-cli volumes resize $volume_id --size=5 --text --no-headers
+    run linode-cli volumes resize $volume_id \
+        --size=5 \
+        --text \
+        --no-headers
+
     assert_failure
     assert_output --partial "Request failed: 400"
     assert_output --partial "Storage volumes can only be resized up"
@@ -20,7 +24,11 @@ load '../common'
 
 @test "it should fail to resize a volume greater than 10240gb" {
     volume_id=$(linode-cli volumes list --text --no-headers --format="id")
-    run linode-cli volumes resize $volume_id --size=1024893405 --text --no-headers
+    run linode-cli volumes resize $volume_id \
+        --size=1024893405 \
+        --text \
+        --no-headers
+
     assert_failure
     assert_output --partial "Request failed: 400"
     assert_output --partial "Storage volumes cannot be resized larger than 10240 gigabytes"
@@ -28,9 +36,18 @@ load '../common'
 
 @test "it should resize a volume" {
     volume_id=$(linode-cli volumes list --text --no-headers --format="id")
-    run linode-cli volumes resize $volume_id --size=11 --text --no-headers
+    run linode-cli volumes resize $volume_id \
+        --size=11 \
+        --text \
+        --no-headers
+
     assert_success
-    run linode-cli volumes view $volume_id --format="size" --text --no-headers
+
+    run linode-cli volumes view $volume_id \
+        --format="size" \
+        --text \
+        --no-headers
+
     assert_success
     assert_output "11"
 }

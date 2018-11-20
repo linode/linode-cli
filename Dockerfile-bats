@@ -4,9 +4,9 @@ ARG SPEC=https://developers.linode.com/api/v4/openapi.yaml
 ARG API_OVERRIDE=api.linode.com
 ARG TOKEN
 
-RUN apt-get update && apt-get install -y python3 python3-pip bats
-RUN pip install requests terminaltables colorclass PyYAML enum34
-RUN pip3 install requests terminaltables colorclass PyYAML enum34
+RUN apt-get update && apt-get install -y python3 python3-pip bats \
+    && pip install requests terminaltables colorclass PyYAML enum34 \
+    && pip3 install requests terminaltables colorclass PyYAML enum34
 
 ENV PYTHONPATH=.
 ENV PATH="/usr/local/bin:/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/root/.local/bin"

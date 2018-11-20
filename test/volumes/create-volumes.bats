@@ -9,44 +9,85 @@ load '../common'
 #  WARNING: USE A SEPARATE TEST ACCOUNT WHEN RUNNING THESE TESTS #
 ##################################################################
 
+setup() {
+    export timestamp=$(date +%s)
+}
+
+teardown() {
+    unset timestamp
+}
+
 @test "it should fail to create a volume under 10gb" {
-    timestamp=$(date +%s)
-    run linode-cli volumes create --label "A$timestmap" --region us-east --size 5 --text --no-headers
+    run linode-cli volumes create \
+        --label "A$timestmap" \
+        --region us-east \
+        --size 5 \
+        --text \
+        --no-headers
+
     assert_failure
     assert_output --partial "size	Must be 10-10240"
 }
 
 @test "it should fail to create a volume without a region" {
-	run linode-cli volumes create --label "A$timestamp" --size 10 --text --no-headers
+	run linode-cli volumes create \
+        --label "A$timestamp" \
+        --size 10 \
+        --text \
+        --no-headers
+
     assert_failure
     assert_output --partial "Request failed: 400"
-    assert_output --partial "Must provide a region or a Linode ID"
+    assert_output --partial "region	region is not valid"
 }
 
 @test "it should fail to create a volume without a label" {
-	run linode-cli volumes create --size 10 --region us-east --text --no-headers
+	run linode-cli volumes create \
+        --size 10 \
+        --region us-east \
+        --text \
+        --no-headers
+
     assert_failure
     assert_output --partial "Request failed: 400"
     assert_output --partial "label	label is required"
 }
 
 @test "it should fail to create a volume over 10240gb in size" {
-	run linode-cli volumes create --size 10241 --label "A$timestamp" --region us-east --text --no-headers
+	run linode-cli volumes create \
+        --size 10241 \
+        --label "A$timestamp" \
+        --region us-east \
+        --text \
+        --no-headers
+
     assert_failure
     assert_output --partial "Request failed: 400"
     assert_output --partial "size	Must be 10-10240"
 }
 
 @test "it should fail to create a volume with an all numeric label" {
-	run linode-cli volumes create --label "9200900" --region us-east --size 10 --text --no-headers
+	run linode-cli volumes create \
+        --label "9200900" \
+        --region us-east \
+        --size 10 \
+        --text \
+        --no-headers
+
     assert_failure
     assert_output --partial "Request failed: 400"
     assert_output --partial "label	Must begin with a letter"
 }
 
 @test "it should create an unattached volume" {
-	timestamp=$(date +%s)
-	run linode-cli volumes create --label "A$timestamp" --region us-east --size 10 --text --no-headers --delimiter ","
+	run linode-cli volumes create \
+        --label "A$timestamp" \
+        --region us-east \
+        --size 10 \
+        --text \
+        --no-headers \
+        --delimiter ","
+
 	assert_success
 	assert_output --regexp "[0-9]+,A[0-9]+,creating,10,us-east"
 }

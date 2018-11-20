@@ -1,3 +1,18 @@
+# Get an available image and set it as an env variable
+if [ -z "$test_image" ]; then
+    export test_image=$(linode-cli images list --format id --text --no-header | egrep "linode\/.*" | head -n 1)
+fi
+
+# Random pass to use persistently thorough test run
+if [  -z "$random_pass" ]; then
+    export random_pass=$(openssl rand -base64 32)
+fi
+
+# A Unique tag to use in tag related tests
+if [ -z "$uniqueTag" ]; then
+    export uniqueTag="$(date +%s)-tag"
+fi
+
 createLinode() {
     local linode_type=$(linode-cli linodes types --text --no-headers --format="id" | xargs | awk '{ print $1 }')
     run bash -c "linode-cli linodes create --type=$linode_type --region us-east --image=$test_image --root_pass=$random_pass"
@@ -47,11 +62,6 @@ removeVolumes() {
     done
 }
 
-# Get an available image and set it as an env variable
-if [ -z "$test_image" ]; then
-    export test_image=$(linode-cli images list --format id --text --no-header | egrep "linode\/.*" | head -n 1)
-fi
-
-if [  -z "$random_pass" ]; then
-	export random_pass=$(openssl rand -base64 32)
-fi
+removeUniqueTag() {
+    run bash -c "linode-cli tags delete $uniqueTag"
+}

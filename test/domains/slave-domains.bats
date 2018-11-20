@@ -24,12 +24,13 @@ domainTimeStamp=0
     assert_output --partial "$domainTimeStamp-example.com"
 }
 
-# @test "it should fail to update domain without a type" {
-#     slaveId=$(linode-cli domains list --domain "$domainTimeStamp-example.com" --format "id" --text --no-header)
-#     run linode-cli domains update $slaveId --master_ips 8.8.8.8 --text --no-header --deleteimiter "," --format "id,domain,type,status"
-#     assert_failure
-#     # assert_output --partial
-# }
+@test "it should fail to update domain without a type" {
+    skip "BUG 872"
+    slaveId=$(linode-cli domains list --domain "$domainTimeStamp-example.com" --format "id" --text --no-header)
+    run linode-cli domains update $slaveId --master_ips 8.8.8.8 --text --no-header --deleteimiter "," --format "id,domain,type,status"
+    assert_failure
+    # assert_output --partial
+}
 
 @test "it should update a slave domain" {
     slaveId=$(linode-cli domains list --domain $domainTimeStamp-example.com --format "id" --text --no-header)
