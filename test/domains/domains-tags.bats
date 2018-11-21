@@ -13,7 +13,7 @@ teardown() {
 }
 
 @test "it should fail to create a master domain with invalid tags" {
-    skip "Fails due to a known issue"
+    skip "BUG 943"
 
     badTag="*"
     timestamp=$(date +%s)
@@ -32,7 +32,7 @@ teardown() {
 }
 
 @test "it should fail to create a slave domain with invalid tags" {
-    skip "Fails due to a known issue"
+    skip "BUG 943"
 
     badTag="*2"
     run linode-cli domains create \

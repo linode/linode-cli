@@ -25,7 +25,7 @@ teardown() {
 }
 
 @test "it should fail to create a master domain without a SOA email" {
-	run linode-cli domains create
+	run linode-cli domains create \
 		--type master \
 		--domain "$timestamp-example.com" \
 		--text \
@@ -37,7 +37,7 @@ teardown() {
 }
 
 @test "it should create a master domain" {
-	run linode-cli domains create
+	run linode-cli domains create \
 		--type master \
 		--soa_email="pthiel+$timestamp@linode.com" \
 		--domain "$timestamp-example.com" \

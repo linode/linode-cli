@@ -74,6 +74,22 @@ load '../common'
     assert_output --partial 'cli-1'
 }
 
+@test "it should add a tag a linode" {
+    linode_id="$(linode-cli --text --no-headers linodes list | awk '{ print $1 }' | xargs)"
+    set -- $linode_id
+    LINODE=$1
+
+    run linode-cli linodes update $LINODE \
+        --tags=$uniqueTag \
+        --format 'tags' \
+        --text \
+        --no-headers
+
+    assert_success
+    assert_output $uniqueTag
+}
+
 @test "it should remove all linodes" {
     run removeLinodes
+    run removeUniqueTag
 }
