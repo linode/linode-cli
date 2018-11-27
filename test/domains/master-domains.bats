@@ -21,7 +21,7 @@ teardown() {
 
 	assert_failure
 	assert_output --partial "Request failed: 400"
-	assert_output --partial "type	type is not valid"
+	assert_output --partial "type	type is required"
 }
 
 @test "it should fail to create a master domain without a SOA email" {

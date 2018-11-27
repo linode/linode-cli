@@ -43,4 +43,4 @@ RUN git clone https://github.com/bats-core/bats-core.git \
     && ./install.sh /usr/local
 
 
-CMD bats /src/linode-cli/test/linodes /src/linode-cli/test/domains /src/linode-cli/test/volumes /src/linode-cli/test/tags
+CMD bats $(ls /src/linode-cli/test/**/*.bats  | egrep  -v 'bats-')

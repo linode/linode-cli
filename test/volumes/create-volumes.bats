@@ -38,7 +38,7 @@ teardown() {
 
     assert_failure
     assert_output --partial "Request failed: 400"
-    assert_output --partial "region	region is not valid"
+    assert_output --partial "Must provide a region or a Linode ID"
 }
 
 @test "it should fail to create a volume without a label" {
