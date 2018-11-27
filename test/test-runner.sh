@@ -8,7 +8,7 @@ then
     if [[ ! $REPLY =~ ^[Yy]$ ]]
     then
     	echo "Phew, that was a close one!"
-        exit 1
+        exit 0
     fi
 
     testsWorkingDir=$(echo $PWD | grep test)
@@ -23,5 +23,5 @@ else
     echo -e "\n ####WARNING!#### \n"
     echo -e  "Running the Linode CLI tests requires removing all resources on your account\n"
     echo -e "Run this command with the --allow-delete-resources flag to accept this fate\n"
-    exit 0
+    exit 1
 fi
