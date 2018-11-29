@@ -147,20 +147,22 @@ def main():
         table.inner_heading_row_border = False
         print(table.table)
 
-        print("Available plugins:")
+        if plugins.available:
+            # only show this if there are any available plugins
+            print("Available plugins:")
 
-        plugin_content = [p for p in plugins.available]
-        plugin_proc = []
+            plugin_content = [p for p in plugins.available]
+            plugin_proc = []
 
-        for i in range(0,len(plugin_content),3):
-            plugin_proc.append(plugin_content[i:i+3])
-        if plugin_content[i+3:]:
-            plugin_proc.append(plugin_content[i+3:])
+            for i in range(0,len(plugin_content),3):
+                plugin_proc.append(plugin_content[i:i+3])
+            if plugin_content[i+3:]:
+                plugin_proc.append(plugin_content[i+3:])
 
-        plugin_table = SingleTable(plugin_proc)
-        plugin_table.inner_heading_row_border = False
+            plugin_table = SingleTable(plugin_proc)
+            plugin_table.inner_heading_row_border = False
 
-        print(plugin_table.table)
+            print(plugin_table.table)
 
         print()
         print("To reconfigure, call `linode-cli configure`")
