@@ -24,7 +24,7 @@ must have one function, `call`, that matches the following signature:
 ```
 def call(args, context):
     """
-    This is the function used to invoke the plugin.  It will receive the remaineder
+    This is the function used to invoke the plugin.  It will receive the remainder
     of sys.argv after the plugin's name, and a context of user defaults and config
     settings.
     """
@@ -50,6 +50,6 @@ JSON data.
 
 ## TODOs
 
- - [ ] Test/handle unconfigured invokations
+ - [ ] Test/handle unconfigured invocations
  - [ ] Finish statuspage plugin
  - [ ] Clean up documentation
