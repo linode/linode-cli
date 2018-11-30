@@ -1,4 +1,4 @@
-# plugin support
+# Plugin support
 
 The Linode CLI supports embedded plugins, features that are hard-coded (instead
 of generated as the rest of the CLI is) but are accessible directly through the
@@ -40,7 +40,7 @@ all information the plugin is given during invocation.  This includes the follow
     of the acting user.  This is preferrable to using `requests` or another library
     directly (see below).
 
-### CLI Client
+#### CLI Client
 
 The CLI Client provided as `context.client` can make authenticated API calls on
 behalf of the user using the provided `call_operation` method.  This method is
@@ -48,8 +48,17 @@ invoked with a command and an action, and executes the given CLI command as if
 it were entered into the command line, returning the resulting status code and
 JSON data.
 
-## TODOs
+## Development
 
- - [ ] Test/handle unconfigured invocations
- - [ ] Finish statuspage plugin
- - [ ] Clean up documentation
+To develop a plugin, simply create a python source file in this directory that
+has a `call` function as described above.  To test, simply build the CLI as
+normal (via `make install`) or simply by running `./setup.py install` in the
+root directory of the project (this installs the code without generating new
+baked data, and will only work if you've installed the CLI via `make install`
+at least once, however it's a lot faster).
+
+### Examples
+
+This directory contains two example plugins, `echo.py.example` and
+`regionstats.py.example`.  To run these, simply remove the `.example` at the end
+of the file and build the CLI as described above.
