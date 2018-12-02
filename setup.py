@@ -42,7 +42,10 @@ setup(
     author="Linode",
     author_email='developers@linode.com',
     url="https://developers.linode.com/api/v4",
-    packages=['linodecli'],
+    packages=[
+        'linodecli',
+        'linodecli.plugins',
+    ],
     license="BSD 3-Clause License",
     install_requires=["terminaltables","colorclass","requests","PyYAML","enum34"],
     entry_points={

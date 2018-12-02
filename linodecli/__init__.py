@@ -14,6 +14,7 @@ from .cli import CLI
 from .response import ModelAttr, ResponseModel
 from .operation import CLIArg, CLIOperation, URLParam
 from .output import OutputMode
+from linodecli import plugins
 
 
 # this might not be installed at the time of building
@@ -145,6 +146,24 @@ def main():
         table = SingleTable(proc)
         table.inner_heading_row_border = False
         print(table.table)
+
+        if plugins.available:
+            # only show this if there are any available plugins
+            print("Available plugins:")
+
+            plugin_content = [p for p in plugins.available]
+            plugin_proc = []
+
+            for i in range(0,len(plugin_content),3):
+                plugin_proc.append(plugin_content[i:i+3])
+            if plugin_content[i+3:]:
+                plugin_proc.append(plugin_content[i+3:])
+
+            plugin_table = SingleTable(plugin_proc)
+            plugin_table.inner_heading_row_border = False
+
+            print(plugin_table.table)
+
         print()
         print("To reconfigure, call `linode-cli configure`")
         print("For comprehensive documentation, visit https://developers.linode.com")
@@ -159,6 +178,21 @@ def main():
     # special command to bake shell completion script
     if parsed.command == 'bake-bash':
         cli.bake_completions()
+
+    # check for plugin invocation
+    if parsed.command not in cli.ops and parsed.command in plugins.available:
+        context = plugins.PluginContext(cli.token, cli)
+
+        # reconstruct arguments to send to the plugin
+        plugin_args = argv[1:] # don't include the program name
+        plugin_args.remove(parsed.command) # don't include the plugin name tho
+
+        plugins.invoke(parsed.command, plugin_args, context)
+        exit(0)
+
+    if parsed.command not in cli.ops and parsed.command not in plugins.available:
+        # unknown commands
+        print('Unrecognized command {}'.format(parsed.command))
 
     # handle a help for a command - either --help or no action triggers this
     if parsed.command is not None and parsed.action is None:
