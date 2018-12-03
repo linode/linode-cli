@@ -10,13 +10,19 @@ Invoke as follows::
 """
 import argparse
 import subprocess
-from sys import exit
+from sys import exit, platform
 
 
 def call(args, context):
     """
     Invokes this plugin
     """
+    if platform == 'win32':
+        print('This plugin is not currently supported in Windows.  For more '
+              'information or to suggest a fix, please visit '
+              'https://github.com/linode/linode-cli')
+        exit(1)
+
     parser = argparse.ArgumentParser("linode-cli ssh-into", add_help=True)
     parser.add_argument('label', metavar='LABEL', nargs='?', type=str,
                         help="The label of the Linode to ssh into")
