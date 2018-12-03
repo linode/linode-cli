@@ -438,7 +438,7 @@ complete -F _linode_cli linode-cli""")
 
     def call_operation(self, command, action, args=[]):
         """
-        This function is used in plguins to retrieve the result of CLI operations
+        This function is used in plugins to retrieve the result of CLI operations
         in JSON format.  This uses the configured user of the CLI.
         """
         if command not in self.ops or action not in self.ops[command]:
