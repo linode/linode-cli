@@ -166,6 +166,18 @@ export nodebalancerCreated="[0-9]+,balancer[0-9]+,us-east,nb-[0-9]+-[0-9]+-[0-9]
 	assert_output --regexp "[0-9]+,10700,tcp,roundrobin,none,True,recommended,,"
 }
 
+@test "it should remove a configuration profile" {
+	nodebalancerId=$(linode-cli nodebalancers list --format=id --text --no-headers)
+	configurationIds=$(linode-cli nodebalancers configs-list $nodebalancerId --text --no-headers --format=id)
+
+	set -- $configurationIds
+	configId=$1
+
+	run linode-cli nodebalancers config-delete $nodebalancerId $configId
+
+	assert_success
+}
+
 @test "it should delete all nodebalancers" {
 	run removeAll "nodebalancers"
 	run removeAll "linodes"
