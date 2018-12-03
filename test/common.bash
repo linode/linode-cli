@@ -62,6 +62,15 @@ removeVolumes() {
     done
 }
 
+removeAll() {
+    local entity_ids="( $(linode-cli $1 list --text --no-headers --format="id" | xargs) )"
+    local id
+
+    for id in $entity_ids ; do
+        run bash -c "linode-cli $1 delete $id"
+    done
+}
+
 removeUniqueTag() {
     run bash -c "linode-cli tags delete $uniqueTag"
 }
