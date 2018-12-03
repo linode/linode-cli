@@ -9,6 +9,7 @@ Invoke as follows::
    USERNAME - the user to ssh into the Linode as.  Defaults to root
 """
 import argparse
+import subprocess
 from sys import exit
 
 
@@ -58,4 +59,13 @@ def call(args, context):
             break
 
     
-    print("sshing in as {}@{}".format(parsed.username, public_ip))
+    # do it
+    code = 0
+    try:
+        subprocess.check_call(['ssh', '{}@{}'.format(parsed.username, public_ip)])
+    except subprocess.CalledProcessError as e:
+        # ssh exited with non-zero status code
+        code = e.returncode
+
+    # exit with the same code as ssh
+    exit(code)
