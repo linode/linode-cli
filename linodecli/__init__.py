@@ -180,14 +180,16 @@ def main():
         cli.bake_completions()
 
     # check for plugin invocation
-    if parsed.command not in cli.ops and parsed.command in plugins.available:
+    plugin_command = parsed.command.replace('-', '_')
+
+    if parsed.command not in cli.ops and plugin_command in plugins.available:
         context = plugins.PluginContext(cli.token, cli)
 
         # reconstruct arguments to send to the plugin
         plugin_args = argv[1:] # don't include the program name
         plugin_args.remove(parsed.command) # don't include the plugin name tho
 
-        plugins.invoke(parsed.command, plugin_args, context)
+        plugins.invoke(plugin_command, plugin_args, context)
         exit(0)
 
     if parsed.command not in cli.ops and parsed.command not in plugins.available:
