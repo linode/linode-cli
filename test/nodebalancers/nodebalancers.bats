@@ -114,6 +114,59 @@ export nodebalancerCreated="[0-9]+,balancer[0-9]+,us-east,nb-[0-9]+-[0-9]+-[0-9]
 	assert_output --regexp "[0-9]+,$nodeLabel,$nodeIp:80,Unknown,100,accept"
 }
 
+@test "it should update a node label" {
+	nodebalancerId=$(linode-cli nodebalancers list --format=id --text --no-headers)
+	configId=$(linode-cli nodebalancers configs-list $nodebalancerId --text --no-headers --format=id)
+	nodeId=$(linode-cli nodebalancers nodes-list $nodebalancerId $configId --text --no-headers --format=id)
+	nodeIp=$(linode-cli nodebalancers node-view $nodebalancerId $configId $nodeId --format "address" --text --no-headers)
+	newLabel="testnode1-edited"
+
+	run linode-cli nodebalancers node-update $nodebalancerId $configId $nodeId \
+		--label $newLabel \
+		--text \
+		--no-headers \
+		--delimiter ","
+
+	assert_success
+	assert_output --regexp "[0-9]+,$newLabel,$nodeIp,Unknown,100,accept"
+}
+
+@test "it should update the node port" {
+	nodebalancerId=$(linode-cli nodebalancers list --format=id --text --no-headers)
+	configId=$(linode-cli nodebalancers configs-list $nodebalancerId --text --no-headers --format=id)
+	nodeId=$(linode-cli nodebalancers nodes-list $nodebalancerId $configId --text --no-headers --format=id)
+	nodeAddress=$(linode-cli nodebalancers node-view $nodebalancerId $configId $nodeId --format "address" --text --no-headers)
+
+	updatedPort=":23"
+	updatedAddress=$(echo "${nodeAddress/:80/$updatedPort}")
+
+	run linode-cli nodebalancers node-update $nodebalancerId $configId $nodeId \
+		--address $updatedAddress \
+		--text  \
+		--no-headers \
+		--delimiter ","
+
+	assert_success
+	assert_output --regexp "[0-9]+,testnode1-edited,$updatedAddress,Unknown,100,accept"
+}
+
+@test "it should fail to update node to a public IPv4 address" {
+	nodebalancerId=$(linode-cli nodebalancers list --format=id --text --no-headers)
+	configId=$(linode-cli nodebalancers configs-list $nodebalancerId --text --no-headers --format=id)
+	nodeId=$(linode-cli nodebalancers nodes-list $nodebalancerId $configId --text --no-headers --format=id)
+	nodeIp=$(linode-cli nodebalancers node-view $nodebalancerId $configId $nodeId --format "address" --text --no-headers)
+	publicIp="8.8.8.8:80" # example public ipv4
+
+	run linode-cli nodebalancers node-update $nodebalancerId $configId $nodeId \
+		--address $publicIp \
+		--text \
+		--no-headers
+
+	assert_failure
+	assert_output --partial "Request failed: 400"
+	assert_output --partial "address	address is not valid. Must begin with 192.168"
+}
+
 @test "it should remove a node from a configuration profile" {
 	nodebalancerId=$(linode-cli nodebalancers list --format=id --text --no-headers)
 	configId=$(linode-cli nodebalancers configs-list $nodebalancerId --text --no-headers --format=id)
