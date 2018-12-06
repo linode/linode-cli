@@ -3,6 +3,7 @@ The alpha plugin includes Linode CLI features which are in an early,
 pre-release, state.
 """
 import argparse
+import base64
 import sys
 import os
 from subprocess import call as spcall
@@ -18,7 +19,12 @@ def call(args, context):
                         help="The clusters command to be invoked.")
     parsed, args = parser.parse_known_args(args)
 
-    commands = { 'create': create, 'delete': delete }
+    commands = {
+        'create': create,
+        # Delete coming soon. For now we label everything with a special prefix
+        # so that it can be deleted manually if desired.
+        # 'delete': delete
+    }
     
     if parsed.command is None or (parsed.command is None and parsed.help):
         parser.print_help()
@@ -30,15 +36,66 @@ def call(args, context):
     else:
         print('Unrecognized command {}'.format(parsed.command))
 
+# Maps parameters for the `create` command to Terraform variable names
+tf_var_map = {
+    'node_type': {
+        'name': 'server_type_node',
+        'default': 'g6-standard-2',
+    },
+    'nodes': {
+        'name': 'nodes',
+        'default': 3,
+    },
+    'master_type': {
+        'name': 'server_type_master',
+        'default': 'g6-standard-2',
+    },
+    'region': {
+        'name': 'region',
+        'default': 'us-west',
+    },
+    'ssh_private_key': {
+        'name': 'ssh_private_key',
+        'default': os.path.expanduser('~/.ssh/id_rsa'),
+    },
+    'ssh_public_key': {
+        'name': 'ssh_public_key',
+        'default': os.path.expanduser('~/.ssh/id_rsa.pub'),
+    },
+}
+
 def create(args, context):
     parser = argparse.ArgumentParser("{} create".format(plugin_name), add_help=True)
     parser.add_argument('name', metavar='NAME', type=str,
                         help="A name for the cluster.")
+#    High availability master nodes coming soon.
 #    parser.add_argument('--ha', metavar="MASTERS", type=int, required=False,
 #                        choices=[3, 5],
 #                        help="Make the cluster highly-available with MASTERS "
 #                             "number of masters (3 or 5)")
-    parsed = parser.parse_args(args)
+    parser.add_argument('--node-type', metavar="TYPE", type=str, required=False,
+                        default=tf_var_map['node_type']['default'],
+                        help='Linode Type ID for cluster Nodes as retrieved with '
+                             '`linode-cli linodes types`. (default "g6-standard-2")')
+    parser.add_argument('--nodes', metavar="COUNT", type=int, required=False,
+                        default=tf_var_map['nodes']['default'],
+                        help='The number of Linodes to deploy as Nodes in the cluster. '
+                             '(default 3)')
+    parser.add_argument('--master-type', metavar="TYPE", type=str, required=False,
+                        default=tf_var_map['master_type']['default'],
+                        help='Linode Type ID for cluster Master Nodes as retrieved with '
+                             '`linode-cli linodes types`. (default "g6-standard-2")')
+    parser.add_argument('--region', metavar="REGION", type=str, required=False,
+                        default=tf_var_map['region']['default'],
+                        help='The Linode Region ID in which to deploy the cluster as retrieved with '
+                             '`linode-cli regions list`. (default "us-west")')
+    parser.add_argument('--ssh-private-key', metavar="KEYPATH", type=str, required=False,
+                        default=tf_var_map['ssh_private_key']['default'],
+                        help='The path to your private key file which will be used to access Nodes')
+    parser.add_argument('--ssh-public-key', metavar="KEYPATH", type=str, required=False,
+                        default=tf_var_map['ssh_public_key']['default'],
+                        help='The path to your public key file which will be used to access Nodes')
+    parsed, _ = parser.parse_known_args(args)
 
     # Check if Terraform is installed
     try:
@@ -53,10 +110,8 @@ def create(args, context):
 
     hashname = get_hashname(parsed.name)
 #   MAJOR @TODO: check here if this hashname already appears as a prefix on any
-#   volumes, linodes, or nodebalancers. If it does, bail with an error message,
-#   because we don't want to later delete resources from both clusters!
-
-    # print(hashname)
+#   Volumes, Linodes, or NodeBalancers. If it does, bail with an error message,
+#   because we don't want to later delete resources from multiple clusters!
 
     # Make application directory if it doesn't exist
     appdir = make_appdir("k8s-alpha")
@@ -69,19 +124,17 @@ def create(args, context):
 
     # Generate the terraform file
     terrafile = open('cluster.tf', 'w')
-    terrafile.write(gen_terraform_file(context))
+    terrafile.write(gen_terraform_file(context, parsed.name, hashname))
     terrafile.close()
 
+    # Generate terraform args
+    terraform_args = gen_terraform_args(parsed)
+
     # Run the Terraform commands
-    ret = spcall(['terraform', 'workspace', 'new', parsed.name])
-    if ret != 0:
-        sys.exit(ret)
-    ret = spcall(['terraform', 'init'])
-    if ret != 0:
-        sys.exit(ret)
-    ret = spcall(['terraform', 'apply'])
-    if ret != 0:
-        sys.exit(ret)
+    spcall(['terraform', 'workspace', 'new', parsed.name])
+    call_or_exit(['terraform', 'init'])
+    terraform_apply_command = ['terraform', 'apply'] + terraform_args
+    call_or_exit(terraform_apply_command)
 
     # Merge and/or create kubeconfig for the new cluster.
     # Also, activate the kubeconfig context.
@@ -96,27 +149,66 @@ def create(args, context):
     os.environ["KUBECONFIG"] = "{}:{}".format(kubeconfig_existing, kubeconfig_new)
     tempfilepath = 'tempkubeconfig'
     tempf = open(tempfilepath, 'w')
-    ret = spcall(['kubectl', 'config', 'view', '--flatten'], stdout=tempf)
-    if ret != 0:
-        sys.exit(ret)
+    call_or_exit(['kubectl', 'config', 'view', '--flatten'], stdout=tempf)
     tempf.close()
     shutil.move(tempfilepath, kubeconfig_existing)
 
     # Set the kubeconfig context to the new cluster
-    spcall(['kubectl', 'config', 'use-context', '{}@{}'.format(parsed.name, parsed.name)])
+    call_or_exit(['kubectl', 'config', 'use-context', '{}@{}'.format(parsed.name, parsed.name)])
 
-    # We're done! The user should be able to run something like
-    # kubectl get pods --all-namespaces, and see the Linode CSI, CCM etc.
+    # We're done! We have merged the user's kubeconfigs.
+    # So, the user should be able to run something like
+    # `kubectl get pods --all-namespaces`
+    # and see the Linode CSI, CCM, and ExternalDNS controllers
 
-def gen_terraform_file(context):
-    return """module "k8s" {{
-  source  = "git@github.com:linode/terraform-linode-k8s.git?ref=master"
+def delete(args, context):
+    pass
+
+def quoted_string_or_bare_int(val):
+    if type(val) is int:
+        return val
+    elif type(val) is str:
+        return '"{}"'.format(val)
+    else:
+        return None
+
+def gen_terraform_file(context, cluster_name, hashname):
+    tf_file_parts = []
+
+    for varname in tf_var_map.keys():
+        tf_file_parts.append("""variable "{tf_varname}" {{
+  default = {default}
+}}
+""".format(tf_varname=tf_var_map[varname]['name'],
+           default=quoted_string_or_bare_int(tf_var_map[varname]['default'])))
+    
+    tf_file_parts.append("""module "k8s" {{
+  source  = "git@github.com:linode/terraform-linode-k8s.git?ref=for-cli"
 
   linode_token = "{token}"
-}}
-""".format(
-        token=context.token
-    )
+  
+  linode_group = "ka{hashname}-{cluster_name}"
+""".format(token=context.token, cluster_name=cluster_name, hashname=hashname))
+
+    for varname in tf_var_map.keys():
+        tf_file_parts.append("""
+  {tf_varname} = "${{var.{tf_varname}}}"
+""".format(tf_varname=tf_var_map[varname]['name']))
+
+    tf_file_parts.append("}\n")
+
+    return ''.join(tf_file_parts)
+
+def gen_terraform_args(parsed):
+    args = []
+    for varname in tf_var_map.keys():
+        args = args + ['-var', "{}={}".format(tf_var_map[varname]['name'], getattr(parsed, varname))]
+    return args
+
+def call_or_exit(*args, **kwargs):
+    ret = spcall(*args, **kwargs)
+    if ret != 0:
+        sys.exit(ret)
 
 def replace_kubeconfig_user(terrapath, cluster_name):
     """
@@ -132,12 +224,6 @@ def replace_kubeconfig_user(terrapath, cluster_name):
     kubeconfig_new.write(kubeconfig)
 
     return kubeconfig_new_fp
-
-def pause():
-    if sys.version_info[0] < 3:
-        raw_input("Press Enter to continue")
-    else:
-        input("Press Enter to continue")
 
 def make_appdir(appname):
     if sys.platform == 'win32':
@@ -157,25 +243,19 @@ def safe_mkdir(dirpath):
             print('Unable to create the directory: {}'.format(dirpath))
             sys.exit(1)
 
-def delete(args, context):
-    print('deleting cluster')
-
-#def update(args, context):
-#    pass
-#    # If a user attempts an update but does not have the corresponding
-#    # terraform file, point them to a community post on how to retrieve it.
-
 def get_hashname(name):
     """
-    A cluster hashname is the first 9 characters of a SHA256 digest encoded in base36.
+    A cluster hashname is the first 9 characters of a SHA256 digest encoded in base64
 
     This is used as a compact way to uniquely identify a cluster's Linode resources.
     It's also stateless! If a user loses their terraform file and wishes to
     delete a cluster they can still do so.
     """
-    hashname = int(hashlib.sha256(name.encode('utf8')).hexdigest(), 16)
-    hashname = base36encode(hashname)[:9]
-    return hashname
+    hashname = base64.b64encode(hashlib.sha256(name.encode('utf8')).digest())
+    hashname = hashname.decode('utf8')
+    hashname = hashname.replace(r'+', r'')
+    hashname = hashname.replace(r'/', r'')
+    return hashname[:9]
 
 def print_available_commands(commands):
     print("\nAvailable commands:")
@@ -189,23 +269,3 @@ def print_available_commands(commands):
     table = SingleTable(proc)
     table.inner_heading_row_border = False
     print(table.table)
-
-def base36encode(number):
-    """Converts an integer to a base36 string."""
-    if not isinstance(number, (int)):
-        raise TypeError('number must be an integer')
-    alphabet='0123456789abcdefghijklmnopqrstuvwxyz'
-    base36 = ''
-    sign = ''
-    if number < 0:
-        sign = '-'
-        number = -number
-    if 0 <= number < len(alphabet):
-        return sign + alphabet[number]
-    while number != 0:
-        number, i = divmod(number, len(alphabet))
-        base36 = alphabet[i] + base36
-    return sign + base36
-
-def base36decode(number):
-    return int(number, 36)
