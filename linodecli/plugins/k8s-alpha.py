@@ -21,9 +21,7 @@ def call(args, context):
 
     commands = {
         'create': create,
-        # Delete coming soon. For now we label everything with a special prefix
-        # so that it can be deleted manually if desired.
-        # 'delete': delete
+        'delete': delete
     }
     
     if parsed.command is None or (parsed.command is None and parsed.help):
@@ -103,9 +101,11 @@ def create(args, context):
         spcall(['terraform'], stdout=nullf)
     except:
         print('To create a cluster you must first install Terraform\n'
-              'https://learn.hashicorp.com/terraform/getting-started/install.html'
-              '\n\nThis command will automatically download and install the Linode provider '
-              'for Terraform.')
+              'This command will automatically download and install the Linode provider '
+              'for Terraform.\n'
+              '\nOn macOS with Homebrew: brew install terraform\n'
+              'For other platforms, use your package manager and/or refer to this documentation\n'
+              'https://learn.hashicorp.com/terraform/getting-started/install.html')
         sys.exit(1)
 
     hashname = get_hashname(parsed.name)
@@ -114,7 +114,7 @@ def create(args, context):
 #   because we don't want to later delete resources from multiple clusters!
 
     # Make application directory if it doesn't exist
-    appdir = make_appdir("k8s-alpha")
+    appdir = safe_make_appdir("k8s-alpha")
     # Make the terraform project directory if it doesn't exist
     terrapath = os.path.join(appdir, parsed.name)
     safe_mkdir(terrapath)
@@ -133,6 +133,8 @@ def create(args, context):
     # Run the Terraform commands
     spcall(['terraform', 'workspace', 'new', parsed.name])
     call_or_exit(['terraform', 'init'])
+    # TODO: Before running the apply delete any existing Linodes that would
+    # cause the apply to fail.
     terraform_apply_command = ['terraform', 'apply'] + terraform_args
     call_or_exit(terraform_apply_command)
 
@@ -162,7 +164,19 @@ def create(args, context):
     # and see the Linode CSI, CCM, and ExternalDNS controllers
 
 def delete(args, context):
-    pass
+    parser = argparse.ArgumentParser("{} create".format(plugin_name), add_help=True)
+    parser.add_argument('name', metavar='NAME', type=str,
+                        help="A name for the cluster.")
+    parsed, _ = parser.parse_known_args(args)
+
+    # Get the appdir path
+    appdir = safe_make_appdir("k8s-alpha")
+    terrapath = os.path.join(appdir, parsed.name)
+    # Move to the terraform directory
+    os.chdir(terrapath)
+    call_or_exit(['terraform', 'destroy'])
+
+    # TODO: Also delete all NodeBalancers and Volumes using the cluster prefix
 
 def quoted_string_or_bare_int(val):
     if type(val) is int:
@@ -188,7 +202,9 @@ def gen_terraform_file(context, cluster_name, hashname):
   linode_token = "{token}"
   
   linode_group = "ka{hashname}-{cluster_name}"
-""".format(token=context.token, cluster_name=cluster_name, hashname=hashname))
+""".format(token=context.token,
+           cluster_name=cluster_name,
+           hashname=hashname,))
 
     for varname in tf_var_map.keys():
         tf_file_parts.append("""
@@ -225,7 +241,7 @@ def replace_kubeconfig_user(terrapath, cluster_name):
 
     return kubeconfig_new_fp
 
-def make_appdir(appname):
+def safe_make_appdir(appname):
     if sys.platform == 'win32':
         appdir = os.path.join(os.environ['APPDATA'], appname)
     else:

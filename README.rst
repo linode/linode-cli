@@ -95,6 +95,67 @@ View your user::
 
    linode-cli profile view
 
+Kubernetes Deployment Plugin
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+A plugin is included that allows you to deploy a Kubernetes cluster on Linode!
+
+This Kubernetes cluster is integrated with Linode in a number of ways:
+
+   * When you deploy a LoadBalancer-type service a Linode NodeBalancer will be
+     automatically created and managed for the Pods backing that service.
+   * When PersistentVolumes are created, those volumes will be Linode Block
+     Storage volumes. These are also automatically managed with the lifecycle of the
+     PersistentVolume resource.
+   * Nodes have the appropriate InternalIP, ExternalIP and ProviderID fields,
+     meaning that CNI and other controllers can take advantage of these fields
+     for the sake of NetworkPolicy and other Kubernetes features.
+   * Nodes are labeled with the Linode Region and Linode Type, which can also
+     be used by controllers for the purposes of scheduling
+   * The metrics-server is installed, allowing you to use `kubectl top`
+
+The following is the help message for the command
+
+   $ linode-cli k8s-alpha create --help
+   usage: k8s-alpha create [-h] [--node-type TYPE] [--nodes COUNT]
+                           [--master-type TYPE] [--region REGION]
+                           [--ssh-private-key KEYPATH] [--ssh-public-key KEYPATH]
+                           NAME
+
+   positional arguments:
+     NAME                  A name for the cluster.
+
+   optional arguments:
+     -h, --help            show this help message and exit
+     --node-type TYPE      Linode Type ID for cluster Nodes as retrieved with
+                           `linode-cli linodes types`. (default "g6-standard-2")
+     --nodes COUNT         The number of Linodes to deploy as Nodes in the
+                           cluster. (default 3)
+     --master-type TYPE    Linode Type ID for cluster Master Nodes as retrieved
+                           with `linode-cli linodes types`. (default
+                           "g6-standard-2")
+     --region REGION       The Linode Region ID in which to deploy the cluster as
+                           retrieved with `linode-cli regions list`. (default
+                           "us-west")
+     --ssh-private-key KEYPATH
+                           The path to your private key file which will be used
+                           to access Nodes
+     --ssh-public-key KEYPATH
+                           The path to your public key file which will be used to
+                           access Nodes
+
+Here's an example use of the command, creating a cluster with 6 2GB Linodes as
+the Nodes.
+
+   linode-cli k8s-alpha create mycluster77 --node-type g6-standard-1 --nodes 6 --master-type g6-standard-4 --region us-east --ssh-private-key $HOME/.ssh/id_rsa --ssh-public-key $HOME/.ssh/id_rsa.pub
+
+To delete a cluster simply run
+
+   linode-cli k8s-alpha delete mycluster77
+
+If you have any questions, visit us on #linode on the Kubernetes offical Slack!
+http://slack.k8s.io/
+
 Reconfiguring
 """""""""""""
 
