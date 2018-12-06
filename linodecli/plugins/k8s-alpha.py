@@ -1,6 +1,5 @@
 """
-The alpha plugin includes Linode CLI features which are in an early,
-pre-release, state.
+The k8s-alpha plugin includes a means to deploy Kubernetes clusters on Linode
 """
 import argparse
 import base64
