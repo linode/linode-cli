@@ -67,7 +67,7 @@ def create(args, context):
     # Check if deps are installed
     needed_deps = check_deps('terraform', 'kubectl')
     if needed_deps:
-        print('To create a cluster, this command requires {}\n'.format(' and '.join(needed_deps)))
+        print('To create a cluster, this command requires {}'.format(' and '.join(needed_deps)))
         if 'terraform' in needed_deps:
             print_terraform_install_help()
         if 'kubectl' in needed_deps:
@@ -217,16 +217,16 @@ def dep_installed(command):
         return False
 
 def print_terraform_install_help():
-    print('Installing Terraform:\n'
-          'On macOS with Homebrew: brew install terraform\n'
+    print('\n# Installing Terraform:\n\n'
+          'On macOS with Homebrew: \n'
+          'brew install terraform\n\n'
           'For other platforms, use your package manager and/or refer to this documentation\n'
-          'https://learn.hashicorp.com/terraform/getting-started/install.html\n'
-          'This command will automatically download and install the Linode provider '
-          'for Terraform.')
+          'https://learn.hashicorp.com/terraform/getting-started/install.html')
 
 def print_kubectl_install_help():
-    print('Installing The Kubernetes CLI (kubectl)\n'
-          'On macOS with Homebrew: brew install kubernetes-cli\n'
+    print('\n# Installing The Kubernetes CLI (kubectl):\n\n'
+          'On macOS with Homebrew: \n'
+          'brew install kubernetes-cli\n\n'
           'For other platforms, use your package manager and/or refer to this documentation\n'
           'https://kubernetes.io/docs/tasks/tools/install-kubectl/')
 
