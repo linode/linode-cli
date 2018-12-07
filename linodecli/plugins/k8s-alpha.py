@@ -160,6 +160,10 @@ def create(args, context):
     # Set the kubeconfig context to the new cluster
     call_or_exit(['kubectl', 'config', 'use-context', '{}@{}'.format(parsed.name, parsed.name)])
 
+    print("Your cluster has been created and your kubectl context updated.\n"
+          "Try the following command: \n"
+          "kubectl get pods --watch --all-namespaces")
+
     # We're done! We have merged the user's kubeconfigs.
     # So, the user should be able to run something like
     # `kubectl get pods --all-namespaces`
@@ -212,7 +216,7 @@ def print_terraform_install_help():
 
 def print_kubectl_install_help():
     print('Installing The Kubernetes CLI (kubectl)\n'
-          'On macOS with Homebrew: brew install brew install kubernetes-cli\n'
+          'On macOS with Homebrew: brew install kubernetes-cli\n'
           'For other platforms, use your package manager and/or refer to this documentation\n'
           'https://kubernetes.io/docs/tasks/tools/install-kubectl/')
 
