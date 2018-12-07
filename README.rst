@@ -96,7 +96,7 @@ View your user::
    linode-cli profile view
 
 Kubernetes Deployment Plugin
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""""""""""""
 
 A plugin is included that allows you to deploy a Kubernetes cluster on Linode!
 
