@@ -50,7 +50,7 @@ def create_varmap(context):
         },
         'region': {
             'name': 'region',
-            'default': context.client.config.config.get('region'),
+            'default': context.client.config.config.get('DEFAULT', 'region'),
         },
         'ssh_private_key': {
             'name': 'ssh_private_key',
