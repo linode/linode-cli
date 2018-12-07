@@ -33,33 +33,35 @@ def call(args, context):
     else:
         print('Unrecognized command {}'.format(parsed.command))
 
-# Maps parameters for the `create` command to Terraform variable names
-tf_var_map = {
-    'node_type': {
-        'name': 'server_type_node',
-        'default': 'g6-standard-2',
-    },
-    'nodes': {
-        'name': 'nodes',
-        'default': 3,
-    },
-    'master_type': {
-        'name': 'server_type_master',
-        'default': 'g6-standard-2',
-    },
-    'region': {
-        'name': 'region',
-        'default': context.client.config.config.get('region'),
-    },
-    'ssh_private_key': {
-        'name': 'ssh_private_key',
-        'default': os.path.expanduser('~/.ssh/id_rsa'),
-    },
-    'ssh_public_key': {
-        'name': 'ssh_public_key',
-        'default': os.path.expanduser('~/.ssh/id_rsa.pub'),
-    },
-}
+def create_varmap(context):
+    # Maps parameters for the `create` command to Terraform variable names
+    tf_var_map = {
+        'node_type': {
+            'name': 'server_type_node',
+            'default': 'g6-standard-2',
+        },
+        'nodes': {
+            'name': 'nodes',
+            'default': 3,
+        },
+        'master_type': {
+            'name': 'server_type_master',
+            'default': 'g6-standard-2',
+        },
+        'region': {
+            'name': 'region',
+            'default': context.client.config.config.get('region'),
+        },
+        'ssh_private_key': {
+            'name': 'ssh_private_key',
+            'default': os.path.expanduser('~/.ssh/id_rsa'),
+        },
+        'ssh_public_key': {
+            'name': 'ssh_public_key',
+            'default': os.path.expanduser('~/.ssh/id_rsa.pub'),
+        },
+    }
+    return tf_var_map
 
 def create(args, context):
     # Check if deps are installed
@@ -71,6 +73,8 @@ def create(args, context):
         if 'kubectl' in needed_deps:
             print_kubectl_install_help()
         sys.exit(1)
+
+    tf_var_map = create_varmap(context)
 
     parser = argparse.ArgumentParser("{} create".format(plugin_name), add_help=True)
     parser.add_argument('name', metavar='NAME', type=str,
@@ -122,11 +126,11 @@ def create(args, context):
 
     # Generate the terraform file
     terrafile = open('cluster.tf', 'w')
-    terrafile.write(gen_terraform_file(context, parsed.name, prefix))
+    terrafile.write(gen_terraform_file(context, tf_var_map, parsed.name, prefix))
     terrafile.close()
 
     # Generate terraform args
-    terraform_args = gen_terraform_args(parsed)
+    terraform_args = gen_terraform_args(parsed, tf_var_map)
 
     # Run the Terraform commands
     spcall(['terraform', 'workspace', 'new', parsed.name])
@@ -220,7 +224,7 @@ def quoted_string_or_bare_int(val):
     else:
         return ''
 
-def gen_terraform_file(context, cluster_name, prefix):
+def gen_terraform_file(context, tf_var_map, cluster_name, prefix):
     tf_file_parts = []
 
     for varname in tf_var_map.keys():
@@ -249,7 +253,7 @@ def gen_terraform_file(context, cluster_name, prefix):
 
     return ''.join(tf_file_parts)
 
-def gen_terraform_args(parsed):
+def gen_terraform_args(parsed, tf_var_map):
     args = []
     for varname in tf_var_map.keys():
         args = args + ['-var', "{}={}".format(tf_var_map[varname]['name'], getattr(parsed, varname))]
