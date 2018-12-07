@@ -15,7 +15,7 @@ plugin_name = os.path.basename(__file__)[:-3]
 def call(args, context):
     parser = argparse.ArgumentParser("{}".format(plugin_name), add_help=False)
     parser.add_argument('command', metavar='COMMAND', nargs='?', type=str,
-                        help="The clusters command to be invoked.")
+                        help="The {} command to be invoked.".format(plugin_name))
     parsed, args = parser.parse_known_args(args)
 
     commands = {
@@ -86,28 +86,34 @@ def create(args, context):
 #                             "number of masters (3 or 5)")
     parser.add_argument('--node-type', metavar="TYPE", type=str, required=False,
                         default=tf_var_map['node_type']['default'],
-                        help='Linode Type ID for cluster Nodes as retrieved with '
-                             '`linode-cli linodes types`. (default "g6-standard-2")')
+                        help='The Linode Type ID for cluster Nodes as retrieved with '
+                             '`linode-cli linodes types`. (default "{}")'.format(
+                                tf_var_map['node_type']['default']))
     parser.add_argument('--nodes', metavar="COUNT", type=int, required=False,
                         default=tf_var_map['nodes']['default'],
                         help='The number of Linodes to deploy as Nodes in the cluster. '
-                             '(default 3)')
+                             '(default {})'.format(
+                                 tf_var_map['nodes']['default']))
     parser.add_argument('--master-type', metavar="TYPE", type=str, required=False,
                         default=tf_var_map['master_type']['default'],
-                        help='Linode Type ID for cluster Master Nodes as retrieved with '
-                             '`linode-cli linodes types`. (default "g6-standard-2")')
+                        help='The Linode Type ID for cluster Master Nodes as retrieved with '
+                             '`linode-cli linodes types`. (default "{}")'.format(
+                                 tf_var_map['master_type']['default']))
     parser.add_argument('--region', metavar="REGION", type=str, required=False,
                         default=tf_var_map['region']['default'],
                         help='The Linode Region ID in which to deploy the cluster as retrieved with '
-                             '`linode-cli regions list`. (default "us-west")')
+                             '`linode-cli regions list`. (default "{}")'.format(
+                                 tf_var_map['region']['default']))
     parser.add_argument('--ssh-private-key', metavar="KEYPATH", type=str, required=False,
                         default=tf_var_map['ssh_private_key']['default'],
                         help='The path to your private key file which will be used to access Nodes '
-                        '(during initial provisioning only!)')
+                             'during initial provisioning only! (default {})'.format(
+                                 tf_var_map['ssh_private_key']['default']))
     parser.add_argument('--ssh-public-key', metavar="KEYPATH", type=str, required=False,
                         default=tf_var_map['ssh_public_key']['default'],
                         help='The path to your public key file which will be used to access Nodes '
-                        '(during initial provisioning only!)')
+                             'during initial provisioning only! (default {})'.format(
+                                 tf_var_map['ssh_public_key']['default']))
     parsed, remaining_args = parser.parse_known_args(args)
 
     if not parsed.region:
@@ -116,9 +122,14 @@ def create(args, context):
         sys.exit(1)
 
     prefix = get_prefix(parsed.name)
-#   MAJOR @TODO: check here if this hashname already appears as a prefix on any
+#   MAJOR @TODO: check here if this prefix already appears as a prefix on any
 #   Volumes, Linodes, or NodeBalancers. If it does, bail with an error message,
-#   because we don't want to later delete resources from multiple clusters!
+#   because we don't want to later delete resources from an existing cluster!
+#
+#   Luckily, for now, Terraform will refuse to create the Linodes for the new
+#   cluster with the same names, stopping the cluster from being created (only in
+#   the case where Linodes still exist for an existing cluster). There is still
+#   the issue of zombie NodeBalancers to address.
 
     # Make application directory if it doesn't exist
     appdir = safe_make_appdir("k8s-alpha-linode")
@@ -164,13 +175,11 @@ def create(args, context):
 
     # Set the kubeconfig context to the new cluster
     call_or_exit(['kubectl', 'config', 'use-context',
-                  '{prefix}-{cluster_name}@{prefix}-{cluster_name}'.format(
-                      prefix=prefix,
-                      cluster_name=parsed.name)])
+                  '{}@{}'.format(get_kubeconfig_user(prefix, parsed.name), parsed.name)])
 
-    print("Your cluster has been created and your kubectl context updated.\n"
+    print("Your cluster has been created and your kubectl context updated.\n\n"
           "Try the following command: \n"
-          "kubectl get pods --watch --all-namespaces\n\n"
+          "kubectl get pods --all-namespaces\n\n"
           "Come hang out with us in #linode on the Kubernetes Slack! http://slack.k8s.io/")
 
     # We're done! We have merged the user's kubeconfigs.
@@ -192,7 +201,7 @@ def delete(args, context):
     parsed, remaining_args = parser.parse_known_args(args)
 
     # Get the appdir path
-    appdir = safe_make_appdir("k8s-alpha")
+    appdir = safe_make_appdir("k8s-alpha-linode")
     terrapath = os.path.join(appdir, parsed.name)
     # Move to the terraform directory
     os.chdir(terrapath)
@@ -279,6 +288,9 @@ def call_or_exit(*args, **kwargs):
         print("Error calling {} with additional options {}".format(args, kwargs))
         sys.exit(ret)
 
+def get_kubeconfig_user(cluster_name, prefix):
+    return "{}-{}".format(prefix, cluster_name)
+
 def replace_kubeconfig_user(terrapath, cluster_name, prefix):
     """
     If we leave the user as kubernetes-admin then the configs don't flatten properly.
@@ -288,7 +300,7 @@ def replace_kubeconfig_user(terrapath, cluster_name, prefix):
     with open(kubeconfig_fp) as f:
         kubeconfig = f.read()
     
-    kubeconfig.replace('kubernetes-admin', "{}-{}".format(prefix, cluster_name))
+    kubeconfig = kubeconfig.replace('kubernetes-admin', get_kubeconfig_user(prefix, cluster_name))
 
     kubeconfig_new_fp = os.path.join(terrapath, "{}_new.conf".format(cluster_name))
     with open(kubeconfig_new_fp, 'w') as f:
