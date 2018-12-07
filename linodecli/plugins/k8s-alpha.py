@@ -110,6 +110,11 @@ def create(args, context):
                         '(during initial provisioning only!)')
     parsed, remaining_args = parser.parse_known_args(args)
 
+    if not parsed.region:
+        print('You must either configure your default region with '
+              '`linode-cli configure` or pass --region')
+        sys.exit(1)
+
     prefix = get_prefix(parsed.name)
 #   MAJOR @TODO: check here if this hashname already appears as a prefix on any
 #   Volumes, Linodes, or NodeBalancers. If it does, bail with an error message,
@@ -162,7 +167,8 @@ def create(args, context):
 
     print("Your cluster has been created and your kubectl context updated.\n"
           "Try the following command: \n"
-          "kubectl get pods --watch --all-namespaces")
+          "kubectl get pods --watch --all-namespaces\n\n"
+          "Come hang out with us in #linode on the Kubernetes Slack! http://slack.k8s.io/")
 
     # We're done! We have merged the user's kubeconfigs.
     # So, the user should be able to run something like
