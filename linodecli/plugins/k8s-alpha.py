@@ -163,7 +163,10 @@ def create(args, context):
     shutil.move(tempfilepath, kubeconfig_existing)
 
     # Set the kubeconfig context to the new cluster
-    call_or_exit(['kubectl', 'config', 'use-context', '{}@{}'.format(parsed.name, parsed.name)])
+    call_or_exit(['kubectl', 'config', 'use-context',
+                  '{prefix}-{cluster_name}@{prefix}-{cluster_name}'.format(
+                      prefix=prefix,
+                      cluster_name=parsed.name)])
 
     print("Your cluster has been created and your kubectl context updated.\n"
           "Try the following command: \n"
@@ -171,7 +174,7 @@ def create(args, context):
           "Come hang out with us in #linode on the Kubernetes Slack! http://slack.k8s.io/")
 
     # We're done! We have merged the user's kubeconfigs.
-    # So, the user should be able to run something like
+    # The user should be able to run something like
     # `kubectl get pods --all-namespaces`
     # and see the Linode CSI, CCM, and ExternalDNS controllers
 
@@ -285,7 +288,7 @@ def replace_kubeconfig_user(terrapath, cluster_name, prefix):
     with open(kubeconfig_fp) as f:
         kubeconfig = f.read()
     
-    kubeconfig.replace('kubernetes-admin', "{}-{}".format(cluster_name, prefix))
+    kubeconfig.replace('kubernetes-admin', "{}-{}".format(prefix, cluster_name))
 
     kubeconfig_new_fp = os.path.join(terrapath, "{}_new.conf".format(cluster_name))
     with open(kubeconfig_new_fp, 'w') as f:
