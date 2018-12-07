@@ -208,6 +208,7 @@ def dep_installed(command):
     try:
         nullf = open(os.devnull, 'w')
         spcall([command], stdout=nullf)
+        nullf.close()
         return True
     except: 
         return False
