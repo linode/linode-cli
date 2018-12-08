@@ -267,6 +267,11 @@ While the `--all` is optional, you probably want to see all output fields in
 your JSON output.  If you want your JSON pretty-printed, we can do that too::
 
    linode-cli linodes list --json --pretty --all
+ 
+Need custom output for a report, presentation or dashboard? Just pass that output right through to your own mustache_ .template::
+
+   linode-cli linodes list --json | mustache - myawesometemplate.mustache
+   
 
 Building from Source
 --------------------
@@ -369,3 +374,5 @@ added to Linode's OpenAPI spec:
 +---------------------+----------+-------------------------------------------------------------------------------------------+
 
 .. _Specification Extensions: https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#specificationExtensions
+
+.. _mustache: https://mustache.github.io/mustache.1.html
