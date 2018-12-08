@@ -52,10 +52,6 @@ def create_varmap(context):
             'name': 'region',
             'default': context.client.config.config.get('DEFAULT', 'region'),
         },
-        'ssh_private_key': {
-            'name': 'ssh_private_key',
-            'default': os.path.expanduser('~/.ssh/id_rsa'),
-        },
         'ssh_public_key': {
             'name': 'ssh_public_key',
             'default': os.path.expanduser('~/.ssh/id_rsa.pub'),
@@ -104,15 +100,11 @@ def create(args, context):
                         help='The Linode Region ID in which to deploy the cluster as retrieved with '
                              '`linode-cli regions list`. (default "{}")'.format(
                                  tf_var_map['region']['default']))
-    parser.add_argument('--ssh-private-key', metavar="KEYPATH", type=str, required=False,
-                        default=tf_var_map['ssh_private_key']['default'],
-                        help='The path to your private key file which will be used to access Nodes '
-                             'during initial provisioning only! (default {})'.format(
-                                 tf_var_map['ssh_private_key']['default']))
     parser.add_argument('--ssh-public-key', metavar="KEYPATH", type=str, required=False,
                         default=tf_var_map['ssh_public_key']['default'],
                         help='The path to your public key file which will be used to access Nodes '
-                             'during initial provisioning only! (default {})'.format(
+                             'during initial provisioning only! The keypair _must_ be added to an '
+                             'ssh-agent (default {})'.format(
                                  tf_var_map['ssh_public_key']['default']))
     parsed, remaining_args = parser.parse_known_args(args)
 
@@ -197,7 +189,7 @@ def delete(args, context):
 
     parser = argparse.ArgumentParser("{} create".format(plugin_name), add_help=True)
     parser.add_argument('name', metavar='NAME', type=str,
-                        help="A name for the cluster to delete.")
+                        help="The name of the cluster to delete.")
     parsed, remaining_args = parser.parse_known_args(args)
 
     # Get the appdir path
@@ -285,7 +277,8 @@ def gen_terraform_args(parsed, tf_var_map):
 def call_or_exit(*args, **kwargs):
     ret = spcall(*args, **kwargs)
     if ret != 0:
-        print("Error calling {} with additional options {}".format(args, kwargs))
+        print("Error when calling {} with additional options {}".format(args, kwargs))
+        print("\nPlease visit us in #linode on the Kubernetes Slack and let us know about this error! http://slack.k8s.io/")
         sys.exit(ret)
 
 def get_kubeconfig_user(cluster_name, prefix):

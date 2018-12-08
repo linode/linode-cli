@@ -114,51 +114,50 @@ This Kubernetes cluster is integrated with Linode in a number of ways:
   of these fields for the sake of NetworkPolicy and other Kubernetes features.
 * Nodes in Kubernetes are labeled with the Linode Region and Linode Type, which
   can also be used by controllers for the purposes of scheduling
-* The Kubernetes metrics-server is installed, allowing you to use `kubectl top`
+* The Kubernetes metrics-server is installed, allowing you to use ``kubectl top``
 
 The following is the help message for the command::
 
    $ linode-cli k8s-alpha create --help
    usage: k8s-alpha create [-h] [--node-type TYPE] [--nodes COUNT]
                            [--master-type TYPE] [--region REGION]
-                           [--ssh-private-key KEYPATH] [--ssh-public-key KEYPATH]
+                           [--ssh-public-key KEYPATH]
                            NAME
-
+   
    positional arguments:
      NAME                  A name for the cluster.
-
+   
    optional arguments:
      -h, --help            show this help message and exit
-     --node-type TYPE      Linode Type ID for cluster Nodes as retrieved with
+     --node-type TYPE      The Linode Type ID for cluster Nodes as retrieved with
                            `linode-cli linodes types`. (default "g6-standard-2")
      --nodes COUNT         The number of Linodes to deploy as Nodes in the
                            cluster. (default 3)
-     --master-type TYPE    Linode Type ID for cluster Master Nodes as retrieved
-                           with `linode-cli linodes types`. (default
+     --master-type TYPE    The Linode Type ID for cluster Master Nodes as
+                           retrieved with `linode-cli linodes types`. (default
                            "g6-standard-2")
      --region REGION       The Linode Region ID in which to deploy the cluster as
                            retrieved with `linode-cli regions list`. (default
                            "us-west")
-     --ssh-private-key KEYPATH
-                           The path to your private key file which will be used
-                           to access Nodes
      --ssh-public-key KEYPATH
                            The path to your public key file which will be used to
-                           access Nodes
+                           access Nodes during initial provisioning only! The
+                           keypair _must_ be added to an ssh-agent (default
+                           $HOME/.ssh/id_rsa.pub)
 
-Here's an example use of the command, creating a cluster with 6 2GB Linodes as
+Here's an example usage of the command, creating a cluster with six 2GB Linodes as
 the Nodes::
 
-   linode-cli k8s-alpha create mycluster77 --node-type g6-standard-1 --nodes 6 --master-type g6-standard-4 --region us-east --ssh-private-key $HOME/.ssh/id_rsa --ssh-public-key $HOME/.ssh/id_rsa.pub
+   linode-cli k8s-alpha create mycluster77 --node-type g6-standard-1 --nodes 6 --master-type g6-standard-4 --region us-east --ssh-public-key $HOME/.ssh/id_rsa.pub
 
 Once you have created a cluster, that cluster's kubeconfig is automatically merged into
-your default kubeconfig. The kubectl context is also switched. So you can immediately begin
+your default kubeconfig. The kubectl context is also switched so that you can immediately begin
 interacting with the cluster. For example::
 
    kubectl get pods --all-namespaces
    kubectl create -f the-next-big-social-app-manifest.yaml
 
-If you have any questions, or just want to hang out, visit us on #linode on the `Kubernetes offical Slack`_!
+If you have any questions, or just want to hang out, visit us on #linode on the `Kubernetes official Slack`_!
 
 .. _Kubernetes official Slack: http://slack.k8s.io/
 .. _Linode Cloud Controller Manager: https://github.com/linode/linode-cloud-controller-manager
