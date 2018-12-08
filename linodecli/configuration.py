@@ -101,7 +101,7 @@ Note that no token will be saved in your configuration file.
             print("""
 First, we need a Personal Access Token.  To get one, please visit
 {} and click
-"Create a Personal Access Token".  The CLI needs access to everything
+"Add a Personal Access Token".  The CLI needs access to everything
 on your account to work correctly.""".format(TOKEN_GENERATION_URL))
 
             while True:
