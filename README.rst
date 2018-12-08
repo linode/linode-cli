@@ -26,7 +26,7 @@ This will need to be repeated on each pull.  For a build to succeed, see
 Upgrading
 ---------
 
-To upgrade a prior installation of the Linode CLI::
+To upgrade to the latest version of the Linode CLI::
 
 pip install linode-cli --upgrade
 
