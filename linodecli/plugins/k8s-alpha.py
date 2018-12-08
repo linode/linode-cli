@@ -248,9 +248,9 @@ def gen_terraform_file(context, tf_var_map, cluster_name, prefix):
 }}
 """.format(tf_varname=tf_var_map[varname]['name'],
            default=quoted_string_or_bare_int(tf_var_map[varname]['default'])))
-    
+
     tf_file_parts.append("""module "k8s" {{
-  source  = "git@github.com:linode/terraform-linode-k8s.git?ref=for-cli"
+  source  = "git::https://github.com/linode/terraform-linode-k8s.git?ref=for-cli"
 
   linode_token = "{token}"
   
