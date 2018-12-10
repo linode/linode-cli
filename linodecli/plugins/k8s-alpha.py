@@ -5,10 +5,16 @@ import argparse
 import base64
 import sys
 import os
-from subprocess import call as spcall
+from subprocess import call as spcall, Popen, PIPE
 import hashlib
 import shutil
 from terminaltables import SingleTable
+
+# Alias FileNotFoundError for Python 2
+try:
+    FileNotFoundError
+except NameError:
+    FileNotFoundError = IOError
 
 plugin_name = os.path.basename(__file__)[:-3]
 
@@ -108,6 +114,12 @@ def create(args, context):
                                  tf_var_map['ssh_public_key']['default']))
     parsed, remaining_args = parser.parse_known_args(args)
 
+    # make sure that the ssh public key exists
+    check_for_pubkey(parsed)
+
+    # make sure that an ssh-agent is running
+    check_for_ssh_agent(parsed)
+
     if not parsed.region:
         print('You must either configure your default region with '
               '`linode-cli configure` or pass --region')
@@ -200,6 +212,50 @@ def delete(args, context):
     call_or_exit(['terraform', 'destroy'] + remaining_args)
 
     # TODO: Also delete all NodeBalancers and Volumes using the cluster prefix
+
+def check_for_pubkey(parsed):
+    try:
+        open(parsed.ssh_public_key, 'r')
+    except FileNotFoundError:
+        print("The ssh public key {} does not exist\n"
+              "Please refer to this documentation on creating an ssh key\n"
+              "https://help.github.com/articles/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent/".format(
+                  parsed.ssh_public_key
+              ))
+        sys.exit(1)
+
+def check_for_ssh_agent(parsed):
+    # The most likely filename name for the private key
+    privkey_name = os.path.basename(parsed.ssh_public_key.replace('.pub',''))
+
+    print_warning = False
+    need_agent_start = False
+    try:
+        pid = Popen(["ssh-add", "-l"], stdout=PIPE, stderr=PIPE)
+        stdout, _ = pid.communicate()
+        stdout = str(stdout)
+        if pid.returncode == 2:
+            need_agent_start = True
+        # TODO if the provided pubkey name is a substring of another key name
+        # then we think that it's loaded when it's not.
+        if privkey_name not in stdout:
+            print_warning = True
+    except FileNotFoundError:
+        print_warning = True
+        need_agent_start = True
+
+    if print_warning:
+        print_ssh_agent_warning(parsed, with_agent_start=need_agent_start)
+
+def print_ssh_agent_warning(parsed, with_agent_start=False):
+    agent_start = ''
+    if with_agent_start:
+        agent_start = "eval $(ssh-agent) && "
+    print("Your ssh private key must be added to your ssh-agent.\n"
+          "Please run this command:\n\n{}ssh-add {}".format(
+            agent_start,
+            parsed.ssh_public_key.replace('.pub', '')))
+    sys.exit(1)
 
 def check_deps(*args):
     needed_deps = []
