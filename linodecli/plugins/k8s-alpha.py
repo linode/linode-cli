@@ -231,13 +231,16 @@ def print_kubectl_install_help():
           'For other platforms, use your package manager and/or refer to this documentation\n'
           'https://kubernetes.io/docs/tasks/tools/install-kubectl/')
 
-def quoted_string_or_bare_int(val):
-    if type(val) is int:
+def bare_int_or_quoted_value(val):
+    if isinstance(val, int):
         return val
-    elif type(val) is str:
+    # a way to check for str or unicode type in both Python2/3
+    elif isinstance(val, ("".__class__, u"".__class__)):
         return '"{}"'.format(val)
     else:
-        return ''
+        # Important that we return this string rather than an empty string
+        # because the callee expects some non-empty value
+        return '""'
 
 def gen_terraform_file(context, tf_var_map, cluster_name, prefix):
     tf_file_parts = []
@@ -247,7 +250,7 @@ def gen_terraform_file(context, tf_var_map, cluster_name, prefix):
   default = {default}
 }}
 """.format(tf_varname=tf_var_map[varname]['name'],
-           default=quoted_string_or_bare_int(tf_var_map[varname]['default'])))
+           default=bare_int_or_quoted_value(tf_var_map[varname]['default'])))
 
     tf_file_parts.append("""module "k8s" {{
   source  = "git::https://github.com/linode/terraform-linode-k8s.git?ref=for-cli"
