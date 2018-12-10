@@ -9,7 +9,7 @@ load '../common'
 #  WARNING: USE A SEPARATE TEST ACCOUNT WHEN RUNNING THESE TESTS #
 ##################################################################
 
-EXAMPLE_SCRIPT="echooo foo > test.sh"
+EXAMPLE_SCRIPT="echo foo > test.sh"
 
 @test "it should list stackscripts" {
     run linode-cli stackscripts list \
@@ -67,28 +67,51 @@ EXAMPLE_SCRIPT="echooo foo > test.sh"
 }
 
 @test "it should update a stackscript compatible image" {
-	newImage="linode/debian8"
+	images=$(linode-cli images list --format "id" --text --no-headers)
+	set -- $images
+
 	privateStackscript=$(linode-cli stackscripts list --is_public false --text --no-headers --format "id")
 	run linode-cli stackscripts update \
-		--images $newImage \
+		--images $1 \
 		$privateStackscript \
 		--text \
 		--no-headers \
 		--delimiter ","
 
 	assert_success
-	assert_output --regexp "[0-9]+,.*,testfoo,$newImage,False,[0-9]+-[0-9]+-[0-9]+T[0-9]+:[0-9]+:[0-9]+,[0-9]+-[0-9]+-[0-9]+T[0-9]+:[0-9]+:[0-9]+"
+	assert_output --regexp "[0-9]+,.*,testfoo,$1,False,[0-9]+-[0-9]+-[0-9]+T[0-9]+:[0-9]+:[0-9]+,[0-9]+-[0-9]+-[0-9]+T[0-9]+:[0-9]+:[0-9]+"
+}
+
+
+@test "it should update a stackscript to be compatible with multiple images" {
+	images=$(linode-cli images list --format "id" --text --no-headers)
+	set -- $images
+
+	privateStackscript=$(linode-cli stackscripts list --is_public false --text --no-headers --format "id")
+	run linode-cli stackscripts update \
+		--images $1 \
+		--images $2 \
+		$privateStackscript \
+		--text \
+		--no-headers \
+		--delimiter "," \
+		--format "images"
+
+	assert_success
+	assert_output --partial $1
+	assert_output --partial $2
 }
 
 @test "it should fail to deploy a stackscript to a linode from an incompatible image" {
 	privateStackscript=$(linode-cli stackscripts list --is_public false --text --no-headers --format "id")
-	compatibleImage="linode/debian8"
 	linodePlan="g6-standard-1"
 	linodeRegion="us-east"
+	images=$(linode-cli images list --format "id" --text --no-headers)
+	set -- $images
 
 	run linode-cli linodes create --stackscript_id $privateStackscript \
 		--type $linodePlan \
-		--image "linode/arch" \
+		--image $3 \
 		--region $linodeRegion \
 		--root_pass $random_pass \
 		--text \
@@ -100,7 +123,9 @@ EXAMPLE_SCRIPT="echooo foo > test.sh"
 }
 
 @test "it should deploy a linode from a stackscript" {
-	compatibleImage="linode/debian8"
+	images=$(linode-cli images list --format "id" --text --no-headers)
+	set -- $images
+	compatibleImage=$1
 	linodePlan="g6-standard-1"
 	linodeRegion="us-east"
 	privateStackscript=$(linode-cli stackscripts list --is_public false --text --no-headers --format "id")
