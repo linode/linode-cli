@@ -105,7 +105,7 @@ View your user::
 Kubernetes Deployment Plugin
 """"""""""""""""""""""""""""
 
-A plugin is included that allows you to deploy a Kubernetes cluster on Linode!
+A plugin is included that allows you to deploy a Kubernetes cluster on Linode! These commands require Terraform, the Kubernetes CLI, and an SSH key added to your ssh-agent. If any dependencies are not present, you'll recieve installation instructions during command execution.
 
 This Kubernetes cluster is integrated with Linode in a number of ways:
 
