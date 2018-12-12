@@ -12,7 +12,7 @@ export nodebalancerCreated="[0-9]+,balancer[0-9]+,us-east,nb-[0-9]+-[0-9]+-[0-9]
     	--no-headers
     assert_failure
     assert_output --partial "Request failed: 400"
-    assert_output --partial "region	region is not valid"
+    assert_output --partial "region	region is required"
 }
 
 
