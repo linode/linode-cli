@@ -17,12 +17,10 @@ WORKDIR /src/linode-cli
 
 COPY . .
 
-RUN mv linodecli/cli.py linodecli/original-cli.py
-
 # Modify the cli.py to suppress version warnings by default
 # Modify the cli.py to no longer verify certs and suppress warnings (allows running tests on custom environments)
-RUN sed -i '' 's/data=body/data=body,verify=False/' linodecli/cli.py \
-    && sed -i '' 's/suppress_warnings = False/suppress_warnings = True/' linodecli/cli.py \
+RUN sed -i '' 's/data=body/data=body,verify=False/' /src/linode-cli/linodecli/cli.py \
+    && sed -i '' 's/suppress_warnings = False/suppress_warnings = True/' /src/linode-cli/linodecli/cli.py \
     && echo "from requests.packages.urllib3.exceptions import InsecureRequestWarning\nrequests.packages.urllib3.disable_warnings(InsecureRequestWarning)" >> /src/linode-cli/linodecli/cli.py
 
 # Build and Install the Linode CLI
