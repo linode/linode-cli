@@ -102,8 +102,45 @@ View your user::
 
    linode-cli profile view
 
+Reconfiguring
+"""""""""""""
+
+If your token expires or you want to otherwise change your configuration, simply
+run the *configure* command::
+
+   linode-cli configure
+
+Suppressing Defaults
+""""""""""""""""""""
+
+If you configured default values for `image`, `region`, and Linode `type`, they
+will be sent for all requests that accept them if you do not specify a different
+value.  If you want to send a request *without* these arguments, you must invoke
+the CLI with the `--no-defaults` option.  For example, to create a Linode with
+no `image` after a default Image has been configured, you would do this::
+
+   linode-cli linodes create --region us-east --type g5-standard-2 --no-defaults
+
+Suppressing Warnings
+""""""""""""""""""""
+
+In some situations, like when the CLI is out of date, it will generate a warning
+in addition to its normal output.  If these warnings can interfere with your
+scripts or you otherwise want them disabled, simply add the `--suppress-warnings`
+flag to prevent them from being emitted.
+
+Environment Variables
+"""""""""""""""""""""
+
+If you prefer, you may store your token in an environment variable named
+`LINODE_CLI TOKEN` instead of using the configuration file.  Doing so allows you
+to bypass the initial configuration, and subsequent calls to `linode-cli configure`
+will allow you to set defaults without having to set a token.  Be aware that if
+the environment variable should be unset, the Linode CLI will stop working until
+it is set again or the CLI is reconfigured with a token.
+
 Kubernetes Deployment Plugin
-""""""""""""""""""""""""""""
+----------------------------
 
 A plugin is included that allows you to deploy a Kubernetes cluster on Linode! These commands require Terraform, the Kubernetes CLI, and an SSH key added to your ssh-agent. If any dependencies are not present, you'll recieve installation instructions during command execution.
 
@@ -173,43 +210,6 @@ If you have any questions, or just want to hang out, visit us on #linode on the 
 To delete a cluster simply run::
 
    linode-cli k8s-alpha delete mycluster77
-
-Reconfiguring
-"""""""""""""
-
-If your token expires or you want to otherwise change your configuration, simply
-run the *configure* command::
-
-   linode-cli configure
-
-Suppressing Defaults
-""""""""""""""""""""
-
-If you configured default values for `image`, `region`, and Linode `type`, they
-will be sent for all requests that accept them if you do not specify a different
-value.  If you want to send a request *without* these arguments, you must invoke
-the CLI with the `--no-defaults` option.  For example, to create a Linode with
-no `image` after a default Image has been configured, you would do this::
-
-   linode-cli linodes create --region us-east --type g5-standard-2 --no-defaults
-
-Suppressing Warnings
-""""""""""""""""""""
-
-In some situations, like when the CLI is out of date, it will generate a warning
-in addition to its normal output.  If these warnings can interfere with your
-scripts or you otherwise want them disabled, simply add the `--suppress-warnings`
-flag to prevent them from being emitted.
-
-Environment Variables
-"""""""""""""""""""""
-
-If you prefer, you may store your token in an environment variable named
-`LINODE_CLI TOKEN` instead of using the configuration file.  Doing so allows you
-to bypass the initial configuration, and subsequent calls to `linode-cli configure`
-will allow you to set defaults without having to set a token.  Be aware that if
-the environment variable should be unset, the Linode CLI will stop working until
-it is set again or the CLI is reconfigured with a token.
 
 Customizing Output
 ------------------
