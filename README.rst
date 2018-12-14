@@ -145,7 +145,7 @@ The following is the help message for the command::
                            "g6-standard-2")
      --region REGION       The Linode Region ID in which to deploy the cluster as
                            retrieved with `linode-cli regions list`. (default
-                           "us-west")
+                           is whatever you set during CLI configuration)
      --ssh-public-key KEYPATH
                            The path to your public key file which will be used to
                            access Nodes during initial provisioning only! The
