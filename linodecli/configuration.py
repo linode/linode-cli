@@ -1,7 +1,6 @@
 """
 Handles configuring the cli, as well as loading configs so that they can be
 used elsewhere.
-
 """
 from __future__ import print_function
 from xdg import XDG_CONFIG_HOME
