@@ -1,6 +1,7 @@
 """
 Handles configuring the cli, as well as loading configs so that they can be
 used elsewhere.
+
 """
 from __future__ import print_function
 from xdg import XDG_CONFIG_HOME
@@ -19,6 +20,8 @@ import sys
 
 ENV_TOKEN_NAME='LINODE_CLI_TOKEN'
 
+LEGACY_CONFIG_DIR = os.path.expanduser('~')
+LEGACY_CONFIG_NAME = '.linode-cli'
 CONFIG_DIR = XDG_CONFIG_HOME
 CONFIG_NAME = 'linode-cli'
 TOKEN_GENERATION_URL='https://cloud.linode.com/profile/tokens'
@@ -164,6 +167,9 @@ on your account to work correctly.""".format(TOKEN_GENERATION_URL))
         """
         Returns the path to the config file
         """
+        if os.path.exists("{}/{}".format(LEGACY_CONFIG_DIR, LEGACY_CONFIG_NAME)):
+            return "{}/{}".format(LEGACY_CONFIG_DIR, LEGACY_CONFIG_NAME)
+
         return "{}/{}".format(CONFIG_DIR, CONFIG_NAME)
 
     def _get_config(self):
