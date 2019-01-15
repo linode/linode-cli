@@ -86,13 +86,19 @@ export nodebalancerCreated="[0-9]+,balancer[0-9]+,us-east,nb-[0-9]+-[0-9]+-[0-9]
 }
 
 @test "it should add a node to the configuration profile" {
+	images=$(linode cli images list --text --no-headers --format "id")
+
+	set -- $images
+
+	nodeImage=$1
+
 	nodeIp=$(linode-cli linodes create \
 	     --root_pass aComplex@Password \
 	     --booted true \
 	     --region us-east \
 	     --type g6-standard-2 \
 	     --private_ip true \
-	     --image linode/arch \
+	     --image $nodeImage \
 	     --text \
 	     --no-headers \
 	     --format "ip_address" | egrep -o "192.168.[0-9]{1,3}.[0-9]{1,3}")
