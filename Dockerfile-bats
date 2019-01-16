@@ -3,6 +3,7 @@ FROM python:2
 ARG SPEC=https://developers.linode.com/api/v4/openapi.yaml
 ARG API_OVERRIDE=api.linode.com
 ARG TOKEN
+ARG SPEC_NAME
 
 RUN apt-get update && apt-get install -y python3 python3-pip bats \
     && pip install requests terminaltables colorclass PyYAML enum34 \
@@ -24,8 +25,7 @@ RUN sed -i="" "s/data=body/data=body,verify=False/" /src/linode-cli/linodecli/cl
     && echo "from requests.packages.urllib3.exceptions import InsecureRequestWarning\nrequests.packages.urllib3.disable_warnings(InsecureRequestWarning)" >> /src/linode-cli/linodecli/cli.py
 
 # Build and Install the Linode CLI
-RUN curl -o /src/linode-cli/openapi.yaml ${SPEC} \
-    && sed -n "s|${DEFAULT_API}|${API_ENV}|g;w cli-tests.yaml" /src/linode-cli/openapi.yaml \
+RUN sed -n "s|${DEFAULT_API}|${API_ENV}|g;w cli-tests.yaml" /src/linode-cli/${SPEC_NAME} \
     && git submodule init \
     && git submodule update \
     && make build SPEC=cli-tests.yaml \
