@@ -3,7 +3,6 @@ Handles configuring the cli, as well as loading configs so that they can be
 used elsewhere.
 """
 from __future__ import print_function
-from xdg import XDG_CONFIG_HOME
 
 
 import argparse
@@ -21,7 +20,7 @@ ENV_TOKEN_NAME='LINODE_CLI_TOKEN'
 
 LEGACY_CONFIG_DIR = os.path.expanduser('~')
 LEGACY_CONFIG_NAME = '.linode-cli'
-CONFIG_DIR = XDG_CONFIG_HOME
+CONFIG_DIR = os.environ.get('XDG_CONFIG_HOME', "{}/{}/".format(os.path.expanduser('~'), '.config'))
 CONFIG_NAME = 'linode-cli'
 TOKEN_GENERATION_URL='https://cloud.linode.com/profile/tokens'
 

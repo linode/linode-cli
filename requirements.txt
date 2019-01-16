@@ -3,4 +3,3 @@ colorclass
 requests
 PyYAML
 enum34
-xdg
