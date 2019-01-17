@@ -63,7 +63,7 @@ class CLIConfig:
         if not username:
             username = "DEFAULT"
 
-        if not self.config.has_option(username, 'token') and not os.environ.get(ENV_TOKEN_NAME, None:
+        if not self.config.has_option(username, 'token') and not os.environ.get(ENV_TOKEN_NAME, None):
             print("User {} is not configured.".format(username))
             sys.exit(1)
 
