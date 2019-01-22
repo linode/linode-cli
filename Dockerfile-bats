@@ -28,8 +28,8 @@ RUN sed -i="" "s/data=body/data=body,verify=False/" /src/linode-cli/linodecli/cl
 RUN sed -n "s|${DEFAULT_API}|${API_ENV}|g;w cli-tests.yaml" /src/linode-cli/open-api.yaml \
     && git submodule init \
     && git submodule update \
-    && make build SPEC=cli-tests.yaml \
-    && make install SPEC=cli-tests.yaml \
+    && make build SPEC=/src/linode-cli/cli-tests.yaml \
+    && make install SPEC=/src/linode-cli/cli-tests.yaml \
     && cd dist \
     && pip install --user $(ls) \
     && echo -n "[DEFAULT]\ntoken = ${TOKEN_1}\ndefault-user = test-user\n\n[test-user]" > /root/.linode-cli \
