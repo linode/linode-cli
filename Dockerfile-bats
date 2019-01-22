@@ -25,8 +25,7 @@ RUN sed -i="" "s/data=body/data=body,verify=False/" /src/linode-cli/linodecli/cl
     && echo "from requests.packages.urllib3.exceptions import InsecureRequestWarning\nrequests.packages.urllib3.disable_warnings(InsecureRequestWarning)" >> /src/linode-cli/linodecli/cli.py
 
 # Build and Install the Linode CLI
-RUN curl -o /src/linode-cli/openapi.yaml ${SPEC} \
-    && sed -n "s|${DEFAULT_API}|${API_ENV}|g;w cli-tests.yaml" /src/linode-cli/openapi.yaml \
+RUN sed -n "s|${DEFAULT_API}|${API_ENV}|g;w cli-tests.yaml" /src/linode-cli/open-api.yaml \
     && git submodule init \
     && git submodule update \
     && make build SPEC=cli-tests.yaml \
