@@ -147,9 +147,10 @@ on your account to work correctly.""".format(TOKEN_GENERATION_URL))
             self.config.add_section(username)
 
         for k, v in config.items():
-            self.config.set(username, k, v)
-            if is_default:
-                self.config.set('DEFAULT', k, v)
+            if v:
+                self.config.set(username, k, v)
+                if is_default:
+                    self.config.set('DEFAULT', k, v)
 
         with open(self._get_config_path(), 'w') as f:
             self.config.write(f)
