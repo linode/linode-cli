@@ -133,7 +133,7 @@ Environment Variables
 """""""""""""""""""""
 
 If you prefer, you may store your token in an environment variable named
-`LINODE_CLI TOKEN` instead of using the configuration file.  Doing so allows you
+`LINODE_CLI_TOKEN` instead of using the configuration file.  Doing so allows you
 to bypass the initial configuration, and subsequent calls to `linode-cli configure`
 will allow you to set defaults without having to set a token.  Be aware that if
 the environment variable should be unset, the Linode CLI will stop working until
