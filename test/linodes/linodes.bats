@@ -49,6 +49,7 @@ load '../common'
         --format 'id,region,type'
 
     assert_output --regexp "[0-9]+,us-east,g6-standard-2"
+    run removeLinodes
 }
 
 @test "it should fail to create a linode without a root_pass" {
@@ -65,13 +66,33 @@ load '../common'
     assert_output --partial 'root_pass	root_pass is required'
 }
 
+@test "it should create a linode without an image and not boot" {
+    local linode_type=$(linode-cli linodes types --text --no-headers --format="id" | xargs | awk '{ print $1 }')
+    local linode_region=$(linode-cli regions list --format="id"  --text --no-headers | xargs | awk '{ print $1 }')
+    run linode-cli linodes create \
+        --no-defaults \
+        --label='cli-2' \
+        --type=$linode_type \
+        --region=$linode_region \
+        --root_pass $random_pass
+    local linode_id=$(linode-cli linodes list --format="id" --text --no-headers)
+
+    until [ $(linode-cli linodes view $linode_id --format="status" --text --no-headers) = "offline" ]; do
+        echo 'still setting up'
+    done
+
+    run linode-cli linodes view $linode_id --format="status" --text --no-headers
+    assert_success
+    assert_output "offline"
+}
+
 @test "it should list linodes" {
     run linode-cli linodes list \
         --no-headers \
         --format 'label' \
         --text
 
-    assert_output --partial 'cli-1'
+    assert_output --partial 'cli-2'
 }
 
 @test "it should add a tag a linode" {
