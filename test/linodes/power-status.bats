@@ -30,6 +30,7 @@ teardown() {
 }
 
 @test "it should create a linode and boot" {
+    # Wait For Linode to be Running
     until [ $(linode-cli linodes view $linode_id --format="status" --text --no-headers) = "running" ]; do
         echo 'still provisioning'
         sleep 5 # Rate limit ourselves
@@ -43,6 +44,7 @@ teardown() {
 }
 
 @test "it should reboot the linode" {
+    # Wait For Linode to be Running
     until [ $(linode-cli linodes view $linode_id --format="status" --text --no-headers) = "running" ]; do
         echo "still provisioning"
         sleep 5 # Rate limit ourselves
@@ -59,8 +61,9 @@ teardown() {
         --no-headers
     assert_success
 
+    # Wait For Linode to NOT be Running
     SECONDS=0
-    until [ $(linode-cli linodes view $linode_id --format="status" --text --no-headers) = "running" ]; do
+    until [ $(linode-cli linodes view $linode_id --format="status" --text --no-headers) != "running" ]; do
         sleep 5 # Rate limit ourselves
         if [[ "$SECONDS" -eq 180 ]];
         then
@@ -72,6 +75,7 @@ teardown() {
 }
 
 @test "it should shutdown the linode" {
+    # Wait For Linode to be Running
     until [ $(linode-cli linodes view $linode_id --format="status" --text --no-headers) = "running" ]; do
         echo 'still provisioning'
         sleep 5 # Rate limit ourselves
@@ -86,6 +90,7 @@ teardown() {
     run linode-cli linodes shutdown $linode_id
     assert_success
 
+    # Wait For Linode to be offline
     SECONDS=0
     until [ $(linode-cli linodes view $linode_id --format="status" --text --no-headers) = "offline" ]; do
         echo 'still shutting down'
