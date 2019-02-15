@@ -11,6 +11,7 @@ setup() {
     export timestamp=$(date +%s)
     run createLinode
     linode_id=$(linode-cli linodes list --format id --text --no-header | head -n 1)
+    SECONDS=0
 }
 
 teardown() {
@@ -29,7 +30,6 @@ teardown() {
 }
 
 @test "it should create a linode and boot" {
-    SECONDS=0
     until [ $(linode-cli linodes view $linode_id --format="status" --text --no-headers) = "running" ]; do
         echo 'still provisioning'
         if [[ "$SECONDS" -eq 180 ]];
@@ -42,8 +42,6 @@ teardown() {
 }
 
 @test "it should reboot the linode" {
-    # Wait for booted
-    SECONDS=0
     until [ $(linode-cli linodes view $linode_id --format="status" --text --no-headers) = "running" ]; do
         echo "still provisioning"
         if [[ "$SECONDS" -eq 180 ]];
@@ -71,7 +69,6 @@ teardown() {
 }
 
 @test "it should shutdown the linode" {
-    SECONDS=0
     until [ $(linode-cli linodes view $linode_id --format="status" --text --no-headers) = "running" ]; do
         echo 'still provisioning'
         if [[ "$SECONDS" -eq 180 ]];
