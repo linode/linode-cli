@@ -61,7 +61,7 @@ teardown() {
         --no-headers
     assert_success
 
-    # Wait For Linode to NOT be Running
+    # Wait For Linode to NOT be running
     SECONDS=0
     until [ $(linode-cli linodes view $linode_id --format="status" --text --no-headers) != "running" ]; do
         sleep 5 # Rate limit ourselves
