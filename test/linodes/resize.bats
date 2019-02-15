@@ -73,17 +73,30 @@ teardown() {
 	assert_success
 
 	# Wait for status = "Resizing"
+    SECONDS=0
 	until [ $(linode-cli linodes view $linode_id --format="status" --text --no-headers) = "resizing" ]; do
         echo 'waiting for resize to start'
+        sleep 5
+        if [[ "$SECONDS" -eq 180 ]]
+        then
+            assert_failure # Linode failed to start resizing
+            break
+        fi
     done
 
 	# Wait for offline status.
 	# Linodes that are resized do not boot automatically
+    SECONDS=0
     until [ $(linode-cli linodes view $linode_id --format="status" --text --no-headers) = "offline" ]; do
         echo 'still resizing'
 
 		# Check for resizing completion every 15 seconds
         sleep 15
+        if [[ "$SECONDS" -eq 600 ]];
+        then
+            assert_failure # Linode failed to completge resizing within 10 minutes
+            break
+        fi
     done
 
     run linode-cli linodes view $linode_id \

@@ -56,13 +56,28 @@ teardown() {
     assert_success
 
     # Wait until rebuilding
+    SECONDS=0
     until [ $(linode-cli linodes view $linode_id --format="status" --text --no-headers) = "rebuilding" ]; do
         echo 'still running'
+        sleep 3 # Wait 3 seconds between requests
+        if [[ "$SECONDS" -eq 180 ]];
+        then
+            assert_failure # Fail if status is not rebuilding
+            break
+        fi
     done
 
+
     # Wait until done rebuilding
+    SECONDS=0
 	until [ $(linode-cli linodes view $linode_id --format="status" --text --no-headers) = "running" ]; do
         echo 'still rebuilding'
+        sleep 3 # Wait 3 seconds between requests
+        if [[ "$SECONDS" -eq 180 ]];
+        then
+            assert_failure # Linode failed to start
+            break
+        fi
     done
 
     run linode-cli linodes view $linode_id \

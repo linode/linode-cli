@@ -61,11 +61,16 @@ teardown() {
 }
 
 @test "it should take a snapshot of a linode" {
+    SECONDS=0
     until [ $(linode-cli linodes view $linode_id --format="status" --text --no-headers) = "running" ]; do
         echo 'still provisioning'
-
         # Wait 3 seconds before checking status again, to rate-limit ourselves
         sleep 3
+        if [[ "$SECONDS" -eq 180 ]];
+        then
+            assert_failure # Linode failed to boot
+            break
+        fi
     done
     snapshot_label="test_snapshot1"
     run linode-cli linodes snapshot $linode_id \
@@ -79,9 +84,6 @@ teardown() {
 }
 
 @test "it should view the snapshot" {
-    run linode-cli linodes view $linode_id --format "status" --text --no-headers
-    assert_output "foooo"
-
     run linode-cli linodes backups-list $linode_id \
         --text \
         --no-headers
