@@ -8,8 +8,9 @@ load '../common'
 ##################################################################
 
 setup() {
-    run removeLinodes
     export timestamp=$(date +%s)
+    run createLinode
+    linode_id=$(linode-cli linodes list --format id --text --no-header | head -n 1)
 }
 
 teardown() {
@@ -18,8 +19,6 @@ teardown() {
 }
 
 @test "it should create a linode and be provisioning status" {
-    run createLinode
-    local linode_id=$(linode-cli linodes list --format="id" --text --no-headers)
     run linode-cli linodes view $linode_id \
         --format="status" \
         --text \
@@ -30,73 +29,71 @@ teardown() {
 }
 
 @test "it should create a linode and boot" {
-    run createLinode
-    local linode_id=$(linode-cli linodes list --format="id" --text --no-headers)
-
+    SECONDS=0
     until [ $(linode-cli linodes view $linode_id --format="status" --text --no-headers) = "running" ]; do
         echo 'still provisioning'
+        if [[ "$SECONDS" -eq 180 ]];
+        then
+            echo "Timeout elapsed! Linode did not boot in time"
+            assert_failure  # This will fail the test
+            break
+        fi
     done
-
-    run linode-cli linodes view $linode_id \
-        --format="status" \
-        --text \
-        --no-headers
-
-    assert_success
-    assert_output "running"
 }
 
 @test "it should reboot the linode" {
-    run createLinode
-    local linode_id=$(linode-cli linodes list --format="id" --text --no-headers)
+    # Wait for booted
+    SECONDS=0
+    until [ $(linode-cli linodes view $linode_id --format="status" --text --no-headers) = "running" ]; do
+        echo "still provisioning"
+        if [[ "$SECONDS" -eq 180 ]];
+        then
+            echo "Timeout elapsed! Linode did not boot in time"
+            assert_failure  # This will fail the test
+            break
+        fi
+    done
 
     run linode-cli linodes reboot $linode_id \
         --text \
         --no-headers
-
-    until [ $(linode-cli linodes view $linode_id --format="status" --text --no-headers) = "booting" ]; do
-        echo 'still running'
-    done
-
-    run linode-cli linodes view $linode_id \
-        --format="status" \
-        --text \
-        --no-headers
-
     assert_success
-    assert_output "booting"
 
+    SECONDS=0
     until [ $(linode-cli linodes view $linode_id --format="status" --text --no-headers) = "running" ]; do
-        echo 'still rebooting'
+        if [[ "$SECONDS" -eq 180 ]];
+        then
+            echo "Timeout elapsed! Linode did not reboot in time"
+            assert_failure # This will fail the test
+            break
+        fi
     done
-
-    run linode-cli linodes view $linode_id \
-        --format="status" \
-        --text \
-        --no-headers
-
-    assert_success
-    assert_output "running"
 }
 
 @test "it should shutdown the linode" {
-    run createLinode
-    local linode_id=$(linode-cli linodes list --format="id" --text --no-headers)
-
+    SECONDS=0
     until [ $(linode-cli linodes view $linode_id --format="status" --text --no-headers) = "running" ]; do
         echo 'still provisioning'
+        if [[ "$SECONDS" -eq 180 ]];
+        then
+            echo "Timeout elapsed! Linode did not start running in time"
+            assert_failure # This will fail the test
+            break
+        fi
     done
 
     run linode-cli linodes shutdown $linode_id
     assert_success
 
+    SECONDS=0
     until [ $(linode-cli linodes view $linode_id --format="status" --text --no-headers) = "offline" ]; do
         echo 'still shutting down'
+        if [[ "$SECONDS" -eq 180 ]];
+        then
+            echo "Timeout elapsed! Linode did not shutdown in time"
+            assert_failure # This will fail the test
+            break
+        fi
     done
-
-    run linode-cli linodes view $linode_id --format="status" --text --no-headers
-
-    assert_success
-    assert_output "offline"
 }
 
