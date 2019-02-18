@@ -76,43 +76,51 @@ teardown() {
 }
 
 @test "it should take a snapshot of a linode" {
-    SECONDS=0
-    until [ $(linode-cli linodes view $linode_id --format="status" --text --no-headers) = "running" ]; do
-        echo 'still provisioning'
-        # Wait 5 seconds before checking status again, to rate-limit ourselves
-        sleep 5
-        if [[ "$SECONDS" -eq 180 ]];
-        then
-            assert_failure # Linode failed to boot
-            break
-        fi
-    done
+    if [ $RUN_LONG_TESTS = "TRUE" ]; then
+        SECONDS=0
+        until [ $(linode-cli linodes view $linode_id --format="status" --text --no-headers) = "running" ]; do
+            echo 'still provisioning'
+            # Wait 5 seconds before checking status again, to rate-limit ourselves
+            sleep 5
+            if [[ "$SECONDS" -eq 180 ]];
+            then
+                assert_failure # Linode failed to boot
+                break
+            fi
+        done
 
-    run linode-cli linodes snapshot $linode_id \
-        --label=$snapshot_label \
-        --text \
-        --delimiter="," \
-        --no-headers
+        run linode-cli linodes snapshot $linode_id \
+            --label=$snapshot_label \
+            --text \
+            --delimiter="," \
+            --no-headers
 
-    assert_success
-    assert_output --regexp "[0-9]+,pending,snapshot,[0-9]+-[0-9]+-[0-9]+T[0-9]+:[0-9]+:[0-9]+,${snapshot_label}"
+        assert_success
+        assert_output --regexp "[0-9]+,pending,snapshot,[0-9]+-[0-9]+-[0-9]+T[0-9]+:[0-9]+:[0-9]+,${snapshot_label}"
+    else
+        skip "Skipping long-running Test, to run set RUN_LONG_TESTS=TRUE"
+    fi
 }
 
 @test "it should view the snapshot" {
-    run linode-cli linodes backups-list $linode_id \
-        --delimiter="," \
-        --text \
-        --no-headers
-    assert_success
+    if [ $RUN_LONG_TESTS  = "TRUE" ]; then
+        run linode-cli linodes backups-list $linode_id \
+            --delimiter="," \
+            --text \
+            --no-headers
+        assert_success
 
-    # assert_output --regexp "[0-9]+,pending,snapshot,[0-9]+-[0-9]+-[0-9]+T[0-9]+:[0-9]+:[0-9]+,${snapshot_label}"
-    # BUG outputs the backup as json, assertion below asserts that outputs the expected.
-    assert_output --regexp "\'status\': \'pending."
-    assert_output --regexp "\'finished\': None"
-    assert_output --regexp "\'type\': \'snapshot\'"
-    assert_output --regexp "\'label\': \'$snapshot_label\'"
-    assert_output --regexp "\'region\': \'us-east\'"
-    assert_output --regexp "\'id\': [0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]"
+        # assert_output --regexp "[0-9]+,pending,snapshot,[0-9]+-[0-9]+-[0-9]+T[0-9]+:[0-9]+:[0-9]+,${snapshot_label}"
+        # BUG outputs the backup as json, assertion below asserts that outputs the expected.
+        assert_output --regexp "\'status\': \'pending."
+        assert_output --regexp "\'finished\': None"
+        assert_output --regexp "\'type\': \'snapshot\'"
+        assert_output --regexp "\'label\': \'$snapshot_label\'"
+        assert_output --regexp "\'region\': \'us-east\'"
+        assert_output --regexp "\'id\': [0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]"
+    else
+        skip "Skipping long-running Test, to run set RUN_LONG_TESTS=TRUE"
+    fi
 }
 
 # @test "it should restore the linode from a snapshot" {

@@ -63,47 +63,51 @@ teardown() {
 }
 
 @test "it should resize the linode to the next size plan" {
-	larger_plan=$(linode-cli linodes types --format="id" --text --no-headers | sed -n 3p)
-	run linode-cli linodes resize \
-		--type=$larger_plan \
-		--text \
-		--no-headers \
-		$linode_id
+    if [ $CI_BUILD = "TRUE" ]; then
+    	larger_plan=$(linode-cli linodes types --format="id" --text --no-headers | sed -n 3p)
+    	run linode-cli linodes resize \
+    		--type=$larger_plan \
+    		--text \
+    		--no-headers \
+    		$linode_id
 
-	assert_success
+    	assert_success
 
-	# Wait for status = "Resizing"
-    SECONDS=0
-	until [ $(linode-cli linodes view $linode_id --format="status" --text --no-headers) = "resizing" ]; do
-        echo 'waiting for resize to start'
-        sleep 5
-        if [[ "$SECONDS" -eq 180 ]]
-        then
-            assert_failure # Linode failed to start resizing
-            break
-        fi
-    done
+    	# Wait for status = "Resizing"
+        SECONDS=0
+    	until [ $(linode-cli linodes view $linode_id --format="status" --text --no-headers) = "resizing" ]; do
+            echo 'waiting for resize to start'
+            sleep 5
+            if [[ "$SECONDS" -eq 180 ]]
+            then
+                assert_failure # Linode failed to start resizing
+                break
+            fi
+        done
 
-	# Wait for offline status.
-	# Linodes that are resized do not boot automatically
-    SECONDS=0
-    until [ $(linode-cli linodes view $linode_id --format="status" --text --no-headers) = "offline" ]; do
-        echo 'still resizing'
+    	# Wait for offline status.
+    	# Linodes that are resized do not boot automatically
+        SECONDS=0
+        until [ $(linode-cli linodes view $linode_id --format="status" --text --no-headers) = "offline" ]; do
+            echo 'still resizing'
 
-		# Check for resizing completion every 15 seconds
-        sleep 15
-        if [[ "$SECONDS" -eq 600 ]];
-        then
-            assert_failure # Linode failed to completge resizing within 10 minutes
-            break
-        fi
-    done
+    		# Check for resizing completion every 15 seconds
+            sleep 15
+            if [[ "$SECONDS" -eq 600 ]];
+            then
+                assert_failure # Linode failed to completge resizing within 10 minutes
+                break
+            fi
+        done
 
-    run linode-cli linodes view $linode_id \
-    	--format="type" \
-    	--text \
-    	--no-headers
+        run linode-cli linodes view $linode_id \
+        	--format="type" \
+        	--text \
+        	--no-headers
 
-    assert_success
-    assert_output $larger_plan
+        assert_success
+        assert_output $larger_plan
+    else
+        skip "Skipping long-running Test, to run set CI_BUILD=TRUE"
+    fi
 }
