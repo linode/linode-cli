@@ -77,7 +77,16 @@ load '../common'
         --root_pass $random_pass
     local linode_id=$(linode-cli linodes list --format="id" --text --no-headers)
 
+    SECONDS=0
     until [ $(linode-cli linodes view $linode_id --format="status" --text --no-headers) = "offline" ]; do
+        if [[ "$SECONDS" -eq 180 ]];
+        then
+            echo "Timeout elapsed! Linode did not initialize in time"
+            assert_failure  # This will fail the test
+            break
+        fi
+
+        sleep 5
         echo 'still setting up'
     done
 
