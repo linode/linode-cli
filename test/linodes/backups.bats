@@ -107,7 +107,6 @@ teardown() {
 
     # assert_output --regexp "[0-9]+,pending,snapshot,[0-9]+-[0-9]+-[0-9]+T[0-9]+:[0-9]+:[0-9]+,${snapshot_label}"
     # BUG outputs the backup as json, assertion below asserts that outputs the expected.
-    # assert_output --regexp ",{'updated': '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T[0-9][0-9]:[0-9][0-9]:[0-9][0-9]', 'created': '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]T[0-9][0-9]:[0-9][0-9]:[0-9][0-9]', 'id': [0-9]*, 'label': '$snapshot_label', 'status': 'pending', 'finished': None, 'type': 'snapshot', 'region': 'us-east', 'disks': \[\], 'configs': \[\]},"
     assert_output --regexp "\'status\': \'pending."
     assert_output --regexp "\'finished\': None"
     assert_output --regexp "\'type\': \'snapshot\'"
