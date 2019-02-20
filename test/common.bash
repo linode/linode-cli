@@ -74,3 +74,23 @@ removeAll() {
 removeUniqueTag() {
     run bash -c "linode-cli tags delete $uniqueTag"
 }
+
+createLinodeAndWait() {
+    local default_plan=$(linode-cli linodes types --text --no-headers --format="id" | xargs | awk '{ print $1 }')
+    local linode_type=${1:-$default_plan}
+    run bash -c "linode-cli linodes create --type=$linode_type --region us-east --image=$test_image --root_pass=$random_pass"
+    assert_success
+
+    local linode_id=$(linode-cli linodes list --format id --text --no-header | head -n 1)
+
+    SECONDS=0
+    until [ $(linode-cli linodes view $linode_id --format="status" --text --no-headers) = "running" ]; do
+        echo 'still provisioning'
+        sleep 5 # Wait 5 seconds before checking status again, to rate-limit ourselves
+        if [[ "$SECONDS" -eq 180 ]];
+        then
+            assert_failure # Fail test, linode did not boot in time
+            break
+        fi
+    done
+}

@@ -11,6 +11,10 @@ load '../common'
 
 EXAMPLE_SCRIPT="echo foo > test.sh"
 
+setup() {
+	images=$(linode-cli images list --format id --text --no-headers | egrep "linode\/.*")
+}
+
 @test "it should list stackscripts" {
     run linode-cli stackscripts list \
         --text
@@ -67,10 +71,10 @@ EXAMPLE_SCRIPT="echo foo > test.sh"
 }
 
 @test "it should update a stackscript compatible image" {
-	images=$(linode-cli images list --format "id" --text --no-headers)
 	set -- $images
 
 	privateStackscript=$(linode-cli stackscripts list --is_public false --text --no-headers --format "id")
+
 	run linode-cli stackscripts update \
 		--images $1 \
 		$privateStackscript \
@@ -84,10 +88,10 @@ EXAMPLE_SCRIPT="echo foo > test.sh"
 
 
 @test "it should update a stackscript to be compatible with multiple images" {
-	images=$(linode-cli images list --format "id" --text --no-headers)
 	set -- $images
 
 	privateStackscript=$(linode-cli stackscripts list --is_public false --text --no-headers --format "id")
+
 	run linode-cli stackscripts update \
 		--images $1 \
 		--images $2 \
@@ -103,11 +107,11 @@ EXAMPLE_SCRIPT="echo foo > test.sh"
 }
 
 @test "it should fail to deploy a stackscript to a linode from an incompatible image" {
+	set -- $images
+
 	privateStackscript=$(linode-cli stackscripts list --is_public false --text --no-headers --format "id")
 	linodePlan="g6-standard-1"
 	linodeRegion="us-east"
-	images=$(linode-cli images list --format "id" --text --no-headers)
-	set -- $images
 
 	run linode-cli linodes create --stackscript_id $privateStackscript \
 		--type $linodePlan \
@@ -123,7 +127,6 @@ EXAMPLE_SCRIPT="echo foo > test.sh"
 }
 
 @test "it should deploy a linode from a stackscript" {
-	images=$(linode-cli images list --format "id" --text --no-headers)
 	set -- $images
 	compatibleImage=$1
 	linodePlan="g6-standard-1"
