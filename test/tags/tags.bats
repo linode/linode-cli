@@ -33,7 +33,7 @@ load '../common'
 
     assert_failure
     assert_output --partial "Request failed: 400"
-    assert_output --partial "label	Length must be 3-25 characters"
+    assert_output --partial "label	Length must be 3-50 characters"
 }
 
 @test "it should remove a tag" {
