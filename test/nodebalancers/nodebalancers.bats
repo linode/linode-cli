@@ -102,7 +102,7 @@ teardown() {
 	     --region us-east \
 	     --type g6-standard-2 \
 	     --private_ip true \
-	     --image linode/arch \
+	     --image=$test_image \
 	     --text \
 	     --no-headers \
 	     --format "ip_address" | egrep -o "192.168.[0-9]{1,3}.[0-9]{1,3}")
