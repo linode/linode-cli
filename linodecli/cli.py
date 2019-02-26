@@ -370,11 +370,16 @@ complete -F _linode_cli linode-cli""")
 
         result =  method(self.base_url+url, headers=headers, data=body)
 
-        # if the API indicated it's newer than the client, print a warning
+        # if the API indicated it's newer major or minor version than the client, print a warning
         if 'X-Spec-Version' in result.headers:
             spec_version = result.headers.get('X-Spec-Version')
+
+            # Get Major / Minor version of the API Spec and CLI Spec
+            spec_major_minor_version = spec_version.split(".")[0] + "." + spec_version.split(".")[1]
+            current_major_minor_version = self.spec_version.split(".")[0] + "." + self.spec_version.split(".")[1]
+
             try:
-                if LooseVersion(spec_version) > LooseVersion(self.spec_version) and not self.suppress_warnings:
+                if LooseVersion(spec_major_minor_version) > LooseVersion(current_major_minor_version) and not self.suppress_warnings:
                     print("The API responded with version {}, which is newer than "
                           "the CLI's version of {}.  Please update the CLI to get "
                           "access to the newest features.  You can update with a "
