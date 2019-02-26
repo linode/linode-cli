@@ -1,6 +1,6 @@
 FROM python:2
 
-ARG SPEC=https://developers.linode.com/api/v4/openapi.yaml
+ARG SPEC=https://developers.linode.com/api/docs/v4/openapi.yaml
 ARG API_OVERRIDE=api.linode.com
 ARG TOKEN
 
