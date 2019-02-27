@@ -375,8 +375,8 @@ complete -F _linode_cli linode-cli""")
             spec_version = result.headers.get('X-Spec-Version')
 
             # Get Major / Minor version of the API Spec and CLI Spec
-            spec_major_minor_version = spec_version.split(".")[0] + "." + spec_version.split(".")[1]
-            current_major_minor_version = self.spec_version.split(".")[0] + "." + self.spec_version.split(".")[1]
+            spec_major_minor_version = spec_version.split(".")[0] + "." + spec_version.split(".")[1] if spec_version != 'DEVELOPMENT' else spec_version
+            current_major_minor_version = self.spec_version.split(".")[0] + "." + self.spec_version.split(".")[1] if self.spec_version != 'DEVELOPMENT' else self.spec_version
 
             try:
                 if LooseVersion(spec_major_minor_version) > LooseVersion(current_major_minor_version) and not self.suppress_warnings:
