@@ -44,7 +44,7 @@ def create_varmap(context):
     tf_var_map = {
         'node_type': {
             'name': 'server_type_node',
-            'default': 'g6-standard-2',
+            'default': context.client.config.config.get('DEFAULT', 'type', fallback='g6-standard-2'),
         },
         'nodes': {
             'name': 'nodes',
@@ -52,7 +52,7 @@ def create_varmap(context):
         },
         'master_type': {
             'name': 'server_type_master',
-            'default': 'g6-standard-2',
+            'default': get_default_master_plan(context),
         },
         'region': {
             'name': 'region',
@@ -411,3 +411,38 @@ def print_available_commands(commands):
     table = SingleTable(proc)
     table.inner_heading_row_border = False
     print(table.table)
+
+def get_default_master_plan(context):
+    """
+    Return either the user's requeted default plan size (if valid for
+    a Kubernetes master) or the smallest valid plan for a Kubernetes
+    master if the user's requested plan doesn't meet that criteria.
+
+    If the user's plan doesn't meet the 2 VCPU requirement, it's
+    probably a smaller plan, so we default to the smallest valid plan
+    in that case to get as close as possible to their requested plan.
+    """
+    requested_default = context.client.config.config.get('DEFAULT', 'type', fallback=None)
+
+    if requested_default:
+        if is_valid_master_plan(context, requested_default):
+            return requested_default
+
+    return smallest_valid_master(context)
+
+def is_valid_master_plan(context, linode_type):
+    """
+    Kubernetes masters must have a minimum of 2 VCPUs.
+    """
+    status, result = context.client.call_operation('linodes', 'type-view', args=[linode_type])
+    if status != 200:
+        raise RuntimeError("{}: Failed to look up configured default Linode type from API".format(str(status)))
+    else:
+        return result['vcpus'] >= 2
+
+def smallest_valid_master(context):
+    status, result = context.client.call_operation('linodes', 'types', filters={"+and": [{ "vcpus": { "+gte": 2 }}, {"class": "standard"}], "+order_by": "memory", "+order": "asc"})
+    if status != 200:
+        raise RuntimeError("{}: Failed to request Linode types from API".format(str(status)))
+    else:
+        return result['data'][0]
