@@ -3,7 +3,7 @@ Responsible for managing spec and routing commands to operations.
 """
 from __future__ import print_function
 
-from distutils.version import LooseVersion
+from distutils.version import StrictVersion, LooseVersion
 import json
 import os
 import pickle
@@ -370,11 +370,25 @@ complete -F _linode_cli linode-cli""")
 
         result =  method(self.base_url+url, headers=headers, data=body)
 
-        # if the API indicated it's newer than the client, print a warning
+        # if the API indicated it's newer major or minor version than the client, print a warning
         if 'X-Spec-Version' in result.headers:
             spec_version = result.headers.get('X-Spec-Version')
+
             try:
-                if LooseVersion(spec_version) > LooseVersion(self.spec_version) and not self.suppress_warnings:
+                # Parse the spec versions from the API and local CLI.
+                StrictVersion(spec_version)
+                StrictVersion(self.spec_version)
+
+                # Get only the Major/Minor version of the API Spec and CLI Spec, ignore patch version differences
+                spec_major_minor_version = spec_version.split(".")[0] + "." + spec_version.split(".")[1]
+                current_major_minor_version = self.spec_version.split(".")[0] + "." + self.spec_version.split(".")[1]
+            except ValueError:
+                # If versions are non-standard like, "DEVELOPMENT" use them and don't complain.
+                spec_major_minor_version = spec_version
+                current_major_minor_version = self.spec_version
+
+            try:
+                if LooseVersion(spec_major_minor_version) > LooseVersion(current_major_minor_version) and not self.suppress_warnings:
                     print("The API responded with version {}, which is newer than "
                           "the CLI's version of {}.  Please update the CLI to get "
                           "access to the newest features.  You can update with a "
