@@ -319,7 +319,7 @@ complete -F _linode_cli linode-cli""")
         """
         return 'data-{}'.format(version_info[0])
 
-    def do_request(self, operation, args):
+    def do_request(self, operation, args, filter_header=None):
         """
         Makes a request to an operation's URL and returns the resulting JSON, or
         prints and error if a non-200 comes back
@@ -340,16 +340,21 @@ complete -F _linode_cli linode-cli""")
 
         body = None
         if operation.method == 'get':
-            filters = vars(parsed_args)
-            # remove URL parameters
-            for p in operation.params:
-                if p.name in filters:
-                    del filters[p.name]
-            # remove empty filters
-            filters = {k: v for k, v in filters.items() if v is not None}
-            # apply filter, if any
-            if filters:
-                headers["X-Filter"] = json.dumps(filters)
+            if filter_header is not None:
+                # plugins can specify their own filters - use those by default
+                headers["X-Filter"] = json.dumps(filter_header)
+            else:
+                # otherwise, get filters from the CLI call
+                filters = vars(parsed_args)
+                # remove URL parameters
+                for p in operation.params:
+                    if p.name in filters:
+                        del filters[p.name]
+                # remove empty filters
+                filters = {k: v for k, v in filters.items() if v is not None}
+                # apply filter, if any
+                if filters:
+                    headers["X-Filter"] = json.dumps(filters)
         else:
             if self.defaults:
                 parsed_args = self.config.update(parsed_args)
@@ -436,16 +441,20 @@ complete -F _linode_cli linode-cli""")
         """
         self.config.configure(username=username)
 
-    def call_operation(self, command, action, args=[]):
+    def call_operation(self, command, action, args=[], filters=None):
         """
         This function is used in plugins to retrieve the result of CLI operations
         in JSON format.  This uses the configured user of the CLI.
+
+        :param filters: The X-Filter header to include in the request.  This overrides
+                        whatever is passed into to command as filters.
+        :type filters: dict
         """
         if command not in self.ops or action not in self.ops[command]:
             raise ValueError('Unknown command/action {}/{}'.format(command, action))
 
         operation = self.ops[command][action]
 
-        result = self.do_request(operation, args)
+        result = self.do_request(operation, args, filter_header=filters)
 
         return result.status_code, result.json()
