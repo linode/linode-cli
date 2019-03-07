@@ -29,7 +29,7 @@ class ModelAttr:
 
         return value
 
-    def render_value(self, model):
+    def render_value(self, model, colorize=True):
         """
         Given the model returned from the API, returns the correctly- rendered
         version of it.  This can transform text based on various rules
@@ -45,7 +45,7 @@ class ModelAttr:
         if isinstance(value, list):
             value = ', '.join([str(c) for c in value])
 
-        if self.color_map is not None:
+        if colorize and self.color_map is not None:
             # apply colors
             value = str(value) # just in case
             color = self.color_map.get(value) or self.color_map['default_']

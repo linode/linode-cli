@@ -43,6 +43,8 @@ def main():
                         help="The delimiter when displaying raw output.")
     parser.add_argument('--json', action='store_true',
                         help="Display output as JSON")
+    parser.add_argument('--markdown', action='store_true',
+                        help="Display output in Markdown format.")
     parser.add_argument('--pretty', action='store_true',
                         help="If set, pretty-print JSON output")
     parser.add_argument('--no-headers', action='store_true',
@@ -72,6 +74,8 @@ def main():
         cli.output_handler.mode = OutputMode.delimited
     elif parsed.json:
         cli.output_handler.mode = OutputMode.json
+    elif parsed.markdown:
+        cli.output_handler.mode = OutputMode.markdown
     if parsed.delimiter:
         cli.output_handler.delimiter = parsed.delimiter
     if parsed.pretty:
