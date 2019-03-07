@@ -44,7 +44,7 @@ def create_varmap(context):
     tf_var_map = {
         'node_type': {
             'name': 'server_type_node',
-            'default': context.client.config.config.get('DEFAULT', 'type', fallback='g6-standard-2'),
+            'default': requested_plan_with_fallback(context),
         },
         'nodes': {
             'name': 'nodes',
@@ -422,13 +422,21 @@ def get_default_master_plan(context):
     probably a smaller plan, so we default to the smallest valid plan
     in that case to get as close as possible to their requested plan.
     """
-    requested_default = context.client.config.config.get('DEFAULT', 'type', fallback=None)
+    requested_default = requested_plan_with_fallback(context)
 
     if requested_default:
         if is_valid_master_plan(context, requested_default):
             return requested_default
 
     return smallest_valid_master(context)
+
+def requested_plan_with_fallback(context):
+    default_node_type = 'g6-standard-2'
+    try:
+        default_node_type = context.client.config.config.get('DEFAULT', 'type')
+    except:
+        pass
+    return default_node_type
 
 def is_valid_master_plan(context, linode_type):
     """
