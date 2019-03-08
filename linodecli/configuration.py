@@ -41,9 +41,7 @@ class CLIConfig:
         self._configured = False
 
         if not self.config.has_option('DEFAULT', 'default-user') and self.config.has_option('DEFAULT', 'token'):
-            # this is a legacy config format - handle it somehow
-            # TODO 
-            pass
+            self._handle_no_default_user()
 
         if (not self.config.has_option('DEFAULT', 'default-user')
             and not skip_config and not os.environ.get(ENV_TOKEN_NAME, None)):
@@ -228,14 +226,15 @@ on your account to work correctly.""".format(TOKEN_GENERATION_URL))
         os.chmod(self._get_config_path(), 0o600)
         self._configured = True
 
-    def _write_config(self):
+    def _write_config(self, silent=False):
         """
         Saves the config file as it is right now
         """
         with open(self._get_config_path(), 'w') as f:
             self.config.write(f)
 
-        print("\nConfig written to {}".format(self._get_config_path()))
+        if not silent:
+            print("\nConfig written to {}".format(self._get_config_path()))
 
     def _get_config_path(self):
         """
@@ -299,3 +298,30 @@ on your account to work correctly.""".format(TOKEN_GENERATION_URL))
                 sys.exit(4)
 
         return result.json()
+
+    def _handle_no_default_user(self):
+        """
+        Handle the case that there is no default user in the config
+        """
+        users = [c for c in self.config.sections() if c != 'DEFAULT']
+
+        if len(users) == 1:
+            # only one user configured - they're the default
+            self.config.set('DEFAULT', 'default-user', users[0])
+            self._write_config(silent=True)
+            return
+
+        # more than one user - prompt for the default
+        print('Please choose the active user.  Configured users are:')
+        for u in users:
+            print(' {}'.format(u))
+        print()
+
+        while True:
+            username = input_helper('Active user: ')
+
+            if username in users:
+                self.config.set('DEFAULT', 'default-user', username)
+                self._write_config()
+                return
+            print('No user {}'.format(username))
