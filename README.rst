@@ -368,11 +368,15 @@ want to install Bats. For example, to install Bats into /usr/local::
 Running the Tests
 ^^^^^^^^^^^^^^^^^
 
-Running the tests is simple. The only requirement is that you have a .linode-cli in your user folder containing your test user token::
+Running the tests is simple. The only requirements are that you have a .linode-cli in your user folder containing your test user token::
 
    ./test/test-runner.sh
 
 **Running Tests via Docker**
+
+The openapi spec must first be saved to the base of the linode-cli project:
+
+   curl -o ./openapi.yaml https://developers.linode.com/api/docs/v4/openapi.yaml
 
 Run the following command to build the tests container:
 
