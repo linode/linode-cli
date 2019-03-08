@@ -311,6 +311,37 @@ on your account to work correctly.""".format(TOKEN_GENERATION_URL))
             self._write_config(silent=True)
             return
 
+        if len(users) == 0:
+            # config is new or _really_ old
+            token = self.config.get('DEFAULT', 'token')
+
+            if token is not None:
+                # there's a token in the config - configure that user
+                u = self._do_get_request('/profile', token=token, exit_on_error=False)
+
+                if "errors" in u:
+                    # this token was bad - reconfigure
+                    self.configure()
+                    return
+
+                # setup config for this user
+                username = u['username']
+
+                self.config.set('DEFAULT', 'default-user', username)
+                self.config.add_section(username)
+                self.config.set(username, 'token', token)
+                self.config.set(username, 'region', self.config.get('DEFAULT', 'region'))
+                self.config.set(username, 'type', self.config.get('DEFAULT', 'type'))
+                self.config.set(username, 'image', self.config.get('DEFAULT', 'image'))
+
+                self._write_config(silent=True)
+            else:
+                # got nothin', reconfigure
+                self.configure()
+
+            # this should be handled
+            return
+
         # more than one user - prompt for the default
         print('Please choose the active user.  Configured users are:')
         for u in users:
