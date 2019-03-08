@@ -40,8 +40,28 @@ class CLIConfig:
 
         self._configured = False
 
-        if not self.config.has_option('DEFAULT', 'token') and not skip_config and not os.environ.get(ENV_TOKEN_NAME, None):
+        if not self.config.has_option('DEFAULT', 'default-user') and self.config.has_option('DEFAULT', 'token'):
+            # this is a legacy config format - handle it somehow
+            # TODO 
+            pass
+
+        if (not self.config.has_option('DEFAULT', 'default-user')
+            and not skip_config and not os.environ.get(ENV_TOKEN_NAME, None)):
             self.configure()
+
+    def set_user(self, username):
+        """
+        Sets the acting username.  If this username is not in the config, this is
+        an error.  This overrides the default username
+        """
+        if not self.config.has_section(username):
+            print('User {} is not configured!'.format(username))
+            sys.exit(1)
+
+        self.username = username
+
+    def default_username(self):
+        return self.config.get('DEFAULT', 'default-user')
 
     def update_namespace(self, namespace, new_dict):
         """
@@ -55,13 +75,12 @@ class CLIConfig:
 
         return argparse.Namespace(**ns_dict)
 
-    def update(self, namespace, username=None):
+    def update(self, namespace):
         """
         This updates a Namespace (as returned by ArgumentParser) with config values
         if they aren't present in the Namespace already.
         """
-        if not username:
-            username = "DEFAULT"
+        username = self.username or self.default_username()
 
         if not self.config.has_option(username, 'token') and not os.environ.get(ENV_TOKEN_NAME, None):
             print("User {} is not configured.".format(username))
@@ -69,14 +88,52 @@ class CLIConfig:
 
         return self.update_namespace(namespace, dict(self.config.items(username)))
 
-    def get_token(self, username=None):
+    def get_token(self):
         """
         Returns the token for a configured user
         """
         t = os.environ.get(ENV_TOKEN_NAME, None)
-        return t if t else self.config.get(username or 'DEFAULT', "token")
+        return t if t else self.config.get(self.username or self.default_username(), "token")
 
-    def configure(self, username=None):
+    def remove_user(self, username):
+        """
+        Removes the requested user from the config.  If the user is the default,
+        this exits with error
+        """
+        if self.default_username() == username:
+            print('Cannot remote {} as they are the default user!  You can change '
+                  'the default user with: `linode-cli set-user USERNAME`'.format(username))
+            sys.exit(1)
+
+        if self.config.has_section(username):
+            self.config.remove_section(username)
+            self._write_config()
+
+    def print_users(self):
+        """
+        Prints all users available and exits
+        """
+        print('Configured Users: ')
+        default_user = self.default_username()
+
+        for sec in self.config.sections():
+            if sec != 'DEFAULT':
+                print('{}  {}'.format('*' if sec == default_user else ' ', sec))
+
+        sys.exit(0)
+
+    def set_default_user(self, username):
+        """
+        Sets the default user.  If that user isn't in the config, exits with error
+        """
+        if not self.config.has_section(username):
+            print('User {} is not configured!'.format(username))
+            sys.exit(1)
+
+        self.config.set('DEFAULT', 'default-user', username)
+        self._write_config()
+
+    def configure(self):
         """
         This assumes we're running interactively, and prompts the user
         for a series of defaults in order to make future CLI calls
@@ -85,7 +142,10 @@ class CLIConfig:
         # If configuration has already been done in this run, don't do it again.
         if self._configured: return
         config = {}
-        is_default = username == None
+        # we're configuring the default user if there is no default user configured
+        # yet
+        is_default = not self.config.has_option('DEFAULT', 'default-user')
+        username = None
 
         print("""Welcome to the Linode CLI.  This will walk you through some
 initial setup.""")
@@ -112,11 +172,10 @@ on your account to work correctly.""".format(TOKEN_GENERATION_URL))
                     print("That token didn't work: {}".format(','.join([c["reason"] for c in u['errors']])))
                     continue
 
-                if username is None:
-                    username = u['username']
-                elif u['username'] != username:
-                    print("That is a token for {}, not {}\n".format(u['username'], username))
-                    continue
+                username = u['username']
+                print()
+                print('Configuring {}'.format(username))
+                print()
                 break
 
         regions = [r['id'] for r in self._do_get_request('/regions')['data']]
@@ -146,16 +205,35 @@ on your account to work correctly.""".format(TOKEN_GENERATION_URL))
         if username != 'DEFAULT' and not self.config.has_section(username):
             self.config.add_section(username)
 
+        if not is_default:
+            while True:
+                value = input_helper('Make default user? [y/N]: ')
+
+                if value.lower() in 'yn':
+                    is_default = value.lower() == 'y'
+                    break
+                elif not value.strip():
+                    break
+
+
+        if is_default:
+            # if this is the default user, make it so
+            self.config.set('DEFAULT', 'default-user', username)
+
         for k, v in config.items():
             if v:
                 self.config.set(username, k, v)
-                if is_default:
-                    self.config.set('DEFAULT', k, v)
 
-        with open(self._get_config_path(), 'w') as f:
-            self.config.write(f)
+        self._write_config()
         os.chmod(self._get_config_path(), 0o600)
         self._configured = True
+
+    def _write_config(self):
+        """
+        Saves the config file as it is right now
+        """
+        with open(self._get_config_path(), 'w') as f:
+            self.config.write(f)
 
         print("\nConfig written to {}".format(self._get_config_path()))
 

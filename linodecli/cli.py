@@ -25,7 +25,7 @@ class CLI:
     """
     Responsible for loading or baking a spec and handling incoming commands
     """
-    def __init__(self, version, base_url, skip_config=False):
+    def __init__(self, version, base_url, skip_config=False, as_user=None):
         self.ops = {}
         self.spec = {}
         self.defaults = True # whether to use default values for arguments
@@ -38,9 +38,6 @@ class CLI:
         self.output_handler = OutputHandler()
         self.config = CLIConfig(self.base_url, skip_config=skip_config)
         self.load_baked()
-
-        if not skip_config:
-            self.token = self.config.get_token()
 
     def _resolve_allOf(self, node):
         """
@@ -326,7 +323,7 @@ complete -F _linode_cli linode-cli""")
         """
         method = getattr(requests, operation.method)
         headers = {
-            'Authorization': "Bearer {}".format(self.token),
+            'Authorization': "Bearer {}".format(self.config.get_token()),
             'Content-Type': 'application/json',
             'User-Agent': "linode-cli:{}".format(self.version),
         }
@@ -444,11 +441,11 @@ complete -F _linode_cli linode-cli""")
             print('Page {} of {}.  Call with --page [PAGE] to load a different page.'.format(
                 result.json()['page'], result.json()['pages']))
 
-    def configure(self, username=None):
+    def configure(self):
         """
         Reconfigure the application
         """
-        self.config.configure(username=username)
+        self.config.configure()
 
     def call_operation(self, command, action, args=[]):
         """

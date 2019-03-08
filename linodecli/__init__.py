@@ -61,6 +61,9 @@ def main():
     parser.add_argument('--no-defaults', action='store_true',
                         help="Suppress default values for arguments.  Default values "
                              "are configured on initial setup or with linode-cli configure")
+    parser.add_argument('--as-user', metavar='USERNAME', type=str,
+                        help="The username to execute this command as.  This user must "
+                             "be configured.")
     parser.add_argument('--suppress-warnings', action='store_true',
                         help="Suppress warnings that are intended for human users. "
                              "This is useful for scripting the CLI's behavior.")
@@ -90,6 +93,10 @@ def main():
     cli.defaults = not parsed.no_defaults
     cli.suppress_warnings = parsed.suppress_warnings
     cli.page = parsed.page
+
+    if parsed.as_user:
+        # if they are acting as a non-default user, set it up early
+        cli.config.set_user(parsed.as_user)
 
     if parsed.version:
         # print version info and exit
@@ -176,7 +183,20 @@ def main():
 
     # configure
     if parsed.command == "configure":
-        cli.configure(username=parsed.action)
+        cli.configure()
+        exit(0)
+
+    # block of commands for user-focused operations
+    if parsed.command == "set-user":
+        cli.config.set_default_user(parsed.action)
+        exit(0)
+
+    if parsed.command == "show-users":
+        cli.config.print_users()
+        exit(0)
+
+    if parsed.command == "remove-user":
+        cli.config.remove_user(parsed.action)
         exit(0)
 
     # special command to bake shell completion script
