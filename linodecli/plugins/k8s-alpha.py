@@ -44,7 +44,7 @@ def create_varmap(context):
     tf_var_map = {
         'node_type': {
             'name': 'server_type_node',
-            'default': 'g6-standard-2',
+            'default': requested_type_with_fallback(context),
         },
         'nodes': {
             'name': 'nodes',
@@ -52,7 +52,7 @@ def create_varmap(context):
         },
         'master_type': {
             'name': 'server_type_master',
-            'default': 'g6-standard-2',
+            'default': get_default_master_type(context),
         },
         'region': {
             'name': 'region',
@@ -103,8 +103,8 @@ def create(args, context):
                                  tf_var_map['master_type']['default']))
     parser.add_argument('--region', metavar="REGION", type=str, required=False,
                         default=tf_var_map['region']['default'],
-                        help='The Linode Region ID in which to deploy the cluster as retrieved with '
-                             '`linode-cli regions list`. (default "{}")'.format(
+                        help='The Linode Region ID in which to deploy the cluster as retrieved '
+                             'with `linode-cli regions list`. (default "{}")'.format(
                                  tf_var_map['region']['default']))
     parser.add_argument('--ssh-public-key', metavar="KEYPATH", type=str, required=False,
                         default=tf_var_map['ssh_public_key']['default'],
@@ -219,7 +219,8 @@ def check_for_pubkey(parsed):
     except FileNotFoundError:
         print("The ssh public key {} does not exist\n"
               "Please refer to this documentation on creating an ssh key\n"
-              "https://help.github.com/articles/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent/".format(
+              "https://help.github.com/articles/"
+              "generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent/".format(
                   parsed.ssh_public_key
               ))
         sys.exit(1)
@@ -328,16 +329,21 @@ def gen_terraform_file(context, tf_var_map, cluster_name, prefix):
     return ''.join(tf_file_parts)
 
 def gen_terraform_args(parsed, tf_var_map):
+    'Transform relevant cli plugin args into terraform args'
     args = []
     for varname in tf_var_map.keys():
-        args = args + ['-var', "{}={}".format(tf_var_map[varname]['name'], getattr(parsed, varname))]
+        args = args + [
+            '-var',
+            "{}={}".format(tf_var_map[varname]['name'],
+            getattr(parsed, varname))]
     return args
 
 def call_or_exit(*args, **kwargs):
     ret = spcall(*args, **kwargs)
     if ret != 0:
         print("Error when calling {} with additional options {}".format(args, kwargs))
-        print("\nPlease visit us in #linode on the Kubernetes Slack and let us know about this error! http://slack.k8s.io/")
+        print("\nPlease visit us in #linode on the Kubernetes Slack and let us know about "
+              "this error! http://slack.k8s.io/")
         sys.exit(ret)
 
 def get_kubeconfig_user(cluster_name, prefix):
@@ -411,3 +417,50 @@ def print_available_commands(commands):
     table = SingleTable(proc)
     table.inner_heading_row_border = False
     print(table.table)
+
+def get_default_master_type(context):
+    """
+    Return either the user's requeted default type size (if valid for
+    a Kubernetes master) or the smallest valid type for a Kubernetes
+    master if the user's requested type doesn't meet that criteria.
+
+    If the user's type doesn't meet the 2 VCPU requirement, it's
+    probably a smaller type, so we default to the smallest valid type
+    in that case to get as close as possible to their requested type.
+    """
+    requested_default = requested_type_with_fallback(context)
+
+    if requested_default:
+        if is_valid_master_type(context, requested_default):
+            return requested_default
+
+    return smallest_valid_master(context)
+
+def requested_type_with_fallback(context):
+    default_node_type = 'g6-standard-2'
+    try:
+        default_node_type = context.client.config.config.get('DEFAULT', 'type')
+    except:
+        pass
+    return default_node_type
+
+def is_valid_master_type(context, linode_type):
+    """
+    Kubernetes masters must have a minimum of 2 VCPUs.
+    """
+    status, result = context.client.call_operation('linodes', 'type-view', args=[linode_type])
+    if status != 200:
+        raise RuntimeError(
+            "{}: Failed to look up configured default Linode type from API".format(str(status)))
+    else:
+        return result['vcpus'] >= 2
+
+def smallest_valid_master(context):
+    status, result = context.client.call_operation('linodes', 'types',
+        filters={
+            "+and": [{ "vcpus": { "+gte": 2 }}, {"class": "standard"}],
+            "+order_by": "memory", "+order": "asc"})
+    if status != 200:
+        raise RuntimeError("{}: Failed to request Linode types from API".format(str(status)))
+    else:
+        return result['data'][0]['id']
