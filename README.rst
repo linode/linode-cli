@@ -186,8 +186,11 @@ The following is the help message for the command::
      --ssh-public-key KEYPATH
                            The path to your public key file which will be used to
                            access Nodes during initial provisioning only! The
-                           keypair _must_ be added to an ssh-agent (default
-                           $HOME/.ssh/id_rsa.pub)
+                           keypair _must_ be added to an ssh-agent. If you don't
+                           use id_rsa as your private key name, use the flag
+                           --ssh-public-key and supply your public key path. If
+                           you use id_rsa as your key name, omit the flag.
+                           (default $HOME/.ssh/id_rsa.pub).
 
 Here's an example usage of the command, creating a cluster with six 2GB Linodes as
 the Nodes::
