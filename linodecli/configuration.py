@@ -205,7 +205,7 @@ on your account to work correctly.""".format(TOKEN_GENERATION_URL))
 
         if not is_default:
             while True:
-                value = input_helper('Make default user? [y/N]: ')
+                value = input_helper('Make active user? [y/N]: ')
 
                 if value.lower() in 'yn':
                     is_default = value.lower() == 'y'
@@ -213,10 +213,14 @@ on your account to work correctly.""".format(TOKEN_GENERATION_URL))
                 elif not value.strip():
                     break
 
+            if not is_default: # they didn't change the default user
+                print('Active user will remain {}'.format(self.config.get('DEFAULT', 'default-user')))
+
 
         if is_default:
             # if this is the default user, make it so
             self.config.set('DEFAULT', 'default-user', username)
+            print('Active user is now {}'.format(username))
 
         for k, v in config.items():
             if v:

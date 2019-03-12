@@ -144,6 +144,16 @@ def main():
     # handle a help for the CLI
     if parsed.command is None or (parsed.command is None and  parsed.help):
         parser.print_help()
+
+        # commands to manager CLI users (don't call out to API)
+        print()
+        print('CLI user management commands:')
+        um_commands = [['configure', 'set-user', 'show-users'],['remove-user']]
+        table = SingleTable(um_commands)
+        table.inner_heading_row_border = False
+        print(table.table)
+
+        # commands generated from the spec (call the API directly)
         print()
         print("Available commands:")
 
@@ -158,6 +168,7 @@ def main():
         table.inner_heading_row_border = False
         print(table.table)
 
+        # plugins registered to the CLI (do arbitrary things)
         if plugins.available:
             # only show this if there are any available plugins
             print("Available plugins:")
@@ -183,21 +194,55 @@ def main():
 
     # configure
     if parsed.command == "configure":
-        cli.configure()
-        exit(0)
+        if parsed.help:
+            print('linode-cli configure')
+            print()
+            print('Configured the Linode CLI.  This command can be used to change')
+            print('defaults selected for the current user, or to configure additional')
+            print('users.')
+            exit(0)
+        else:
+            cli.configure()
+            exit(0)
 
     # block of commands for user-focused operations
     if parsed.command == "set-user":
-        cli.config.set_default_user(parsed.action)
-        exit(0)
+        if parsed.help or not parsed.action:
+            print('linode-cli set-user [USER]')
+            print()
+            print('Sets the active user for the CLI out of users you have configured.')
+            print('To configure a new user, see `linode-cli configure`')
+            exit(0)
+        else:
+            cli.config.set_default_user(parsed.action)
+            exit(0)
 
     if parsed.command == "show-users":
-        cli.config.print_users()
-        exit(0)
+        if parsed.help:
+            print('linode-cli show-users')
+            print()
+            print('Lists configured users.  Configured users can be set as the')
+            print('active user (used for all commands going forward) with the')
+            print('`set-user` command, or used for a single command with the')
+            print('`--as-user` flag.  New users can be added with `linode-cli configure`.')
+            print('The user that is currently active is indicated with a `*`')
+            exit(0)
+        else:
+            cli.config.print_users()
+            exit(0)
 
     if parsed.command == "remove-user":
-        cli.config.remove_user(parsed.action)
-        exit(0)
+        if parsed.help or not parsed.action:
+            print('linode-cli remove-user [USER]')
+            print()
+            print('Removes a user the CLI was configured with.  This does not change')
+            print('your Linode account, only this CLI installation.  Once removed,')
+            print('the user may not be set as active or used for commands unless')
+            print('configured again.')
+            exit(0)
+        else:
+            cli.config.remove_user(parsed.action)
+            exit(0)
 
     # special command to bake shell completion script
     if parsed.command == 'bake-bash':
