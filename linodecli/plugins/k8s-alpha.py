@@ -112,7 +112,7 @@ def create(args, context):
                              'during initial provisioning only! If you don\'t use id_rsa as your '
                              'private key name, use the flag --ssh-public-key and supply your '
                              'public key path. If you use id_rsa as your key name and it\'s been '
-                             'added to your ssh-agent, omit the flag. (default {}).'.format(tf_var_map['ssh_public_key']['default']).)
+                             'added to your ssh-agent, omit the flag. (default {})'.format(tf_var_map['ssh_public_key']['default']).)
     parsed, remaining_args = parser.parse_known_args(args)
 
     # make sure that the ssh public key exists
