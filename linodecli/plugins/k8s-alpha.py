@@ -253,10 +253,10 @@ def print_ssh_agent_warning(parsed, with_agent_start=False):
     agent_start = ''
     if with_agent_start:
         agent_start = "eval $(ssh-agent) && "
-    print("Your ssh private key must be added to your ssh-agent.\n"
-          "Please run this command:\n\n{}ssh-add {}".format(
-            agent_start,
-            parsed.ssh_public_key.replace('.pub', '')))
+    print("If you wish to omit specifying the public key path, you must use \n"
+          "id_rsa for your private key name and add it to your ssh-agent.\n"
+          "Please run 'ssh-add some_path_to_id_rsa' or use the flag --ssh-public-key and \n"
+          "specify your public key path")
     sys.exit(1)
 
 def check_deps(*args):
