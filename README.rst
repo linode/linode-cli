@@ -113,11 +113,11 @@ run the *configure* command::
 Suppressing Defaults
 """"""""""""""""""""
 
-If you configured default values for `image`, `region`, and Linode `type`, they
+If you configured default values for ``image``, ``region``, and Linode ``type``, they
 will be sent for all requests that accept them if you do not specify a different
 value.  If you want to send a request *without* these arguments, you must invoke
-the CLI with the `--no-defaults` option.  For example, to create a Linode with
-no `image` after a default Image has been configured, you would do this::
+the CLI with the ``--no-defaults`` option.  For example, to create a Linode with
+no ``image`` after a default Image has been configured, you would do this::
 
    linode-cli linodes create --region us-east --type g5-standard-2 --no-defaults
 
@@ -126,18 +126,57 @@ Suppressing Warnings
 
 In some situations, like when the CLI is out of date, it will generate a warning
 in addition to its normal output.  If these warnings can interfere with your
-scripts or you otherwise want them disabled, simply add the `--suppress-warnings`
+scripts or you otherwise want them disabled, simply add the ``--suppress-warnings``
 flag to prevent them from being emitted.
 
 Environment Variables
 """""""""""""""""""""
 
 If you prefer, you may store your token in an environment variable named
-`LINODE_CLI_TOKEN` instead of using the configuration file.  Doing so allows you
-to bypass the initial configuration, and subsequent calls to `linode-cli configure`
+``LINODE_CLI_TOKEN`` instead of using the configuration file.  Doing so allows you
+to bypass the initial configuration, and subsequent calls to ``linode-cli configure``
 will allow you to set defaults without having to set a token.  Be aware that if
 the environment variable should be unset, the Linode CLI will stop working until
 it is set again or the CLI is reconfigured with a token.
+
+Multiple Users
+^^^^^^^^^^^^^^
+
+If you use the Linode CLI to manage multiple Linode accounts, you may configure
+additional users using the ``linode-cli configure`` command.  The CLI will automatically
+detect that a new user is being configured based on the token given.
+
+Displaying Configured Users
+"""""""""""""""""""""""""""
+
+To see what users are configured, simply run the following::
+
+   linode-cli show-users
+
+The user who is currently active will be indicated by an asterisk.
+
+Changing the Active User
+""""""""""""""""""""""""
+
+You may change the active user for all requests as follows::
+
+   linode-cli set-user USERNAME
+
+Subsequent CLI commands will be executed as that user by default.
+
+Should you wish to execute a single request as a different user, you can supply
+the ``--as-user`` argument to specify the username you wish to act as for that
+command.  This *will not* change the active user.
+
+Removing Configured Users
+"""""""""""""""""""""""""
+
+To remove a user from you previously configured, run::
+
+   linode-cli remove-user USERNAME
+
+Once a user is removed, they will need to be reconfigured if you wish to use the
+CLI for them again.
 
 Kubernetes Deployment Plugin
 ----------------------------
@@ -167,10 +206,10 @@ The following is the help message for the command::
                            [--master-type TYPE] [--region REGION]
                            [--ssh-public-key KEYPATH]
                            NAME
-   
+
    positional arguments:
      NAME                  A name for the cluster.
-   
+
    optional arguments:
      -h, --help            show this help message and exit
      --node-type TYPE      The Linode Type ID for cluster Nodes as retrieved with
@@ -297,7 +336,7 @@ When using ``install``, the ``PYTHON`` argument is optional - if provided, it
 will install the CLI for that version of python.  Valid values are ``2`` and
 ``3``, and it will default to ``3``.
 
-Testing 
+Testing
 -------
 
 **WARNING!** Running the CLI tests will remove all linodes and data associated
