@@ -109,9 +109,10 @@ def create(args, context):
     parser.add_argument('--ssh-public-key', metavar="KEYPATH", type=str, required=False,
                         default=tf_var_map['ssh_public_key']['default'],
                         help='The path to your public key file which will be used to access Nodes '
-                             'during initial provisioning only! The keypair _must_ be added to an '
-                             'ssh-agent (default {})'.format(
-                                 tf_var_map['ssh_public_key']['default']))
+                             'during initial provisioning only! If you don\'t use id_rsa as your '
+                             'private key name, use the flag --ssh-public-key and supply your '
+                             'public key path. If you use id_rsa as your key name and it\'s been '
+                             'added to your ssh-agent, omit the flag. (default {})'.format(tf_var_map['ssh_public_key']['default']))
     parsed, remaining_args = parser.parse_known_args(args)
 
     # make sure that the ssh public key exists
@@ -252,10 +253,13 @@ def print_ssh_agent_warning(parsed, with_agent_start=False):
     agent_start = ''
     if with_agent_start:
         agent_start = "eval $(ssh-agent) && "
-    print("Your ssh private key must be added to your ssh-agent.\n"
+    print("Your currently selected ssh public key is: {}\n"
+          "Use --ssh-public-key to choose a different public key.\n\n"
+          "The ssh private key must be added to your ssh-agent.\n"
           "Please run this command:\n\n{}ssh-add {}".format(
-            agent_start,
-            parsed.ssh_public_key.replace('.pub', '')))
+              parsed.ssh_public_key,
+              agent_start,
+              parsed.ssh_public_key.replace('.pub', '')))
     sys.exit(1)
 
 def check_deps(*args):
