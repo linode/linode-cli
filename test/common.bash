@@ -94,3 +94,48 @@ createLinodeAndWait() {
         fi
     done
 }
+
+
+setToken() {
+    source ./env.sh
+
+    if [ "$TOKEN_1_IN_USE_BY" = "NONE" ]; then
+        export LINODE_CLI_TOKEN=$TOKEN_1
+        export TOKEN_1_IN_USE_BY=$1
+    elif [[ "$TOKEN_1_IN_USE_BY" != "NONE" && "$TOKEN_2_IN_USE_BY" = "NONE" ]]; then
+        export LINODE_CLI_TOKEN=$TOKEN_2
+        export TOKEN_2_IN_USE_BY=$1
+    fi
+
+    run bash -c "echo \"export TOKEN_1=$TOKEN_1\" > ./env.sh"
+    run bash -c "echo \"export TOKEN_2=$TOKEN_2\" >> ./env.sh"
+    run bash -c "echo \"export TOKEN_1_IN_USE_BY=$TOKEN_1_IN_USE_BY\" >> ./env.sh"
+    run bash -c "echo \"export TOKEN_2_IN_USE_BY=$TOKEN_2_IN_USE_BY\" >> ./env.sh"
+}
+
+getToken() {
+    source ./env.sh
+
+    if [ "$TOKEN_1_IN_USE_BY" = $1 ]; then
+        export LINODE_CLI_TOKEN=$TOKEN_1
+    elif [ "$TOKEN_2_IN_USE_BY" = $1 ]; then
+        export LINODE_CLI_TOKEN=$TOKEN_2
+    fi
+}
+
+clearToken() {
+    source ./env.sh
+
+    if [ "$TOKEN_1_IN_USE_BY" = $1 ]; then
+        export TOKEN_1_IN_USE_BY=NONE
+    elif [ "$TOKEN_2_IN_USE_BY" = $1 ]; then
+        export TOKEN_2_IN_USE_BY=NONE
+    fi
+
+    unset LINODE_CLI_TOKEN
+
+    run bash -c "echo \"export TOKEN_1=$TOKEN_1\" > ./env.sh"
+    run bash -c "echo \"export TOKEN_2=$TOKEN_2\" >> ./env.sh"
+    run bash -c "echo \"export TOKEN_1_IN_USE_BY=$TOKEN_1_IN_USE_BY\" >> ./env.sh"
+    run bash -c "echo \"export TOKEN_2_IN_USE_BY=$TOKEN_2_IN_USE_BY\" >> ./env.sh"
+}

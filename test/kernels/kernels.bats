@@ -2,8 +2,15 @@
 
 load '../test_helper/bats-support/load'
 load '../test_helper/bats-assert/load'
+load '../common'
+
+setup() {
+    export suiteName="kernels"
+}
 
 @test "it should list available kernels" {
+    setToken "$suiteName"
+
     kernelIdsDisplay() {
         local kernelsList=$(linode-cli kernels list --text --no-headers --format "id")
         local kernel
@@ -18,6 +25,8 @@ load '../test_helper/bats-assert/load'
 }
 
 @test "it should display id,label,version,kvm,xen,architecture,pvops fields" {
+    getToken "$suiteName"
+
     kernelFieldsReturned() {
         local kernelsList=$(linode-cli kernels list --text --no-headers --delimiter "," --format "id,version,kvm,xen,architecture,pvops")
         local kernelWithFields
@@ -32,6 +41,8 @@ load '../test_helper/bats-assert/load'
 }
 
 @test "it should view a kernel" {
+    getToken "$suiteName"
+
     kernelsAvailable=$(linode-cli kernels list --text --no-headers --format "id")
     set -- $kernelsAvailable
     kernelId=$1
@@ -44,4 +55,6 @@ load '../test_helper/bats-assert/load'
     assert_success
     assert_output --partial "id,version,kvm,xen,architecture,pvops"
     assert_output --regexp "linode/.*,.*,(False|True),(False|True),(i386|x86_64),(False|True)"
+
+    clearToken "$suiteName"
 }

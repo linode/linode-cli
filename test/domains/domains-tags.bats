@@ -6,6 +6,7 @@ load '../common'
 
 setup() {
     export timestamp=$(date +%s)
+    export suiteName="domain-tags"
 }
 
 teardown() {
@@ -49,6 +50,9 @@ teardown() {
 }
 
 @test "it should create a master domain with tags" {
+    setToken $suiteName
+    echo "Tags test token is $LINODE_CLI_TOKEN" >&3
+
     tag="foo"
     email="pthiel+$timestamp@linode.com"
     run linode-cli domains create \
@@ -67,6 +71,8 @@ teardown() {
 }
 
 @test "it should cleanup domains and tags" {
+    getToken "$suiteName"
     run removeDomains
     run removeUniqueTag
+    clearToken "$suiteName"
 }
