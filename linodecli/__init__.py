@@ -250,7 +250,7 @@ def main():
 
     # check for plugin invocation
     if parsed.command not in cli.ops and parsed.command in plugins.available:
-        context = plugins.PluginContext(cli.token, cli)
+        context = plugins.PluginContext(cli.config.get_token(), cli)
 
         # reconstruct arguments to send to the plugin
         plugin_args = argv[1:] # don't include the program name
