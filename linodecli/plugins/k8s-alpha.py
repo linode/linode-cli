@@ -227,20 +227,23 @@ def check_for_pubkey(parsed):
         sys.exit(1)
 
 def check_for_ssh_agent(parsed):
-    # The most likely filename name for the private key
-    privkey_name = os.path.basename(parsed.ssh_public_key.replace('.pub',''))
+    """Check if the selected pubkey is added to the agent"""
+
+    with open(parsed.ssh_public_key) as f:
+        """Grab the actual pubkey from the file"""
+        pubkey = f.readline().split(' ')[1]
 
     print_warning = False
     need_agent_start = False
     try:
-        pid = Popen(["ssh-add", "-l"], stdout=PIPE, stderr=PIPE)
+        # ssh-agent -L (not -l), which prints the actual pubkeys rather than just the comments
+        pid = Popen(["ssh-add", "-L"], stdout=PIPE, stderr=PIPE)
         stdout, _ = pid.communicate()
         stdout = str(stdout)
         if pid.returncode == 2:
             need_agent_start = True
-        # TODO if the provided pubkey name is a substring of another key name
-        # then we think that it's loaded when it's not.
-        if privkey_name not in stdout:
+        # If the pubkey isn't there, then it's not loaded!
+        if pubkey not in stdout:
             print_warning = True
     except FileNotFoundError:
         print_warning = True
