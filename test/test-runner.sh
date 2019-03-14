@@ -18,6 +18,23 @@ then
         cd $PWD/test
     fi
 
+
+
+
+    # Trap ctrl-c and reset .env file
+    trap ctrl_c INT
+
+    function ctrl_c() {
+        source ./.env
+
+        unset LINODE_CLI_TOKEN
+
+        echo "export TOKEN_1=$TOKEN_1" > ./.env
+        echo "export TOKEN_2=$TOKEN_2" >> ./.env
+        echo "export TOKEN_1_IN_USE_BY=NONE" >> ./.env
+        echo "export TOKEN_2_IN_USE_BY=NONE" >> ./.env
+    }
+
     find . -name *.bats -not \( -path './test_helper*' \) | parallel --jobs 2 bats
 else
     echo -e "\n ####WARNING!#### \n"
