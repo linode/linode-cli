@@ -6,7 +6,8 @@ load '../common'
 
 setup() {
 	export timestamp=$(date +%s)
-	export suiteName="master-domains"
+	suiteName="master-domains"
+	setToken $suiteName
 }
 
 teardown() {
@@ -14,7 +15,6 @@ teardown() {
 }
 
 @test "it should fail to create a domain without specifying a type" {
-	setToken "$suiteName"
 	run linode-cli domains create \
 		--domain "$timestamp-example.com" \
 		--soa_email="pthiel+$timestamp@linode.com" \
@@ -27,8 +27,6 @@ teardown() {
 }
 
 @test "it should fail to create a master domain without a SOA email" {
-	getToken "$suiteName"
-
 	run linode-cli domains create \
 		--type master \
 		--domain "$timestamp-example.com" \
@@ -41,8 +39,6 @@ teardown() {
 }
 
 @test "it should create a master domain" {
-	getToken "$suiteName"
-
 	run linode-cli domains create \
 		--type master \
 		--soa_email="pthiel+$timestamp@linode.com" \
@@ -57,7 +53,6 @@ teardown() {
 }
 
 @test "it should update the master domain soa_email" {
-	getToken "$suiteName"
 	# Remove --master_ips param when 872 is resolved
 	newSoaEmail='pthiel@linode.com'
 
@@ -74,8 +69,6 @@ teardown() {
 }
 
 @test "it should list master domains" {
-	getToken "$suiteName"
-
 	run linode-cli domains list \
 		--format="id,domain,type,status" \
 		--text \
@@ -87,8 +80,6 @@ teardown() {
 }
 
 @test "it should show domain detail" {
-	getToken "$suiteName"
-
 	run linode-cli domains view $(linode-cli domains list --text --no-header --format="id") \
 		--text \
 		--no-header \
@@ -100,7 +91,6 @@ teardown() {
 }
 
 @test "it should delete all master domains" {
-	getToken "$suiteName"
     run removeDomains
     clearToken "$suiteName"
 }

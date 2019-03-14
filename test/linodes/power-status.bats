@@ -8,6 +8,8 @@ load '../common'
 ##################################################################
 
 setup() {
+    suiteName="power-status"
+    setToken "$suiteName"
     export timestamp=$(date +%s)
     run createLinode
     linode_id=$(linode-cli linodes list --format id --text --no-header | head -n 1)
@@ -17,17 +19,21 @@ setup() {
 teardown() {
     unset timestamp
     run removeLinodes
+
+    if [ "$LAST_TEST" = "TRUE" ]; then
+        clearToken "$suiteName"
+    fi
 }
 
-@test "it should create a linode and be provisioning status" {
-    run linode-cli linodes view $linode_id \
-        --format="status" \
-        --text \
-        --no-headers
+# @test "it should create a linode and be provisioning status" {
+#     run linode-cli linodes view $linode_id \
+#         --format="status" \
+#         --text \
+#         --no-headers
 
-    assert_success
-    assert_output "provisioning"
-}
+#     assert_success
+#     assert_output "provisioning"
+# }
 
 @test "it should create a linode and boot" {
     # Wait For Linode to be Running
@@ -75,6 +81,7 @@ teardown() {
 }
 
 @test "it should shutdown the linode" {
+    LAST_TEST="TRUE"
     # Wait For Linode to be Running
     until [ $(linode-cli linodes view $linode_id --format="status" --text --no-headers) = "running" ]; do
         echo 'still provisioning'

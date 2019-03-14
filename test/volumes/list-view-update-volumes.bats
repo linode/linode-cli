@@ -10,6 +10,8 @@ load '../common'
 ##################################################################
 
 setup() {
+    suiteName="list-view-update-volumes"
+    setToken "$suiteName"
     export volume_id=$(linode-cli volumes list --text --no-headers --delimiter="," --format="id" )
 }
 
@@ -87,4 +89,5 @@ teardown() {
 @test "it should remove all volumes and unique tags" {
     run removeVolumes
     run removeUniqueTag
+    clearToken "$suiteName"
 }

@@ -18,7 +18,7 @@ then
         cd $PWD/test
     fi
 
-    bats $(ls */*.bats)
+    find . -name *.bats -not \( -path './test_helper*' \) | parallel --jobs 2 bats
 else
     echo -e "\n ####WARNING!#### \n"
     echo -e  "Running the Linode CLI tests requires removing all resources on your account\n"

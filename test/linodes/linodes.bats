@@ -9,6 +9,11 @@ load '../common'
 #  WARNING: USE A SEPARATE TEST ACCOUNT WHEN RUNNING THESE TESTS #
 ##################################################################
 
+setup() {
+    suiteName="linodes"
+    setToken "$suiteName"
+}
+
 @test "it should create linodes with a label" {
     run linode-cli linodes create \
         --type g6-standard-2 \
@@ -26,7 +31,7 @@ load '../common'
 }
 
 @test "it should view the linode configuration" {
-    linode_id="$(linode-cli --text --no-headers linodes list | awk '{ print $1 }' | xargs)"
+    linode_id=$(linode-cli --text --no-headers linodes list | awk '{ print $1 }' | xargs)
     run linode-cli linodes view "$linode_id" \
         --text \
         --delimiter "," \
@@ -105,11 +110,9 @@ load '../common'
 }
 
 @test "it should add a tag a linode" {
-    linode_id="$(linode-cli --text --no-headers linodes list | awk '{ print $1 }' | xargs)"
-    set -- $linode_id
-    LINODE=$1
+    local linode_id=$(linode-cli --text --no-headers linodes list | awk '{ print $1 }' | xargs)
 
-    run linode-cli linodes update $LINODE \
+    run linode-cli linodes update $linode_id \
         --tags=$uniqueTag \
         --format 'tags' \
         --text \
@@ -122,4 +125,5 @@ load '../common'
 @test "it should remove all linodes" {
     run removeLinodes
     run removeUniqueTag
+    clearToken "$suiteName"
 }

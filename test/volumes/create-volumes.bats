@@ -10,6 +10,8 @@ load '../common'
 ##################################################################
 
 setup() {
+    suiteName="create-volumes"
+    setToken "$suiteName"
     export timestamp=$(date +%s)
 }
 
@@ -103,4 +105,5 @@ teardown() {
 @test "it should remove all volumes" {
 	run removeLinodes
 	run removeVolumes
+    clearToken "$suiteName"
 }

@@ -8,19 +8,24 @@ load '../common'
 ##################################################################
 
 setup() {
+    suiteName="resize"
+    setToken "$suiteName"
     export timestamp=$(date +%s)
-    local plan=$(linode-cli linodes types --format="id" --text --no-headers | sed -n 2p)
-    run createLinodeAndWait $plan
-    linode_id=$(linode-cli linodes list --format id --text --no-header | head -n 1)
 }
 
 teardown() {
     unset timestamp
     run removeLinodes
+
+    if [ "$LAST_TEST" = "TRUE" ]; then
+        clearToken "$suiteName"
+    fi
 }
 
 @test "it should fail to resize to the same plan" {
-    # linode_id=$(linode-cli linodes list --format id --text --no-header | head -n 1)
+    local plan=$(linode-cli linodes types --format="id" --text --no-headers | sed -n 2p)
+    run createLinodeAndWait $plan
+    linode_id=$(linode-cli linodes list --format id --text --no-header | head -n 1)
     linode_plan=$(linode-cli linodes view $linode_id --format="type" --text --no-headers)
 
     run linode-cli linodes resize \
@@ -37,7 +42,11 @@ teardown() {
 
 @test "it should fail to resize to a smaller plan" {
 	smaller_plan=$(linode-cli linodes types --format="id" --text --no-headers | sed -n 1p)
-	# linode_id=$(linode-cli linodes list --format id --text --no-header | head -n 1)
+	local plan=$(linode-cli linodes types --format="id" --text --no-headers | sed -n 2p)
+
+    run createLinodeAndWait $plan
+    linode_id=$(linode-cli linodes list --format id --text --no-header | head -n 1)
+
 	run linode-cli linodes resize \
 		--type=$smaller_plan \
 		--text \
@@ -50,7 +59,11 @@ teardown() {
 }
 
 @test "it should fail to resize to an invalid plan" {
+    local plan=$(linode-cli linodes types --format="id" --text --no-headers | sed -n 2p)
+    run createLinodeAndWait $plan
+    linode_id=$(linode-cli linodes list --format id --text --no-header | head -n 1)
 	invalid_plan="g15-bad-plan"
+
 	run linode-cli linodes resize \
 		--type=$invalid_plan \
 		--text \
@@ -63,7 +76,8 @@ teardown() {
 }
 
 @test "it should resize the linode to the next size plan" {
-    if [ $CI_BUILD = "TRUE" ]; then
+    LAST_TEST="TRUE"
+    if [ $RUN_LONG_TESTS = "TRUE" ]; then
     	larger_plan=$(linode-cli linodes types --format="id" --text --no-headers | sed -n 3p)
     	run linode-cli linodes resize \
     		--type=$larger_plan \
@@ -107,7 +121,8 @@ teardown() {
 
         assert_success
         assert_output $larger_plan
+
     else
-        skip "Skipping long-running Test, to run set CI_BUILD=TRUE"
+        skip "Skipping long-running Test, to run set RUN_LONG_TESTS=TRUE"
     fi
 }

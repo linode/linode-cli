@@ -7,12 +7,11 @@ load '../common'
 domainTimeStamp=0
 
 setup() {
-    export suiteName="slave-domains"
+    suiteName="slave-domains"
+    setToken $suiteName
 }
 
 @test "it should fail to create a slave domain without a master dns server" {
-    setToken "$suiteName"
-
     domainTimeStamp="$(date +"%s")"
     run linode-cli domains create --type slave --domain "$domainTimeStamp-example.com" --text --no-header
     assert_failure
@@ -21,15 +20,11 @@ setup() {
 }
 
 @test "it should create a slave domain" {
-    getToken "$suiteName"
-
     run linode-cli domains create --type slave --domain "$domainTimeStamp-example.com" --master_ips 1.1.1.1 --text --no-header --delimiter "," --format="id,domain,type,status"
     assert_output --regexp "[0-9]+,$domainTimeStamp-example.com,slave,active"
 }
 
 @test "it should list the slave domain" {
-    getToken "$suiteName"
-
     run linode-cli domains list --text --no-header
     assert_output --partial "$domainTimeStamp-example.com"
 }
@@ -43,15 +38,12 @@ setup() {
 }
 
 @test "it should update a slave domain" {
-    getToken "$suiteName"
-
     slaveId=$(linode-cli domains list --domain $domainTimeStamp-example.com --format "id" --text --no-header)
     run linode-cli domains update --type slave --master_ips 8.8.8.8 $slaveId --text --no-header
     assert_success
 }
 
 @test "it should delete all slave domains" {
-    getToken "$suiteName"
     run removeDomains
     clearToken "$suiteName"
 }

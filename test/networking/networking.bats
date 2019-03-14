@@ -5,6 +5,8 @@ load '../test_helper/bats-assert/load'
 load '../common'
 
 setup() {
+    suiteName="networking"
+    setToken "$suiteName"
     linode_id=$(linode-cli linodes list --format id --text --no-header | head -n 1)
 }
 
@@ -73,4 +75,5 @@ setup() {
     assert_output --regexp "ipv4,False,.*,[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]"
 
     run removeLinodes
+    clearToken "$suiteName"
 }

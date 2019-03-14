@@ -8,6 +8,8 @@ load '../common'
 # ##################################################################
 
 setup() {
+    suiteName="backups"
+    setToken "$suiteName"
     export timestamp=$(date +%s)
     clean_linodes="false"
     linode_id=$(linode-cli linodes list --format id --text --no-header | head -n 1)
@@ -17,9 +19,12 @@ setup() {
 teardown() {
     unset timestamp
 
-    if [ "$clean_linodes" = "true" ] || [ "$last_test" = "true" ];
-    then
+    if [ "$clean_linodes" = "true" ] || [ "$last_test" = "true" ]; then
         run removeLinodes
+    fi
+
+    if [ "$last_test" = "true" ]; then
+        clearToken "$suiteName"
     fi
 }
 

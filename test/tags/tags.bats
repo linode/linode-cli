@@ -3,6 +3,11 @@
 load '../test_helper/bats-assert/load'
 load '../common'
 
+setup() {
+    suiteName="tags"
+    setToken "$suiteName"
+}
+
 @test "it should display tags" {
     run linode-cli tags list
     assert_success
@@ -39,4 +44,6 @@ load '../common'
 @test "it should remove a tag" {
     run linode-cli tags delete $uniqueTag
     assert_success
+
+    clearToken "$suiteName"
 }

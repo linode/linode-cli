@@ -5,12 +5,11 @@ load '../test_helper/bats-assert/load'
 load '../common'
 
 setup() {
-    export suiteName="domain-records"
+    suiteName="domain-records"
+    setToken $suiteName
 }
 
 @test "it should create a domain" {
-    setToken $suiteName
-
     timestamp=$(date +%s)
     domainId=$(linode-cli domains list --format="id" --text --no-header)
 
@@ -25,7 +24,6 @@ setup() {
 }
 
 @test "it should create a domain SRV record" {
-    getToken "$suiteName"
     echo "records test token is $LINODE_CLI_TOKEN" >&3
 
     domainId=$(linode-cli domains list --format="id" --text --no-header)
@@ -47,8 +45,6 @@ setup() {
 }
 
 @test "it should list the SRV record" {
-    getToken "$suiteName"
-
     domainId=$(linode-cli domains list --format="id" --text --no-header)
     run linode-cli domains records-list $domainId \
         --text \
@@ -60,8 +56,6 @@ setup() {
 }
 
 @test "it should view domain record" {
-    getToken "$suiteName"
-
     domainId=$(linode-cli domains list --format="id" --text --no-header)
     recordId=$(linode-cli domains records-list $domainId --text --no-header --format="id")
 
@@ -91,8 +85,6 @@ setup() {
 }
 
 @test "it should delete a domain record" {
-    getToken "$suiteName"
-
     domainId=$(linode-cli domains list --format="id" --text --no-header)
     recordId=$(linode-cli domains records-list $domainId --text --no-header --format="id")
 
@@ -102,7 +94,6 @@ setup() {
 }
 
 @test "it should delete all domains" {
-    getToken "$suiteName"
     run removeDomains
     clearToken "$suiteName"
 }
