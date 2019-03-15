@@ -17,6 +17,10 @@ setup() {
 
 teardown() {
     unset timestamp
+
+    if [ "$LAST_TEST" = "TRUE" ]; then
+        clearToken "$suiteName"
+    fi
 }
 
 @test "it should fail to create a volume under 10gb" {
@@ -103,7 +107,7 @@ teardown() {
 # }
 
 @test "it should remove all volumes" {
+    LAST_TEST="TRUE"
 	run removeLinodes
 	run removeVolumes
-    clearToken "$suiteName"
 }

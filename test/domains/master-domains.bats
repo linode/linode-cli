@@ -12,6 +12,10 @@ setup() {
 
 teardown() {
 	unset timestamp
+
+	if [ "$LAST_TEST" = "TRUE" ]; then
+        clearToken "$suiteName"
+    fi
 }
 
 @test "it should fail to create a domain without specifying a type" {
@@ -91,6 +95,6 @@ teardown() {
 }
 
 @test "it should delete all master domains" {
+	LAST_TEST="TRUE"
     run removeDomains
-    clearToken "$suiteName"
 }

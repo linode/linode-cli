@@ -17,6 +17,12 @@ setup() {
 	setToken "$suiteName"
 }
 
+teardown() {
+    if [ "$LAST_TEST" = "TRUE" ]; then
+        clearToken "$suiteName"
+    fi
+}
+
 @test "it should list stackscripts" {
     run linode-cli stackscripts list \
         --text
@@ -151,11 +157,11 @@ setup() {
 }
 
 @test "it should delete the stackscript and teardown the linode" {
+	LAST_TEST="TRUE"
 	privateStackscript=$(linode-cli stackscripts list --is_public false --text --no-headers --format "id")
 	run linode-cli stackscripts delete $privateStackscript
 
 	assert_success
 
 	run removeAll "linodes"
-	clearToken "$suiteName"
 }

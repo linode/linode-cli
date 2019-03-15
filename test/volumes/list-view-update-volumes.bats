@@ -16,6 +16,9 @@ setup() {
 }
 
 teardown() {
+    if [ "$LAST_TEST" = "TRUE" ]; then
+        clearToken "$suiteName"
+    fi
     unset volume_id
 }
 
@@ -87,7 +90,7 @@ teardown() {
 }
 
 @test "it should remove all volumes and unique tags" {
+    LAST_TEST="TRUE"
     run removeVolumes
     run removeUniqueTag
-    clearToken "$suiteName"
 }

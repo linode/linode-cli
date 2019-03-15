@@ -9,6 +9,12 @@ setup() {
     setToken "$suiteName"
 }
 
+teardown() {
+    if [ "$LAST_TEST" = "TRUE" ]; then
+        clearToken "$suiteName"
+    fi
+}
+
 @test "it should list available kernels" {
     kernelIdsDisplay() {
         local kernelsList=$(linode-cli kernels list --text --no-headers --format "id")
@@ -36,6 +42,7 @@ setup() {
 }
 
 @test "it should view a kernel" {
+    LAST_TEST="TRUE"
     kernelsAvailable=$(linode-cli kernels list --text --no-headers --format "id")
     set -- $kernelsAvailable
     kernelId=$1
@@ -48,6 +55,4 @@ setup() {
     assert_success
     assert_output --partial "id,version,kvm,xen,architecture,pvops"
     assert_output --regexp "linode/.*,.*,(False|True),(False|True),(i386|x86_64),(False|True)"
-
-    clearToken "$suiteName"
 }

@@ -2,9 +2,10 @@ FROM python:2
 
 ARG SPEC=https://developers.linode.com/api/docs/v4/openapi.yaml
 ARG API_OVERRIDE=api.linode.com
-ARG TOKEN
+ARG TOKEN_1
+ARG TOKEN_2
 
-RUN apt-get update && apt-get install -y python3 python3-pip bats \
+RUN apt-get update && apt-get install -y python3 python3-pip bats parallel \
     && pip install requests terminaltables colorclass PyYAML enum34 \
     && pip3 install requests terminaltables colorclass PyYAML enum34
 
@@ -32,14 +33,21 @@ RUN curl -o /src/linode-cli/openapi.yaml ${SPEC} \
     && make install SPEC=cli-tests.yaml \
     && cd dist \
     && pip install --user $(ls) \
-    && echo -n "[DEFAULT]\ntoken = ${TOKEN}\n" > /root/.linode-cli
+    && echo -n "[DEFAULT]\ntoken = ${TOKEN_1}\ndefault-user = test-user\n\n[test-user]" > /root/.linode-cli \
+    && echo "export TOKEN_1=$TOKEN_1" > /src/linode-cli/test/.env \
+    && echo "export TOKEN_2=$TOKEN_2" >> /src/linode-cli/test/.env \
+    && echo "export TOKEN_1_IN_USE_BY=NONE" >> /src/linode-cli/test/.env \
+    && echo "export TOKEN_2_IN_USE_BY=NONE" >> /src/linode-cli/test/.env
 
 WORKDIR /src
 
 # Install BATS testing framework
-RUN git clone https://github.com/bats-core/bats-core.git \
+RUN mkdir bats-core \
     && cd bats-core \
+    && git clone https://github.com/bats-core/bats-core.git --branch master v1.1.0 --single-branch \
+    && cd v1.1.0 \
     && ./install.sh /usr/local
 
+WORKDIR /src/linode-cli
 
-CMD bats $(ls /src/linode-cli/test/**/*.bats  | egrep  -v 'bats-')
+ENTRYPOINT ["test/test-runner.sh", "--force"]

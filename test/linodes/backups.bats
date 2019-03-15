@@ -23,7 +23,7 @@ teardown() {
         run removeLinodes
     fi
 
-    if [ "$last_test" = "true" ]; then
+    if [ "$LAST_TEST" = "TRUE" ]; then
         clearToken "$suiteName"
     fi
 }
@@ -134,7 +134,7 @@ teardown() {
 
 @test "it should cancel backups" {
     # Ensure we clean up after, even if the assertion fails
-    last_test="true"
+    LAST_TEST="TRUE"
 
     run linode-cli linodes backups-cancel $linode_id \
         --text \

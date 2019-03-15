@@ -9,6 +9,12 @@ setup() {
     setToken $suiteName
 }
 
+teardown() {
+    if [ "$LAST_TEST" = "TRUE" ]; then
+        clearToken "$suiteName"
+    fi
+}
+
 @test "it should create a domain" {
     timestamp=$(date +%s)
     domainId=$(linode-cli domains list --format="id" --text --no-header)
@@ -94,6 +100,6 @@ setup() {
 }
 
 @test "it should delete all domains" {
+    LAST_TEST="TRUE"
     run removeDomains
-    clearToken "$suiteName"
 }

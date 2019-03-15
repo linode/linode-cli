@@ -11,6 +11,12 @@ setup() {
 	setToken "$suiteName"
 }
 
+teardown() {
+    if [ "$LAST_TEST" = "TRUE" ]; then
+        clearToken "$suiteName"
+    fi
+}
+
 @test "it should fail to create a nodebalancer without specifying a region" {
     run linode-cli nodebalancers create \
     	--text \
@@ -236,7 +242,7 @@ setup() {
 }
 
 @test "it should delete all nodebalancers" {
+	LAST_TEST="TRUE"
 	run removeAll "nodebalancers"
 	run removeAll "linodes"
-	clearToken "$suiteName"
 }

@@ -14,6 +14,12 @@ setup() {
     setToken "$suiteName"
 }
 
+teardown() {
+    if [ "$LAST_TEST" = "TRUE" ]; then
+        clearToken "$suiteName"
+    fi
+}
+
 @test "it should create linodes with a label" {
     run linode-cli linodes create \
         --type g6-standard-2 \
@@ -123,7 +129,7 @@ setup() {
 }
 
 @test "it should remove all linodes" {
+    LAST_TEST="TRUE"
     run removeLinodes
     run removeUniqueTag
-    clearToken "$suiteName"
 }
