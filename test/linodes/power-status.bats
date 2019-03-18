@@ -40,8 +40,7 @@ teardown() {
     until [ $(linode-cli linodes view $linode_id --format="status" --text --no-headers) = "running" ]; do
         echo 'still provisioning'
         sleep 5 # Rate limit ourselves
-        if [[ "$SECONDS" -eq 180 ]];
-        then
+        if (( $SECONDS > 180 )); then
             echo "Timeout elapsed! Linode did not boot in time"
             assert_failure  # This will fail the test
             break
@@ -54,8 +53,7 @@ teardown() {
     until [ $(linode-cli linodes view $linode_id --format="status" --text --no-headers) = "running" ]; do
         echo "still provisioning"
         sleep 5 # Rate limit ourselves
-        if [[ "$SECONDS" -eq 180 ]];
-        then
+        if (( $SECONDS > 180 )); then
             echo "Timeout elapsed! Linode did not boot in time"
             assert_failure  # This will fail the test
             break
@@ -71,8 +69,7 @@ teardown() {
     SECONDS=0
     until [ $(linode-cli linodes view $linode_id --format="status" --text --no-headers) != "running" ]; do
         sleep 5 # Rate limit ourselves
-        if [[ "$SECONDS" -eq 180 ]];
-        then
+        if (( $SECONDS > 180 )); then
             echo "Timeout elapsed! Linode did not reboot in time"
             assert_failure # This will fail the test
             break
@@ -86,8 +83,7 @@ teardown() {
     until [ $(linode-cli linodes view $linode_id --format="status" --text --no-headers) = "running" ]; do
         echo 'still provisioning'
         sleep 5 # Rate limit ourselves
-        if [[ "$SECONDS" -eq 180 ]];
-        then
+        if (( $SECONDS > 180 )); then
             echo "Timeout elapsed! Linode did not start running in time"
             assert_failure # This will fail the test
             break
@@ -102,12 +98,10 @@ teardown() {
     until [ $(linode-cli linodes view $linode_id --format="status" --text --no-headers) = "offline" ]; do
         echo 'still shutting down'
         sleep 5 # Rate limit ourselves
-        if [[ "$SECONDS" -eq 180 ]];
-        then
+        if (( $SECONDS > 180 )); then
             echo "Timeout elapsed! Linode did not shutdown in time"
             assert_failure # This will fail the test
             break
         fi
     done
 }
-

@@ -90,8 +90,7 @@ teardown() {
 
     SECONDS=0
     until [ $(linode-cli linodes view $linode_id --format="status" --text --no-headers) = "offline" ]; do
-        if [[ "$SECONDS" -eq 180 ]];
-        then
+        if (( $SECONDS > 180 )); then
             echo "Timeout elapsed! Linode did not initialize in time"
             assert_failure  # This will fail the test
             break

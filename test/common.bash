@@ -91,8 +91,8 @@ createLinodeAndWait() {
     until [ $(LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN linode-cli linodes view $linode_id --format="status" --text --no-headers) = "running" ]; do
         echo 'still provisioning'
         sleep 5 # Wait 5 seconds before checking status again, to rate-limit ourselves
-        if [[ "$SECONDS" -eq 180 ]];
-        then
+        if (( $SECONDS > 180 )); then
+            echo "Failed to provision.. Failed after $SECONDS seconds" >&3
             assert_failure # Fail test, linode did not boot in time
             break
         fi

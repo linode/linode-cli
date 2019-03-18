@@ -92,8 +92,7 @@ teardown() {
     	until [ $(linode-cli linodes view $linode_id --format="status" --text --no-headers) = "resizing" ]; do
             echo 'waiting for resize to start'
             sleep 5
-            if [[ "$SECONDS" -eq 180 ]]
-            then
+            if (( $SECONDS > 180 )); then
                 assert_failure # Linode failed to start resizing
                 break
             fi
@@ -107,8 +106,7 @@ teardown() {
 
     		# Check for resizing completion every 15 seconds
             sleep 15
-            if [[ "$SECONDS" -eq 600 ]];
-            then
+            if (( $SECONDS > 600 )); then
                 assert_failure # Linode failed to completge resizing within 10 minutes
                 break
             fi
