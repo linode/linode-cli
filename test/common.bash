@@ -115,10 +115,7 @@ setToken() {
         export LINODE_CLI_TOKEN=$TOKEN_2
     fi
 
-    run bash -c "echo \"export TOKEN_1=$TOKEN_1
-        export TOKEN_2=$TOKEN_2
-        export TOKEN_1_IN_USE_BY=$TOKEN_1_IN_USE_BY
-        export TOKEN_2_IN_USE_BY=$TOKEN_2_IN_USE_BY\" > ./.env"
+    run bash -c "echo -e \"export TOKEN_1=$TOKEN_1\nexport TOKEN_2=$TOKEN_2\nexport TOKEN_1_IN_USE_BY=$TOKEN_1_IN_USE_BY\nexport TOKEN_2_IN_USE_BY=$TOKEN_2_IN_USE_BY\" > ./.env"
 }
 
 clearToken() {
@@ -132,8 +129,5 @@ clearToken() {
 
     unset LINODE_CLI_TOKEN
 
-    run bash -c "echo \"export TOKEN_1=$TOKEN_1
-        export TOKEN_2=$TOKEN_2
-        export TOKEN_1_IN_USE_BY=$TOKEN_1_IN_USE_BY
-        export TOKEN_2_IN_USE_BY=$TOKEN_2_IN_USE_BY\" > ./.env"
+    run bash -c "echo -e \"export TOKEN_1=$TOKEN_1\nexport TOKEN_2=$TOKEN_2\nexport TOKEN_1_IN_USE_BY=$TOKEN_1_IN_USE_BY\nexport TOKEN_2_IN_USE_BY=$TOKEN_2_IN_USE_BY\" > ./.env"
 }

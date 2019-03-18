@@ -8,11 +8,14 @@ function ctrl_c() {
 
     unset LINODE_CLI_TOKEN
 
-    run bash -c "echo \"export TOKEN_1=$TOKEN_1
-        export TOKEN_2=$TOKEN_2
-        export TOKEN_1_IN_USE_BY=NONE
-        export TOKEN_2_IN_USE_BY=NONE\" > ./.env"
+    echo -e "export TOKEN_1=$TOKEN_1\nexport TOKEN_2=$TOKEN_2\nexport TOKEN_1_IN_USE_BY=NONE\nexport TOKEN_2_IN_USE_BY=NONE" > ./.env
 }
+
+if ( !(which -s parallel) ); then
+    echo "The Linode-CLI requires GNU Parallel to be installed and added to your PATH"
+    echo "For information on how to install, visit https://www.gnu.org/software/parallel/"
+    exit 1
+fi
 
 if [[ $1 = "--allow-delete-resources" || $1 = "--force" || $1 = "-f" ]]; then
     if [ $1 = "--allow-delete-resources" ]; then
