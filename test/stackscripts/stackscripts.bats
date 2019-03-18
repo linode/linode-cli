@@ -29,7 +29,7 @@ teardown() {
     assert_success
     assert_output --partial "id	username	label	images	is_public	created	updated"
 
-    run bash -c "export LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN && linode-cli stackscripts list \
+    run bash -c "LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN linode-cli stackscripts list \
     	--text \
     	--no-headers \
     	--format "id,username,is_public,created,updated" \

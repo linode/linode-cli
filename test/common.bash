@@ -17,32 +17,32 @@ createLinode() {
     local linode_type=$(linode-cli linodes types --text --no-headers --format="id" | xargs | awk '{ print $1 }')
     local test_image=$(linode-cli images list --format id --text --no-header | egrep "linode\/.*" | head -n 1)
     local random_pass=$(openssl rand -base64 32)
-    run bash -c "export LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN && linode-cli linodes create --type=$linode_type --region us-east --image=$test_image --root_pass=$random_pass"
+    run bash -c "LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN linode-cli linodes create --type=$linode_type --region us-east --image=$test_image --root_pass=$random_pass"
 
     assert_success
 }
 
 createVolume() {
     timestamp=$(date +%s)
-    run bash -c "export LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN && linode-cli volumes create --label=A$timestamp --size=10 --region=us-east"
+    run bash -c "LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN linode-cli volumes create --label=A$timestamp --size=10 --region=us-east"
     assert_success
 }
 
 shutdownLinodes() {
-    local linode_ids="( $(export LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN && linode-cli --text --no-headers linodes list | awk '{ print $1 }' | xargs) )"
+    local linode_ids="( $(LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN linode-cli --text --no-headers linodes list | awk '{ print $1 }' | xargs) )"
     local id
 
     for id in $linode_ids ; do
-        run bash -c "export LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN && linode-cli linodes shutdown $id"
+        run bash -c "LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN linode-cli linodes shutdown $id"
     done
 }
 
 removeLinodes() {
-    local linode_ids="( $(export LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN && linode-cli --text --no-headers linodes list | awk '{ print $1 }' | xargs) )"
+    local linode_ids="( $(LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN linode-cli --text --no-headers linodes list | awk '{ print $1 }' | xargs) )"
     local id
 
     for id in $linode_ids ; do
-        run bash -c "export LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN && linode-cli linodes delete $id"
+        run bash -c "LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN linode-cli linodes delete $id"
     done
 }
 
@@ -51,7 +51,7 @@ removeDomains() {
     local id
 
     for id in $domain_ids ; do
-        run bash -c "export LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN && linode-cli domains delete $id"
+        run bash -c "LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN linode-cli domains delete $id"
         [ "$status" -eq 0 ]
     done
 }
@@ -61,7 +61,7 @@ removeVolumes() {
     local id
 
     for id in $volume_ids ; do
-        run bash -c "export LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN && linode-cli volumes delete $id"
+        run bash -c "LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN linode-cli volumes delete $id"
     done
 }
 
@@ -70,25 +70,25 @@ removeAll() {
     local id
 
     for id in $entity_ids ; do
-        run bash -c "export LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN && linode-cli $1 delete $id"
+        run bash -c "LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN linode-cli $1 delete $id"
     done
 }
 
 removeUniqueTag() {
-    run bash -c "export LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN && linode-cli tags delete $uniqueTag"
+    run bash -c "LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN linode-cli tags delete $uniqueTag"
 }
 
 createLinodeAndWait() {
     local default_plan=$(linode-cli linodes types --text --no-headers --format="id" | xargs | awk '{ print $1 }')
     local linode_type=${1:-$default_plan}
 
-    run bash -c "export LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN && linode-cli linodes create --type=$linode_type --region us-east --image=$test_image --root_pass=$random_pass"
+    run bash -c "LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN linode-cli linodes create --type=$linode_type --region us-east --image=$test_image --root_pass=$random_pass"
     assert_success
 
-    local linode_id=$(export LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN && linode-cli linodes list --format id --text --no-header | head -n 1)
+    local linode_id=$(LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN linode-cli linodes list --format id --text --no-header | head -n 1)
 
     SECONDS=0
-    until [ $(export LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN && linode-cli linodes view $linode_id --format="status" --text --no-headers) = "running" ]; do
+    until [ $(LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN linode-cli linodes view $linode_id --format="status" --text --no-headers) = "running" ]; do
         echo 'still provisioning'
         sleep 5 # Wait 5 seconds before checking status again, to rate-limit ourselves
         if [[ "$SECONDS" -eq 180 ]];
@@ -115,10 +115,10 @@ setToken() {
         export LINODE_CLI_TOKEN=$TOKEN_2
     fi
 
-    run bash -c "echo \"export TOKEN_1=$TOKEN_1\" > ./.env"
-    run bash -c "echo \"export TOKEN_2=$TOKEN_2\" >> ./.env"
-    run bash -c "echo \"export TOKEN_1_IN_USE_BY=$TOKEN_1_IN_USE_BY\" >> ./.env"
-    run bash -c "echo \"export TOKEN_2_IN_USE_BY=$TOKEN_2_IN_USE_BY\" >> ./.env"
+    run bash -c "echo \"export TOKEN_1=$TOKEN_1
+        export TOKEN_2=$TOKEN_2
+        export TOKEN_1_IN_USE_BY=$TOKEN_1_IN_USE_BY
+        export TOKEN_2_IN_USE_BY=$TOKEN_2_IN_USE_BY\" > ./.env"
 }
 
 clearToken() {
@@ -132,8 +132,8 @@ clearToken() {
 
     unset LINODE_CLI_TOKEN
 
-    run bash -c "echo \"export TOKEN_1=$TOKEN_1\" > ./.env"
-    run bash -c "echo \"export TOKEN_2=$TOKEN_2\" >> ./.env"
-    run bash -c "echo \"export TOKEN_1_IN_USE_BY=$TOKEN_1_IN_USE_BY\" >> ./.env"
-    run bash -c "echo \"export TOKEN_2_IN_USE_BY=$TOKEN_2_IN_USE_BY\" >> ./.env"
+    run bash -c "echo \"export TOKEN_1=$TOKEN_1
+        export TOKEN_2=$TOKEN_2
+        export TOKEN_1_IN_USE_BY=$TOKEN_1_IN_USE_BY
+        export TOKEN_2_IN_USE_BY=$TOKEN_2_IN_USE_BY\" > ./.env"
 }

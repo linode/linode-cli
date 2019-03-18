@@ -30,8 +30,6 @@ teardown() {
 }
 
 @test "it should create a domain SRV record" {
-    echo "records test token is $LINODE_CLI_TOKEN" >&3
-
     domainId=$(linode-cli domains list --format="id" --text --no-header)
 
     run linode-cli domains records-create \
@@ -52,6 +50,7 @@ teardown() {
 
 @test "it should list the SRV record" {
     domainId=$(linode-cli domains list --format="id" --text --no-header)
+
     run linode-cli domains records-list $domainId \
         --text \
         --no-header \
