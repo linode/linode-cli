@@ -5,7 +5,15 @@ load '../test_helper/bats-assert/load'
 load '../common'
 
 setup() {
+    suiteName="networking"
+    setToken "$suiteName"
     linode_id=$(linode-cli linodes list --format id --text --no-header | head -n 1)
+}
+
+teardown() {
+    if [ "$LAST_TEST" = "TRUE" ]; then
+        clearToken "$suiteName"
+    fi
 }
 
 @test "it should not list any ips available on an account without linodes" {
@@ -61,6 +69,7 @@ setup() {
 }
 
 @test "it should allocate an additional private ipv4 address" {
+    LAST_TEST="TRUE"
     run linode-cli networking ip-add \
         --type=ipv4 \
         --linode_id=$linode_id \

@@ -5,11 +5,19 @@ load '../test_helper/bats-assert/load'
 load '../common'
 
 setup() {
-    export domainId=$(linode-cli domains list --format="id" --text --no-header)
+    suiteName="domain-records"
+    setToken $suiteName
+}
+
+teardown() {
+    if [ "$LAST_TEST" = "TRUE" ]; then
+        clearToken "$suiteName"
+    fi
 }
 
 @test "it should create a domain" {
     timestamp=$(date +%s)
+    domainId=$(linode-cli domains list --format="id" --text --no-header)
 
     run linode-cli domains create \
         --type master \
@@ -22,6 +30,8 @@ setup() {
 }
 
 @test "it should create a domain SRV record" {
+    domainId=$(linode-cli domains list --format="id" --text --no-header)
+
     run linode-cli domains records-create \
         --protocol=tcp \
         --type=SRV \
@@ -39,6 +49,8 @@ setup() {
 }
 
 @test "it should list the SRV record" {
+    domainId=$(linode-cli domains list --format="id" --text --no-header)
+
     run linode-cli domains records-list $domainId \
         --text \
         --no-header \
@@ -49,7 +61,9 @@ setup() {
 }
 
 @test "it should view domain record" {
+    domainId=$(linode-cli domains list --format="id" --text --no-header)
     recordId=$(linode-cli domains records-list $domainId --text --no-header --format="id")
+
     run linode-cli domains records-view $domainId $recordId \
         --text \
         --no-header \
@@ -62,7 +76,9 @@ setup() {
 @test "it should update a domain record" {
     skip "BUG 969"
 
+    domainId=$(linode-cli domains list --format="id" --text --no-header)
     recordId=$(linode-cli domains records-list $domainId --text --no-header --format="id")
+
     run linode-cli domains records-update $domainId $recordId \
         --target="8.8.4.4" \
         --text \
@@ -74,12 +90,15 @@ setup() {
 }
 
 @test "it should delete a domain record" {
+    domainId=$(linode-cli domains list --format="id" --text --no-header)
     recordId=$(linode-cli domains records-list $domainId --text --no-header --format="id")
+
     run linode-cli domains records-delete $domainId $recordId
 
     assert_success
 }
 
 @test "it should delete all domains" {
+    LAST_TEST="TRUE"
     run removeDomains
 }

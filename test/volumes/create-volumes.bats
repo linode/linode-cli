@@ -10,11 +10,17 @@ load '../common'
 ##################################################################
 
 setup() {
+    suiteName="create-volumes"
+    setToken "$suiteName"
     export timestamp=$(date +%s)
 }
 
 teardown() {
     unset timestamp
+
+    if [ "$LAST_TEST" = "TRUE" ]; then
+        clearToken "$suiteName"
+    fi
 }
 
 @test "it should fail to create a volume under 10gb" {
@@ -101,6 +107,7 @@ teardown() {
 # }
 
 @test "it should remove all volumes" {
+    LAST_TEST="TRUE"
 	run removeLinodes
 	run removeVolumes
 }

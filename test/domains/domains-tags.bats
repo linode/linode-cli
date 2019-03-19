@@ -6,10 +6,16 @@ load '../common'
 
 setup() {
     export timestamp=$(date +%s)
+    suiteName="domain-tags"
+    setToken $suiteName
 }
 
 teardown() {
     unset timestamp
+
+    if [ "$LAST_TEST" = "TRUE" ]; then
+        clearToken "$suiteName"
+    fi
 }
 
 @test "it should fail to create a master domain with invalid tags" {
@@ -67,6 +73,7 @@ teardown() {
 }
 
 @test "it should cleanup domains and tags" {
+    LAST_TEST="TRUE"
     run removeDomains
     run removeUniqueTag
 }

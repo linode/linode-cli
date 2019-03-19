@@ -1,7 +1,19 @@
 #!/usr/bin/env bats
 
 load '../test_helper/bats-assert/load'
+load '../test_helper/bats-support/load'
 load '../common'
+
+setup() {
+    suiteName="tags"
+    setToken "$suiteName"
+}
+
+teardown() {
+    if [ "$LAST_TEST" = "TRUE" ]; then
+        clearToken "$suiteName"
+    fi
+}
 
 @test "it should display tags" {
     run linode-cli tags list
@@ -37,6 +49,8 @@ load '../common'
 }
 
 @test "it should remove a tag" {
+    LAST_TEST="TRUE"
+
     run linode-cli tags delete $uniqueTag
     assert_success
 }

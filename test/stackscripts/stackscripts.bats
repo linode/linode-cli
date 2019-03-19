@@ -12,7 +12,15 @@ load '../common'
 EXAMPLE_SCRIPT="echo foo > test.sh"
 
 setup() {
+	suiteName="stackscripts"
 	images=$(linode-cli images list --format id --text --no-headers | egrep "linode\/.*")
+	setToken "$suiteName"
+}
+
+teardown() {
+    if [ "$LAST_TEST" = "TRUE" ]; then
+        clearToken "$suiteName"
+    fi
 }
 
 @test "it should list stackscripts" {
@@ -21,7 +29,7 @@ setup() {
     assert_success
     assert_output --partial "id	username	label	images	is_public	created	updated"
 
-    run bash -c "linode-cli stackscripts list \
+    run bash -c "LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN linode-cli stackscripts list \
     	--text \
     	--no-headers \
     	--format "id,username,is_public,created,updated" \
@@ -149,6 +157,7 @@ setup() {
 }
 
 @test "it should delete the stackscript and teardown the linode" {
+	LAST_TEST="TRUE"
 	privateStackscript=$(linode-cli stackscripts list --is_public false --text --no-headers --format "id")
 	run linode-cli stackscripts delete $privateStackscript
 
