@@ -1,3 +1,5 @@
+#!/usr/bin/env bats
+
 load '../test_helper/bats-support/load'
 load '../test_helper/bats-assert/load'
 load '../common'
@@ -87,7 +89,7 @@ teardown() {
             echo 'still provisioning'
             # Wait 5 seconds before checking status again, to rate-limit ourselves
             sleep 5
-            if [[ "$SECONDS" -eq 180 ]];
+            if (( $SECONDS > 180 ));
             then
                 assert_failure # Linode failed to boot
                 break
