@@ -103,7 +103,7 @@ createLinodeAndWait() {
 
 
 setToken() {
-    source ./.env
+    source $PWD/.env
 
     if [[ "$TOKEN_1_IN_USE_BY" = "NONE" && "$TOKEN_2_IN_USE_BY" != $1 ]]; then
         export LINODE_CLI_TOKEN=$TOKEN_1
@@ -121,7 +121,7 @@ setToken() {
 }
 
 clearToken() {
-    source ./.env
+    source $PWD/.env
 
     if [ "$TOKEN_1_IN_USE_BY" = $1 ]; then
         export TOKEN_1_IN_USE_BY=NONE

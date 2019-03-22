@@ -25,16 +25,17 @@ teardown() {
 }
 
 @test "it should fail to rebuild without providing the image" {
-    run createLinodeAndWait
     linode_id=$(linode-cli linodes list --format id --text --no-header | head -n 1)
+    rebuild_image=$(linode-cli images list --text --no-headers --format id | sed -n 3p)
 
     run linode-cli linodes rebuild \
+        --image=$rebuild_image \
         --root_pass=$random_pass \
         --text \
         --no-headers
 
     assert_failure
-    assert_output --partial "the following arguments are required: linodeId"
+    assert_output --partial "linode-cli: error: too few arguments"
 }
 
 @test "it should fail to rebuild with an invalid image" {

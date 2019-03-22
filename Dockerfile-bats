@@ -2,21 +2,22 @@ FROM python:2
 
 ARG SPEC=https://developers.linode.com/api/docs/v4/openapi.yaml
 ARG API_OVERRIDE=api.linode.com
-ARG TOKEN_1
-ARG TOKEN_2
+
+ENV TOKEN_1 ""
+ENV TOKEN_2 ""
 
 RUN apt-get update && apt-get install -y python3 python3-pip bats parallel \
-    && pip install requests terminaltables colorclass PyYAML enum34 \
-    && pip3 install requests terminaltables colorclass PyYAML enum34
+    && rm -rf /var/lib/apt/lists/*
 
 ENV PYTHONPATH=.
 ENV PATH="/usr/local/bin:/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/root/.local/bin"
-ENV DEFAULT_API="url: https://api.linode.com/v4"
-ENV API_ENV="url: https://${API_OVERRIDE}/v4"
 
 WORKDIR /src/linode-cli
 
 COPY . .
+
+RUN pip install -r requirements.txt \
+    && pip3 install -r requirements.txt
 
 # Modify the cli.py to suppress version warnings by default
 # Modify the cli.py to no longer verify certs and suppress warnings (allows running tests on custom environments)
@@ -25,18 +26,13 @@ RUN sed -i="" "s/data=body/data=body,verify=False/" /src/linode-cli/linodecli/cl
     && echo "from requests.packages.urllib3.exceptions import InsecureRequestWarning\nrequests.packages.urllib3.disable_warnings(InsecureRequestWarning)" >> /src/linode-cli/linodecli/cli.py
 
 # Build and Install the Linode CLI
-RUN sed -n "s|${DEFAULT_API}|${API_ENV}|g;w cli-tests.yaml" /src/linode-cli/openapi.yaml \
+RUN sed -n "s|url: https://api.linode.com/v4|url: https://${API_OVERRIDE}/v4|g;w cli-tests.yaml" /src/linode-cli/openapi.yaml \
     && git submodule init \
     && git submodule update \
     && make build SPEC=/src/linode-cli/cli-tests.yaml \
     && make install SPEC=/src/linode-cli/cli-tests.yaml \
     && cd dist \
-    && pip install --user $(ls) \
-    && echo -n "[DEFAULT]\ntoken = ${TOKEN_1}\ndefault-user = test-user\n\n[test-user]" > /root/.linode-cli \
-    && echo "export TOKEN_1=$TOKEN_1" > /src/linode-cli/test/.env \
-    && echo "export TOKEN_2=$TOKEN_2" >> /src/linode-cli/test/.env \
-    && echo "export TOKEN_1_IN_USE_BY=NONE" >> /src/linode-cli/test/.env \
-    && echo "export TOKEN_2_IN_USE_BY=NONE" >> /src/linode-cli/test/.env
+    && pip install --user $(ls)
 
 WORKDIR /src
 
@@ -47,6 +43,6 @@ RUN mkdir bats-core \
     && cd v1.1.0 \
     && ./install.sh /usr/local
 
-WORKDIR /src/linode-cli
+WORKDIR /src/linode-cli/test
 
-ENTRYPOINT ["test/test-runner.sh", "--force"]
+ENTRYPOINT ["./test-runner.sh", "--force"]
