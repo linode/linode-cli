@@ -380,11 +380,11 @@ The openapi spec must first be saved to the base of the linode-cli project:
 
 Run the following command to build the tests container:
 
-   docker build -f Dockerfile-bats -t linode-cli-tests --build-arg TOKEN=$INSERT_YOUR_TOKEN_HERE .
+   docker build -f Dockerfile-bats -t linode-cli-tests .
 
 Run the following command to run the test
 
-   docker run --rm linode-cli-tests
+   docker run -e TOKEN_1=$INSERT_YOUR_TOKEN_HERE -e TOKEN_2=$INSERT_YOUR_TOKEN_HERE --rm linode-cli-tests
 
 Contributing
 ------------
