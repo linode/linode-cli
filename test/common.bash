@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Get an available image and set it as an env variable
 if [ -z "$test_image" ]; then
     export test_image=$(linode-cli images list --format id --text --no-header | egrep "linode\/.*" | head -n 1)
@@ -101,7 +103,7 @@ createLinodeAndWait() {
 
 
 setToken() {
-    source ./.env
+    source $PWD/.env
 
     if [[ "$TOKEN_1_IN_USE_BY" = "NONE" && "$TOKEN_2_IN_USE_BY" != $1 ]]; then
         export LINODE_CLI_TOKEN=$TOKEN_1
@@ -119,7 +121,7 @@ setToken() {
 }
 
 clearToken() {
-    source ./.env
+    source $PWD/.env
 
     if [ "$TOKEN_1_IN_USE_BY" = $1 ]; then
         export TOKEN_1_IN_USE_BY=NONE

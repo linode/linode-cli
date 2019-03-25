@@ -64,14 +64,14 @@ teardown() {
     linode_type=$(linode-cli linodes types --text --no-headers --format="id" | xargs | awk '{ print $1 }')
     run linode-cli linodes create \
         --backups_enabled="true" \
-        --type=$linode_type \
+        --type="$linode_type" \
         --region us-east \
-        --image=$test_image \
-        --root_pass=$random_pass \
+        --image="$test_image" \
+        --root_pass="$random_pass" \
         --text \
         --no-headers
 
-    linode_id=$(linode-cli linodes list --format id --text --no-header | head -n 1)
+    local linode_id=$(linode-cli linodes list --format id --text --no-header | head -n 1)
 
     run linode-cli linodes list --format="id,enabled" \
         --delimiter="," \
@@ -83,9 +83,11 @@ teardown() {
 }
 
 @test "it should take a snapshot of a linode" {
-    if [ $RUN_LONG_TESTS = "TRUE" ]; then
+    local linode_id=$(linode-cli linodes list --format id --text --no-header | head -n 1)
+
+    if [ "$RUN_LONG_TESTS" = "TRUE" ]; then
         SECONDS=0
-        until [ $(linode-cli linodes view $linode_id --format="status" --text --no-headers) = "running" ]; do
+        until [ $(linode-cli linodes view "$linode_id" --format="status" --text --no-headers) = "running" ]; do
             echo 'still provisioning'
             # Wait 5 seconds before checking status again, to rate-limit ourselves
             sleep 5
@@ -97,7 +99,7 @@ teardown() {
         done
 
         run linode-cli linodes snapshot $linode_id \
-            --label=$snapshot_label \
+            --label="$snapshot_label" \
             --text \
             --delimiter="," \
             --no-headers
@@ -110,8 +112,10 @@ teardown() {
 }
 
 @test "it should view the snapshot" {
+    local linode_id=$(linode-cli linodes list --format id --text --no-header | head -n 1)
+
     if [ $RUN_LONG_TESTS  = "TRUE" ]; then
-        run linode-cli linodes backups-list $linode_id \
+        run linode-cli linodes backups-list "$linode_id" \
             --delimiter="," \
             --text \
             --no-headers
@@ -138,7 +142,7 @@ teardown() {
     # Ensure we clean up after, even if the assertion fails
     LAST_TEST="TRUE"
 
-    run linode-cli linodes backups-cancel $linode_id \
+    run linode-cli linodes backups-cancel "$linode_id" \
         --text \
         --no-headers
     assert_success
