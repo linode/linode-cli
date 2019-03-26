@@ -37,6 +37,7 @@ class CLIConfig:
         self.base_url = base_url
         self.username = username
         self.config = self._get_config()
+        self.running_plugin = None
 
         self._configured = False
 
@@ -161,7 +162,7 @@ class CLIConfig:
 
         return self.config.get(username, key)
 
-    def plugin_set_value(self, plugin_name, key, value):
+    def plugin_set_value(self, key, value):
         """
         Sets a new config value for a plugin for the current user.  Plugin config
         keys are set in the following format::
@@ -169,36 +170,38 @@ class CLIConfig:
            plugin-{plugin_name}-{key}
 
         Values set with this method are intended to be retrieved with ``plugin_get_value``
-        below.  Plugins are responsible for passing in the correct name in both instances.
+        below.
 
-        :param plugin_name: The name of the plugin setting this value
-        :type plugin_name: str
         :param key: The config key to set - this is needed to retrieve the value
         :type key: str
         :param value: The value to set for this key
         :type value: any
         """
-        username = self.username or self.default_username()
-        self.config.set(username, 'plugin-{}-{}'.format(plugin_name, key), value)
+        if self.running_plugin is None:
+            raise RuntimeError('No running plugin to retrieve configuration for!')
 
-    def plugin_get_value(self, plugin_name, key):
+        username = self.username or self.default_username()
+        self.config.set(username, 'plugin-{}-{}'.format(self.running_plugin, key), value)
+
+    def plugin_get_value(self, key):
         """
         Retrieves and returns a config value previously set for a plugin.  Your
-        plugin should have set this value in the past using the same plugin name.
-        If this value does not exist in the config, ``None`` is returned.  This
-        is the only time ``None`` is returned, so receiving this value should be
-        treated as "plugin is not configured."
+        plugin should have set this value in the past.  If this value does not
+        exist in the config, ``None`` is returned.  This is the only time
+        ``None`` is returned, so receiving this value should be treated as
+        "plugin is not configured."
 
-        :param plugin_name: The name of the plugin that set this value
-        :type plugin_name: str
         :param key: The key of the value to return
         :type key: str
 
         :returns: The value for this plugin for this key, or None if not set
         :rtype: any
         """
+        if self.running_plugin is None:
+            raise RuntimeError('No running plugin to retrieve configuration for!')
+
         username = self.username or self.default_username()
-        full_key = 'plugin-{}-{}'.format(plugin_name, key)
+        full_key = 'plugin-{}-{}'.format(self.running_plugin, key)
 
         if not self.config.has_option(username, full_key):
             return None

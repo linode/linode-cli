@@ -13,6 +13,10 @@ def invoke(name, args, context):
         raise ValueError('No plugin named {}'.format(name))
 
     plugin = import_module('linodecli.plugins.'+name)
+
+    # setup config to know what plugin is running
+    context.client.config.running_plugin = name
+
     plugin.call(args, context)
 
 
