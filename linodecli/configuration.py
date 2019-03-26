@@ -137,6 +137,30 @@ class CLIConfig:
 
     # plugin methods - these are intended for plugins to utilize to store their
     # own persistent config information
+    def get_value(self, key):
+        """
+        Retrieves and returns an existing config value for the current user.  This
+        is intended for plugins to use instead of having to deal with figuring out
+        who the current user is when accessing their config.
+
+        .. warning::
+           Plugins _MUST NOT_ set values for the user's config except through
+           ``plugin_set_value`` below.
+
+        :param key: The key to look up.
+        :type key: str
+
+        :returns: The value for that key, or None if the key doesn't exist for the
+                  current user.
+        :rtype: any
+        """
+        username = self.username or self.default_username()
+
+        if not self.config.has_option(username, key):
+            return None
+
+        return self.config.get(username, key)
+
     def plugin_set_value(self, plugin_name, key, value):
         """
         Sets a new config value for a plugin for the current user.  Plugin config
