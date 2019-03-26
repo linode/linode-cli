@@ -12,6 +12,7 @@ setup() {
 teardown() {
     if [ "$LAST_TEST" = "TRUE" ]; then
         clearToken "$suiteName"
+        rm .tmp-tag
     fi
 }
 
@@ -21,6 +22,7 @@ teardown() {
 }
 
 @test "it should create a tag" {
+    echo "export tag=$uniqueTag" > .tmp-tag
     run linode-cli tags create \
         --label $uniqueTag \
         --text \
@@ -29,12 +31,14 @@ teardown() {
 }
 
 @test "it should view the unique tag" {
+    source .tmp-tag
+
     run linode-cli tags list \
         --text \
         --no-headers
 
     assert_success
-    assert_output --partial "$uniqueTag"
+    assert_output --partial "$tag"
 }
 
 @test "it should fail to create a tag shorter than 3 characters" {
@@ -50,7 +54,8 @@ teardown() {
 
 @test "it should remove a tag" {
     LAST_TEST="TRUE"
+    source .tmp-tag
 
-    run linode-cli tags delete $uniqueTag
+    run linode-cli tags delete $tag
     assert_success
 }

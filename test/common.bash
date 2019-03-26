@@ -6,7 +6,7 @@ if [ -z "$test_image" ]; then
 fi
 
 # Random pass to use persistently thorough test run
-if [  -z "$random_pass" ]; then
+if [ -z "$random_pass" ]; then
     export random_pass=$(openssl rand -base64 32)
 fi
 
@@ -76,8 +76,8 @@ removeAll() {
     done
 }
 
-removeUniqueTag() {
-    run bash -c "LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN linode-cli tags delete $uniqueTag"
+removeTag() {
+    run bash -c "LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN linode-cli tags delete $1"
 }
 
 createLinodeAndWait() {

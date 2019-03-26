@@ -8,6 +8,10 @@ function ctrl_c() {
 
     unset LINODE_CLI_TOKEN
 
+    if [ -f ".tmp-tag" ]; then
+        rm .tmp-*
+    fi
+
     echo -e "export TOKEN_1=$TOKEN_1\nexport TOKEN_2=$TOKEN_2\nexport TOKEN_1_IN_USE_BY=NONE\nexport TOKEN_2_IN_USE_BY=NONE" > ./.env
 }
 
