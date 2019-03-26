@@ -48,6 +48,57 @@ invoked with a command and an action, and executes the given CLI command as if
 it were entered into the command line, returning the resulting status code and
 JSON data.
 
+## Configuration
+
+Plugins can access the CLI's configuration through the CLI Client mentioned above.
+Plugins are allowed to:
+
+ * Read values from the current user's config
+ * Read and write their own values to the current user's config
+
+Any other operation is not supported and may break without notice.
+
+### Methods
+
+The `Configuration` class provides the following methods for plugins to use:
+
+**get_value(key)** Returns the value the current user has set for this key, or `None`
+if the key does not exist.  Currently supported keys are `region`, `type`, and `image`.
+
+**plugin_set_value(key, value)** Sets a value in the user's config for this plugin.
+Plugins can safely set values for any key, and they are namespaced away from other
+config keys.
+
+**plugin_get_value(key)** Returns the value this plugin previously set for the given
+key, or `None` if not set.  Plugins should assume they are not configured if they
+receive `None` when getting a value with this method.
+
+**write_config()** Writes config changes to disk.  This is required to save changes
+after calling `plugin_set_value` above.
+
+### Sample Code
+
+The following code manipulates and reads from the config in a plugin:
+
+```python
+
+def call(args, context):
+    # get a value from the user's config
+    default_region = context.client.config.get_value('region')
+
+    # check if we set a value perviously
+    our_value = context.client.config.plugin_get_value('configured')
+
+    if our_value is None:
+        # plugin not configured - do configuration here
+        context.client.config.plugin_set_value('configured', 'yes')
+
+        # save the config so changes take effect
+        context.client.config.write_config()
+
+    # normal plugin code
+```
+
 ## Development
 
 To develop a plugin, simply create a python source file in this directory that
