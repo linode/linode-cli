@@ -37,6 +37,7 @@ class CLIConfig:
         self.base_url = base_url
         self.username = username
         self.config = self._get_config()
+        self.running_plugin = None
 
         self._configured = False
 
@@ -68,6 +69,10 @@ class CLIConfig:
         """
         ns_dict = vars(namespace)
         for k in new_dict:
+            if k.startswith('plugin-'):
+                # plugins set config options that start with 'plugin-' - these don't
+                # get included in the updated namespace
+                continue
             if k in ns_dict and ns_dict[k] is None:
                 ns_dict[k] = new_dict[k]
 
@@ -105,7 +110,7 @@ class CLIConfig:
 
         if self.config.has_section(username):
             self.config.remove_section(username)
-            self._write_config()
+            self.write_config()
 
     def print_users(self):
         """
@@ -129,7 +134,96 @@ class CLIConfig:
             sys.exit(1)
 
         self.config.set('DEFAULT', 'default-user', username)
-        self._write_config()
+        self.write_config()
+
+    # plugin methods - these are intended for plugins to utilize to store their
+    # own persistent config information
+    def get_value(self, key):
+        """
+        Retrieves and returns an existing config value for the current user.  This
+        is intended for plugins to use instead of having to deal with figuring out
+        who the current user is when accessing their config.
+
+        .. warning::
+           Plugins _MUST NOT_ set values for the user's config except through
+           ``plugin_set_value`` below.
+
+        :param key: The key to look up.
+        :type key: str
+
+        :returns: The value for that key, or None if the key doesn't exist for the
+                  current user.
+        :rtype: any
+        """
+        username = self.username or self.default_username()
+
+        if not self.config.has_option(username, key):
+            return None
+
+        return self.config.get(username, key)
+
+    def plugin_set_value(self, key, value):
+        """
+        Sets a new config value for a plugin for the current user.  Plugin config
+        keys are set in the following format::
+
+           plugin-{plugin_name}-{key}
+
+        Values set with this method are intended to be retrieved with ``plugin_get_value``
+        below.
+
+        :param key: The config key to set - this is needed to retrieve the value
+        :type key: str
+        :param value: The value to set for this key
+        :type value: any
+        """
+        if self.running_plugin is None:
+            raise RuntimeError('No running plugin to retrieve configuration for!')
+
+        username = self.username or self.default_username()
+        self.config.set(username, 'plugin-{}-{}'.format(self.running_plugin, key), value)
+
+    def plugin_get_value(self, key):
+        """
+        Retrieves and returns a config value previously set for a plugin.  Your
+        plugin should have set this value in the past.  If this value does not
+        exist in the config, ``None`` is returned.  This is the only time
+        ``None`` is returned, so receiving this value should be treated as
+        "plugin is not configured."
+
+        :param key: The key of the value to return
+        :type key: str
+
+        :returns: The value for this plugin for this key, or None if not set
+        :rtype: any
+        """
+        if self.running_plugin is None:
+            raise RuntimeError('No running plugin to retrieve configuration for!')
+
+        username = self.username or self.default_username()
+        full_key = 'plugin-{}-{}'.format(self.running_plugin, key)
+
+        if not self.config.has_option(username, full_key):
+            return None
+
+        return self.config.get(username, full_key)
+
+    def write_config(self, silent=False):
+        """
+        Saves the config file as it is right now.  This can be used by plugins
+        to save values they've set, and is used internally to update the config
+        on disk when a new user if configured.
+
+        :param silent: If True, does not print a message noting the config file
+                       has been updated.  This is primarily intended for silently
+                       updated the config file from one version to another.
+        :type silent: bool
+        """
+        with open(self._get_config_path(), 'w') as f:
+            self.config.write(f)
+
+        if not silent:
+            print("\nConfig written to {}".format(self._get_config_path()))
 
     def configure(self):
         """
@@ -226,19 +320,9 @@ on your account to work correctly.""".format(TOKEN_GENERATION_URL))
             if v:
                 self.config.set(username, k, v)
 
-        self._write_config()
+        self.write_config()
         os.chmod(self._get_config_path(), 0o600)
         self._configured = True
-
-    def _write_config(self, silent=False):
-        """
-        Saves the config file as it is right now
-        """
-        with open(self._get_config_path(), 'w') as f:
-            self.config.write(f)
-
-        if not silent:
-            print("\nConfig written to {}".format(self._get_config_path()))
 
     def _get_config_path(self):
         """
@@ -312,7 +396,7 @@ on your account to work correctly.""".format(TOKEN_GENERATION_URL))
         if len(users) == 1:
             # only one user configured - they're the default
             self.config.set('DEFAULT', 'default-user', users[0])
-            self._write_config(silent=True)
+            self.write_config(silent=True)
             return
 
         if len(users) == 0:
@@ -338,7 +422,7 @@ on your account to work correctly.""".format(TOKEN_GENERATION_URL))
                 self.config.set(username, 'type', self.config.get('DEFAULT', 'type'))
                 self.config.set(username, 'image', self.config.get('DEFAULT', 'image'))
 
-                self._write_config(silent=True)
+                self.write_config(silent=True)
             else:
                 # got nothin', reconfigure
                 self.configure()
@@ -357,6 +441,6 @@ on your account to work correctly.""".format(TOKEN_GENERATION_URL))
 
             if username in users:
                 self.config.set('DEFAULT', 'default-user', username)
-                self._write_config()
+                self.write_config()
                 return
             print('No user {}'.format(username))
