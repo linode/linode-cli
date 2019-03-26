@@ -56,7 +56,7 @@ def create_varmap(context):
         },
         'region': {
             'name': 'region',
-            'default': context.client.config.config.get('DEFAULT', 'region'),
+            'default': context.client.config.get_value('region'),
         },
         'ssh_public_key': {
             'name': 'ssh_public_key',
@@ -446,7 +446,7 @@ def get_default_master_type(context):
 def requested_type_with_fallback(context):
     default_node_type = 'g6-standard-2'
     try:
-        default_node_type = context.client.config.config.get('DEFAULT', 'type')
+        default_node_type = context.client.config.get_value('type')
     except:
         pass
     return default_node_type
