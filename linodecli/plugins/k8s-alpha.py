@@ -446,7 +446,10 @@ def get_default_master_type(context):
 def requested_type_with_fallback(context):
     default_node_type = 'g6-standard-2'
     try:
-        default_node_type = context.client.config.get_value('type')
+        requested_node_type = context.client.config.get_value('type')
+        if not requested_node_type:
+            raise ValueError('user did not provide a Linode type by argument or config')
+        return requested_node_type
     except:
         pass
     return default_node_type
