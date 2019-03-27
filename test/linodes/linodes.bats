@@ -17,6 +17,7 @@ setup() {
 teardown() {
     if [ "$LAST_TEST" = "TRUE" ]; then
         clearToken "$suiteName"
+        rm .tmp-linode-tag
     fi
 }
 
