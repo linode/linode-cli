@@ -17,12 +17,11 @@ setup() {
 
 teardown() {
     if [ "$LAST_TEST" = "TRUE" ]; then
-        clearToken "$suiteName"
         source .tmp-volume-tag
         removeTag "$tag"
         rm .tmp-volume-tag
+        clearToken "$suiteName"
     fi
-    unset volume_id
 }
 
 @test "it should list volumes" {
