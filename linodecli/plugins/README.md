@@ -6,15 +6,30 @@ CLI as other features are.  All plugins are found in this directory.
 
 ## Creating a Plugin
 
-To create a plugin, simply drop a new python file into this directory.  The
-plugin must meet the following conditions:
+To create a plugin, simply drop a new python file into this directory or write a
+module that presents the interface described below.
 
+Plugins in this directory are called "Internal Plugins," and must meet the
+following conditions:
+
+ * It must be compatible with python 2 and 3
  * Its name must be unique, both with the other plugins and with all commands
    offered through the generated CLI
- * Its name must not contain special characters, and should be easily enter able
+ * Its name must not contain special characters, and should be easily to enter
    on the command line
+ * It must contain a `call(args, context)` function for invocation
  * It must support a `--help` command as all other CLI commands do.
 
+Plugins that are installed separately and registered with the `register-plugin`
+command are called "Third Party Plugins," and must meet the following
+conditions:
+
+ * It should be compatible with python 2 and 3
+ * Its name must be unique, both with the internal plugins and all CLI operations
+ * It must contain a `call(args, context)` function for invocation
+ * It must contain a `PLUGIN_NAME` constant whose value is a string that does not
+   contain special characters, and should be easy to enter on the command line.
+ * It should support a `--help` command as all other CLI commands do.
 
 ## The Plugin Interface
 
@@ -108,8 +123,16 @@ root directory of the project (this installs the code without generating new
 baked data, and will only work if you've installed the CLI via `make install`
 at least once, however it's a lot faster).
 
+To develop a third party plugin, simply create and install your module and register
+it to the CLI.  As long as the `PLUGIN_NAME` doesn't change, updated installations
+should invoke the new code.
+
 ### Examples
 
 This directory contains two example plugins, `echo.py.example` and
 `regionstats.py.example`.  To run these, simply remove the `.example` at the end
 of the file and build the CLI as described above.
+
+[This directory](https://github.com/linode/linode-cli/tree/master/examples/third-party-plugin)
+contains an example Third Party Plugin module.  This module is installable and
+can be registered to the CLI.

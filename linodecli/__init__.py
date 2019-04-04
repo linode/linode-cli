@@ -170,10 +170,37 @@ def main():
             print('{} is not a valid Linode CLI plugin - missing call'.format(module))
             exit(11)
 
+        reregistering = False
+        # check for naming conflicts
+        if plugin_name in cli.ops:
+            print('Plugin name conflicts with CLI operation - registration failed.')
+            exit(12)
+        elif plugin_name in plugins.available_local:
+            # conflicts with an internal plugin - can't do that
+            print('Plugin name conflicts with internal CLI plugin - registration failed.')
+            exit(13)
+        elif plugin_name in plugins.available(cli.config):
+            from linodecli.configuration import input_helper
+
+            # this isn't an internal plugin, so warn that we're re-registering it
+            print("WARNING: Plugin {} is already registered.".format(plugin_name))
+            print("")
+            answer = input_helper("Allow re-registration of {}? [y/N] ".format(plugin_name))
+
+            if not answer or answer not in 'yY':
+                print('Registration aborted.')
+                exit(0)
+
+            reregistering = True
+
         # looks good - register it
         already_registered  = []
         if cli.config.config.has_option('DEFAULT', 'registered-plugins'):
-            already_registered = cli.config.config.get('DEFAULT', 'registered-plugins')
+            already_registered = cli.config.config.get('DEFAULT', 'registered-plugins').split(',')
+
+        if reregistering:
+            already_registered.remove(plugin_name)
+            cli.config.config.remove_option('DEFAULT', 'plugin-name-{}'.format(plugin_name))
 
         already_registered.append(plugin_name)
         cli.config.config.set('DEFAULT', 'registered-plugins', ','.join(already_registered))

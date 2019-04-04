@@ -5,7 +5,7 @@ import sys
 
 
 _available_files = listdir(dirname(__file__))
-_available_local = [f[:-3] for f in _available_files if f.endswith('.py') and f != '__init__.py']
+available_local = [f[:-3] for f in _available_files if f.endswith('.py') and f != '__init__.py']
 
 
 def available(config):
@@ -18,7 +18,7 @@ def available(config):
 
         additional = registered_plugins.split(',')
 
-    return _available_local + additional
+    return available_local + additional
 
 
 def invoke(name, args, context):
@@ -28,7 +28,7 @@ def invoke(name, args, context):
     # setup config to know what plugin is running
     context.client.config.running_plugin = name
 
-    if name in _available_local:
+    if name in available_local:
         plugin = import_module('linodecli.plugins.'+name)
         plugin.call(args, context)
     elif name in available(context.client.config):
