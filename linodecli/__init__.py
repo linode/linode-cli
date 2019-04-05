@@ -212,6 +212,35 @@ def main():
         print('  linode-cli {}'.format(plugin_name))
         exit(0)
 
+    if parsed.command == 'remove-plugin':
+        if parsed.action is None:
+            print('remove-plugin requires a plugin name to remove!')
+            exit(9)
+
+        # is this plugin registered?
+        plugin_name = parsed.action
+        if plugin_name in plugins.available_local:
+            # can't remove first-party plugins
+            print('{} is bundled with the CLI and cannot be removed'.format(plugin_name))
+            exit(13)
+        elif plugin_name not in plugins.available(cli.config):
+            print('{} is not a registered plugin'.format(plugin_name))
+            exit(14)
+
+        # do the removal
+        current_plugins = cli.config.config.get('DEFAULT', 'registered-plugins').split(',')
+        current_plugins.remove(plugin_name)
+        cli.config.config.set('DEFAULT', 'registered-plugins', ','.join(current_plugins))
+
+        if cli.config.config.has_option('DEFAULT', 'plugin-name-{}'.format(plugin_name)):
+            # if the config if malformed, don't blow up
+            cli.config.config.remove_option('DEFAULT', 'plugin-name-{}'.format(plugin_name))
+
+        cli.config.write_config()
+
+        print("Plugin {} removed".format(plugin_name))
+        exit(0)
+
     # handle a help for the CLI
     if parsed.command is None or (parsed.command is None and  parsed.help):
         parser.print_help()
