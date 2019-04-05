@@ -2,6 +2,7 @@
 from __future__ import print_function
 
 import argparse
+from importlib import import_module
 import os
 import pkg_resources
 from sys import argv, exit
@@ -140,16 +141,123 @@ def main():
         # if not spec was found and we weren't baking, we're doomed
         exit(3)
 
+    if parsed.command == 'register-plugin':
+        # this is how the CLI discovers third-party plugins - the user registers
+        # them!  Registering a plugin gets it set up for all CLI users.
+        if parsed.action is None:
+            print('register-plugin requires a module name!')
+            exit(9)
+        module = parsed.action
+
+        # attempt to import the module to prove it is installed and exists
+        try:
+            plugin = import_module(module)
+        except ImportError:
+            print('Module {} not installed'.format(module))
+            exit(10)
+
+        # get the plugin name
+        try:
+            plugin_name = plugin.PLUGIN_NAME
+        except AttributeError:
+            print('{} is not a valid Linode CLI plugin - missing PLUGIN_NAME'.format(module))
+            exit(11)
+
+        # prove it's callable
+        try:
+            call_func = plugin.call
+        except AttributeError:
+            print('{} is not a valid Linode CLI plugin - missing call'.format(module))
+            exit(11)
+
+        reregistering = False
+        # check for naming conflicts
+        if plugin_name in cli.ops:
+            print('Plugin name conflicts with CLI operation - registration failed.')
+            exit(12)
+        elif plugin_name in plugins.available_local:
+            # conflicts with an internal plugin - can't do that
+            print('Plugin name conflicts with internal CLI plugin - registration failed.')
+            exit(13)
+        elif plugin_name in plugins.available(cli.config):
+            from linodecli.configuration import input_helper
+
+            # this isn't an internal plugin, so warn that we're re-registering it
+            print("WARNING: Plugin {} is already registered.".format(plugin_name))
+            print("")
+            answer = input_helper("Allow re-registration of {}? [y/N] ".format(plugin_name))
+
+            if not answer or answer not in 'yY':
+                print('Registration aborted.')
+                exit(0)
+
+            reregistering = True
+
+        # looks good - register it
+        already_registered  = []
+        if cli.config.config.has_option('DEFAULT', 'registered-plugins'):
+            already_registered = cli.config.config.get('DEFAULT', 'registered-plugins').split(',')
+
+        if reregistering:
+            already_registered.remove(plugin_name)
+            cli.config.config.remove_option('DEFAULT', 'plugin-name-{}'.format(plugin_name))
+
+        already_registered.append(plugin_name)
+        cli.config.config.set('DEFAULT', 'registered-plugins', ','.join(already_registered))
+        cli.config.config.set('DEFAULT', 'plugin-name-{}'.format(plugin_name), module)
+        cli.config.write_config()
+
+        print('Plugin registered successfully!')
+        print('Invoke this plugin by running the following:')
+        print('  linode-cli {}'.format(plugin_name))
+        exit(0)
+
+    if parsed.command == 'remove-plugin':
+        if parsed.action is None:
+            print('remove-plugin requires a plugin name to remove!')
+            exit(9)
+
+        # is this plugin registered?
+        plugin_name = parsed.action
+        if plugin_name in plugins.available_local:
+            # can't remove first-party plugins
+            print('{} is bundled with the CLI and cannot be removed'.format(plugin_name))
+            exit(13)
+        elif plugin_name not in plugins.available(cli.config):
+            print('{} is not a registered plugin'.format(plugin_name))
+            exit(14)
+
+        # do the removal
+        current_plugins = cli.config.config.get('DEFAULT', 'registered-plugins').split(',')
+        current_plugins.remove(plugin_name)
+        cli.config.config.set('DEFAULT', 'registered-plugins', ','.join(current_plugins))
+
+        if cli.config.config.has_option('DEFAULT', 'plugin-name-{}'.format(plugin_name)):
+            # if the config if malformed, don't blow up
+            cli.config.config.remove_option('DEFAULT', 'plugin-name-{}'.format(plugin_name))
+
+        cli.config.write_config()
+
+        print("Plugin {} removed".format(plugin_name))
+        exit(0)
 
     # handle a help for the CLI
     if parsed.command is None or (parsed.command is None and  parsed.help):
         parser.print_help()
 
-        # commands to manager CLI users (don't call out to API)
+        # commands to manage CLI users (don't call out to API)
         print()
         print('CLI user management commands:')
         um_commands = [['configure', 'set-user', 'show-users'],['remove-user']]
         table = SingleTable(um_commands)
+        table.inner_heading_row_border = False
+        print(table.table)
+
+        # commands to manage plugins (don't call out to API)
+        print()
+        print('CLI Plugin management commands:')
+        pm_commands = [['register-plugin', 'remove-plugin']]
+        table = SingleTable(pm_commands)
         table.inner_heading_row_border = False
         print(table.table)
 
@@ -169,11 +277,11 @@ def main():
         print(table.table)
 
         # plugins registered to the CLI (do arbitrary things)
-        if plugins.available:
+        if plugins.available(cli.config):
             # only show this if there are any available plugins
             print("Available plugins:")
 
-            plugin_content = [p for p in plugins.available]
+            plugin_content = [p for p in plugins.available(cli.config)]
             plugin_proc = []
 
             for i in range(0,len(plugin_content),3):
@@ -249,7 +357,7 @@ def main():
         cli.bake_completions()
 
     # check for plugin invocation
-    if parsed.command not in cli.ops and parsed.command in plugins.available:
+    if parsed.command not in cli.ops and parsed.command in plugins.available(cli.config):
         context = plugins.PluginContext(cli.config.get_token(), cli)
 
         # reconstruct arguments to send to the plugin
@@ -259,7 +367,7 @@ def main():
         plugins.invoke(parsed.command, plugin_args, context)
         exit(0)
 
-    if parsed.command not in cli.ops and parsed.command not in plugins.available:
+    if parsed.command not in cli.ops and parsed.command not in plugins.available(cli.config):
         # unknown commands
         print('Unrecognized command {}'.format(parsed.command))
 
