@@ -245,11 +245,19 @@ def main():
     if parsed.command is None or (parsed.command is None and  parsed.help):
         parser.print_help()
 
-        # commands to manager CLI users (don't call out to API)
+        # commands to manage CLI users (don't call out to API)
         print()
         print('CLI user management commands:')
         um_commands = [['configure', 'set-user', 'show-users'],['remove-user']]
         table = SingleTable(um_commands)
+        table.inner_heading_row_border = False
+        print(table.table)
+
+        # commands to manage plugins (don't call out to API)
+        print()
+        print('CLI Plugin management commands:')
+        pm_commands = [['register-plugin', 'remove-plugin']]
+        table = SingleTable(pm_commands)
         table.inner_heading_row_border = False
         print(table.table)
 
