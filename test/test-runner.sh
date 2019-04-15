@@ -12,7 +12,7 @@ function ctrl_c() {
         rm .tmp-*
     fi
 
-    echo -e "export TOKEN_1=$TOKEN_1\nexport TOKEN_2=$TOKEN_2\nexport TOKEN_1_IN_USE_BY=NONE\nexport TOKEN_2_IN_USE_BY=NONE" > ./.env
+    echo -e "export TOKEN_1=$TOKEN_1\nexport TOKEN_2=$TOKEN_2\nexport TOKEN_1_IN_USE_BY=NONE\nexport TOKEN_2_IN_USE_BY=NONE\nexport TEST_ENVIRONMENT=$TEST_ENVIRONMENT" > ./.env
 }
 
 if ( ! (command -v parallel > /dev/null) ); then
@@ -47,7 +47,7 @@ fi
 # Only relevant when running via docker
 if [ -z "$DOCKER_HOST" ]; then
     echo -e "[DEFAULT]\ntoken = ${TOKEN_1}\ndefault-user = test-user\n\n[test-user]" > /root/.linode-cli \
-        && echo -e "export TOKEN_1=$TOKEN_1\nexport TOKEN_2=$TOKEN_2\nexport TOKEN_1_IN_USE_BY=NONE\nexport TOKEN_2_IN_USE_BY=NONE" > /src/linode-cli/test/.env
+        && echo -e "export TOKEN_1=$TOKEN_1\nexport TOKEN_2=$TOKEN_2\nexport TOKEN_1_IN_USE_BY=NONE\nexport TOKEN_2_IN_USE_BY=NONE\nexport TEST_ENVIRONMENT=$TEST_ENVIRONMENT" > /src/linode-cli/test/.env
 fi
 
 find . -name "*.bats" -not \( -path './test_helper*' \) | parallel --will-cite --jobs 2 bats

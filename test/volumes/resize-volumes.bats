@@ -42,7 +42,12 @@ teardown() {
 
     assert_failure
     assert_output --partial "Request failed: 400"
-    assert_output --partial "Storage volumes cannot be resized larger than 10240 gigabytes"
+
+    if [ "$TEST_ENVIRONMENT" != "prod" ] || [ "$TEST_ENVIRONMENT" != "staging" ]; then
+        assert_output --partial "Storage volumes cannot be resized larger than 1024 gigabytes"
+    else
+        assert_output --partial "Storage volumes cannot be resized larger than 10240 gigabytes"
+    fi
 }
 
 @test "it should resize a volume" {
