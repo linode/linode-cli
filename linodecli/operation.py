@@ -148,7 +148,7 @@ class CLIOperation:
                 if arg.arg_type == 'array':
                     # special handling for input arrays
                     parser.add_argument('--'+arg.path, metavar=arg.name,
-                                        action='append', type=TYPES[arg.arg_item_type])
+                                        nargs='*', type=TYPES[arg.arg_item_type])
                 else:
                     if arg.arg_type == 'string' and arg.arg_format == 'password':
                         # special case - password input
