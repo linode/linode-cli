@@ -130,6 +130,11 @@ class CLIOperation:
         Given sys.argv after the operation name, parse args based on the params
         and args of this operation
         """
+        # these are arguments that come in as arrays - we accept them as either
+        # `--arg val1 --arg val2` or `--arg val1 val2`, and the result is a list
+        # of lists.  We need to flatten those lists after parsing.
+        to_flatten = []
+
         #  build an argparse
         parser = argparse.ArgumentParser(description=self.summary)
         for param in self.params:
@@ -148,7 +153,9 @@ class CLIOperation:
                 if arg.arg_type == 'array':
                     # special handling for input arrays
                     parser.add_argument('--'+arg.path, metavar=arg.name,
-                                        nargs='*', type=TYPES[arg.arg_item_type])
+                                        nargs='*', action='append', type=TYPES[arg.arg_item_type])
+                    # remember to flatten the result later
+                    to_flatten.append(arg.name)
                 else:
                     if arg.arg_type == 'string' and arg.arg_format == 'password':
                         # special case - password input
@@ -162,6 +169,20 @@ class CLIOperation:
                                             type=TYPES[arg.arg_type])
 
         parsed = parser.parse_args(args)
+
+        # flatten lists of lists
+        for name in to_flatten:
+            result = getattr(parsed, name)
+            if result:
+                flattened = []
+                for c in result:
+                    flattened += c
+
+                # inject the flattened array into the namespace
+                ns = vars(parsed)
+                ns[name] = flattened
+                parsed = argparse.Namespace(**ns)
+
         return parsed
 
     def process_response_json(self, json, handler):
