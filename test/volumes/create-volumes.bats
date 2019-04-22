@@ -33,10 +33,10 @@ teardown() {
 
     assert_failure
 
-    if [ "$TEST_ENVIRONMENT" != "prod" ] || [ "$TEST_ENVIRONMENT" != "staging" ]; then
-        assert_output --partial "size	Must be 10-1024"
+    if [ "$TEST_ENVIRONMENT" = "prod" ] || [ "$TEST_ENVIRONMENT" = "staging" ]; then
+        assert_output --partial "size   Must be 10-10240"
     else
-        assert_output --partial "size	Must be 10-10240"
+        assert_output --partial "size   Must be 10-1024"
     fi
 }
 
@@ -75,10 +75,10 @@ teardown() {
     assert_failure
     assert_output --partial "Request failed: 400"
 
-    if [ "$TEST_ENVIRONMENT" != "prod" ] || [ "$TEST_ENVIRONMENT" != "staging" ]; then
-        assert_output --partial "size	Must be 10-1024"
+    if [ "$TEST_ENVIRONMENT" = "prod" ] || [ "$TEST_ENVIRONMENT" = "staging" ]; then
+        assert_output --partial "size   Must be 10-10240"
     else
-        assert_output --partial "size	Must be 10-10240"
+        assert_output --partial "size   Must be 10-1024"
     fi
 }
 

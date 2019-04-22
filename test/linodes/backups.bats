@@ -47,6 +47,10 @@ teardown() {
 }
 
 @test "it should enable backups" {
+    if [ "$TEST_ENVIRONMENT" = "dev" ] || [ $"TEST_ENVIRONMENT" = "test" ]; then
+        skip "Skipping backups tests"
+    fi
+
     run linode-cli linodes backups-enable $linode_id \
         --text \
         --no-headers
@@ -143,6 +147,10 @@ teardown() {
 # }
 
 @test "it should cancel backups" {
+    if [ "$TEST_ENVIRONMENT" = "dev" ] || [ $"TEST_ENVIRONMENT" = "test" ]; then
+        skip "Skipping backups tests"
+    fi
+
     # Ensure we clean up after, even if the assertion fails
     LAST_TEST="TRUE"
 
