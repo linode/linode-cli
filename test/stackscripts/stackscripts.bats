@@ -19,6 +19,7 @@ setup() {
 
 teardown() {
     if [ "$LAST_TEST" = "TRUE" ]; then
+    	removeAll "stackscripts"
         clearToken "$suiteName"
     fi
 }
@@ -55,7 +56,7 @@ teardown() {
 
 @test "it should create a stackscript" {
 	run linode-cli stackscripts create \
-		--script "#!/bin/bash \n $EXAMPLE_SCRIPT" \
+		--script '#!/bin/bash \n $EXAMPLE_SCRIPT' \
 		--images "linode/debian9" \
 		--label 'testfoo' \
 		--is_public=false \

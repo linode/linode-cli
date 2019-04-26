@@ -69,7 +69,12 @@ removeVolumes() {
 }
 
 removeAll() {
-    local entity_ids="( $(linode-cli $1 list --text --no-headers --format="id" | xargs) )"
+    if [ "$1" = "stackscripts" ]; then
+        entity_ids="( $(linode-cli $1 list --is_public=false --text --no-headers --format="id" | xargs) )"
+    else
+        entity_ids="( $(linode-cli $1 list --text --no-headers --format="id" | xargs) )"
+    fi
+
     local id
 
     for id in $entity_ids ; do
