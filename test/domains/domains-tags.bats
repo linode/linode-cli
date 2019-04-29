@@ -61,7 +61,7 @@ teardown() {
         --type master \
         --soa_email="$email" \
         --domain "$timestamp-example.com" \
-        --tags "$uniqueTag" \
+        --tags "$tag" \
         --format="id,domain,type,status,tags" \
         --suppress-warnings \
         --text \
@@ -69,11 +69,12 @@ teardown() {
         --delimiter=","
 
     assert_success
-    assert_output --regexp "[0-9]+,[0-9]+-example.com,master,active,${uniqueTag}"
+    assert_output --regexp "[0-9]+,[0-9]+-example.com,master,active,${tag}"
 }
 
 @test "it should cleanup domains and tags" {
     LAST_TEST="TRUE"
     run removeDomains
-    run removeUniqueTag
+    run removeTag "foo"
+    assert_success
 }

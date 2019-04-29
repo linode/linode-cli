@@ -6,7 +6,7 @@ if [ -z "$test_image" ]; then
 fi
 
 # Random pass to use persistently thorough test run
-if [  -z "$random_pass" ]; then
+if [ -z "$random_pass" ]; then
     export random_pass=$(openssl rand -base64 32)
 fi
 
@@ -16,10 +16,11 @@ if [ -z "$uniqueTag" ]; then
 fi
 
 createLinode() {
+    local region=${1:-us-east}
     local linode_type=$(linode-cli linodes types --text --no-headers --format="id" | xargs | awk '{ print $1 }')
     local test_image=$(linode-cli images list --format id --text --no-header | egrep "linode\/.*" | head -n 1)
     local random_pass=$(openssl rand -base64 32)
-    run bash -c "LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN linode-cli linodes create --type=$linode_type --region us-east --image=$test_image --root_pass=$random_pass"
+    run bash -c "LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN linode-cli linodes create --type=$linode_type --region $region --image=$test_image --root_pass=$random_pass"
 
     assert_success
 }
@@ -68,7 +69,12 @@ removeVolumes() {
 }
 
 removeAll() {
-    local entity_ids="( $(linode-cli $1 list --text --no-headers --format="id" | xargs) )"
+    if [ "$1" = "stackscripts" ]; then
+        entity_ids="( $(linode-cli $1 list --is_public=false --text --no-headers --format="id" | xargs) )"
+    else
+        entity_ids="( $(linode-cli $1 list --text --no-headers --format="id" | xargs) )"
+    fi
+
     local id
 
     for id in $entity_ids ; do
@@ -76,8 +82,8 @@ removeAll() {
     done
 }
 
-removeUniqueTag() {
-    run bash -c "LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN linode-cli tags delete $uniqueTag"
+removeTag() {
+    run bash -c "LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN linode-cli tags delete $1"
 }
 
 createLinodeAndWait() {
@@ -117,7 +123,7 @@ setToken() {
         export LINODE_CLI_TOKEN=$TOKEN_2
     fi
 
-    run bash -c "echo -e \"export TOKEN_1=$TOKEN_1\nexport TOKEN_2=$TOKEN_2\nexport TOKEN_1_IN_USE_BY=$TOKEN_1_IN_USE_BY\nexport TOKEN_2_IN_USE_BY=$TOKEN_2_IN_USE_BY\" > ./.env"
+    run bash -c "echo -e \"export TOKEN_1=$TOKEN_1\nexport TOKEN_2=$TOKEN_2\nexport TOKEN_1_IN_USE_BY=$TOKEN_1_IN_USE_BY\nexport TOKEN_2_IN_USE_BY=$TOKEN_2_IN_USE_BY\nexport TEST_ENVIRONMENT=$TEST_ENVIRONMENT\" > ./.env"
 }
 
 clearToken() {
@@ -131,5 +137,5 @@ clearToken() {
 
     unset LINODE_CLI_TOKEN
 
-    run bash -c "echo -e \"export TOKEN_1=$TOKEN_1\nexport TOKEN_2=$TOKEN_2\nexport TOKEN_1_IN_USE_BY=$TOKEN_1_IN_USE_BY\nexport TOKEN_2_IN_USE_BY=$TOKEN_2_IN_USE_BY\" > ./.env"
+    run bash -c "echo -e \"export TOKEN_1=$TOKEN_1\nexport TOKEN_2=$TOKEN_2\nexport TOKEN_1_IN_USE_BY=$TOKEN_1_IN_USE_BY\nexport TOKEN_2_IN_USE_BY=$TOKEN_2_IN_USE_BY\nexport TEST_ENVIRONMENT=$TEST_ENVIRONMENT\" > ./.env"
 }

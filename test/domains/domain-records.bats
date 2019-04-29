@@ -45,7 +45,7 @@ teardown() {
         --delimiter=","
 
     assert_success
-    assert_output --regexp "[0-9]+,SRV,_telnet.tcp._tcp,8.8.8.8,0,4,4"
+    assert_output --regexp "[0-9]+,SRV,_telnet._tcp,8.8.8.8,0,4,4"
 }
 
 @test "it should list the SRV record" {
@@ -57,7 +57,7 @@ teardown() {
         --delimiter=","
 
     assert_success
-    assert_output --regexp "[0-9]+,SRV,_telnet.tcp._tcp,8.8.8.8,0,4,4"
+    assert_output --regexp "[0-9]+,SRV,_telnet._tcp,8.8.8.8,0,4,4"
 }
 
 @test "it should view domain record" {
@@ -70,7 +70,7 @@ teardown() {
         --delimiter=","
 
     assert_success
-    assert_output --regexp "[0-9]+,SRV,_telnet.tcp._tcp,8.8.8.8,0,4,4"
+    assert_output --regexp "[0-9]+,SRV,_telnet._tcp,8.8.8.8,0,4,4"
 }
 
 @test "it should update a domain record" {
@@ -86,7 +86,7 @@ teardown() {
         --delimiter=","
 
     assert_success
-    assert_output --regexp "[0-9]+,SRV,_telnet.tcp._tcp,8.8.4.4,0,4,4"
+    assert_output --regexp "[0-9]+,SRV,_telnet._tcp,8.8.4.4,0,4,4"
 }
 
 @test "it should delete a domain record" {

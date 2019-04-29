@@ -17,9 +17,11 @@ setup() {
 
 teardown() {
     if [ "$LAST_TEST" = "TRUE" ]; then
+        source .tmp-volume-tag
+        removeTag "$tag"
+        rm .tmp-volume-tag
         clearToken "$suiteName"
     fi
-    unset volume_id
 }
 
 @test "it should list volumes" {
@@ -56,6 +58,7 @@ teardown() {
 }
 
 @test "it should add a new tag to a volume" {
+    echo "export tag=$uniqueTag" > .tmp-volume-tag
     run linode-cli volumes update $volume_id \
         --tags=$uniqueTag \
         --format="tags" \
@@ -67,13 +70,15 @@ teardown() {
 }
 
 @test "it should view tags attached to the volume" {
+    source .tmp-volume-tag
+
     run linode-cli volumes view $volume_id \
         --tags "" \
         --format="tags" \
         --text \
         --no-headers
 
-    assert_output "$uniqueTag"
+    assert_output "$tag"
     assert_success
 }
 
@@ -92,5 +97,4 @@ teardown() {
 @test "it should remove all volumes and unique tags" {
     LAST_TEST="TRUE"
     run removeVolumes
-    run removeUniqueTag
 }

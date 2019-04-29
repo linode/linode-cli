@@ -19,6 +19,7 @@ setup() {
 
 teardown() {
     if [ "$LAST_TEST" = "TRUE" ]; then
+    	removeAll "stackscripts"
         clearToken "$suiteName"
     fi
 }
@@ -32,12 +33,12 @@ teardown() {
     run bash -c "LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN linode-cli stackscripts list \
     	--text \
     	--no-headers \
-    	--format "id,username,is_public,created,updated" \
+    	--format "id,username,is_public" \
     	--delimiter ',' \
     	| head -n 1"
 
     assert_success
-    assert_output --regexp "[0-9]+,[a-z]+,True,[0-9]+-[0-9]+-[0-9]+T[0-9]+:[0-9]+:[0-9]+,[0-9]+-[0-9]+-[0-9]+T[0-9]+:[0-9]+:[0-9]+"
+    assert_output --regexp "[0-9]+,[a-z]+,True"
 }
 
 @test "it should fail to create a stackscript without specifying an image" {
@@ -55,7 +56,7 @@ teardown() {
 
 @test "it should create a stackscript" {
 	run linode-cli stackscripts create \
-		--script "#!/bin/bash \n $EXAMPLE_SCRIPT" \
+		--script '#!/bin/bash \n $EXAMPLE_SCRIPT' \
 		--images "linode/debian9" \
 		--label 'testfoo' \
 		--is_public=false \

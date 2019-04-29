@@ -32,7 +32,11 @@ teardown() {
         --no-headers
 
     assert_failure
-    assert_output --partial "size	Must be 10-10240"
+    if [ "$TEST_ENVIRONMENT" = "dev" ] || [ "$TEST_ENVIRONMENT" = "test" ]; then
+        assert_output --partial "size	Must be 10-1024"
+    else
+        assert_output --partial "size	Must be 10-10240"
+    fi
 }
 
 @test "it should fail to create a volume without a region" {
@@ -69,7 +73,12 @@ teardown() {
 
     assert_failure
     assert_output --partial "Request failed: 400"
-    assert_output --partial "size	Must be 10-10240"
+
+    if [ "$TEST_ENVIRONMENT" = "dev" ] || [ "$TEST_ENVIRONMENT" = "test" ]; then
+        assert_output --partial "size	Must be 10-1024"
+    else
+        assert_output --partial "size	Must be 10-10240"
+    fi
 }
 
 @test "it should fail to create a volume with an all numeric label" {

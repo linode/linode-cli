@@ -17,6 +17,7 @@ setup() {
 teardown() {
     if [ "$LAST_TEST" = "TRUE" ]; then
         clearToken "$suiteName"
+        rm .tmp-linode-tag
     fi
 }
 
@@ -116,6 +117,7 @@ teardown() {
 
 @test "it should add a tag a linode" {
     local linode_id=$(linode-cli --text --no-headers linodes list | awk '{ print $1 }' | xargs)
+    echo "export tag=$uniqueTag" > .tmp-linode-tag
 
     run linode-cli linodes update $linode_id \
         --tags=$uniqueTag \
@@ -129,6 +131,8 @@ teardown() {
 
 @test "it should remove all linodes" {
     LAST_TEST="TRUE"
+
+    source .tmp-linode-tag
     run removeLinodes
-    run removeUniqueTag
+    run removeTag "$tag"
 }
