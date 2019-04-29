@@ -31,7 +31,7 @@ teardown() {
 }
 
 @test "it should create a linode with backups disabled" {
-    if [ "$TEST_ENVIRONMENT" = "dev" ] || [ $"TEST_ENVIRONMENT" = "test" ]; then
+    if [ "$TEST_ENVIRONMENT" = "dev" ] || [ "$TEST_ENVIRONMENT" = "test" ]; then
         skip "Skipping backups tests"
     fi
 
