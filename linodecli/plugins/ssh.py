@@ -40,6 +40,8 @@ def call(args, context):
                         help="The label of the Linode to SSH into, optionally with "
                              "a username before it in USERNAME@LABEL format.  If no "
                              "username is given, defaults to the current user.")
+    parser.add_argument('-6', action='store_true',
+                        help="If given, uses the Linode's SLAAC address for SSH.")
 
     parsed, args = parser.parse_known_args(args)
 
@@ -56,8 +58,7 @@ def call(args, context):
             "linodes", "list", filters={'label': {"+contains": label}})
 
     if result != 200:
-        # TODO
-        print('Something went wrong')
+        print('Could not retrieve Linode: {} error'.format(result))
         exit(2)
 
     potential_matches = potential_matches['data']
@@ -85,10 +86,14 @@ def call(args, context):
 
     # find a public IP Address to use
     public_ip = None
-    for ip in exact_match['ipv4']:
-        if not ip.startswith('192.168'):
-            public_ip = ip # TODO - this uses the "first" IP Address
-            break
+
+    if getattr(parsed, '6'): # this is necessary since the name isn't a valid python variable name
+        public_ip = exact_match['ipv6'].split('/')[0]
+    else:
+        for ip in exact_match['ipv4']:
+            if not ip.startswith('192.168'):
+                public_ip = ip # TODO - this uses the "first" IP Address
+                break
 
     address = public_ip
     if username:
