@@ -64,13 +64,12 @@ teardown() {
 	run linode-cli ssh "root@$linode_label" -oStrictHostKeyChecking=no uname -r
 	assert_success
 	# Assert the kernel version comes back:
-    # Purposefully fai:
-	assert_output --partial "1.19.34-0-virt"
+	assert_output --partial "4.19.34-0-virt"
 }
 
 @test "it should check the linode OS" {
     linode_label=$(linode-cli linodes list --format "label" --text --no-headers)
-	run linode-cli ssh "root@$linode_label" -oStrictHostKeyChecking=no "cat /etc/os-release | grep -o 'NAME=.*'"
+	run linode-cli ssh "root@$linode_label" -oStrictHostKeyChecking=no 'cat /etc/os-release | grep -o "NAME=.*"'
 	assert_success
     assert_output --partial "Alpine Linux"
 }
@@ -79,7 +78,7 @@ teardown() {
 @test "it should check the ipv4 connectivity" {
     LAST_TEST="TRUE"
     linode_label=$(linode-cli linodes list --format "label" --text --no-headers)
-    run linode-cli ssh "root@$linode_label" -oStrictHostKeyChecking=no "ping -4 -W60 -c3 google.com || ping -W60 -c3 google.com"
+    run linode-cli ssh "root@$linode_label" -oStrictHostKeyChecking=no 'ping -4 -W60 -c3 google.com || ping -W60 -c3 google.com'
     assert_success
     assert_output --partial "0% packet loss"
 }
