@@ -45,7 +45,7 @@ fi
 
 # If .env file does not exist, attempt to generate one from global env vars
 # Only relevant when running via docker
-if [[ -v $DOCKER_BATS ]]; then
+if [[  $DOCKER_BATS = "TRUE" ]]; then
     echo -e "[DEFAULT]\ntoken = ${TOKEN_1}\ndefault-user = test-user\n\n[test-user]" > /root/.linode-cli \
         && echo -e "export TOKEN_1=$TOKEN_1\nexport TOKEN_2=$TOKEN_2\nexport TOKEN_1_IN_USE_BY=NONE\nexport TOKEN_2_IN_USE_BY=NONE\nexport TEST_ENVIRONMENT=$TEST_ENVIRONMENT" > /src/linode-cli/test/.env
 fi
