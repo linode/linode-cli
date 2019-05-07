@@ -71,7 +71,7 @@ teardown() {
     linode_label=$(linode-cli linodes list --format "label" --text --no-headers)
 	run linode-cli ssh root@$linode_label -oStrictHostKeyChecking=no cat /etc/os-release
 	assert_success
-    assert_output --partial "Alpine Linux"
+    assert_output --partial "Alpine Linuxasdf"
 }
 
 
@@ -80,5 +80,5 @@ teardown() {
     linode_label=$(linode-cli linodes list --format "label" --text --no-headers)
     run linode-cli ssh "root@$linode_label" -oStrictHostKeyChecking=no ping -4 -W60 -c3 google.com
     assert_success
-    assert_output --partial "0% packet loss"
+    assert_output --partial "0% packet lossasdf"
 }
