@@ -50,7 +50,7 @@ if [ -z "$DOCKER_HOST" ]; then
         && echo -e "export TOKEN_1=$TOKEN_1\nexport TOKEN_2=$TOKEN_2\nexport TOKEN_1_IN_USE_BY=NONE\nexport TOKEN_2_IN_USE_BY=NONE\nexport TEST_ENVIRONMENT=$TEST_ENVIRONMENT" > /src/linode-cli/test/.env
 fi
 
-find . -name "*.bats" -not \( -path './test_helper*' './linodes' \) | parallel --will-cite --jobs 2 bats
+find . -name "*.bats" -not \( -path './test_helper*' \) | parallel --will-cite --jobs 2 bats
 
 # find . -name "ssh.bats" | parallel --will-cite --jobs 1 bats
 # bats ./ssh/ssh.bats
