@@ -1,6 +1,5 @@
 FROM python:2
 
-ENV HOME "/tmp"
 ENV TOKEN_1 ""
 ENV TOKEN_2 ""
 ENV TEST_ENVIRONMENT "prod"
