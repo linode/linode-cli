@@ -102,7 +102,7 @@ createLinodeAndWait() {
     local linode_id=$(LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN linode-cli linodes list --format id --text --no-header | head -n 1)
 
     SECONDS=0
-    until [ $(LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN linode-cli linodes view $linode_id --format="status" --text --no-headers) = "running" ]; do
+    until [[ $(LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN linode-cli linodes view $linode_id --format="status" --text --no-headers) = "running" ]]; do
         echo 'still provisioning'
         sleep 5 # Wait 5 seconds before checking status again, to rate-limit ourselves
         if (( $SECONDS > 180 )); then
