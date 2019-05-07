@@ -12,12 +12,11 @@ load '../common'
 setup() {
     suiteName="ssh"
     setToken "$suiteName"
-    clean_linodes="false"
     # linode_label="sshTestLinode"
 }
 
 teardown() {
-    if [ "$clean_linodes" = "true" ] || [ "$LAST_TEST" = "TRUE" ]; then
+    if [[ "$LAST_TEST" = "TRUE" ]]; then
         run removeLinodes
     fi
 
@@ -56,7 +55,6 @@ teardown() {
 @test "it should successfully ssh into a linode" {
     ## Figure out a better way to get IP of a linode label
     linode_label=$(linode-cli linodes list --format "label" --text --no-headers)
-	linode_ip=$(linode-cli linodes list --format "ipv4" --text --no-headers)
 
     # Replace this with polling for ssh port open
     sleep 25
@@ -69,7 +67,7 @@ teardown() {
 
 @test "it should check the linode OS" {
     linode_label=$(linode-cli linodes list --format "label" --text --no-headers)
-	run linode-cli ssh root@$linode_label -oStrictHostKeyChecking=no cat /etc/os-release
+	run linode-cli ssh "root@$linode_label" -oStrictHostKeyChecking=no cat /etc/os-release
 	assert_success
     assert_output --partial "Alpine Linuxasdf"
 }

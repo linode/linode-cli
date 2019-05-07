@@ -3,8 +3,10 @@ FROM python:2
 ENV TOKEN_1 ""
 ENV TOKEN_2 ""
 ENV TEST_ENVIRONMENT "prod"
+ENV PYTHONPATH=.
+ENV PATH="/usr/local/bin:/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/root/.local/bin"
 
-RUN apt-get update && apt-get install -y python3 python3-pip bats parallel \
+RUN apt-get update && apt-get install -y python3 python3-pip parallel \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /src
@@ -15,9 +17,6 @@ RUN mkdir bats-core \
     && git clone https://github.com/bats-core/bats-core.git --branch master v1.1.0 --single-branch \
     && cd v1.1.0 \
     && ./install.sh /usr/local
-
-ENV PYTHONPATH=.
-ENV PATH="/usr/local/bin:/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/root/.local/bin"
 
 WORKDIR /src/linode-cli
 
