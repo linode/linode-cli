@@ -64,7 +64,8 @@ teardown() {
 	run linode-cli ssh "root@$linode_label" -oStrictHostKeyChecking=no uname -r
 	assert_success
 	# Assert the kernel version comes back:
-	assert_output --partial "4.19.34-0-virt"
+    # Purposefully fai:
+	assert_output --partial "1.19.34-0-virt"
 }
 
 @test "it should check the linode OS" {
