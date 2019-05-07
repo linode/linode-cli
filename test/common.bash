@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Get an available image and set it as an env variable
 if [ -z "$test_image" ]; then
