@@ -89,13 +89,15 @@ removeTag() {
 createLinodeAndWait() {
     local test_image=$(linode-cli images list --format id --text --no-header | egrep "linode\/.*" | head -n 1)
     local default_plan=$(linode-cli linodes types --text --no-headers --format="id" | xargs | awk '{ print $1 }')
-    local linode_type=${1:-$default_plan}
+    local linode_image=${1:-$test_image}
+    local linode_type=${2:-$default_plan}
 
-    if [ -n "$2" ]; then
-        run bash -c "LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN linode-cli linodes create --type=$linode_type --region us-east --image=$test_image --root_pass=$random_pass --authorized_keys=\"$2\""
+    # $3 is ssh-keys
+    if [ -n "$3" ]; then
+        run bash -c "LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN linode-cli linodes create --type=$linode_type --region us-east --image=$linode_image --root_pass=$random_pass --authorized_keys=\"$3\""
         assert_success
     else
-        run bash -c "LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN linode-cli linodes create --type=$linode_type --region us-east --image=$test_image --root_pass=$random_pass"
+        run bash -c "LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN linode-cli linodes create --type=$linode_type --region us-east --image=$linode_image --root_pass=$random_pass"
         assert_success
     fi
 

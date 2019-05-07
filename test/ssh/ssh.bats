@@ -40,9 +40,10 @@ teardown() {
 }
 
 @test "it should create a linode and wait for it to be running" {
+    alpine_image=$(linode-cli images list --format "id" --text --no-headers | grep 'alpine')
 	plan=$(linode-cli linodes types --text --no-headers --format="id" | xargs | awk '{ print $1 }')
 	ssh_key="$(cat ~/.ssh/id_rsa.pub)"
-	createLinodeAndWait "$plan" "$ssh_key"
+	createLinodeAndWait "$alpine_image" "$plan" "$ssh_key"
 	assert_success
 }
 
@@ -52,7 +53,7 @@ teardown() {
 	assert_output "No Linode found for label aasdkjlf"
 }
 
-@test "it should successfully ssh into a linode" {
+@test "it should successfully ssh into a linode and get the kernel version" {
     LAST_TEST="TRUE"
     ## Figure out a better way to get IP of a linode label
     linode_label=$(linode-cli linodes list --format "label" --text --no-headers)
@@ -62,22 +63,6 @@ teardown() {
 
 	run linode-cli ssh "root@$linode_label" -oStrictHostKeyChecking=no uname -r
 	assert_success
-	# Assert the kernel version comes back:
-	assert_output --partial "4.19.34-0-virt"
+	# Assert the kernel version matching this regex:
+	assert_output --regexp "[0-9]\.[0-9]*\.[0-9]*-.*-virt"
 }
-
-# @test "it should check the linode OS" {
-#     linode_label=$(linode-cli linodes list --format "label" --text --no-headers)
-# 	run linode-cli ssh "root@$linode_label" -oStrictHostKeyChecking=no cat /etc/os-release
-# 	assert_success
-#     assert_output --partial "Alpine Linuxasdf"
-# }
-
-
-# @test "it should check the ipv4 connectivity" {
-#     LAST_TEST="TRUE"
-#     linode_label=$(linode-cli linodes list --format "label" --text --no-headers)
-#     run linode-cli ssh "root@$linode_label" -oStrictHostKeyChecking=no ping -4 -W60 -c3 google.com
-#     assert_success
-#     assert_output --partial "0% packet lossasdf"
-# }

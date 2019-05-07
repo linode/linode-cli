@@ -10,7 +10,7 @@ load '../common'
 # ##################################################################
 
 setup() {
-    suiteName="ssh-connectivity"
+    suiteName="distro-and-connection-check"
     setToken "$suiteName"
     # linode_label="sshTestLinode"
 }
@@ -26,16 +26,17 @@ teardown() {
 }
 
 @test "it should create a linode and wait for it to be running" {
+    alpine_image=$(linode-cli images list --format "id" --text --no-headers | grep 'alpine')
     plan=$(linode-cli linodes types --text --no-headers --format="id" | xargs | awk '{ print $1 }')
     ssh_key="$(cat ~/.ssh/id_rsa.pub)"
-    createLinodeAndWait "$plan" "$ssh_key"
+    createLinodeAndWait "$alpine_image" "$plan" "$ssh_key"
     assert_success
 }
 
-
-@test "it should check the linode OS" {
-    # Wait 25 seconds for ssh to start
+@test "it should confirm the distro image is the distro selected in the CLI" {
+    # Replace this with polling for ssh port open
     sleep 25
+
     linode_label=$(linode-cli linodes list --format "label" --text --no-headers)
     run runCmdSsh "$linode_label" "cat /etc/os-release"
     assert_success
@@ -43,7 +44,7 @@ teardown() {
 }
 
 
-@test "it should check the ipv4 connectivity" {
+@test "it should check the vm for ipv4 connectivity" {
     LAST_TEST="TRUE"
     linode_label=$(linode-cli linodes list --format "label" --text --no-headers)
     run runCmdSsh "$linode_label" "ping -4 -W60 -c3 google.com"
