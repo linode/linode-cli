@@ -39,7 +39,7 @@ teardown() {
 
 @test "it should create a linode and boot" {
     # Wait For Linode to be Running
-    until [ $(linode-cli linodes view $linode_id --format="status" --text --no-headers) = "running" ]; do
+    until [[ $(linode-cli linodes view $linode_id --format="status" --text --no-headers) = "running" ]]; do
         echo 'still provisioning'
         sleep 5 # Rate limit ourselves
         if (( $SECONDS > 180 )); then
@@ -52,7 +52,7 @@ teardown() {
 
 @test "it should reboot the linode" {
     # Wait For Linode to be Running
-    until [ $(linode-cli linodes view $linode_id --format="status" --text --no-headers) = "running" ]; do
+    until [[ $(linode-cli linodes view $linode_id --format="status" --text --no-headers) = "running" ]]; do
         echo "still provisioning"
         sleep 5 # Rate limit ourselves
         if (( $SECONDS > 180 )); then
@@ -69,7 +69,7 @@ teardown() {
 
     # Wait For Linode to NOT be running
     SECONDS=0
-    until [ $(linode-cli linodes view $linode_id --format="status" --text --no-headers) != "running" ]; do
+    until [[ $(linode-cli linodes view $linode_id --format="status" --text --no-headers) != "running" ]]; do
         sleep 5 # Rate limit ourselves
         if (( $SECONDS > 180 )); then
             echo "Timeout elapsed! Linode did not reboot in time"
@@ -82,7 +82,7 @@ teardown() {
 @test "it should shutdown the linode" {
     LAST_TEST="TRUE"
     # Wait For Linode to be Running
-    until [ $(linode-cli linodes view $linode_id --format="status" --text --no-headers) = "running" ]; do
+    until [[ $(linode-cli linodes view $linode_id --format="status" --text --no-headers) = "running" ]]; do
         echo 'still provisioning'
         sleep 5 # Rate limit ourselves
         if (( $SECONDS > 180 )); then
@@ -97,7 +97,7 @@ teardown() {
 
     # Wait For Linode to be offline
     SECONDS=0
-    until [ $(linode-cli linodes view $linode_id --format="status" --text --no-headers) = "offline" ]; do
+    until [[ $(linode-cli linodes view $linode_id --format="status" --text --no-headers) = "offline" ]]; do
         echo 'still shutting down'
         sleep 5 # Rate limit ourselves
         if (( $SECONDS > 180 )); then
