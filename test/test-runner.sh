@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Trap ctrl-c and reset .env file
 trap ctrl_c INT
