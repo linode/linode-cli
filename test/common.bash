@@ -87,11 +87,17 @@ removeTag() {
 }
 
 createLinodeAndWait() {
+    local test_image=$(linode-cli images list --format id --text --no-header | egrep "linode\/.*" | head -n 1)
     local default_plan=$(linode-cli linodes types --text --no-headers --format="id" | xargs | awk '{ print $1 }')
     local linode_type=${1:-$default_plan}
 
-    run bash -c "LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN linode-cli linodes create --type=$linode_type --region us-east --image=$test_image --root_pass=$random_pass"
-    assert_success
+    if [ -n "$2" ]; then
+        run bash -c "LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN linode-cli linodes create --type=$linode_type --region us-east --image=$test_image --root_pass=$random_pass --authorized_keys=\"$2\""
+        assert_success
+    else
+        run bash -c "LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN linode-cli linodes create --type=$linode_type --region us-east --image=$test_image --root_pass=$random_pass"
+        assert_success
+    fi
 
     local linode_id=$(LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN linode-cli linodes list --format id --text --no-header | head -n 1)
 
@@ -104,6 +110,23 @@ createLinodeAndWait() {
             assert_failure # Fail test, linode did not boot in time
             break
         fi
+    done
+}
+
+waitForSsh() {
+    local linode_label=$(linode-cli linodes list --format "label" --text --no-headers)
+    local linode_ip=$(linode-cli linodes list --format "ipv4" --text --no-headers)
+
+    # Wait until SSH is available
+    SECONDS=0
+    sshUp=$(nc -z -G 2 "$linode_ip" 22  || echo "port closed")
+
+    while [ "$sshUp" == "port closed" ]; do
+        # Timeout if it takes more than 15 seconds for ssh availability
+        if (( "$SECONDS" > 15)); then
+            break
+        fi
+        sshUp=$(nc -z -G 2 "$linode_ip" 22 || echo "port closed")
     done
 }
 
