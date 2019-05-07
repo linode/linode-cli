@@ -53,6 +53,7 @@ teardown() {
 }
 
 @test "it should successfully ssh into a linode" {
+    LAST_TEST="TRUE"
     ## Figure out a better way to get IP of a linode label
     linode_label=$(linode-cli linodes list --format "label" --text --no-headers)
 
