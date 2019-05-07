@@ -65,18 +65,18 @@ teardown() {
 	assert_output --partial "4.19.34-0-virt"
 }
 
-@test "it should check the linode OS" {
-    linode_label=$(linode-cli linodes list --format "label" --text --no-headers)
-	run linode-cli ssh "root@$linode_label" -oStrictHostKeyChecking=no cat /etc/os-release
-	assert_success
-    assert_output --partial "Alpine Linuxasdf"
-}
+# @test "it should check the linode OS" {
+#     linode_label=$(linode-cli linodes list --format "label" --text --no-headers)
+# 	run linode-cli ssh "root@$linode_label" -oStrictHostKeyChecking=no cat /etc/os-release
+# 	assert_success
+#     assert_output --partial "Alpine Linuxasdf"
+# }
 
 
-@test "it should check the ipv4 connectivity" {
-    LAST_TEST="TRUE"
-    linode_label=$(linode-cli linodes list --format "label" --text --no-headers)
-    run linode-cli ssh "root@$linode_label" -oStrictHostKeyChecking=no ping -4 -W60 -c3 google.com
-    assert_success
-    assert_output --partial "0% packet lossasdf"
-}
+# @test "it should check the ipv4 connectivity" {
+#     LAST_TEST="TRUE"
+#     linode_label=$(linode-cli linodes list --format "label" --text --no-headers)
+#     run linode-cli ssh "root@$linode_label" -oStrictHostKeyChecking=no ping -4 -W60 -c3 google.com
+#     assert_success
+#     assert_output --partial "0% packet lossasdf"
+# }

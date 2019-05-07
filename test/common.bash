@@ -131,6 +131,13 @@ waitForSsh() {
 }
 
 
+runCmdSsh() {
+    local linode_label="$1"
+    local cmd="$2"
+
+    linode-cli ssh root@$linode_label -oStrictHostKeyChecking=no $cmd
+}
+
 setToken() {
     source $PWD/.env
 
