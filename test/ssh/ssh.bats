@@ -69,7 +69,7 @@ teardown() {
 
 @test "it should check the linode OS" {
     linode_label=$(linode-cli linodes list --format "label" --text --no-headers)
-	run linode-cli ssh "root@$linode_label" -oStrictHostKeyChecking=no 'cat /etc/os-release | grep -o "NAME=.*"'
+	run linode-cli ssh root@$linode_label -oStrictHostKeyChecking=no cat /etc/os-release
 	assert_success
     assert_output --partial "Alpine Linux"
 }
@@ -78,7 +78,7 @@ teardown() {
 @test "it should check the ipv4 connectivity" {
     LAST_TEST="TRUE"
     linode_label=$(linode-cli linodes list --format "label" --text --no-headers)
-    run linode-cli ssh "root@$linode_label" -oStrictHostKeyChecking=no 'ping -4 -W60 -c3 google.com || ping -W60 -c3 google.com'
+    run linode-cli ssh "root@$linode_label" -oStrictHostKeyChecking=no ping -4 -W60 -c3 google.com
     assert_success
     assert_output --partial "0% packet loss"
 }
