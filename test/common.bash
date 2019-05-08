@@ -137,7 +137,7 @@ runCmdSsh() {
     local linode_label="$1"
     local cmd="$2"
 
-    bash -c "linode-cli ssh root@$linode_label -oStrictHostKeyChecking=no $cmd"
+    linode-cli ssh root@$linode_label -oStrictHostKeyChecking=no $cmd
 }
 
 setToken() {
