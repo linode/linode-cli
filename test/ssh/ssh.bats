@@ -25,7 +25,7 @@ teardown() {
     fi
 }
 
-@test "it should display the ssh plugin usage infomraiton" {
+@test "it should display the ssh plugin usage information" {
     run linode-cli ssh -h
 
     assert_success
