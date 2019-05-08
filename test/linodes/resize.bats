@@ -26,7 +26,7 @@ teardown() {
 
 @test "it should fail to resize to the same plan" {
     local plan=$(linode-cli linodes types --format="id" --text --no-headers | sed -n 2p)
-    run createLinodeAndWait $plan
+    run createLinodeAndWait $test_image $plan
     linode_id=$(linode-cli linodes list --format id --text --no-header | head -n 1)
     linode_plan=$(linode-cli linodes view $linode_id --format="type" --text --no-headers)
 
@@ -46,7 +46,7 @@ teardown() {
 	smaller_plan=$(linode-cli linodes types --format="id" --text --no-headers | sed -n 1p)
 	local plan=$(linode-cli linodes types --format="id" --text --no-headers | sed -n 2p)
 
-    run createLinodeAndWait $plan
+    run createLinodeAndWait $test_image $plan
     linode_id=$(linode-cli linodes list --format id --text --no-header | head -n 1)
 
 	run linode-cli linodes resize \
@@ -62,7 +62,7 @@ teardown() {
 
 @test "it should fail to resize to an invalid plan" {
     local plan=$(linode-cli linodes types --format="id" --text --no-headers | sed -n 2p)
-    run createLinodeAndWait $plan
+    run createLinodeAndWait $test_image $plan
     linode_id=$(linode-cli linodes list --format id --text --no-header | head -n 1)
 	invalid_plan="g15-bad-plan"
 
