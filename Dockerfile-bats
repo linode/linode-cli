@@ -12,10 +12,8 @@ RUN apt-get update && apt-get install -y python3 python3-pip parallel \
 WORKDIR /src
 
 # Install BATS testing framework
-RUN mkdir bats-core \
+RUN git clone --branch v1.1.0 https://github.com/bats-core/bats-core.git \
     && cd bats-core \
-    && git clone https://github.com/bats-core/bats-core.git --branch master v1.1.0 --single-branch \
-    && cd v1.1.0 \
     && ./install.sh /usr/local
 
 WORKDIR /src/linode-cli
