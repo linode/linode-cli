@@ -38,7 +38,7 @@ teardown() {
     sleep 25
 
     linode_label=$(linode-cli linodes list --format "label" --text --no-headers)
-    run runCmdSsh "$linode_label" "cat /etc/os-release"
+    run linode-cli ssh "$linode_label cat /etc/os-release"
     assert_success
     assert_output --partial "Alpine Linux"
 }
@@ -47,7 +47,8 @@ teardown() {
 @test "it should check the vm for ipv4 connectivity" {
     LAST_TEST="TRUE"
     linode_label=$(linode-cli linodes list --format "label" --text --no-headers)
-    run runCmdSsh "$linode_label" "ping -4 -W60 -c3 google.com"
+    # run runCmdSsh "$linode_label" "ping -4 -W60 -c3 google.com"
+    run linode-cli ssh "$linode_label ping -4 -W60 -c3 google.com"
     assert_success
     assert_output --partial "0% packet loss"
 }
