@@ -17,39 +17,38 @@ setup() {
 
 teardown() {
     unset timestamp
-    run removeLinodes
 
     if [ "$LAST_TEST" = "TRUE" ]; then
+        run removeLinodes
         clearToken "$suiteName"
     fi
 }
 
 @test "it should fail to rebuild without providing the image" {
+    run createLinodeAndWait
     linode_id=$(linode-cli linodes list --format id --text --no-header | head -n 1)
-    rebuild_image=$(linode-cli images list --text --no-headers --format id | sed -n 3p)
 
     run linode-cli linodes rebuild \
-        --image=$rebuild_image \
         --root_pass=$random_pass \
+        $linode_id \
         --text \
         --no-headers
 
     assert_failure
-    assert_output --partial "linode-cli: error: too few arguments"
+    assert_output --partial "Request failed: 400"
+    assert_output --partial "You must specify an image"
 }
 
 @test "it should fail to rebuild with an invalid image" {
-    run createLinodeAndWait
-
     linode_id=$(linode-cli linodes list --format id --text --no-header | head -n 1)
     rebuild_image="bad/image"
 
     run linode-cli linodes rebuild \
         --image=$rebuild_image \
         --root_pass=$random_pass \
+        $linode_id \
         --text \
-        --no-headers \
-        $linode_id
+        --no-headers
 
     assert_failure
     assert_output --partial "Request failed: 400"
@@ -60,8 +59,6 @@ teardown() {
     LAST_TEST="TRUE"
 
     if [ $RUN_LONG_TESTS = "TRUE" ]; then
-        run createLinodeAndWait
-
         linode_id=$(linode-cli linodes list --format id --text --no-header | head -n 1)
         rebuild_image=$(linode-cli images list --text --no-headers --format id | sed -n 3p)
 

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Get an available image and set it as an env variable
 if [ -z "$test_image" ]; then
@@ -87,16 +87,24 @@ removeTag() {
 }
 
 createLinodeAndWait() {
+    local test_image=$(linode-cli images list --format id --text --no-header | egrep "linode\/.*" | head -n 1)
     local default_plan=$(linode-cli linodes types --text --no-headers --format="id" | xargs | awk '{ print $1 }')
-    local linode_type=${1:-$default_plan}
+    local linode_image=${1:-$test_image}
+    local linode_type=${2:-$default_plan}
 
-    run bash -c "LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN linode-cli linodes create --type=$linode_type --region us-east --image=$test_image --root_pass=$random_pass"
-    assert_success
+    # $3 is ssh-keys
+    if [ -n "$3" ]; then
+        run bash -c "LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN linode-cli linodes create --type=$linode_type --region us-east --image=$linode_image --root_pass=$random_pass --authorized_keys=\"$3\""
+        assert_success
+    else
+        run bash -c "LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN linode-cli linodes create --type=$linode_type --region us-east --image=$linode_image --root_pass=$random_pass"
+        assert_success
+    fi
 
     local linode_id=$(LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN linode-cli linodes list --format id --text --no-header | head -n 1)
 
     SECONDS=0
-    until [ $(LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN linode-cli linodes view $linode_id --format="status" --text --no-headers) = "running" ]; do
+    until [[ $(LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN linode-cli linodes view $linode_id --format="status" --text --no-headers) = "running" ]]; do
         echo 'still provisioning'
         sleep 5 # Wait 5 seconds before checking status again, to rate-limit ourselves
         if (( $SECONDS > 180 )); then
@@ -107,6 +115,22 @@ createLinodeAndWait() {
     done
 }
 
+waitForSsh() {
+    local linode_label=$(linode-cli linodes list --format "label" --text --no-headers)
+    local linode_ip=$(linode-cli linodes list --format "ipv4" --text --no-headers)
+
+    # Wait until SSH is available
+    SECONDS=0
+    sshUp=$(nc -z -G 2 "$linode_ip" 22  || echo "port closed")
+
+    while [ "$sshUp" == "port closed" ]; do
+        # Timeout if it takes more than 15 seconds for ssh availability
+        if (( "$SECONDS" > 15)); then
+            break
+        fi
+        sshUp=$(nc -z -G 2 "$linode_ip" 22 || echo "port closed")
+    done
+}
 
 setToken() {
     source $PWD/.env

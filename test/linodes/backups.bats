@@ -95,7 +95,7 @@ teardown() {
 
     if [ "$RUN_LONG_TESTS" = "TRUE" ]; then
         SECONDS=0
-        until [ $(linode-cli linodes view "$linode_id" --format="status" --text --no-headers) = "running" ]; do
+        until [[ $(linode-cli linodes view "$linode_id" --format="status" --text --no-headers) = "running" ]]; do
             echo 'still provisioning'
             # Wait 5 seconds before checking status again, to rate-limit ourselves
             sleep 5
