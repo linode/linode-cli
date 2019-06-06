@@ -13,19 +13,19 @@ setup() {
     suiteName="resize"
     setToken "$suiteName"
     export timestamp=$(date +%s)
+    plan=$(linode-cli linodes types --format="id" --text --no-headers | sed -n 2p)
 }
 
 teardown() {
     unset timestamp
-    run removeLinodes
 
     if [ "$LAST_TEST" = "TRUE" ]; then
+        run removeLinodes
         clearToken "$suiteName"
     fi
 }
 
 @test "it should fail to resize to the same plan" {
-    local plan=$(linode-cli linodes types --format="id" --text --no-headers | sed -n 2p)
     run createLinodeAndWait $test_image $plan
     linode_id=$(linode-cli linodes list --format id --text --no-header | head -n 1)
     linode_plan=$(linode-cli linodes view $linode_id --format="type" --text --no-headers)
@@ -44,9 +44,6 @@ teardown() {
 
 @test "it should fail to resize to a smaller plan" {
 	smaller_plan=$(linode-cli linodes types --format="id" --text --no-headers | sed -n 1p)
-	local plan=$(linode-cli linodes types --format="id" --text --no-headers | sed -n 2p)
-
-    run createLinodeAndWait $test_image $plan
     linode_id=$(linode-cli linodes list --format id --text --no-header | head -n 1)
 
 	run linode-cli linodes resize \
@@ -61,10 +58,8 @@ teardown() {
 }
 
 @test "it should fail to resize to an invalid plan" {
-    local plan=$(linode-cli linodes types --format="id" --text --no-headers | sed -n 2p)
-    run createLinodeAndWait $test_image $plan
+    invalid_plan="g15-bad-plan"
     linode_id=$(linode-cli linodes list --format id --text --no-header | head -n 1)
-	invalid_plan="g15-bad-plan"
 
 	run linode-cli linodes resize \
 		--type=$invalid_plan \
@@ -81,7 +76,10 @@ teardown() {
     LAST_TEST="TRUE"
     if [ $RUN_LONG_TESTS = "TRUE" ]; then
     	larger_plan=$(linode-cli linodes types --format="id" --text --no-headers | sed -n 3p)
+        linode_id=$(linode-cli linodes list --format id --text --no-header | head -n 1)
+
     	run linode-cli linodes resize \
+            --allow_auto_disk_resize=true \
     		--type=$larger_plan \
     		--text \
     		--no-headers \

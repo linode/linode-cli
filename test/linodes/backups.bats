@@ -13,7 +13,7 @@ setup() {
     suiteName="backups"
     setToken "$suiteName"
     export timestamp=$(date +%s)
-    clean_linodes="false"
+    clean_linodes="FALSE"
     linode_id=$(linode-cli linodes list --format id --text --no-header | head -n 1)
     snapshot_label="test_snapshot1"
 }
@@ -21,7 +21,7 @@ setup() {
 teardown() {
     unset timestamp
 
-    if [ "$clean_linodes" = "true" ] || [ "$last_test" = "true" ]; then
+    if [ "$clean_linodes" = "TRUE" ] || [ "$LAST_TEST" = "TRUE" ]; then
         run removeLinodes
     fi
 
@@ -65,7 +65,7 @@ teardown() {
     assert_output --partial "$linode_id,True"
 
     # Cleanup linodes
-    clean_linodes="true"
+    clean_linodes="TRUE"
 }
 
 @test "it should create a backup with backups enabled" {
@@ -131,12 +131,12 @@ teardown() {
 
         # assert_output --regexp "[0-9]+,pending,snapshot,[0-9]+-[0-9]+-[0-9]+T[0-9]+:[0-9]+:[0-9]+,${snapshot_label}"
         # BUG outputs the backup as json, assertion below asserts that outputs the expected.
-        assert_output --regexp "\'status\': \'pending."
-        assert_output --regexp "\'finished\': None"
-        assert_output --regexp "\'type\': \'snapshot\'"
-        assert_output --regexp "\'label\': \'$snapshot_label\'"
-        assert_output --regexp "\'region\': \'us-east\'"
-        assert_output --regexp "\'id\': [0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]"
+        assert_output --regexp "'status\': 'pending."
+        assert_output --regexp "'finished': None"
+        assert_output --regexp "'type\': 'snapshot\'"
+        assert_output --regexp "'label\': '$snapshot_label'"
+        assert_output --regexp "'region\': 'us-east'"
+        assert_output --regexp "'id': [0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]"
     else
         skip "Skipping long-running Test, to run set RUN_LONG_TESTS=TRUE"
     fi
@@ -159,5 +159,5 @@ teardown() {
         --no-headers
     assert_success
 
-    clean_linodes="true"
+    clean_linodes="TRUE"
 }
