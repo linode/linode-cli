@@ -131,12 +131,12 @@ teardown() {
 
         # assert_output --regexp "[0-9]+,pending,snapshot,[0-9]+-[0-9]+-[0-9]+T[0-9]+:[0-9]+:[0-9]+,${snapshot_label}"
         # BUG outputs the backup as json, assertion below asserts that outputs the expected.
-        assert_output --regexp "'status\': 'pending."
-        assert_output --regexp "'finished': None"
-        assert_output --regexp "'type\': 'snapshot\'"
-        assert_output --regexp "'label\': '$snapshot_label'"
-        assert_output --regexp "'region\': 'us-east'"
-        assert_output --regexp "'id': [0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]"
+        assert_output --regexp "'status':.*'pending"
+        assert_output --regexp "'finished':.*None"
+        assert_output --regexp "'type':.*'snapshot'"
+        assert_output --regexp "'label':.*'$snapshot_label'"
+        assert_output --regexp "'region':.*'us-east'"
+        assert_output --regexp "'id':.*[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]"
     else
         skip "Skipping long-running Test, to run set RUN_LONG_TESTS=TRUE"
     fi
