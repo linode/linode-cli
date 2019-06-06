@@ -28,7 +28,7 @@ Upgrading
 
 To upgrade to the latest version of the Linode CLI::
 
-pip install linode-cli --upgrade
+   pip install linode-cli --upgrade
 
 Usage
 -----
@@ -440,7 +440,7 @@ added to Linode's OpenAPI spec:
 |x-linode-cli-action  | method   | The action name for operations under this path. If not present, operationId is used.      |
 +---------------------+----------+-------------------------------------------------------------------------------------------+
 |x-linode-cli-color   | property | If present, defines key-value pairs of property value: color.  Colors must be understood  |
-|                     |          | by colorclass.Color.  Must include a default_                                             |
+|                     |          | by colorclass.Color.  Must include a default.                                             |
 +---------------------+----------+-------------------------------------------------------------------------------------------+
 |x-linode-cli-skip    | path     | If present and truthy, this method will not be available in the CLI.                      |
 +---------------------+----------+-------------------------------------------------------------------------------------------+
