@@ -142,6 +142,7 @@ class CLI:
         """
         self.spec = spec
         self.ops = {}
+        default_servers = [c['url'] for c in spec['servers']]
 
         for path, data in self.spec['paths'].items():
             command = data.get("x-linode-cli-command") or "default"
@@ -167,6 +168,9 @@ class CLI:
                         continue
 
                     summary = data[m].get('summary') or ''
+
+                    use_servers = ([c['url'] for c in data[m]['servers']]
+                                   if 'servers' in data[m] else default_servers)
 
                     args = {}
                     required_fields = []
@@ -238,7 +242,7 @@ class CLI:
 
                     self.ops[command][action] = CLIOperation(m, use_path, summary,
                                                              cli_args, response_model,
-                                                             use_params)
+                                                             use_params, use_servers)
 
         # hide the base_url from the spec away
         self.ops['_base_url'] = spec['servers'][0]['url']
@@ -370,7 +374,7 @@ complete -F _linode_cli linode-cli""")
 
             body = json.dumps(expanded_json)
 
-        result =  method(self.base_url+url, headers=headers, data=body)
+        result =  method(url, headers=headers, data=body)
 
         # if the API indicated it's newer major or minor version than the client, print a warning
         if 'X-Spec-Version' in result.headers:
