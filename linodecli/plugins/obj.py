@@ -1,6 +1,3 @@
-"""
-This is a super early version of the Linode Object Storage plugin
-"""
 from __future__ import print_function
 import argparse
 import base64
@@ -103,14 +100,7 @@ def create_bucket(client, args):
 
     parsed = parser.parse_args(args)
 
-    try:
-        client.create_bucket(parsed.name)
-    except S3CreateError as e:
-        print(e)
-        sys.exit(4)
-    except BotoClientError as e:
-        print(e)
-        sys.exit(4)
+    client.create_bucket(parsed.name)
 
     print('Bucket {} created'.format(parsed.name))
     sys.exit(0)
@@ -147,8 +137,8 @@ def upload_object(client, args):
     parser.add_argument('--acl-public', action='store_true',
                         help="If set, the new object can be downloaded without "
                              "authentication.")
-    parser.add_argument('--recursive', action='store_true',
-                        help="If set, upload directories recursively.")
+    #parser.add_argument('--recursive', action='store_true',
+    #                    help="If set, upload directories recursively.")
 
     parsed = parser.parse_args(args)
 
@@ -168,7 +158,7 @@ def upload_object(client, args):
     # upload the files
     try:
         bucket = client.get_bucket(parsed.bucket)
-    except S3ReponseError:
+    except S3ResponseError:
         print('No bucket named '+parsed.bucket)
         sys.exit(2)
 
@@ -572,7 +562,25 @@ def call(args, context):
         exit(0)
 
     if parsed.command in COMMAND_MAP:
-        COMMAND_MAP[parsed.command](client, args)
+        try:
+            COMMAND_MAP[parsed.command](client, args)
+        except S3ResponseError as e:
+            if e.error_code:
+                print('Error: {}'.format(e.error_code))
+            else:
+                print(e)
+            sys.exit(4)
+        except S3CreateError as e:
+            print('Error: {}'.format(e))
+            sys.exit(5)
+        except BotoClientError as e:
+            message_parts = e.message.split(':')
+            if len(message_parts) > 0:
+                message = ':'.join(message_parts[0:])
+            else:
+                message = e.message
+            print('Error: {}'.format(message))
+            sys.exit(6)
     else:
         print('No command {}'.format(parsed.command))
         sys.exit(1)
