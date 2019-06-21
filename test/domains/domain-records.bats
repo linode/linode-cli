@@ -21,7 +21,7 @@ teardown() {
 
     run linode-cli domains create \
         --type master \
-        --domain "$timestamp-example.com" \
+        --domain "A$timestamp-example.com" \
         --soa_email="pthiel@linode.com" \
         --text \
         --no-header
