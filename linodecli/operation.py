@@ -117,13 +117,22 @@ class CLIOperation:
     responses with the help of their ResponseModel
     """
     def __init__(self, method, url, summary, args, response_model,
-                 params):
+                 params, servers):
         self.method = method
-        self.url = url
+        self._url = url
         self.summary = summary
         self.args = args
         self.response_model = response_model
         self.params = params
+        self.servers = servers
+
+    @property
+    def url(self):
+        """
+        Returns the full URL for this resource based on servers and endpoint
+        """
+        base_url = self.servers[0]
+        return base_url + '/' + self._url
 
     def parse_args(self, args):
         """
