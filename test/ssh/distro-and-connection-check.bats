@@ -26,7 +26,7 @@ teardown() {
 }
 
 @test "it should create a linode and wait for it to be running" {
-    alpine_image=$(linode-cli images list --format "id" --text --no-headers | grep 'alpine')
+    alpine_image=$(linode-cli images list --format "id" --text --no-headers | grep 'alpine' | xargs | awk '{ print $1 }')
     plan=$(linode-cli linodes types --text --no-headers --format="id" | xargs | awk '{ print $1 }')
     ssh_key="$(cat ~/.ssh/id_rsa.pub)"
     createLinodeAndWait "$alpine_image" "$plan" "$ssh_key"
