@@ -47,7 +47,7 @@ teardown() {
 }
 
 @test "it should enable backups" {
-    if [ "$TEST_ENVIRONMENT" = "dev" ] || [ $"TEST_ENVIRONMENT" = "test" ]; then
+    if [ "$TEST_ENVIRONMENT" = "dev" ] || [ "$TEST_ENVIRONMENT" = "test" ]; then
         skip "Skipping backups tests"
     fi
 
