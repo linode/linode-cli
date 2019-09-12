@@ -12,20 +12,17 @@ load '../common'
 setup() {
     suiteName="distro-and-connection-check"
     setToken "$suiteName"
-    # linode_label="sshTestLinode"
 }
 
 teardown() {
-    if [[ "$LAST_TEST" = "TRUE" ]]; then
-        run removeLinodes
-    fi
-
     if [ "$LAST_TEST" = "TRUE" ]; then
+        run removeLinodes
         clearToken "$suiteName"
     fi
 }
 
 @test "it should create a linode and wait for it to be running" {
+    run removeLinodes
     alpine_image=$(linode-cli images list --format "id" --text --no-headers | grep 'alpine' | xargs | awk '{ print $1 }')
     plan=$(linode-cli linodes types --text --no-headers --format="id" | xargs | awk '{ print $1 }')
     ssh_key="$(cat ~/.ssh/id_rsa.pub)"

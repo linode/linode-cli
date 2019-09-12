@@ -12,20 +12,17 @@ load '../common'
 setup() {
     suiteName="ssh"
     setToken "$suiteName"
-    # linode_label="sshTestLinode"
 }
 
 teardown() {
-    if [[ "$LAST_TEST" = "TRUE" ]]; then
-        run removeLinodes
-    fi
-
     if [ "$LAST_TEST" = "TRUE" ]; then
+        run removeLinodes
         clearToken "$suiteName"
     fi
 }
 
 @test "it should display the ssh plugin usage information" {
+    run removeLinodes
     run linode-cli ssh -h
 
     assert_success
