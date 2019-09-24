@@ -1,8 +1,5 @@
 #!/usr/bin/env bash
 
-TOKEN_1="${PROD_API_TOKEN}"
-TOKEN_2="${PROD_API_TOKEN_2}"
-
 docker build \
   -f Dockerfile-bats \
   --build-arg API_OVERRIDE="${API_OVERRIDE}" \
