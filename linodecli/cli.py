@@ -250,7 +250,6 @@ class CLI:
 
         # finish the baking
         data_file = self._get_data_file()
-        print('our data file is...', data_file)
         with open(data_file, 'wb') as f:
             pickle.dump(self.ops, f)
 
