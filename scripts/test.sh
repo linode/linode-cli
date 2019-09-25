@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -x
+
 docker build \
   -f Dockerfile-bats \
   --build-arg API_OVERRIDE="${API_OVERRIDE}" \
@@ -12,8 +14,8 @@ docker run -e TOKEN_1="${TOKEN_1}" \
     -e DOCKER_BATS="TRUE" \
     -e RUN_LONG_TESTS="${LONG_TESTS}" \
     -e USER=${USER} \
-    -e USERID=${USERID} \
-    -u ${USERID} \
+    -e USERID=$(grep Uid /proc/self/status | cut -f2 | awk '{$1=$1};1') \
+    -u $(id -u) \
     -v $SSH_PRIVATE_KEY:/root/.ssh/id_rsa \
     -v $SSH_PUBLIC_KEY:/root/.ssh/id_rsa.pub \
     --rm \
