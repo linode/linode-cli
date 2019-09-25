@@ -9,5 +9,5 @@ docker run \
     -e USER=${USER} \
     -e USERID=$(grep Uid /proc/self/status | cut -f2 | awk '{$1=$1};1') \
     -u $(id -u) \
-    -v $(pwd)/dist:/src/dist \
+    -v $(pwd):/src \
     linode-cli-$BUILD_TAG
