@@ -19,4 +19,4 @@ docker run -e TOKEN_1="${TOKEN_1}" \
     -v $SSH_PRIVATE_KEY:/root/.ssh/id_rsa \
     -v $SSH_PUBLIC_KEY:/root/.ssh/id_rsa.pub \
     --rm \
-    linode-cli
+    linode-cli-test
