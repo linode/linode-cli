@@ -3,7 +3,7 @@ FROM python:2-slim
 ENV PYTHONPATH=.
 ENV PATH="/usr/local/bin:/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/root/.local/bin"
 
-RUN apt-get update && apt-get install -y python3 python3-pip \
+RUN apt-get update && apt-get install -y git python3 python3-pip \
     && rm -rf /var/lib/apt/lists/* \
     && rm -rf /var/cache/apt/*
 

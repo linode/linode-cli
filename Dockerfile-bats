@@ -6,7 +6,7 @@ ENV TEST_ENVIRONMENT "prod"
 ENV PYTHONPATH=.
 ENV PATH="/usr/local/bin:/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/root/.local/bin"
 
-RUN apt-get update && apt-get install -y python3 python3-pip parallel \
+RUN apt-get update && apt-get install -y git python3 python3-pip parallel \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /src
