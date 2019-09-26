@@ -14,7 +14,7 @@ docker run \
     -e TEST_ENVIRONMENT="${ENVIRONMENT}" \
     -e DOCKER_BATS="TRUE" \
     -e RUN_LONG_TESTS="${LONG_TESTS}" \
-    -v $SSH_PRIVATE_KEY:/src/.ssh/id_rsa \
-    -v $SSH_PUBLIC_KEY:/src/.ssh/id_rsa.pub \
+    -v $SSH_PRIVATE_KEY:/root/.ssh/id_rsa \
+    -v $SSH_PUBLIC_KEY:/root/.ssh/id_rsa.pub \
     --rm \
     linode-cli-test
