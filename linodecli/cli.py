@@ -376,37 +376,74 @@ complete -F _linode_cli linode-cli""")
 
         result =  method(url, headers=headers, data=body)
 
-        # if the API indicated it's newer major or minor version than the client, print a warning
-        if 'X-Spec-Version' in result.headers:
-            spec_version = result.headers.get('X-Spec-Version')
+        if not self.suppress_warnings:
+            # check the major/minor version API reported against what we were built
+            # with to see if an upgrade should be available
+            api_version_higher = False
 
-            try:
-                # Parse the spec versions from the API and local CLI.
-                StrictVersion(spec_version)
-                StrictVersion(self.spec_version)
+            if 'X-Spec-Version' in result.headers:
+                spec_version = result.headers.get('X-Spec-Version')
 
-                # Get only the Major/Minor version of the API Spec and CLI Spec, ignore patch version differences
-                spec_major_minor_version = spec_version.split(".")[0] + "." + spec_version.split(".")[1]
-                current_major_minor_version = self.spec_version.split(".")[0] + "." + self.spec_version.split(".")[1]
-            except ValueError:
-                # If versions are non-standard like, "DEVELOPMENT" use them and don't complain.
-                spec_major_minor_version = spec_version
-                current_major_minor_version = self.spec_version
+                try:
+                    # Parse the spec versions from the API and local CLI.
+                    StrictVersion(spec_version)
+                    StrictVersion(self.spec_version)
 
-            try:
-                if LooseVersion(spec_major_minor_version) > LooseVersion(current_major_minor_version) and not self.suppress_warnings:
+                    # Get only the Major/Minor version of the API Spec and CLI Spec, ignore patch version differences
+                    spec_major_minor_version = spec_version.split(".")[0] + "." + spec_version.split(".")[1]
+                    current_major_minor_version = self.spec_version.split(".")[0] + "." + self.spec_version.split(".")[1]
+                except ValueError:
+                    # If versions are non-standard like, "DEVELOPMENT" use them and don't complain.
+                    spec_major_minor_version = spec_version
+                    current_major_minor_version = self.spec_version
+
+                try:
+                    if LooseVersion(spec_major_minor_version) > LooseVersion(current_major_minor_version):
+                        api_version_higher = True
+                except:
+                    # if this comparison or parsing failed, still process output
+                    print("Parsing failed when comparing local version {} with server "
+                          "version {}.  If this problem persists, please open a ticket "
+                          "with `linode-cli support ticket-create`".format(
+                             self.spec_version, spec_version
+                          ), file=stderr)
+
+            if api_version_higher:
+                # check to see if there is, in fact, a version to upgrade to.  If not, don't
+                # suggest an upgrade (since there's no package anyway)
+                new_version_exists = False
+
+                try:
+                    # do this all in a try block since it must _never_ prevent the CLI
+                    # from showing command output
+                    pypi_response = requests.get(
+                        'https://pypi.org/pypi/linode-cli/json',
+                         timeout=1 # seconds
+                    )
+
+                    if pypi_response.status_code == 200:
+                        # we got data back
+                        pypi_version = pypi_response.json()['info']['version']
+
+                        # no need to be fancy; these should always be valid versions
+                        if LooseVersion(pypi_version) > LooseVersion(self.version):
+                            new_version_exists = True
+                except:
+                    # I know, but if anything happens here the end user should still
+                    # be able to see the command output
+                    print("Unable to determine if a new linode-cli package is available "
+                          "in pypi.  If this message persists, open a ticket or invoke "
+                          "with --suppress-warnings",
+                          file=stderr)
+                    pass
+
+                if new_version_exists:
                     print("The API responded with version {}, which is newer than "
                           "the CLI's version of {}.  Please update the CLI to get "
                           "access to the newest features.  You can update with a "
                           "simple `pip install --upgrade linode-cli`".format(
                               spec_version, self.spec_version
                           ), file=stderr)
-            except:
-                # if this comparison or parsing failed, still process output
-                print("Parsing failed when comparing local version {} with server "
-                     "version {}.  If this problem persists, please open a ticket "
-                     "with `linode-cli support ticket-create`".format(
-                    self.spec_version, spec_version), file=stderr)
 
         if not 199 < result.status_code < 399:
             self._handle_error(result)
