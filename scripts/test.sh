@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -x
+set -e -x
 
 docker build \
   -f Dockerfile-bats \
