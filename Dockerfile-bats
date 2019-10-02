@@ -36,8 +36,9 @@ ARG API_OVERRIDE=api.linode.com
 # Override the Spec url
 ARG SPEC=https://developers.linode.com/api/docs/v4/openapi.yaml
 
-# Build and Install the Linode CLI
-RUN sed -n "s|url: https://api.linode.com/v4|url: https://${API_OVERRIDE}/v4|g;w cli-tests.yaml" /src/linode-cli/openapi.yaml \
+# Fetch the openapi spec, build and install the Linode CLI
+RUN curl --cacert ./cacert.pem -o ./openapi.yaml "${SPEC}" \
+    && sed -n "s|url: https://api.linode.com/v4|url: https://${API_OVERRIDE}/v4|g;w cli-tests.yaml" /src/linode-cli/openapi.yaml \
     && git submodule init \
     && git submodule update \
     && make build SPEC=/src/linode-cli/cli-tests.yaml \
