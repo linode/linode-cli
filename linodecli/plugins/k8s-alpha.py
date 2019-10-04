@@ -81,8 +81,8 @@ def create(args, context):
         sys.exit(1)
     # Check if terraform version is between min and max
     if not terraform_version_supported(terraform_min_version,terraform_max_version):
-        print('Terraform version unsupported. Must be between v{} and v{}').format(
-                terraform_min_version,terraform_max_version)
+        print('Terraform version unsupported. Must be between v{} and v{}'.format(
+                terraform_min_version,terraform_max_version))
         print_terraform_install_help()
         sys.exit(1)
 
@@ -213,8 +213,8 @@ def delete(args, context):
 
     # Check if terraform version is between min and max
     if not terraform_version_supported(terraform_min_version,terraform_max_version):
-        print('Terraform version unsupported. Must be between v{} and v{}').format(
-                terraform_min_version,terraform_max_version)
+        print('Terraform version unsupported. Must be between v{} and v{}'.format(
+                terraform_min_version,terraform_max_version))
         print_terraform_install_help()
         sys.exit(1)
 
@@ -301,7 +301,7 @@ def dep_installed(command):
 
 def terraform_version_supported(min_version, max_version):
     # The Terraform version is of the format "Terraform v0.0.0"
-    version = check_output(['terraform','version']).split()[1].replace('v','',1)
+    version = check_output(['terraform','version']).split()[1].decode().replace('v','',1)
     return LooseVersion(min_version) <= LooseVersion(version) < LooseVersion(max_version)
 
 def print_terraform_install_help():
