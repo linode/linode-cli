@@ -6,6 +6,7 @@ import base64
 import sys
 import os
 from subprocess import call as spcall, check_output, Popen, PIPE
+from distutils.version import LooseVersion
 import hashlib
 import shutil
 from terminaltables import SingleTable
@@ -18,8 +19,8 @@ except NameError:
 
 plugin_name = os.path.basename(__file__)[:-3]
 
-terraform_min_version = '0.11.14' # This version and above are supported
-terraform_max_version = '0.12.0'  # Only versions below this one are supported
+terraform_min_version = '0.12.0' # This version and above are supported
+terraform_max_version = '0.13.0' # Only versions below this one are supported
 
 def call(args, context):
     parser = argparse.ArgumentParser("{}".format(plugin_name), add_help=False)
@@ -300,34 +301,8 @@ def dep_installed(command):
 
 def terraform_version_supported(min_version, max_version):
     # The Terraform version is of the format "Terraform v0.0.0"
-    version = check_output(['terraform','version']).split()[1].replace('v','')
-    return terraform_minimum_check(version, min_version) and terraform_maximum_check(version, max_version)
-
-def terraform_minimum_check(version, min_version):
-    version = [int(i) for i in version.split('.')]
-    minimum = [int(i) for i in min_version.split('.')]
-    # Check that version is equal to or greater than minimum
-    for i in range(len(version)):
-        if version[i] < minimum[i]:
-            return False
-        elif version[i] > minimum[i]:
-            return True
-        else:
-            pass
-    return True
-
-def terraform_maximum_check(version, max_version):
-    version = [int(i) for i in version.split('.')]
-    maximum = [int(i) for i in max_version.split('.')]
-    # Check that version is less than maximum
-    for i in range(len(version)):
-        if version[i] < maximum[i]:
-            return True
-        elif version[i] > maximum[i]:
-            return False
-        else:
-            pass
-    return False
+    version = check_output(['terraform','version']).split()[1].replace('v','',1)
+    return LooseVersion(min_version) <= LooseVersion(version) < LooseVersion(max_version)
 
 def print_terraform_install_help():
     print('\n# Installing Terraform:\n\n'
