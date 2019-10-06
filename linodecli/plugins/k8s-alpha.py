@@ -5,7 +5,8 @@ import argparse
 import base64
 import sys
 import os
-from subprocess import call as spcall, Popen, PIPE
+from subprocess import call as spcall, check_output, Popen, PIPE
+from distutils.version import LooseVersion
 import hashlib
 import shutil
 from terminaltables import SingleTable
@@ -17,6 +18,9 @@ except NameError:
     FileNotFoundError = IOError
 
 plugin_name = os.path.basename(__file__)[:-3]
+
+terraform_min_version = '0.12.0'  # This version and above are supported
+terraform_max_version = '0.13.0'  # Only versions below this one are supported
 
 def call(args, context):
     parser = argparse.ArgumentParser("{}".format(plugin_name), add_help=False)
@@ -74,6 +78,12 @@ def create(args, context):
             print_terraform_install_help()
         if 'kubectl' in needed_deps:
             print_kubectl_install_help()
+        sys.exit(1)
+    # Check if terraform version is between min and max
+    if not terraform_version_supported(terraform_min_version, terraform_max_version):
+        print('Terraform version unsupported. Must be between v{} and v{}'.format(
+                terraform_min_version, terraform_max_version))
+        print_terraform_install_help()
         sys.exit(1)
 
     tf_var_map = create_varmap(context)
@@ -200,6 +210,13 @@ def delete(args, context):
             print_terraform_install_help()
         sys.exit(1)
 
+    # Check if terraform version is between min and max
+    if not terraform_version_supported(terraform_min_version, terraform_max_version):
+        print('Terraform version unsupported. Must be between v{} and v{}'.format(
+                terraform_min_version, terraform_max_version))
+        print_terraform_install_help()
+        sys.exit(1)
+
     parser = argparse.ArgumentParser("{} create".format(plugin_name), add_help=True)
     parser.add_argument('name', metavar='NAME', type=str,
                         help="The name of the cluster to delete.")
@@ -280,6 +297,11 @@ def dep_installed(command):
         return True
     except: 
         return False
+
+def terraform_version_supported(min_version, max_version):
+    # The Terraform version is of the format "Terraform v0.0.0"
+    version = check_output(['terraform', 'version']).split()[1].decode().replace('v', '', 1)
+    return LooseVersion(min_version) <= LooseVersion(version) < LooseVersion(max_version)
 
 def print_terraform_install_help():
     print('\n# Installing Terraform:\n\n'
