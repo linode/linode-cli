@@ -3,4 +3,4 @@
 set -e -x
 
 # Cleanup the docker image
-docker rmi linode-cli-$BUILD_TAG linode-cli-test
+docker rmi cli-builder:${BUILD_TAG} linode-cli-test
