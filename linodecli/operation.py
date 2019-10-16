@@ -147,7 +147,7 @@ class CLIOperation:
 
         #  type cast certain args from string to int
         for arg in INT_FILTER_ARGS:
-            parser.add_argument('--'+arg, type=int, dest=arg, help=argparse.SUPPRESS)
+            parser.add_argument('--'+arg, type=int)
 
         for param in self.params:
             parser.add_argument(param.name, metavar=param.name,
