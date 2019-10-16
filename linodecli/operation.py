@@ -83,9 +83,6 @@ TYPES = {
     "number": float,
 }
 
-INT_FILTER_ARGS = [
-    'entity.id'
-]
 
 class CLIArg:
     """
@@ -144,11 +141,6 @@ class CLIOperation:
         """
         #  build an argparse
         parser = argparse.ArgumentParser(description=self.summary)
-
-        #  type cast certain args from string to int
-        for arg in INT_FILTER_ARGS:
-            parser.add_argument('--'+arg, type=int)
-
         for param in self.params:
             parser.add_argument(param.name, metavar=param.name,
                                 type=TYPES[param.param_type])
@@ -156,8 +148,8 @@ class CLIOperation:
         if self.method == "get":
             # build args for filtering
             for attr in self.response_model.attrs:
-                if attr.filterable and attr.name not in INT_FILTER_ARGS:
-                    parser.add_argument('--'+attr.name, metavar=attr.name)
+                if attr.filterable:
+                    parser.add_argument('--'+attr.name, type=TYPES[attr.datatype], metavar=attr.name)
 
         elif self.method in ("post", "put"):
             # build args for body JSON

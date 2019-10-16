@@ -8,12 +8,13 @@ from colorclass import Color
 
 
 class ModelAttr:
-    def __init__(self, name, filterable, display, color_map=None):
+    def __init__(self, name, filterable, display, datatype, color_map=None):
         self.name = name
         self.value = None
         self.filterable = filterable
         self.display = display
         self.column_name = self.name.split('.')[-1]
+        self.datatype = datatype
         self.color_map = color_map
 
     def _get_value(self, model):
