@@ -70,6 +70,8 @@ def main():
                              "This is useful for scripting the CLI's behavior.")
     parser.add_argument('--version', '-v', action="store_true",
                         help="Prints version information and exits.")
+    # type cast string args to other types
+    parser.add_argument('--entity.id', type=int, help=argparse.SUPPRESS)
 
     parsed, args = parser.parse_known_args()
 
