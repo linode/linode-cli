@@ -133,6 +133,7 @@ class CLI:
                     '.'.join(prefix+[name]),
                     info.get('x-linode-filterable') or False,
                     info.get('x-linode-cli-display') or False,
+                    info.get('type') or 'string',
                     color_map=info.get('x-linode-cli-color')))
         return attrs
 

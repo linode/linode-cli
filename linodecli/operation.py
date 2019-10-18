@@ -149,7 +149,7 @@ class CLIOperation:
             # build args for filtering
             for attr in self.response_model.attrs:
                 if attr.filterable:
-                    parser.add_argument('--'+attr.name, metavar=attr.name)
+                    parser.add_argument('--'+attr.name, type=TYPES[attr.datatype], metavar=attr.name)
 
         elif self.method in ("post", "put"):
             # build args for body JSON
