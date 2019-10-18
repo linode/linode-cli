@@ -25,6 +25,21 @@ createLinode() {
     assert_success
 }
 
+createDomain() {
+    timestamp=$(date +%s)
+
+    run linode-cli domains create \
+        --type master \
+        --domain "A$timestamp-example.com" \
+        --soa_email="developer-test@linode.com" \
+        --text \
+        --no-header \
+        --delimiter ","
+
+    assert_success
+    assert_output --regexp "[0-9]+,A[0-9]+-example.com,master,active,developer-test@linode.com"
+}
+
 createVolume() {
     timestamp=$(date +%s)
     run bash -c "LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN linode-cli volumes create --label=A$timestamp --size=10 --region=us-east"
