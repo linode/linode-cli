@@ -8,9 +8,11 @@ SPEC ?= https://developers.linode.com/api/docs/v4/openapi.yaml
 ifeq ($(PYTHON), 3)
 	PYCMD=python3
 	PIPCMD=pip3
+	PY2CMD=python2
 else
 	PYCMD=python
 	PIPCMD=pip
+	PY2CMD=python
 endif
 
 install: check-prerequisites requirements build
@@ -18,7 +20,7 @@ install: check-prerequisites requirements build
 
 .PHONY: build
 build: clean
-	python -m linodecli bake ${SPEC} --skip-config
+	${PY2CMD} -m linodecli bake ${SPEC} --skip-config
 	python3 -m linodecli bake ${SPEC} --skip-config
 	cp data-2 linodecli/
 	cp data-3 linodecli/
