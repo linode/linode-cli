@@ -28,7 +28,7 @@ Upgrading
 
 To upgrade to the latest version of the Linode CLI::
 
-pip install linode-cli --upgrade
+   pip install linode-cli --upgrade
 
 Usage
 -----
@@ -113,11 +113,11 @@ run the *configure* command::
 Suppressing Defaults
 """"""""""""""""""""
 
-If you configured default values for `image`, `region`, and Linode `type`, they
+If you configured default values for ``image``, ``region``, and Linode ``type``, they
 will be sent for all requests that accept them if you do not specify a different
 value.  If you want to send a request *without* these arguments, you must invoke
-the CLI with the `--no-defaults` option.  For example, to create a Linode with
-no `image` after a default Image has been configured, you would do this::
+the CLI with the ``--no-defaults`` option.  For example, to create a Linode with
+no ``image`` after a default Image has been configured, you would do this::
 
    linode-cli linodes create --region us-east --type g5-standard-2 --no-defaults
 
@@ -126,18 +126,57 @@ Suppressing Warnings
 
 In some situations, like when the CLI is out of date, it will generate a warning
 in addition to its normal output.  If these warnings can interfere with your
-scripts or you otherwise want them disabled, simply add the `--suppress-warnings`
+scripts or you otherwise want them disabled, simply add the ``--suppress-warnings``
 flag to prevent them from being emitted.
 
 Environment Variables
 """""""""""""""""""""
 
 If you prefer, you may store your token in an environment variable named
-`LINODE_CLI TOKEN` instead of using the configuration file.  Doing so allows you
-to bypass the initial configuration, and subsequent calls to `linode-cli configure`
+``LINODE_CLI_TOKEN`` instead of using the configuration file.  Doing so allows you
+to bypass the initial configuration, and subsequent calls to ``linode-cli configure``
 will allow you to set defaults without having to set a token.  Be aware that if
 the environment variable should be unset, the Linode CLI will stop working until
 it is set again or the CLI is reconfigured with a token.
+
+Multiple Users
+^^^^^^^^^^^^^^
+
+If you use the Linode CLI to manage multiple Linode accounts, you may configure
+additional users using the ``linode-cli configure`` command.  The CLI will automatically
+detect that a new user is being configured based on the token given.
+
+Displaying Configured Users
+"""""""""""""""""""""""""""
+
+To see what users are configured, simply run the following::
+
+   linode-cli show-users
+
+The user who is currently active will be indicated by an asterisk.
+
+Changing the Active User
+""""""""""""""""""""""""
+
+You may change the active user for all requests as follows::
+
+   linode-cli set-user USERNAME
+
+Subsequent CLI commands will be executed as that user by default.
+
+Should you wish to execute a single request as a different user, you can supply
+the ``--as-user`` argument to specify the username you wish to act as for that
+command.  This *will not* change the active user.
+
+Removing Configured Users
+"""""""""""""""""""""""""
+
+To remove a user from you previously configured, run::
+
+   linode-cli remove-user USERNAME
+
+Once a user is removed, they will need to be reconfigured if you wish to use the
+CLI for them again.
 
 Kubernetes Deployment Plugin
 ----------------------------
@@ -167,10 +206,10 @@ The following is the help message for the command::
                            [--master-type TYPE] [--region REGION]
                            [--ssh-public-key KEYPATH]
                            NAME
-   
+
    positional arguments:
      NAME                  A name for the cluster.
-   
+
    optional arguments:
      -h, --help            show this help message and exit
      --node-type TYPE      The Linode Type ID for cluster Nodes as retrieved with
@@ -185,9 +224,12 @@ The following is the help message for the command::
                            is whatever you set during CLI configuration)
      --ssh-public-key KEYPATH
                            The path to your public key file which will be used to
-                           access Nodes during initial provisioning only! The
-                           keypair _must_ be added to an ssh-agent (default
-                           $HOME/.ssh/id_rsa.pub)
+                           access Nodes during initial provisioning only! If you don't
+                           use id_rsa as your private key name, use the flag
+                           --ssh-public-key and supply your public key path. If
+                           you use id_rsa as your key name and it's been added
+                           to your ssh-agent, omit the flag.
+                           (default $HOME/.ssh/id_rsa.pub).
 
 Here's an example usage of the command, creating a cluster with six 2GB Linodes as
 the Nodes::
@@ -268,6 +310,37 @@ your JSON output.  If you want your JSON pretty-printed, we can do that too::
 
    linode-cli linodes list --json --pretty --all
 
+Plugins
+-------
+
+The Linode CLI allows its features to be expanded with plugins.  Some official
+plugins come bundled with the CLI and are documented above.  Additionally, anyone
+can write and distribute plugins for the CLI - these are called Third Party Plugins.
+
+To register a Third Party Plugin, use the following command::
+
+   linode-cli register-plugin PLUGIN_MODULE_NAME
+
+Plugins should give the exact command required to register them.
+
+Once registered, the command to invoke the Third Party Plugin will be printed, and
+it will appear in the plugin list when invoking ``linode-cli --help``.
+
+To remove a previously registered plugin, use the following command::
+
+   linode-cli remove-plugin PLUGIN_NAME
+
+This command accepts the name used to invoke the plugin in the CLI as it appears
+in ``linode-cli --help``, which may not be the same as the module name used to
+register it.
+
+Developing Plugins
+^^^^^^^^^^^^^^^^^^
+
+For information on how To write your own Third Party Plugin, see the `Plugins documentation`_.
+
+.. _Plugins documentation: https://github.com/linode/linode-cli/blob/master/linodecli/plugins/README.md
+
 Building from Source
 --------------------
 
@@ -297,7 +370,7 @@ When using ``install``, the ``PYTHON`` argument is optional - if provided, it
 will install the CLI for that version of python.  Valid values are ``2`` and
 ``3``, and it will default to ``3``.
 
-Testing 
+Testing
 -------
 
 **WARNING!** Running the CLI tests will remove all linodes and data associated
@@ -326,19 +399,23 @@ want to install Bats. For example, to install Bats into /usr/local::
 Running the Tests
 ^^^^^^^^^^^^^^^^^
 
-Running the tests is simple. The only requirement is that you have a .linode-cli in your user folder containing your test user token::
+Running the tests is simple. The only requirements are that you have a .linode-cli in your user folder containing your test user token::
 
    ./test/test-runner.sh
 
 **Running Tests via Docker**
 
+The openapi spec must first be saved to the base of the linode-cli project:
+
+   curl -o ./openapi.yaml https://developers.linode.com/api/docs/v4/openapi.yaml
+
 Run the following command to build the tests container:
 
-   docker build -f Dockerfile-bats -t linode-cli-tests --build-arg TOKEN=$INSERT_YOUR_TOKEN_HERE .
+   docker build -f Dockerfile-bats -t linode-cli-tests .
 
 Run the following command to run the test
 
-   docker run --rm linode-cli-tests
+   docker run -e TOKEN_1=$INSERT_YOUR_TOKEN_HERE -e TOKEN_2=$INSERT_YOUR_TOKEN_HERE --rm linode-cli-tests
 
 Contributing
 ------------
@@ -363,7 +440,7 @@ added to Linode's OpenAPI spec:
 |x-linode-cli-action  | method   | The action name for operations under this path. If not present, operationId is used.      |
 +---------------------+----------+-------------------------------------------------------------------------------------------+
 |x-linode-cli-color   | property | If present, defines key-value pairs of property value: color.  Colors must be understood  |
-|                     |          | by colorclass.Color.  Must include a default_                                             |
+|                     |          | by colorclass.Color.  Must include a default.                                             |
 +---------------------+----------+-------------------------------------------------------------------------------------------+
 |x-linode-cli-skip    | path     | If present and truthy, this method will not be available in the CLI.                      |
 +---------------------+----------+-------------------------------------------------------------------------------------------+

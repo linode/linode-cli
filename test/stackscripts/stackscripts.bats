@@ -11,21 +11,34 @@ load '../common'
 
 EXAMPLE_SCRIPT="echo foo > test.sh"
 
+setup() {
+	suiteName="stackscripts"
+	images=$(linode-cli images list --format id --text --no-headers | egrep "linode\/.*")
+	setToken "$suiteName"
+}
+
+teardown() {
+    if [ "$LAST_TEST" = "TRUE" ]; then
+    	removeAll "stackscripts"
+        clearToken "$suiteName"
+    fi
+}
+
 @test "it should list stackscripts" {
     run linode-cli stackscripts list \
         --text
     assert_success
     assert_output --partial "id	username	label	images	is_public	created	updated"
 
-    run bash -c "linode-cli stackscripts list \
+    run bash -c "LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN linode-cli stackscripts list \
     	--text \
     	--no-headers \
-    	--format "id,username,is_public,created,updated" \
+    	--format "id,username,is_public" \
     	--delimiter ',' \
     	| head -n 1"
 
     assert_success
-    assert_output --regexp "[0-9]+,[a-z]+,True,[0-9]+-[0-9]+-[0-9]+T[0-9]+:[0-9]+:[0-9]+,[0-9]+-[0-9]+-[0-9]+T[0-9]+:[0-9]+:[0-9]+"
+    assert_output --regexp "[0-9]+,[a-z]+,True"
 }
 
 @test "it should fail to create a stackscript without specifying an image" {
@@ -43,7 +56,7 @@ EXAMPLE_SCRIPT="echo foo > test.sh"
 
 @test "it should create a stackscript" {
 	run linode-cli stackscripts create \
-		--script "#!/bin/bash \n $EXAMPLE_SCRIPT" \
+		--script '#!/bin/bash \n $EXAMPLE_SCRIPT' \
 		--images "linode/debian9" \
 		--label 'testfoo' \
 		--is_public=false \
@@ -67,10 +80,10 @@ EXAMPLE_SCRIPT="echo foo > test.sh"
 }
 
 @test "it should update a stackscript compatible image" {
-	images=$(linode-cli images list --format "id" --text --no-headers)
 	set -- $images
 
 	privateStackscript=$(linode-cli stackscripts list --is_public false --text --no-headers --format "id")
+
 	run linode-cli stackscripts update \
 		--images $1 \
 		$privateStackscript \
@@ -84,10 +97,10 @@ EXAMPLE_SCRIPT="echo foo > test.sh"
 
 
 @test "it should update a stackscript to be compatible with multiple images" {
-	images=$(linode-cli images list --format "id" --text --no-headers)
 	set -- $images
 
 	privateStackscript=$(linode-cli stackscripts list --is_public false --text --no-headers --format "id")
+
 	run linode-cli stackscripts update \
 		--images $1 \
 		--images $2 \
@@ -103,11 +116,11 @@ EXAMPLE_SCRIPT="echo foo > test.sh"
 }
 
 @test "it should fail to deploy a stackscript to a linode from an incompatible image" {
+	set -- $images
+
 	privateStackscript=$(linode-cli stackscripts list --is_public false --text --no-headers --format "id")
 	linodePlan="g6-standard-1"
 	linodeRegion="us-east"
-	images=$(linode-cli images list --format "id" --text --no-headers)
-	set -- $images
 
 	run linode-cli linodes create --stackscript_id $privateStackscript \
 		--type $linodePlan \
@@ -123,7 +136,6 @@ EXAMPLE_SCRIPT="echo foo > test.sh"
 }
 
 @test "it should deploy a linode from a stackscript" {
-	images=$(linode-cli images list --format "id" --text --no-headers)
 	set -- $images
 	compatibleImage=$1
 	linodePlan="g6-standard-1"
@@ -146,6 +158,7 @@ EXAMPLE_SCRIPT="echo foo > test.sh"
 }
 
 @test "it should delete the stackscript and teardown the linode" {
+	LAST_TEST="TRUE"
 	privateStackscript=$(linode-cli stackscripts list --is_public false --text --no-headers --format "id")
 	run linode-cli stackscripts delete $privateStackscript
 

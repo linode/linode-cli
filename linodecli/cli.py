@@ -3,7 +3,7 @@ Responsible for managing spec and routing commands to operations.
 """
 from __future__ import print_function
 
-from distutils.version import LooseVersion
+from distutils.version import StrictVersion, LooseVersion
 import json
 import os
 import pickle
@@ -25,7 +25,7 @@ class CLI:
     """
     Responsible for loading or baking a spec and handling incoming commands
     """
-    def __init__(self, version, base_url, skip_config=False):
+    def __init__(self, version, base_url, skip_config=False, as_user=None):
         self.ops = {}
         self.spec = {}
         self.defaults = True # whether to use default values for arguments
@@ -38,9 +38,6 @@ class CLI:
         self.output_handler = OutputHandler()
         self.config = CLIConfig(self.base_url, skip_config=skip_config)
         self.load_baked()
-
-        if not skip_config:
-            self.token = self.config.get_token()
 
     def _resolve_allOf(self, node):
         """
@@ -136,6 +133,7 @@ class CLI:
                     '.'.join(prefix+[name]),
                     info.get('x-linode-filterable') or False,
                     info.get('x-linode-cli-display') or False,
+                    info.get('type') or 'string',
                     color_map=info.get('x-linode-cli-color')))
         return attrs
 
@@ -145,6 +143,7 @@ class CLI:
         """
         self.spec = spec
         self.ops = {}
+        default_servers = [c['url'] for c in spec['servers']]
 
         for path, data in self.spec['paths'].items():
             command = data.get("x-linode-cli-command") or "default"
@@ -170,6 +169,9 @@ class CLI:
                         continue
 
                     summary = data[m].get('summary') or ''
+
+                    use_servers = ([c['url'] for c in data[m]['servers']]
+                                   if 'servers' in data[m] else default_servers)
 
                     args = {}
                     required_fields = []
@@ -241,7 +243,7 @@ class CLI:
 
                     self.ops[command][action] = CLIOperation(m, use_path, summary,
                                                              cli_args, response_model,
-                                                             use_params)
+                                                             use_params, use_servers)
 
         # hide the base_url from the spec away
         self.ops['_base_url'] = spec['servers'][0]['url']
@@ -319,14 +321,14 @@ complete -F _linode_cli linode-cli""")
         """
         return 'data-{}'.format(version_info[0])
 
-    def do_request(self, operation, args):
+    def do_request(self, operation, args, filter_header=None):
         """
         Makes a request to an operation's URL and returns the resulting JSON, or
         prints and error if a non-200 comes back
         """
         method = getattr(requests, operation.method)
         headers = {
-            'Authorization': "Bearer {}".format(self.token),
+            'Authorization': "Bearer {}".format(self.config.get_token()),
             'Content-Type': 'application/json',
             'User-Agent': "linode-cli:{}".format(self.version),
         }
@@ -340,16 +342,21 @@ complete -F _linode_cli linode-cli""")
 
         body = None
         if operation.method == 'get':
-            filters = vars(parsed_args)
-            # remove URL parameters
-            for p in operation.params:
-                if p.name in filters:
-                    del filters[p.name]
-            # remove empty filters
-            filters = {k: v for k, v in filters.items() if v is not None}
-            # apply filter, if any
-            if filters:
-                headers["X-Filter"] = json.dumps(filters)
+            if filter_header is not None:
+                # plugins can specify their own filters - use those by default
+                headers["X-Filter"] = json.dumps(filter_header)
+            else:
+                # otherwise, get filters from the CLI call
+                filters = vars(parsed_args)
+                # remove URL parameters
+                for p in operation.params:
+                    if p.name in filters:
+                        del filters[p.name]
+                # remove empty filters
+                filters = {k: v for k, v in filters.items() if v is not None}
+                # apply filter, if any
+                if filters:
+                    headers["X-Filter"] = json.dumps(filters)
         else:
             if self.defaults:
                 parsed_args = self.config.update(parsed_args)
@@ -368,25 +375,76 @@ complete -F _linode_cli linode-cli""")
 
             body = json.dumps(expanded_json)
 
-        result =  method(self.base_url+url, headers=headers, data=body)
+        result =  method(url, headers=headers, data=body)
 
-        # if the API indicated it's newer than the client, print a warning
-        if 'X-Spec-Version' in result.headers:
-            spec_version = result.headers.get('X-Spec-Version')
-            try:
-                if LooseVersion(spec_version) > LooseVersion(self.spec_version) and not self.suppress_warnings:
+        if not self.suppress_warnings:
+            # check the major/minor version API reported against what we were built
+            # with to see if an upgrade should be available
+            api_version_higher = False
+
+            if 'X-Spec-Version' in result.headers:
+                spec_version = result.headers.get('X-Spec-Version')
+
+                try:
+                    # Parse the spec versions from the API and local CLI.
+                    StrictVersion(spec_version)
+                    StrictVersion(self.spec_version)
+
+                    # Get only the Major/Minor version of the API Spec and CLI Spec, ignore patch version differences
+                    spec_major_minor_version = spec_version.split(".")[0] + "." + spec_version.split(".")[1]
+                    current_major_minor_version = self.spec_version.split(".")[0] + "." + self.spec_version.split(".")[1]
+                except ValueError:
+                    # If versions are non-standard like, "DEVELOPMENT" use them and don't complain.
+                    spec_major_minor_version = spec_version
+                    current_major_minor_version = self.spec_version
+
+                try:
+                    if LooseVersion(spec_major_minor_version) > LooseVersion(current_major_minor_version):
+                        api_version_higher = True
+                except:
+                    # if this comparison or parsing failed, still process output
+                    print("Parsing failed when comparing local version {} with server "
+                          "version {}.  If this problem persists, please open a ticket "
+                          "with `linode-cli support ticket-create`".format(
+                             self.spec_version, spec_version
+                          ), file=stderr)
+
+            if api_version_higher:
+                # check to see if there is, in fact, a version to upgrade to.  If not, don't
+                # suggest an upgrade (since there's no package anyway)
+                new_version_exists = False
+
+                try:
+                    # do this all in a try block since it must _never_ prevent the CLI
+                    # from showing command output
+                    pypi_response = requests.get(
+                        'https://pypi.org/pypi/linode-cli/json',
+                         timeout=1 # seconds
+                    )
+
+                    if pypi_response.status_code == 200:
+                        # we got data back
+                        pypi_version = pypi_response.json()['info']['version']
+
+                        # no need to be fancy; these should always be valid versions
+                        if LooseVersion(pypi_version) > LooseVersion(self.version):
+                            new_version_exists = True
+                except:
+                    # I know, but if anything happens here the end user should still
+                    # be able to see the command output
+                    print("Unable to determine if a new linode-cli package is available "
+                          "in pypi.  If this message persists, open a ticket or invoke "
+                          "with --suppress-warnings",
+                          file=stderr)
+                    pass
+
+                if new_version_exists:
                     print("The API responded with version {}, which is newer than "
                           "the CLI's version of {}.  Please update the CLI to get "
                           "access to the newest features.  You can update with a "
                           "simple `pip install --upgrade linode-cli`".format(
                               spec_version, self.spec_version
                           ), file=stderr)
-            except:
-                # if this comparison or parsing failed, still process output
-                print("Parsing failed when comparing local version {} with server "
-                     "version {}.  If this problem persists, please open a ticket "
-                     "with `linode-cli support ticket-create`".format(
-                    self.spec_version, spec_version), file=stderr)
 
         if not 199 < result.status_code < 399:
             self._handle_error(result)
@@ -430,22 +488,26 @@ complete -F _linode_cli linode-cli""")
             print('Page {} of {}.  Call with --page [PAGE] to load a different page.'.format(
                 result.json()['page'], result.json()['pages']))
 
-    def configure(self, username=None):
+    def configure(self):
         """
         Reconfigure the application
         """
-        self.config.configure(username=username)
+        self.config.configure()
 
-    def call_operation(self, command, action, args=[]):
+    def call_operation(self, command, action, args=[], filters=None):
         """
         This function is used in plugins to retrieve the result of CLI operations
         in JSON format.  This uses the configured user of the CLI.
+
+        :param filters: The X-Filter header to include in the request.  This overrides
+                        whatever is passed into to command as filters.
+        :type filters: dict
         """
         if command not in self.ops or action not in self.ops[command]:
             raise ValueError('Unknown command/action {}/{}'.format(command, action))
 
         operation = self.ops[command][action]
 
-        result = self.do_request(operation, args)
+        result = self.do_request(operation, args, filter_header=filters)
 
         return result.status_code, result.json()

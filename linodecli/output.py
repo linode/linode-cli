@@ -10,6 +10,7 @@ class OutputMode(Enum):
     table=1
     delimited=2
     json=3
+    markdown=4
 
 
 class OutputHandler:
@@ -46,6 +47,8 @@ class OutputHandler:
             self._delimited_output(header, data, columns, to)
         elif self.mode == OutputMode.json:
             self._json_output(header, data, to)
+        elif self.mode == OutputMode.markdown:
+            self._markdown_output(header, data, columns, to)
 
     def _get_columns(self, response_model):
         """
@@ -144,3 +147,23 @@ class OutputHandler:
                 if v:
                     ret[k] = v
         return ret
+
+    def _markdown_output(self, header, data, columns, to):
+        """
+        Pretty-prints data in a Markdown-formatted table.  This uses github's
+        flavor of Markdown
+        """
+        content = []
+
+        if isinstance(columns[0], str):
+            content=data
+        else:
+            for model in data:
+                content.append([attr.render_value(model, colorize=False) for attr in columns])
+
+        if header:
+            print('| ' + ' | '.join([str(c) for c in header]) + ' |')
+            print('|---' * len(header) + '|')
+
+        for row in content:
+            print('| ' + ' | '.join([str(c) for c in row]) + ' |')

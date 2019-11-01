@@ -6,6 +6,17 @@ load '../common'
 
 export nodebalancerCreated="[0-9]+,balancer[0-9]+,us-east,nb-[0-9]+-[0-9]+-[0-9]+-[0-9]+.newark.nodebalancer.linode.com,0"
 
+setup() {
+	suiteName="nodebalancers"
+	setToken "$suiteName"
+}
+
+teardown() {
+    if [ "$LAST_TEST" = "TRUE" ]; then
+        clearToken "$suiteName"
+    fi
+}
+
 @test "it should fail to create a nodebalancer without specifying a region" {
     run linode-cli nodebalancers create \
     	--text \
@@ -14,7 +25,6 @@ export nodebalancerCreated="[0-9]+,balancer[0-9]+,us-east,nb-[0-9]+-[0-9]+-[0-9]
     assert_output --partial "Request failed: 400"
     assert_output --partial "region	region is required"
 }
-
 
 @test "it should create a nodebalancer with a default configuration" {
 	run linode-cli nodebalancers create \
@@ -92,7 +102,7 @@ export nodebalancerCreated="[0-9]+,balancer[0-9]+,us-east,nb-[0-9]+-[0-9]+-[0-9]
 	     --region us-east \
 	     --type g6-standard-2 \
 	     --private_ip true \
-	     --image linode/arch \
+	     --image=$test_image \
 	     --text \
 	     --no-headers \
 	     --format "ip_address" | egrep -o "192.168.[0-9]{1,3}.[0-9]{1,3}")
@@ -164,7 +174,7 @@ export nodebalancerCreated="[0-9]+,balancer[0-9]+,us-east,nb-[0-9]+-[0-9]+-[0-9]
 
 	assert_failure
 	assert_output --partial "Request failed: 400"
-	assert_output --partial "address	address is not valid. Must begin with 192.168"
+	assert_output --partial "address	Address Invalid: must begin with 192.168"
 }
 
 @test "it should remove a node from a configuration profile" {
@@ -232,6 +242,7 @@ export nodebalancerCreated="[0-9]+,balancer[0-9]+,us-east,nb-[0-9]+-[0-9]+-[0-9]
 }
 
 @test "it should delete all nodebalancers" {
+	LAST_TEST="TRUE"
 	run removeAll "nodebalancers"
 	run removeAll "linodes"
 }

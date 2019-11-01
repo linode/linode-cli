@@ -2,6 +2,18 @@
 
 load '../test_helper/bats-support/load'
 load '../test_helper/bats-assert/load'
+load '../common'
+
+setup() {
+    suiteName="kernels"
+    setToken "$suiteName"
+}
+
+teardown() {
+    if [ "$LAST_TEST" = "TRUE" ]; then
+        clearToken "$suiteName"
+    fi
+}
 
 @test "it should list available kernels" {
     kernelIdsDisplay() {
@@ -27,11 +39,10 @@ load '../test_helper/bats-assert/load'
             [ "$status" -eq 0 ]
         done
     }
-
-    kernelFieldsReturned
 }
 
 @test "it should view a kernel" {
+    LAST_TEST="TRUE"
     kernelsAvailable=$(linode-cli kernels list --text --no-headers --format "id")
     set -- $kernelsAvailable
     kernelId=$1

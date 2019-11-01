@@ -6,6 +6,17 @@ load '../common'
 
 domainTimeStamp=0
 
+setup() {
+    suiteName="slave-domains"
+    setToken $suiteName
+}
+
+teardown() {
+    if [ "$LAST_TEST" = "TRUE" ]; then
+        clearToken "$suiteName"
+    fi
+}
+
 @test "it should fail to create a slave domain without a master dns server" {
     domainTimeStamp="$(date +"%s")"
     run linode-cli domains create --type slave --domain "$domainTimeStamp-example.com" --text --no-header
@@ -40,4 +51,5 @@ domainTimeStamp=0
 
 @test "it should delete all slave domains" {
     run removeDomains
+    LAST_TEST="TRUE"
 }

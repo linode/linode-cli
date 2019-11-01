@@ -9,6 +9,17 @@ load '../common'
 #  WARNING: USE A SEPARATE TEST ACCOUNT WHEN RUNNING THESE TESTS #
 ##################################################################
 
+setup() {
+    suiteName="resize-volumes"
+    setToken "$suiteName"
+}
+
+teardown() {
+    if [ "$LAST_TEST" = "TRUE" ]; then
+        clearToken "$suiteName"
+    fi
+}
+
 @test "it should fail to resize a volume smaller" {
     createVolume
     volume_id=$(linode-cli volumes list --text --no-headers --format="id")
@@ -31,7 +42,12 @@ load '../common'
 
     assert_failure
     assert_output --partial "Request failed: 400"
-    assert_output --partial "Storage volumes cannot be resized larger than 10240 gigabytes"
+
+    if [ "$TEST_ENVIRONMENT" = "dev" ] || [ "$TEST_ENVIRONMENT" = "test" ]; then
+        assert_output --partial "Storage volumes cannot be resized larger than 1024 gigabytes"
+    else
+        assert_output --partial "Storage volumes cannot be resized larger than 10240 gigabytes"
+    fi
 }
 
 @test "it should resize a volume" {
@@ -53,5 +69,6 @@ load '../common'
 }
 
 @test "it should remove all volumes" {
+    LAST_TEST="TRUE"
     run removeVolumes
 }

@@ -1,0 +1,4 @@
+library 'cli-builder'
+
+buildCli()
+

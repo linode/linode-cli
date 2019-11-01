@@ -5,7 +5,8 @@ import argparse
 import base64
 import sys
 import os
-from subprocess import call as spcall, Popen, PIPE
+from subprocess import call as spcall, check_output, Popen, PIPE
+from distutils.version import LooseVersion
 import hashlib
 import shutil
 from terminaltables import SingleTable
@@ -17,6 +18,9 @@ except NameError:
     FileNotFoundError = IOError
 
 plugin_name = os.path.basename(__file__)[:-3]
+
+terraform_min_version = '0.12.0'  # This version and above are supported
+terraform_max_version = '0.13.0'  # Only versions below this one are supported
 
 def call(args, context):
     parser = argparse.ArgumentParser("{}".format(plugin_name), add_help=False)
@@ -44,7 +48,7 @@ def create_varmap(context):
     tf_var_map = {
         'node_type': {
             'name': 'server_type_node',
-            'default': 'g6-standard-2',
+            'default': requested_type_with_fallback(context),
         },
         'nodes': {
             'name': 'nodes',
@@ -52,11 +56,11 @@ def create_varmap(context):
         },
         'master_type': {
             'name': 'server_type_master',
-            'default': 'g6-standard-2',
+            'default': get_default_master_type(context),
         },
         'region': {
             'name': 'region',
-            'default': context.client.config.config.get('DEFAULT', 'region'),
+            'default': context.client.config.get_value('region'),
         },
         'ssh_public_key': {
             'name': 'ssh_public_key',
@@ -74,6 +78,12 @@ def create(args, context):
             print_terraform_install_help()
         if 'kubectl' in needed_deps:
             print_kubectl_install_help()
+        sys.exit(1)
+    # Check if terraform version is between min and max
+    if not terraform_version_supported(terraform_min_version, terraform_max_version):
+        print('Terraform version unsupported. Must be between v{} and v{}'.format(
+                terraform_min_version, terraform_max_version))
+        print_terraform_install_help()
         sys.exit(1)
 
     tf_var_map = create_varmap(context)
@@ -103,15 +113,16 @@ def create(args, context):
                                  tf_var_map['master_type']['default']))
     parser.add_argument('--region', metavar="REGION", type=str, required=False,
                         default=tf_var_map['region']['default'],
-                        help='The Linode Region ID in which to deploy the cluster as retrieved with '
-                             '`linode-cli regions list`. (default "{}")'.format(
+                        help='The Linode Region ID in which to deploy the cluster as retrieved '
+                             'with `linode-cli regions list`. (default "{}")'.format(
                                  tf_var_map['region']['default']))
     parser.add_argument('--ssh-public-key', metavar="KEYPATH", type=str, required=False,
                         default=tf_var_map['ssh_public_key']['default'],
                         help='The path to your public key file which will be used to access Nodes '
-                             'during initial provisioning only! The keypair _must_ be added to an '
-                             'ssh-agent (default {})'.format(
-                                 tf_var_map['ssh_public_key']['default']))
+                             'during initial provisioning only! If you don\'t use id_rsa as your '
+                             'private key name, use the flag --ssh-public-key and supply your '
+                             'public key path. If you use id_rsa as your key name and it\'s been '
+                             'added to your ssh-agent, omit the flag. (default {})'.format(tf_var_map['ssh_public_key']['default']))
     parsed, remaining_args = parser.parse_known_args(args)
 
     # make sure that the ssh public key exists
@@ -199,6 +210,13 @@ def delete(args, context):
             print_terraform_install_help()
         sys.exit(1)
 
+    # Check if terraform version is between min and max
+    if not terraform_version_supported(terraform_min_version, terraform_max_version):
+        print('Terraform version unsupported. Must be between v{} and v{}'.format(
+                terraform_min_version, terraform_max_version))
+        print_terraform_install_help()
+        sys.exit(1)
+
     parser = argparse.ArgumentParser("{} create".format(plugin_name), add_help=True)
     parser.add_argument('name', metavar='NAME', type=str,
                         help="The name of the cluster to delete.")
@@ -219,26 +237,30 @@ def check_for_pubkey(parsed):
     except FileNotFoundError:
         print("The ssh public key {} does not exist\n"
               "Please refer to this documentation on creating an ssh key\n"
-              "https://help.github.com/articles/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent/".format(
+              "https://help.github.com/articles/"
+              "generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent/".format(
                   parsed.ssh_public_key
               ))
         sys.exit(1)
 
 def check_for_ssh_agent(parsed):
-    # The most likely filename name for the private key
-    privkey_name = os.path.basename(parsed.ssh_public_key.replace('.pub',''))
+    """Check if the selected pubkey is added to the agent"""
+
+    with open(parsed.ssh_public_key) as f:
+        """Grab the actual pubkey from the file"""
+        pubkey = f.readline().split(' ')[1]
 
     print_warning = False
     need_agent_start = False
     try:
-        pid = Popen(["ssh-add", "-l"], stdout=PIPE, stderr=PIPE)
+        # ssh-agent -L (not -l), which prints the actual pubkeys rather than just the comments
+        pid = Popen(["ssh-add", "-L"], stdout=PIPE, stderr=PIPE)
         stdout, _ = pid.communicate()
         stdout = str(stdout)
         if pid.returncode == 2:
             need_agent_start = True
-        # TODO if the provided pubkey name is a substring of another key name
-        # then we think that it's loaded when it's not.
-        if privkey_name not in stdout:
+        # If the pubkey isn't there, then it's not loaded!
+        if pubkey not in stdout:
             print_warning = True
     except FileNotFoundError:
         print_warning = True
@@ -251,10 +273,13 @@ def print_ssh_agent_warning(parsed, with_agent_start=False):
     agent_start = ''
     if with_agent_start:
         agent_start = "eval $(ssh-agent) && "
-    print("Your ssh private key must be added to your ssh-agent.\n"
+    print("Your currently selected ssh public key is: {}\n"
+          "Use --ssh-public-key to choose a different public key.\n\n"
+          "The ssh private key must be added to your ssh-agent.\n"
           "Please run this command:\n\n{}ssh-add {}".format(
-            agent_start,
-            parsed.ssh_public_key.replace('.pub', '')))
+              parsed.ssh_public_key,
+              agent_start,
+              parsed.ssh_public_key.replace('.pub', '')))
     sys.exit(1)
 
 def check_deps(*args):
@@ -272,6 +297,11 @@ def dep_installed(command):
         return True
     except: 
         return False
+
+def terraform_version_supported(min_version, max_version):
+    # The Terraform version is of the format "Terraform v0.0.0"
+    version = check_output(['terraform', 'version']).split()[1].decode().replace('v', '', 1)
+    return LooseVersion(min_version) <= LooseVersion(version) < LooseVersion(max_version)
 
 def print_terraform_install_help():
     print('\n# Installing Terraform:\n\n'
@@ -328,16 +358,21 @@ def gen_terraform_file(context, tf_var_map, cluster_name, prefix):
     return ''.join(tf_file_parts)
 
 def gen_terraform_args(parsed, tf_var_map):
+    'Transform relevant cli plugin args into terraform args'
     args = []
     for varname in tf_var_map.keys():
-        args = args + ['-var', "{}={}".format(tf_var_map[varname]['name'], getattr(parsed, varname))]
+        args = args + [
+            '-var',
+            "{}={}".format(tf_var_map[varname]['name'],
+            getattr(parsed, varname))]
     return args
 
 def call_or_exit(*args, **kwargs):
     ret = spcall(*args, **kwargs)
     if ret != 0:
         print("Error when calling {} with additional options {}".format(args, kwargs))
-        print("\nPlease visit us in #linode on the Kubernetes Slack and let us know about this error! http://slack.k8s.io/")
+        print("\nPlease visit us in #linode on the Kubernetes Slack and let us know about "
+              "this error! http://slack.k8s.io/")
         sys.exit(ret)
 
 def get_kubeconfig_user(cluster_name, prefix):
@@ -411,3 +446,53 @@ def print_available_commands(commands):
     table = SingleTable(proc)
     table.inner_heading_row_border = False
     print(table.table)
+
+def get_default_master_type(context):
+    """
+    Return either the user's requeted default type size (if valid for
+    a Kubernetes master) or the smallest valid type for a Kubernetes
+    master if the user's requested type doesn't meet that criteria.
+
+    If the user's type doesn't meet the 2 VCPU requirement, it's
+    probably a smaller type, so we default to the smallest valid type
+    in that case to get as close as possible to their requested type.
+    """
+    requested_default = requested_type_with_fallback(context)
+
+    if requested_default:
+        if is_valid_master_type(context, requested_default):
+            return requested_default
+
+    return smallest_valid_master(context)
+
+def requested_type_with_fallback(context):
+    default_node_type = 'g6-standard-2'
+    try:
+        requested_node_type = context.client.config.get_value('type')
+        if not requested_node_type:
+            raise ValueError('user did not provide a Linode type by argument or config')
+        return requested_node_type
+    except:
+        pass
+    return default_node_type
+
+def is_valid_master_type(context, linode_type):
+    """
+    Kubernetes masters must have a minimum of 2 VCPUs.
+    """
+    status, result = context.client.call_operation('linodes', 'type-view', args=[linode_type])
+    if status != 200:
+        raise RuntimeError(
+            "{}: Failed to look up configured default Linode type from API".format(str(status)))
+    else:
+        return result['vcpus'] >= 2
+
+def smallest_valid_master(context):
+    status, result = context.client.call_operation('linodes', 'types',
+        filters={
+            "+and": [{ "vcpus": { "+gte": 2 }}, {"class": "standard"}],
+            "+order_by": "memory", "+order": "asc"})
+    if status != 200:
+        raise RuntimeError("{}: Failed to request Linode types from API".format(str(status)))
+    else:
+        return result['data'][0]['id']
