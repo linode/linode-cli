@@ -216,8 +216,7 @@ class CLIConfig:
         """
         Saves the config file as it is right now.  This can be used by plugins
         to save values they've set, and is used internally to update the config
-        on disk when a new user if configured. Creates the config directory if
-        it does not exist.
+        on disk when a new user if configured.
 
         :param silent: If True, does not print a message noting the config file
                        has been updated.  This is primarily intended for silently
