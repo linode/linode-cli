@@ -20,7 +20,8 @@ ENV_TOKEN_NAME='LINODE_CLI_TOKEN'
 
 LEGACY_CONFIG_DIR = os.path.expanduser('~')
 LEGACY_CONFIG_NAME = '.linode-cli'
-CONFIG_DIR = os.environ.get('XDG_CONFIG_HOME', "{}/{}/".format(os.path.expanduser('~'), '.config'))
+CONFIG_DIR = os.environ.get('XDG_CONFIG_HOME', "{}/{}".format(os.path.expanduser('~'), '.config'))
+
 CONFIG_NAME = 'linode-cli'
 TOKEN_GENERATION_URL='https://cloud.linode.com/profile/tokens'
 
@@ -215,13 +216,20 @@ class CLIConfig:
         """
         Saves the config file as it is right now.  This can be used by plugins
         to save values they've set, and is used internally to update the config
-        on disk when a new user if configured.
+        on disk when a new user if configured. Creates the config directory if
+        it does not exist.
 
         :param silent: If True, does not print a message noting the config file
                        has been updated.  This is primarily intended for silently
                        updated the config file from one version to another.
         :type silent: bool
         """
+
+
+        # Create the ~/.config directory if it does not exist
+        if not os.path.exists("{}/{}".format(os.path.expanduser('~'), '.config')):
+            os.makedirs("{}/{}".format(os.path.expanduser('~'), '.config'))
+
         with open(self._get_config_path(), 'w') as f:
             self.config.write(f)
 
@@ -329,10 +337,11 @@ on your account to work correctly.""".format(TOKEN_GENERATION_URL))
 
     def _get_config_path(self):
         """
-        Returns the path to the config file
+        Returns the path to the config file.
         """
         if os.path.exists("{}/{}".format(LEGACY_CONFIG_DIR, LEGACY_CONFIG_NAME)):
             return "{}/{}".format(LEGACY_CONFIG_DIR, LEGACY_CONFIG_NAME)
+
 
         return "{}/{}".format(CONFIG_DIR, CONFIG_NAME)
 
