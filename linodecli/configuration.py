@@ -4,6 +4,7 @@ used elsewhere.
 """
 from __future__ import print_function
 
+
 import argparse
 try:
     # python3
@@ -17,8 +18,11 @@ import sys
 
 ENV_TOKEN_NAME='LINODE_CLI_TOKEN'
 
-CONFIG_DIR = os.path.expanduser('~')
-CONFIG_NAME = '.linode-cli'
+LEGACY_CONFIG_DIR = os.path.expanduser('~')
+LEGACY_CONFIG_NAME = '.linode-cli'
+CONFIG_DIR = os.environ.get('XDG_CONFIG_HOME', "{}/{}".format(os.path.expanduser('~'), '.config'))
+
+CONFIG_NAME = 'linode-cli'
 TOKEN_GENERATION_URL='https://cloud.linode.com/profile/tokens'
 
 
@@ -219,6 +223,12 @@ class CLIConfig:
                        updated the config file from one version to another.
         :type silent: bool
         """
+
+
+        # Create the ~/.config directory if it does not exist
+        if not os.path.exists("{}/{}".format(os.path.expanduser('~'), '.config')):
+            os.makedirs("{}/{}".format(os.path.expanduser('~'), '.config'))
+
         with open(self._get_config_path(), 'w') as f:
             self.config.write(f)
 
@@ -326,8 +336,12 @@ on your account to work correctly.""".format(TOKEN_GENERATION_URL))
 
     def _get_config_path(self):
         """
-        Returns the path to the config file
+        Returns the path to the config file.
         """
+        if os.path.exists("{}/{}".format(LEGACY_CONFIG_DIR, LEGACY_CONFIG_NAME)):
+            return "{}/{}".format(LEGACY_CONFIG_DIR, LEGACY_CONFIG_NAME)
+
+
         return "{}/{}".format(CONFIG_DIR, CONFIG_NAME)
 
     def _get_config(self):
