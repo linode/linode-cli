@@ -3,6 +3,10 @@
 # Trap ctrl-c and reset .env file
 trap ctrl_c INT
 
+function clean_accounts() {
+    grep "export TOKEN_[0-9]=" < "$PWD/.env" | cut -d '=' -f 2 | parallel --will-cite --jobs 2 "$PWD/clean-accounts.sh"
+}
+
 function ctrl_c() {
     source "$PWD/.env"
 
@@ -21,14 +25,14 @@ if ( ! (command -v parallel > /dev/null) ); then
     exit 1
 fi
 
-if [[ $1 != "--allow-delete-resources" && $1 != "--force" && $1 != "-f" ]]; then
+if [[ $* != *"--allow-delete-resources"* && $* != *"--force"* && $* != *"-f"* ]]; then
     echo -e "\n ####WARNING!#### \n"
     echo -e  "Running the Linode CLI tests requires removing all resources on your account\n"
     echo -e "Run this command with the --allow-delete-resources flag to accept this fate\n"
     exit 1
 fi
 
-if [ "$1" = "--allow-delete-resources" ]; then
+if [[ $* =~ "--allow-delete-resources" ]]; then
     echo -e "\n\n"
     read -p "WARNING: Running the Linode CLI tests will REMOVE ALL account data. Are you sure? (y/n) " -n 1 -r
     echo
@@ -50,4 +54,20 @@ if [[  $DOCKER_BATS = "TRUE" ]]; then
         && echo -e "export TOKEN_1=$TOKEN_1\nexport TOKEN_2=$TOKEN_2\nexport TOKEN_1_IN_USE_BY=NONE\nexport TOKEN_2_IN_USE_BY=NONE\nexport TEST_ENVIRONMENT=$TEST_ENVIRONMENT" > /src/linode-cli/test/.env
 fi
 
+if [[ $* =~ "--clean" ]]; then
+ clean_accounts
+ ctrl_c
+ exit 0
+fi
+
+# Always clean accounts before tests:
+clean_accounts
+
+# Run all tests in parallel
 find . -name "*.bats" -not \( -path './test_helper*' \) | parallel --will-cite --jobs 2 bats
+
+# Preserve tests exit code:
+tests_status=$?
+
+clean_accounts
+exit $tests_status
