@@ -12,7 +12,7 @@ load '../common'
 setup() {
     suiteName="list-view-update-volumes"
     setToken "$suiteName"
-    export volume_id=$(linode-cli volumes list --text --no-headers --delimiter="," --format="id" )
+    export volume_id=$(linode-cli volumes list --text --no-headers --delimiter="," --format="id")
 }
 
 teardown() {
@@ -90,8 +90,8 @@ teardown() {
         --format="size"
 
     assert_failure
-    assert_output --partial "Request failed: 400"
-    assert_output --partial "size	size is not an editable field"
+    assert_output --partial "usage: linode-cli [-h] [--label label] [--tags tags] volumeId"
+    assert_output --partial "linode-cli: error: unrecognized arguments: --size=15"
 }
 
 @test "it should remove all volumes and unique tags" {
