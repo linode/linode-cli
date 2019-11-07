@@ -42,15 +42,20 @@ class CLIConfig:
         self.username = username
         self.config = self._get_config()
         self.running_plugin = None
+        self.used_env_token = True
 
         self._configured = False
 
         if not self.config.has_option('DEFAULT', 'default-user') and self.config.has_option('DEFAULT', 'token'):
             self._handle_no_default_user()
 
+        environ_token = os.environ.get(ENV_TOKEN_NAME, None)
+
         if (not self.config.has_option('DEFAULT', 'default-user')
-            and not skip_config and not os.environ.get(ENV_TOKEN_NAME, None)):
+            and not skip_config and not environ_token):
             self.configure()
+        elif environ_token:
+            self.used_env_token = True
 
     def set_user(self, username):
         """
@@ -87,6 +92,12 @@ class CLIConfig:
         This updates a Namespace (as returned by ArgumentParser) with config values
         if they aren't present in the Namespace already.
         """
+        if self.used_env_token and self.config is None:
+            # the CLI is using a token defined in the environment; as such, we may
+            # not have actually loaded a config file.  That's fine, there are just
+            # no defaults
+            return
+
         username = self.username or self.default_username()
 
         if not self.config.has_option(username, 'token') and not os.environ.get(ENV_TOKEN_NAME, None):
