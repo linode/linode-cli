@@ -89,7 +89,7 @@ class CLIArg:
     An argument passed to the CLI with a flag, such as `--example value`.  These
     are defined in a requestBody in the api spec.
     """
-    def __init__(self, name, arg_type, description, path, arg_format):
+    def __init__(self, name, arg_type, description, path, arg_format, list_item=None):
         self.name = name
         self.arg_type = arg_type
         self.arg_format = arg_format
@@ -97,6 +97,7 @@ class CLIArg:
         self.path = path
         self.arg_item_type = None # populated during baking for arrays
         self.required = False # this is set during baking
+        self.list_item = list_item
 
 
 class URLParam:
@@ -139,6 +140,8 @@ class CLIOperation:
         Given sys.argv after the operation name, parse args based on the params
         and args of this operation
         """
+        list_items = []
+
         #  build an argparse
         parser = argparse.ArgumentParser(description=self.summary)
         for param in self.params:
@@ -158,6 +161,11 @@ class CLIOperation:
                     # special handling for input arrays
                     parser.add_argument('--'+arg.path, metavar=arg.name,
                                         action='append', type=TYPES[arg.arg_item_type])
+                elif arg.list_item is not None:
+                    parser.add_argument('--'+arg.path, metavar=arg.name,
+                                        action='append', type=TYPES[arg.arg_type])
+                    if arg.list_item:
+                        list_items.append((arg.path, arg.list_item))
                 else:
                     if arg.arg_type == 'string' and arg.arg_format == 'password':
                         # special case - password input
@@ -171,6 +179,25 @@ class CLIOperation:
                                             type=TYPES[arg.arg_type])
 
         parsed = parser.parse_args(args)
+
+        lists = {}
+        # group list items as expected
+        for arg_name, list_name in list_items:
+            item_name = arg_name.split('.')[-1]
+            if hasattr(parsed, arg_name):
+                if  list_name not in lists:
+                    new_list = [{item_name: c} for c in getattr(parsed, arg_name)]
+                    lists[list_name] = new_list
+                else:
+                    update_list = lists[list_name]
+                    for obj, item in zip(update_list, getattr(parsed, arg_name)):
+                        obj[item_name] = item
+
+        if lists:
+            parsed = vars(parsed)
+            parsed.update(lists)
+            parsed = argparse.Namespace(**parsed)
+
         return parsed
 
     def process_response_json(self, json, handler):
