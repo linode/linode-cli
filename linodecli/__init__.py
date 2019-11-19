@@ -100,10 +100,16 @@ def main():
         cli.config.set_user(parsed.as_user)
 
     if parsed.version:
-        # print version info and exit
-        print("linode-cli {}".format(VERSION))
-        print("Built off spec version {}".format(cli.spec_version))
-        exit(0)
+        if not parsed.command:
+            # print version info and exit - but only if no command was given
+            print("linode-cli {}".format(VERSION))
+            print("Built off spec version {}".format(cli.spec_version))
+            exit(0)
+        else:
+            # something else might want to parse version
+            # find where it was originally, as it was removed from args
+            index = argv.index('--version') - 3 # executable command action
+            args = args[:index] + ['--version'] + args[index:]
 
     # handle a bake - this is used to parse a spec and bake it as a pickle
     if parsed.command == "bake":
