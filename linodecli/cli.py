@@ -201,6 +201,14 @@ class CLI:
                     if ('200' in data[m]['responses'] and
                         'application/json' in data[m]['responses']['200']['content']):
                         resp_con = data[m]['responses']['200']['content']['application/json']['schema']
+
+                        if 'x-linode-cli-use-schema' in data[m]['responses']['200']['content']['application/json']:
+                            # this body is atypical, and defines its own columns
+                            # using this schema instead of the normal one.  This
+                            # is usually pairs with x-linode-cli-rows so to handle
+                            # endpoints that returns irregularly formatted data
+                            resp_con = data[m]['responses']['200']['content']['application/json']['x-linode-cli-use-schema']
+
                         if '$ref' in resp_con:
                             resp_con = self._resolve_ref(resp_con['$ref'])
                         if 'allOf' in resp_con:
@@ -214,7 +222,11 @@ class CLI:
                         attrs = []
                         if 'properties' in resp_con:
                             attrs = self._parse_properties(resp_con['properties'])
-                            response_model = ResponseModel(attrs)
+                            # maybe we have special columns?
+                            rows = data[m]['responses']['200']['content']['application/json'].get('x-linode-cli-rows') or None
+                            if rows:
+                                print('got columns {}'.format(rows))
+                            response_model = ResponseModel(attrs, rows=rows)
 
                     cli_args = []
 

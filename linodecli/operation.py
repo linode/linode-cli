@@ -177,9 +177,6 @@ class CLIOperation:
         if self.response_model is None:
             return
 
-        if 'pages' in json:
-            json = json['data']
-        else:
-            json = [json]
+        json = self.response_model.fix_json(json)
 
         handler.print(self.response_model, json)

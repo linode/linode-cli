@@ -76,5 +76,32 @@ class ModelAttr:
 
 
 class ResponseModel:
-    def __init__(self, attrs):
+    def __init__(self, attrs, rows=None):
         self.attrs = attrs
+        self.rows = rows
+
+    def fix_json(self, json):
+        """
+        Takes JSON from the API and formats it into a list of rows
+        """
+        if self.rows:
+            # take the columns as specified
+            ret = []
+            for c in self.rows:
+                cur = json.get(c)
+
+                if not cur:
+                    # probably shouldn't happen, but ok
+                    continue
+
+                if isinstance(cur, list):
+                    ret += cur
+                else:
+                    ret.append(cur)
+
+            # we're good
+            return ret
+        elif 'pages' in json:
+            return json['data']
+        else:
+            return [json]
