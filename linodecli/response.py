@@ -88,7 +88,9 @@ class ResponseModel:
             # take the columns as specified
             ret = []
             for c in self.rows:
-                cur = json.get(c)
+                cur = json
+                for part in c.split('.'):
+                    cur = cur.get(part)
 
                 if not cur:
                     # probably shouldn't happen, but ok
