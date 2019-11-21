@@ -164,8 +164,7 @@ class CLIOperation:
                 elif arg.list_item is not None:
                     parser.add_argument('--'+arg.path, metavar=arg.name,
                                         action='append', type=TYPES[arg.arg_type])
-                    if arg.list_item:
-                        list_items.append((arg.path, arg.list_item))
+                    list_items.append((arg.path, arg.list_item))
                 else:
                     if arg.arg_type == 'string' and arg.arg_format == 'password':
                         # special case - password input
@@ -185,12 +184,13 @@ class CLIOperation:
         for arg_name, list_name in list_items:
             item_name = arg_name.split('.')[-1]
             if hasattr(parsed, arg_name):
+                val = getattr(parsed, arg_name) or []
                 if  list_name not in lists:
-                    new_list = [{item_name: c} for c in getattr(parsed, arg_name)]
+                    new_list = [{item_name: c} for c in val]
                     lists[list_name] = new_list
                 else:
                     update_list = lists[list_name]
-                    for obj, item in zip(update_list, getattr(parsed, arg_name)):
+                    for obj, item in zip(update_list, val):
                         obj[item_name] = item
 
         if lists:
