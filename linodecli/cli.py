@@ -224,8 +224,6 @@ class CLI:
                             attrs = self._parse_properties(resp_con['properties'])
                             # maybe we have special columns?
                             rows = data[m]['responses']['200']['content']['application/json'].get('x-linode-cli-rows') or None
-                            if rows:
-                                print('got columns {}'.format(rows))
                             response_model = ResponseModel(attrs, rows=rows)
 
                     cli_args = []
