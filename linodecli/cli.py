@@ -224,7 +224,8 @@ class CLI:
                             attrs = self._parse_properties(resp_con['properties'])
                             # maybe we have special columns?
                             rows = data[m]['responses']['200']['content']['application/json'].get('x-linode-cli-rows') or None
-                            response_model = ResponseModel(attrs, rows=rows)
+                            nested_list = data[m]['responses']['200']['content']['application/json'].get('x-linode-cli-nested-list') or None
+                            response_model = ResponseModel(attrs, rows=rows, nested_list=nested_list)
 
                     cli_args = []
 
