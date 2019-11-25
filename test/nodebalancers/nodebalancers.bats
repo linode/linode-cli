@@ -174,7 +174,7 @@ teardown() {
 
 	assert_failure
 	assert_output --partial "Request failed: 400"
-	assert_output --partial "address	Address Invalid: must begin with 192.168"
+	assert_output --partial "address	Must begin with 192.168"
 }
 
 @test "it should remove a node from a configuration profile" {
