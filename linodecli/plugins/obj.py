@@ -432,6 +432,18 @@ def show_usage(client, args):
             total += obj.size
 
         grand_total += total
+
+        # Coverts bucket size to human readable bytes. 
+        total = float(total)
+        denomination = ["KB", "MB","GB","TB"]
+        for x in denomination:
+            if total > 1024:
+                total = total / 1024 
+            if total < 1024:
+                total = round(total, 2)
+                total = str(total) + " " + x
+                break
+           
         tab = _borderless_table([[_pad_to(total, length=7), '{} objects'.format(num), b.name]])
         print(tab.table)
 
