@@ -440,6 +440,7 @@ def show_usage(client, args):
             if total > 1024:
                 total = total / 1024 
             if total < 1024:
+                total = round(total, 2)
                 total = str(total) + " " + x
                 break
            
