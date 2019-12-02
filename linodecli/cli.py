@@ -129,12 +129,18 @@ class CLI:
                 attrs += self._parse_properties(info['properties'],
                                                 prefix+[name])
             else:
+                item_type = None
+                item_container = info.get('items')
+                if item_container:
+                    item_type = item_container.get('type')
                 attrs.append(ModelAttr(
                     '.'.join(prefix+[name]),
                     info.get('x-linode-filterable') or False,
                     info.get('x-linode-cli-display') or False,
                     info.get('type') or 'string',
-                    color_map=info.get('x-linode-cli-color')))
+                    color_map=info.get('x-linode-cli-color'),
+                    item_type=item_type))
+
         return attrs
 
     def bake(self, spec):

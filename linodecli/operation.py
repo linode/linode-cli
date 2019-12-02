@@ -27,7 +27,6 @@ def parse_dict(value):
     intended to be passed to the `type=` kwarg for ArgumentParaser.add_argument.
     """
     if not isinstance(value, str):
-        print("not a string :(")
         raise argparse.ArgumentTypeError('Expected a JSON string')
     try:
         return json.loads(value)
@@ -149,7 +148,12 @@ class CLIOperation:
             # build args for filtering
             for attr in self.response_model.attrs:
                 if attr.filterable:
-                    parser.add_argument('--'+attr.name, type=TYPES[attr.datatype], metavar=attr.name)
+                    expected_type = TYPES[attr.datatype]
+                    if expected_type == list:
+                        parser.add_argument('--'+attr.name, type=TYPES[attr.item_type],
+                                            metavar=attr.name, nargs='?')
+                    else:
+                        parser.add_argument('--'+attr.name, type=expected_type, metavar=attr.name)
 
         elif self.method in ("post", "put"):
             # build args for body JSON
