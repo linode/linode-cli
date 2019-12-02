@@ -113,8 +113,21 @@ class CLI:
                     # as is expected here
                     items = self._resolve_allOf(items['allOf'])
                     items = {"type":"object","items":items}
+                if '$ref' in items:
+                    # if it's just a ref, parse that out too
+                    items = self._resolve_ref(items['$ref'])
 
                 args[path]['item_type'] = items['type']
+
+                if (items['type'] == 'object' and 'properties' in items and
+                        not items.get('readOnly')):
+                    # this is a special case - each item has its own properties
+                    # that we need to capture separately
+                    item_args = self._parse_args(items['properties'], prefix=prefix+[arg])
+                    for _, v in item_args.items():
+                        v['list_item'] = path
+                    args.update(item_args)
+                    del args[path] # remove the base element, which is junk
 
         return args
 
@@ -237,7 +250,7 @@ class CLI:
 
                     for arg, info in args.items():
                         new_arg = CLIArg(info['name'], info['type'], info['desc'].split('.')[0]+'.',
-                                         arg, info['format'])
+                                         arg, info['format'], list_item=info.get('list_item'))
 
                         if arg in required_fields:
                             new_arg.required = True
