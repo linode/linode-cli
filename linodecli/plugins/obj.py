@@ -735,6 +735,8 @@ def _pad_to(val, length=10, right_align=False):
     Pads val to be at minimum length characters long
     """
     ret = str(val)
+    padding = ""
+
     if len(ret) < 10:
         padding = " "*(10-len(ret))
 
