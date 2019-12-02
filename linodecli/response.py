@@ -76,5 +76,52 @@ class ModelAttr:
 
 
 class ResponseModel:
-    def __init__(self, attrs):
+    def __init__(self, attrs, rows=None, nested_list=None):
         self.attrs = attrs
+        self.rows = rows
+        self.nested_list = nested_list
+
+    def fix_json(self, json):
+        """
+        Takes JSON from the API and formats it into a list of rows
+        """
+        if self.rows:
+            # take the columns as specified
+            ret = []
+            for c in self.rows:
+                cur = json
+                for part in c.split('.'):
+                    cur = cur.get(part)
+
+                if not cur:
+                    # probably shouldn't happen, but ok
+                    continue
+
+                if isinstance(cur, list):
+                    ret += cur
+                else:
+                    ret.append(cur)
+
+            # we're good
+            return ret
+        elif self.nested_list:
+            # we need to explode the rows into one row per entry in the nested list,
+            # copying the external values
+            if 'pages' in json:
+                json = json['data']
+
+            ret = []
+            if not isinstance(json, list):
+                json = [json]
+            for cur in json:
+                nlist = cur.get(self.nested_list)
+                for item in nlist:
+                    cobj = {k: v for k, v in cur.items() if k != self.nested_list}
+                    cobj[self.nested_list] = item
+                    ret.append(cobj)
+
+            return ret
+        elif 'pages' in json:
+            return json['data']
+        else:
+            return [json]
