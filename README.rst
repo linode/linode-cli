@@ -1,6 +1,7 @@
 linode-cli
 ==========
-
+.. image:: https://repl.it/badge/github/linode/linode-cli
+    :target: https://repl.it/github/linode/linode-cli
 The Linode Command Line Interface
 
 .. image:: https://raw.githubusercontent.com/linode/linode-cli/master/demo.gif
