@@ -200,6 +200,8 @@ class CLIOperation:
         if lists:
             parsed = vars(parsed)
             parsed.update(lists)
+            for name, _ in list_items:
+                del parsed[name]
             parsed = argparse.Namespace(**parsed)
 
         return parsed
