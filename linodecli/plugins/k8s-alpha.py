@@ -1,3 +1,4 @@
+# coding=utf8
 """
 The k8s-alpha plugin includes a means to deploy Kubernetes clusters on Linode
 """
@@ -17,12 +18,20 @@ try:
 except NameError:
     FileNotFoundError = IOError
 
+# Alias input for Python 2
+try:
+    input = raw_input
+except NameError:
+    pass
+
 plugin_name = os.path.basename(__file__)[:-3]
 
 terraform_min_version = '0.12.0'  # This version and above are supported
 terraform_max_version = '0.13.0'  # Only versions below this one are supported
 
 def call(args, context):
+    print_deprecation_notice()
+
     parser = argparse.ArgumentParser("{}".format(plugin_name), add_help=False)
     parser.add_argument('command', metavar='COMMAND', nargs='?', type=str,
                         help="The {} command to be invoked.".format(plugin_name))
@@ -302,6 +311,29 @@ def terraform_version_supported(min_version, max_version):
     # The Terraform version is of the format "Terraform v0.0.0"
     version = check_output(['terraform', 'version']).split()[1].decode().replace('v', '', 1)
     return LooseVersion(min_version) <= LooseVersion(version) < LooseVersion(max_version)
+
+def print_deprecation_notice():
+    input('''┌────────────────────────────────────────────────────────────────────────────────────┐
+│ \033[1mThis Plugin is Deprecated!\033[0m                                                         │
+│                                                                                    │
+│ The k8s-alpha CLI is deprecated. On March 31st, 2020, it will be removed from      │
+│ the linode-cli. After March 31, 2020, you will no longer be able to create or      │
+│ manage clusters with this built-in k8s-alpha CLI plugin.                           │
+│                                                                                    │
+│ You will still be able to successfully create and manage these clusters using      │
+│ an officially supported Terraform module. Please see the following documentation   │
+│ for a migration guide from this plugin and instructions for creating new clusters. │
+│                                                                                    │
+│ https://www.linode.com/docs/kubernetes/how-to-migrate-from-k8s-alpha-to-terraform/ │
+│                                                                                    │
+│ Linode now also has managed Kubernetes clusters!                                   │
+│ Check out Linode Kubernetes Engine.                                                │
+│                                                                                    │
+│ https://www.linode.com/products/kubernetes/                                        │
+│                                                                                    │
+│ Press Enter to continue...                                                         │
+└────────────────────────────────────────────────────────────────────────────────────┘
+''')
 
 def print_terraform_install_help():
     print('\n# Installing Terraform:\n\n'
