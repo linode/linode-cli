@@ -38,7 +38,7 @@ teardown() {
     	| head -n 1"
 
     assert_success
-    assert_output --regexp "[0-9]+,[a-z]+,True"
+    assert_output --regexp "[0-9]+,([A-z]|[0-9])+,True"
 }
 
 @test "it should fail to create a stackscript without specifying an image" {
