@@ -86,6 +86,7 @@ def main():
     if parsed.pretty:
         cli.output_handler.mode = OutputMode.json
         cli.output_handler.pretty_json = True
+        cli.output_handler.columns = '*'
     if parsed.no_headers:
         cli.output_handler.headers = False
     if parsed.all:
