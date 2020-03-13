@@ -78,6 +78,8 @@ def main():
         cli.output_handler.mode = OutputMode.delimited
     elif parsed.json:
         cli.output_handler.mode = OutputMode.json
+        cli.output_handler.pretty_json = True
+        cli.output_handler.columns = '*'
     elif parsed.markdown:
         cli.output_handler.mode = OutputMode.markdown
     if parsed.delimiter:
