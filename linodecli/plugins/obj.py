@@ -52,6 +52,10 @@ Linode CLI by running this command and entering it:
   linode-cli configure
 """
 
+NO_ACCESS_ERROR = """You are not authorized to use Object Storage at this time.
+Please contact your Linode Account administrator to request
+access, or ask them to generate Object Storage Keys for you."""
+
 
 def list_objects_or_buckets(client, args):
     """
@@ -655,6 +659,10 @@ def _get_s3_creds(client):
                 # special case - oauth token isn't allowed to do this
                 print(NO_SCOPES_ERROR)
                 sys.exit(4)
+            if status == 403:
+                # special case - restricted users can't use obj
+                print(NO_ACCESS_ERROR)
+                sys.exit(4)
             # something went wrong - give up
             print('Key generation failed!')
             sys.exit(4)
@@ -683,6 +691,10 @@ def _get_s3_creds(client):
             if status == 401:
                 # special case - oauth token isn't allowed to do this
                 print(NO_SCOPES_ERROR)
+                sys.exit(4)
+            if status == 403:
+                # special case - restricted users can't use obj
+                print(NO_ACCESS_ERROR)
                 sys.exit(4)
             # something went wrong - give up
             print('Key generation failed!')
