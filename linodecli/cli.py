@@ -375,7 +375,7 @@ complete -F _linode_cli linode-cli""")
             print('< {}: {}'.format(k, v), file=stderr)
         print('< ', file=stderr)
 
-    def do_request(self, operation, args, filter_header=None):
+    def do_request(self, operation, args, filter_header=None, skip_error_handling=False):
         """
         Makes a request to an operation's URL and returns the resulting JSON, or
         prints and error if a non-200 comes back
@@ -506,7 +506,7 @@ complete -F _linode_cli linode-cli""")
                               spec_version, self.spec_version
                           ), file=stderr)
 
-        if not 199 < result.status_code < 399:
+        if not 199 < result.status_code < 399 and not skip_error_handling:
             self._handle_error(result)
 
         return result
@@ -568,6 +568,6 @@ complete -F _linode_cli linode-cli""")
 
         operation = self.ops[command][action]
 
-        result = self.do_request(operation, args, filter_header=filters)
+        result = self.do_request(operation, args, filter_header=filters, skip_error_handling=True)
 
         return result.status_code, result.json()
