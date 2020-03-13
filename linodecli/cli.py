@@ -30,6 +30,7 @@ class CLI:
         self.spec = {}
         self.defaults = True # whether to use default values for arguments
         self.page = 1
+        self.debug_request = False
         self.version = version
         self.base_url = base_url
         self.spec_version = 'None'
@@ -351,6 +352,29 @@ complete -F _linode_cli linode-cli""")
         """
         return 'data-{}'.format(version_info[0])
 
+    def print_request_debug_info(self, method, url, headers, body):
+        """
+        Prints debug info for an HTTP request
+        """
+        print('> {} {}'.format(method.__name__.upper(), url), file=stderr)
+        for k, v in headers.items():
+            print('> {}: {}'.format(k, v), file=stderr)
+        print("> Body:", file=stderr)
+        print(">  ", body or "", file=stderr)
+        print("> ", file=stderr)
+
+    def print_response_debug_info(self, response):
+        """
+        Prints debug info for a response from requests
+        """
+        # these come back as ints, convert to HTTP version
+        http_version = response.raw.version/10
+
+        print('< HTTP/{:.1f} {} {}'.format(http_version, response.status_code, response.reason), file=stderr)
+        for k, v in response.headers.items():
+            print('< {}: {}'.format(k, v), file=stderr)
+        print('< ', file=stderr)
+
     def do_request(self, operation, args, filter_header=None):
         """
         Makes a request to an operation's URL and returns the resulting JSON, or
@@ -405,7 +429,13 @@ complete -F _linode_cli linode-cli""")
 
             body = json.dumps(expanded_json)
 
+        if self.debug_request:
+            self.print_request_debug_info(method, url, headers, body)
+
         result =  method(url, headers=headers, data=body)
+
+        if self.debug_request:
+            self.print_response_debug_info(result)
 
         if not self.suppress_warnings:
             # check the major/minor version API reported against what we were built
