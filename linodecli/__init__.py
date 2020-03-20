@@ -70,6 +70,8 @@ def main():
                              "This is useful for scripting the CLI's behavior.")
     parser.add_argument('--version', '-v', action="store_true",
                         help="Prints version information and exits.")
+    parser.add_argument('--debug', action='store_true',
+                        help="Enable verbose HTTP debug output")
 
     parsed, args = parser.parse_known_args()
 
@@ -97,6 +99,7 @@ def main():
     cli.defaults = not parsed.no_defaults
     cli.suppress_warnings = parsed.suppress_warnings
     cli.page = parsed.page
+    cli.debug_request = parsed.debug
 
     if parsed.as_user:
         # if they are acting as a non-default user, set it up early
