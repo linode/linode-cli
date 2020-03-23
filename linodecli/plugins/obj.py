@@ -561,8 +561,6 @@ def call(args, context):
 
         sys.exit(2) # requirements not met - we can't go on
 
-    access_key, secret_key = _get_s3_creds(context.client)
-
     parser = argparse.ArgumentParser(PLUGIN_BASE, add_help=False)
     parser.add_argument('command', metavar='COMMAND', nargs='?', type=str,
                         help='The command to execute in object storage')
@@ -570,8 +568,6 @@ def call(args, context):
                         help='The cluster to use.  Defaults to us-east-1 (presently)')
 
     parsed, args = parser.parse_known_args(args)
-
-    client = _get_boto_client(parsed.cluster or 'us-east-1', access_key, secret_key)
 
     if not parsed.command:
         # show help if invoked with no command
@@ -592,6 +588,10 @@ def call(args, context):
         print('See --help for individual commands for more information')
 
         exit(0)
+
+    # make a client, but only if we weren't printing help
+    access_key, secret_key = _get_s3_creds(context.client)
+    client = _get_boto_client(parsed.cluster or 'us-east-1', access_key, secret_key)
 
     if parsed.command in COMMAND_MAP:
         try:
