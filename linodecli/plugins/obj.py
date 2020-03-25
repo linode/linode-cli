@@ -59,10 +59,10 @@ access, or ask them to generate Object Storage Keys for you."""
 
 
 # Files larger than this need to be uploaded via a multipart upload
-UPLOAD_MAX_FILE_SIZE = 1024 * 1024 * 5
+UPLOAD_MAX_FILE_SIZE = 1024 * 1024 * * 1024 *  5
 # This is how big the chunks of the file that we upload will be
 # This is a float so that division works like we want later
-MULTIPART_UPLOAD_CHUNK_SIZE = 1024 * 1024 * 5.0
+MULTIPART_UPLOAD_CHUNK_SIZE = 1024 * 1024 * 1024 * 5.0
 
 
 def list_objects_or_buckets(client, args):
