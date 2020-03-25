@@ -88,7 +88,8 @@ class CLIArg:
     An argument passed to the CLI with a flag, such as `--example value`.  These
     are defined in a requestBody in the api spec.
     """
-    def __init__(self, name, arg_type, description, path, arg_format, list_item=None):
+    def __init__(self, name, arg_type, description, path, arg_format, list_item=None,
+                 api_name=None):
         self.name = name
         self.arg_type = arg_type
         self.arg_format = arg_format
@@ -97,6 +98,11 @@ class CLIArg:
         self.arg_item_type = None # populated during baking for arrays
         self.required = False # this is set during baking
         self.list_item = list_item
+        # this is the name sent to the API; this is needed in case the name
+        # of this argument in the api's request body conflicts with a built-in
+        # flag (for example, "version").
+        # This is presently only supported for POST/PUT operations
+        self.api_name = api_name if api_name is not None else self.path
 
 
 class URLParam:
@@ -163,22 +169,22 @@ class CLIOperation:
             for arg in self.args:
                 if arg.arg_type == 'array':
                     # special handling for input arrays
-                    parser.add_argument('--'+arg.path, metavar=arg.name,
+                    parser.add_argument('--'+arg.path, metavar=arg.name, dest=arg.api_name,
                                         action='append', type=TYPES[arg.arg_item_type])
                 elif arg.list_item is not None:
-                    parser.add_argument('--'+arg.path, metavar=arg.name,
+                    parser.add_argument('--'+arg.path, metavar=arg.name, dest=arg.api_name,
                                         action='append', type=TYPES[arg.arg_type])
                     list_items.append((arg.path, arg.list_item))
                 else:
                     if arg.arg_type == 'string' and arg.arg_format == 'password':
                         # special case - password input
-                        parser.add_argument('--'+arg.path, nargs='?', action=PasswordPromptAction)
+                        parser.add_argument('--'+arg.path, nargs='?', dest=arg.api_name, action=PasswordPromptAction)
                     elif arg.arg_type == 'string' and arg.arg_format in ('ssl-cert','ssl-key'):
-                        parser.add_argument('--'+arg.path, metavar=arg.name,
+                        parser.add_argument('--'+arg.path, metavar=arg.name, dest=arg.api_name,
                                             action=OptionalFromFileAction,
                                             type=TYPES[arg.arg_type])
                     else:
-                        parser.add_argument('--'+arg.path, metavar=arg.name,
+                        parser.add_argument('--'+arg.path, metavar=arg.name, dest=arg.api_name,
                                             type=TYPES[arg.arg_type])
 
         parsed = parser.parse_args(args)

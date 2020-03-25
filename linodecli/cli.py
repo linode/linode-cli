@@ -104,6 +104,7 @@ class CLI:
                 "desc": info.get('description') or '',
                 "name": arg,
                 "format": info.get('format', None),
+                "name_override": info.get('x-linode-cli-name', None),
             }
             # handle input lists
             if args[path]['type'] == 'array' and 'items' in info:
@@ -250,8 +251,11 @@ class CLI:
                     cli_args = []
 
                     for arg, info in args.items():
-                        new_arg = CLIArg(info['name'], info['type'], info['desc'].split('.')[0]+'.',
-                                         arg, info['format'], list_item=info.get('list_item'))
+                        cli_name = info['name_override'] or info['name']
+                        cli_path = info['name_override'] or arg
+                        new_arg = CLIArg(cli_name, info['type'], info['desc'].split('.')[0]+'.',
+                                         cli_path, info['format'], list_item=info.get('list_item'),
+                                         api_name=arg)
 
                         if arg in required_fields:
                             new_arg.required = True
