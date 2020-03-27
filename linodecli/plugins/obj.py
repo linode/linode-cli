@@ -585,6 +585,9 @@ def call(args, context):
         tab.inner_heading_row_border=False
         print(tab.table)
         print()
+        print("Additionally, you can regenerate your Object Storage keys using the "
+              "'regenerate-keys' command")
+        print()
         print('See --help for individual commands for more information')
 
         exit(0)
@@ -613,6 +616,13 @@ def call(args, context):
                 message = e.message
             print('Error: {}'.format(message))
             sys.exit(6)
+    elif parsed.command == "regenerate-keys":
+        print("Regenerating Object Storage keys..")
+        _get_s3_creds(context.client, force=True)
+        print("Done.")
+        print("Warning: Your old Object Storage keys _were not_ expired!  If you want "
+              "to expire them, see `linode-cli object-storage keys-list` and "
+              "`linode-cli object-storage keys-delete [KEYID]`.")
     else:
         print('No command {}'.format(parsed.command))
         sys.exit(1)
@@ -634,13 +644,16 @@ def _get_boto_client(cluster, access_key, secret_key):
     return client
 
 
-def _get_s3_creds(client):
+def _get_s3_creds(client, force=False):
     """
     Retrieves stored s3 creds for the acting user from the config, or generates new
     creds using the client and stores them if none exist
 
     :param client: The client object from the invoking PluginContext
     :type client: linodecli.CLI
+    :param force: If True, get new creds even if there are already creds stored.
+                  This is used to rotate creds.
+    :type force: bool
 
     :returns: The access key and secret key for this user
     :rtype: tuple(str, str)
@@ -648,7 +661,7 @@ def _get_s3_creds(client):
     access_key = client.config.plugin_get_value('access-key')
     secret_key = client.config.plugin_get_value('secret-key')
 
-    if access_key is None:
+    if force or access_key is None:
         # this means there are no stored s3 creds for this user - set them up
 
         # before we do anything, can they do object storage?
