@@ -620,7 +620,7 @@ def call(args, context):
         print("Regenerating Object Storage keys..")
         _get_s3_creds(context.client, force=True)
         print("Done.")
-        print("Warning: Your old Object Storage keys _were not_ expired!  If you want "
+        print("Warning: Your old Object Storage keys _were not_ automatically expired!  If you want "
               "to expire them, see `linode-cli object-storage keys-list` and "
               "`linode-cli object-storage keys-delete [KEYID]`.")
     else:
