@@ -59,7 +59,7 @@ access, or ask them to generate Object Storage Keys for you."""
 
 
 # Files larger than this need to be uploaded via a multipart upload
-UPLOAD_MAX_FILE_SIZE = 1024 * 1024 * * 1024 *  5
+UPLOAD_MAX_FILE_SIZE = 1024 * 1024 * 1024 *  5
 # This is how big the chunks of the file that we upload will be
 # This is a float so that division works like we want later
 MULTIPART_UPLOAD_CHUNK_SIZE = 1024 * 1024 * 1024 * 5.0
@@ -236,12 +236,9 @@ def _do_multipart_upload(bucket, filename, file_path, file_size):
                 print(" Part {}".format(i+1))
                 upload.upload_part_from_file(f, i+1, cb=_progress, num_cb=100, size=MULTIPART_UPLOAD_CHUNK_SIZE)
     except Exception as e:
-        upload_exception = e
-    finally:
-        if upload_exception:
-            print("Upload failed!  Cleaning up!")
-            upload.cancel_upload()
-            raise upload_exception
+        print("Upload failed!  Cleaning up!")
+        upload.cancel_upload()
+        raise upload_exception
 
     upload.complete_upload()
 
