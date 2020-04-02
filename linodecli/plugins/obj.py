@@ -3,6 +3,7 @@ import argparse
 import base64
 from datetime import datetime
 import getpass
+import math
 import socket
 import sys
 import time
@@ -55,6 +56,13 @@ Linode CLI by running this command and entering it:
 NO_ACCESS_ERROR = """You are not authorized to use Object Storage at this time.
 Please contact your Linode Account administrator to request
 access, or ask them to generate Object Storage Keys for you."""
+
+
+# Files larger than this need to be uploaded via a multipart upload
+UPLOAD_MAX_FILE_SIZE = 1024 * 1024 * 1024 *  5
+# This is how big the chunks of the file that we upload will be
+# This is a float so that division works like we want later
+MULTIPART_UPLOAD_CHUNK_SIZE = 1024 * 1024 * 1024 * 5.0
 
 
 def list_objects_or_buckets(client, args):
@@ -163,6 +171,7 @@ def upload_object(client, args):
     parsed = parser.parse_args(args)
 
     to_upload = []
+    to_multipart_upload = []
     for c in parsed.file:
         # find the object
         file_path = os.path.expanduser(c)
@@ -173,7 +182,12 @@ def upload_object(client, args):
 
         filename = os.path.split(file_path)[-1]
 
-        to_upload.append((filename, file_path))
+        file_size = os.path.getsize(file_path)
+
+        if file_size >= UPLOAD_MAX_FILE_SIZE:
+            to_multipart_upload.append((filename, file_path, file_size))
+        else:
+            to_upload.append((filename, file_path))
 
     # upload the files
     try:
@@ -190,7 +204,43 @@ def upload_object(client, args):
         policy = 'public-read' if parsed.acl_public else None
         k.set_contents_from_filename(file_path, cb=_progress, num_cb=100, policy=policy)
 
+    for filename, file_path, file_size in to_multipart_upload:
+        _do_multipart_upload(bucket, filename, file_path, file_size)
+
     print('Done.')
+
+
+def _do_multipart_upload(bucket, filename, file_path, file_size):
+    """
+    Handles the internals of a multipart upload for a large file.
+
+    :param bucket: The bucket to upload the large file to
+    :type bucket: Boto bucket
+    :param filename: The name of the file to upload
+    :type filename: str
+    :param: file_path: That absolute path to the file we're uploading
+    :type file_path: str
+    :param file_size: The size of this file in bytes (used for chunking)
+    :type file_size: int
+    """
+    upload = bucket.initiate_multipart_upload(filename)
+
+    num_chunks = int(math.ceil(file_size / MULTIPART_UPLOAD_CHUNK_SIZE))
+    upload_exception = None
+
+    print("{} ({} parts)".format(filename, num_chunks))
+
+    try:
+        with open(file_path, "rb") as f:
+            for i in range(num_chunks):
+                print(" Part {}".format(i+1))
+                upload.upload_part_from_file(f, i+1, cb=_progress, num_cb=100, size=MULTIPART_UPLOAD_CHUNK_SIZE)
+    except Exception as e:
+        print("Upload failed!  Cleaning up!")
+        upload.cancel_upload()
+        raise upload_exception
+
+    upload.complete_upload()
 
 
 def get_object(client, args):
