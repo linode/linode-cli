@@ -237,7 +237,10 @@ class CLI:
                         if 'properties' in resp_con and 'pages' in resp_con['properties']:
                             resp_con = resp_con['properties']
                         if 'pages' in resp_con and 'data' in resp_con:
-                            resp_con = self._resolve_ref(resp_con['data']['items']['$ref'])
+                            if '$ref' in resp_con['data']['items']:
+                                resp_con = self._resolve_ref(resp_con['data']['items']['$ref'])
+                            else:
+                                resp_con = resp_con['data']['items']
 
                         attrs = []
                         if 'properties' in resp_con:
