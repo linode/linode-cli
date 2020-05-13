@@ -12,7 +12,7 @@ module that presents the interface described below.
 Plugins in this directory are called "Internal Plugins," and must meet the
 following conditions:
 
- * It must be compatible with python 2 and 3
+ * It must be compatible with python 3
  * Its name must be unique, both with the other plugins and with all commands
    offered through the generated CLI
  * Its name must not contain special characters, and should be easily to enter
@@ -24,7 +24,7 @@ Plugins that are installed separately and registered with the `register-plugin`
 command are called "Third Party Plugins," and must meet the following
 conditions:
 
- * It should be compatible with python 2 and 3
+ * It should be compatible with python 3
  * Its name must be unique, both with the internal plugins and all CLI operations
  * It must contain a `call(args, context)` function for invocation
  * It must contain a `PLUGIN_NAME` constant whose value is a string that does not
