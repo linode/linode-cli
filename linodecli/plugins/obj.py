@@ -16,6 +16,9 @@ from math import ceil
 from linodecli.configuration import input_helper
 
 
+ENV_ACCESS_KEY_NAME = "LINODE_CLI_OBJ_ACCESS_KEY"
+ENV_SECRET_KEY_NAME = "LINODE_CLI_OBJ_SECRET_KEY"
+
 try:
     import boto
     from boto.exception import S3CreateError, S3ResponseError, BotoClientError
@@ -622,14 +625,6 @@ def call(args, context):
                         help='The command to execute in object storage')
     parser.add_argument('--cluster', metavar='CLUSTER', type=str,
                         help='The cluster to use.  Defaults to us-east-1 (presently)')
-    parser.add_argument('--access-key', metavar='ACCESS_KEY', type=str,
-                        help='The Object Storage Access Key to use.  Optional.  '
-                             'If not provided, will use the configured access key '
-                             'for the active user, or generate a new one and save it')
-    parser.add_argument('--secret-key', metavar='SECRET_KEY', type=str,
-                        help='The Object Storage Secret Key to use.  Optional.  '
-                             'If not provided, will use the configured secret key '
-                             'for the active user, or generate a new one and save it')
 
     parsed, args = parser.parse_known_args(args)
 
@@ -658,10 +653,14 @@ def call(args, context):
 
     # make a client, but only if we weren't printing help
 
-    access_key, secret_key = parsed.access_key, parsed.secret_key
+    access_key, secret_key = (
+        os.environ.get(ENV_ACCESS_KEY_NAME, None),
+        os.environ.get(ENV_SECRET_KEY_NAME, None),
+    )
+
 
     if access_key and not secret_key or secret_key and not access_key:
-        print("You must give both of --access-key and --secret-key, or neither")
+        print("You must set both {} and {}, or neither".format(ENV_ACCESS_KEY_NAME, ENV_SECRET_KEY_NAME))
         exit(1)
 
     # not given on command line, so look them up
