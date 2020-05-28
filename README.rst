@@ -139,6 +139,12 @@ will allow you to set defaults without having to set a token.  Be aware that if
 the environment variable should be unset, the Linode CLI will stop working until
 it is set again or the CLI is reconfigured with a token.
 
+You may also use environment variables to store your Object Storage Keys for
+the ``obj`` plugin that ships with the CLI.  To do so, simply set
+``LINODE_CLI_OBJ_ACCESS_KEY`` and ``LINODE_CLI_OBJ_SECRET_KEY`` to the
+appropriate values.  This allows using Linode Object Storage through the CLI
+without having a configuration file, which is desirable in some situations.
+
 Multiple Users
 ^^^^^^^^^^^^^^
 

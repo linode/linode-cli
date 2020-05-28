@@ -16,6 +16,9 @@ from math import ceil
 from linodecli.configuration import input_helper
 
 
+ENV_ACCESS_KEY_NAME = "LINODE_CLI_OBJ_ACCESS_KEY"
+ENV_SECRET_KEY_NAME = "LINODE_CLI_OBJ_SECRET_KEY"
+
 try:
     import boto
     from boto.exception import S3CreateError, S3ResponseError, BotoClientError
@@ -649,7 +652,21 @@ def call(args, context):
         exit(0)
 
     # make a client, but only if we weren't printing help
-    access_key, secret_key = _get_s3_creds(context.client)
+
+    access_key, secret_key = (
+        os.environ.get(ENV_ACCESS_KEY_NAME, None),
+        os.environ.get(ENV_SECRET_KEY_NAME, None),
+    )
+
+
+    if access_key and not secret_key or secret_key and not access_key:
+        print("You must set both {} and {}, or neither".format(ENV_ACCESS_KEY_NAME, ENV_SECRET_KEY_NAME))
+        exit(1)
+
+    # not given on command line, so look them up
+    if not access_key:
+        access_key, secret_key = _get_s3_creds(context.client)
+
     client = _get_boto_client(parsed.cluster or 'us-east-1', access_key, secret_key)
 
     if parsed.command in COMMAND_MAP:
