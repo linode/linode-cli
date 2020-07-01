@@ -641,6 +641,12 @@ def call(args, context):
 
     parsed, args = parser.parse_known_args(args)
 
+    # don't mind --no-defaults if it's there; the top-level parser already took care of it
+    try:
+        args.remove('--no-defaults')
+    except ValueError:
+        pass
+
     if not parsed.command:
         # show help if invoked with no command
         parser.print_help()
