@@ -62,13 +62,13 @@ access, or ask them to generate Object Storage Keys for you."""
 
 
 # Files larger than this need to be uploaded via a multipart upload
-UPLOAD_MAX_FILE_SIZE = 1024 * 1024 * 1024 *  5
+UPLOAD_MAX_FILE_SIZE = 1024 * 1024 * 1024 * 5
 # This is how big the chunks of the file that we upload will be
 # This is a float so that division works like we want later
 MULTIPART_UPLOAD_CHUNK_SIZE = 1024 * 1024 * 1024 * 5.0
 
 
-def list_objects_or_buckets(client, args):
+def list_objects_or_buckets(get_client, args):
     """
     Lists buckets or objects
     """
@@ -79,6 +79,7 @@ def list_objects_or_buckets(client, args):
                              "lists the contents of the given bucket.")
 
     parsed = parser.parse_args(args)
+    client = get_client()
 
     if parsed.bucket:
         # list objects
@@ -120,7 +121,7 @@ def list_objects_or_buckets(client, args):
         sys.exit(0)
 
 
-def create_bucket(client, args):
+def create_bucket(get_client, args):
     """
     Creates a new bucket
     """
@@ -130,6 +131,7 @@ def create_bucket(client, args):
                         help="The name of the bucket to create.")
 
     parsed = parser.parse_args(args)
+    client = get_client()
 
     client.create_bucket(parsed.name)
 
@@ -137,7 +139,7 @@ def create_bucket(client, args):
     sys.exit(0)
 
 
-def delete_bucket(client, args):
+def delete_bucket(get_client, args):
     """
     Deletes a bucket
     """
@@ -147,6 +149,7 @@ def delete_bucket(client, args):
                         help="The name of the bucket to remove.")
 
     parsed = parser.parse_args(args)
+    client = get_client()
 
     client.delete_bucket(parsed.name)
 
@@ -155,7 +158,7 @@ def delete_bucket(client, args):
     sys.exit(0)
 
 
-def upload_object(client, args):
+def upload_object(get_client, args):
     """
     Uploads an object to object storage
     """
@@ -172,6 +175,7 @@ def upload_object(client, args):
     #                    help="If set, upload directories recursively.")
 
     parsed = parser.parse_args(args)
+    client = get_client()
 
     to_upload = []
     to_multipart_upload = []
@@ -246,7 +250,7 @@ def _do_multipart_upload(bucket, filename, file_path, file_size):
     upload.complete_upload()
 
 
-def get_object(client, args):
+def get_object(get_client, args):
     """
     Retrieves an uploaded object and writes it to a file
     """
@@ -261,6 +265,7 @@ def get_object(client, args):
                              'name and saves to the current directory.')
 
     parsed = parser.parse_args(args)
+    client = get_client()
 
     # find destination file
     destination = parsed.destination
@@ -286,7 +291,7 @@ def get_object(client, args):
     print('Done.')
 
 
-def delete_object(client, args):
+def delete_object(get_client, args):
     """
     Removes a file from a bucket
     """
@@ -298,6 +303,7 @@ def delete_object(client, args):
                         help="The object to remove.")
 
     parsed = parser.parse_args(args)
+    client = get_client()
 
     # get the key to delete
     try:
@@ -318,7 +324,7 @@ def delete_object(client, args):
     print('{} removed from {}'.format(parsed.file, parsed.bucket))
 
 
-def generate_url(client, args):
+def generate_url(get_client, args):
     """
     Generates a URL to an object
     """
@@ -334,6 +340,7 @@ def generate_url(client, args):
                              "an offset.")
 
     parsed = parser.parse_args(args)
+    client = get_client()
 
     now = datetime.now()
 
@@ -362,7 +369,7 @@ def generate_url(client, args):
     print(url)
 
 
-def set_acl(client, args):
+def set_acl(get_client, args):
     """
     Modify Access Control List for a Bucket or Objects
     """
@@ -379,6 +386,7 @@ def set_acl(client, args):
                         help="If given, makes the target private.")
 
     parsed = parser.parse_args(args)
+    client = get_client()
 
     # make sure the call is sane
     if parsed.acl_public and parsed.acl_private:
@@ -411,7 +419,7 @@ def set_acl(client, args):
     print('ACL updated')
 
 
-def enable_static_site(client, args):
+def enable_static_site(get_client, args):
     """
     Turns a bucket into a static website
     """
@@ -425,6 +433,7 @@ def enable_static_site(client, args):
                         help='The file to serve as the error page of the website')
 
     parsed = parser.parse_args(args)
+    client = get_client()
 
     # get the bucket
     try:
@@ -442,7 +451,7 @@ def enable_static_site(client, args):
     ))
 
 
-def static_site_info(client, args):
+def static_site_info(get_client, args):
     """
     Returns info about a configured static site
     """
@@ -452,6 +461,7 @@ def static_site_info(client, args):
                         help="The bucket to return static site information on.")
 
     parsed = parser.parse_args(args)
+    client = get_client()
 
     # get the bucket
     try:
@@ -474,7 +484,7 @@ def static_site_info(client, args):
     print('Error document: {}'.format(error))
 
 
-def show_usage(client, args):
+def show_usage(get_client, args):
     """
     Shows space used by all buckets in this cluster, and total space
     """
@@ -485,6 +495,7 @@ def show_usage(client, args):
                              "If omitted, shows usage for all buckets.")
 
     parsed = parser.parse_args(args)
+    client = get_client()
 
     if parsed.bucket:
         try:
@@ -533,12 +544,13 @@ def _denominate(total):
             break
     return total
 
-def list_all_objects(client, args):
+def list_all_objects(get_client, args):
     """
     Lists all objects in all buckets
     """
     parser = argparse.ArgumentParser(PLUGIN_BASE+' la')
     parsed = parser.parse_args(args)
+    client = get_client()
 
     # all buckets
     buckets = client.get_all_buckets()
@@ -564,7 +576,7 @@ def list_all_objects(client, args):
     exit(0)
 
 
-def disable_static_site(client, args):
+def disable_static_site(get_client, args):
     """
     Disables static site for a bucket
     """
@@ -574,6 +586,7 @@ def disable_static_site(client, args):
                         help="The bucket to disable static site for.")
 
     parsed = parser.parse_args(args)
+    client = get_client()
 
     # get the bucket
     try:
@@ -624,7 +637,7 @@ def call(args, context):
     parser.add_argument('command', metavar='COMMAND', nargs='?', type=str,
                         help='The command to execute in object storage')
     parser.add_argument('--cluster', metavar='CLUSTER', type=str,
-                        help='The cluster to use.  Defaults to us-east-1 (presently)')
+                        help='The cluster to use for the operation')
 
     parsed, args = parser.parse_known_args(args)
 
@@ -641,11 +654,12 @@ def call(args, context):
         ]
 
         tab = SingleTable(command_help_map)
-        tab.inner_heading_row_border=False
+        tab.inner_heading_row_border = False
         print(tab.table)
         print()
         print("Additionally, you can regenerate your Object Storage keys using the "
-              "'regenerate-keys' command")
+              "'regenerate-keys' command or configure defaults for the plugin using "
+              "the 'configure' command.")
         print()
         print('See --help for individual commands for more information')
 
@@ -658,7 +672,6 @@ def call(args, context):
         os.environ.get(ENV_SECRET_KEY_NAME, None),
     )
 
-
     if access_key and not secret_key or secret_key and not access_key:
         print("You must set both {} and {}, or neither".format(ENV_ACCESS_KEY_NAME, ENV_SECRET_KEY_NAME))
         exit(1)
@@ -667,11 +680,39 @@ def call(args, context):
     if not access_key:
         access_key, secret_key = _get_s3_creds(context.client)
 
-    client = _get_boto_client(parsed.cluster or 'us-east-1', access_key, secret_key)
+    cluster = parsed.cluster
+    if context.client.defaults:
+        cluster = cluster or context.client.config.plugin_get_value('cluster')
+
+    def get_client():
+        """
+        Get the boto client based on the cluster, or ask to configure a default cluster if one is not specified.
+        This is in a method so command methods can do this work AFTER displaying help, that way help can be shown
+        without specifying a cluster or having a valid OBJ key.
+        """
+        current_cluster = cluster
+        if current_cluster is None and not context.client.defaults:
+            print("Error: cluster is required.")
+            exit(1)
+
+        if current_cluster is None:
+            print("Error: No default cluster is configured.")
+            print("")
+
+            answer = input_helper("Configure now? [y/N] ")
+
+            if not answer or answer not in 'yY':
+                print('Exiting.')
+                exit(0)
+
+            _configure_plugin(context.client)
+            current_cluster = context.client.config.plugin_get_value('cluster')
+
+        return _get_boto_client(current_cluster, access_key, secret_key)
 
     if parsed.command in COMMAND_MAP:
         try:
-            COMMAND_MAP[parsed.command](client, args)
+            COMMAND_MAP[parsed.command](get_client, args)
         except S3ResponseError as e:
             if e.error_code:
                 print('Error: {}'.format(e.error_code))
@@ -696,6 +737,8 @@ def call(args, context):
         print("Warning: Your old Object Storage keys _were not_ automatically expired!  If you want "
               "to expire them, see `linode-cli object-storage keys-list` and "
               "`linode-cli object-storage keys-delete [KEYID]`.")
+    elif parsed.command == "configure":
+        _configure_plugin(context.client)
     else:
         print('No command {}'.format(parsed.command))
         sys.exit(1)
@@ -794,6 +837,27 @@ def _get_s3_creds(client, force=False):
         client.config.write_config(silent=True)
 
     return access_key, secret_key
+
+
+def _configure_plugin(client):
+    """
+    Configures a default cluster value.
+    """
+    clusters = [c['id'] for c in client.config._do_get_request(
+        '/object-storage/clusters',
+        token=client.config.get_value('token')
+    )['data']]
+
+    cluster = client.config._default_thing_input(
+        'Default Cluster for operations.',
+        clusters,
+        'Default Cluster: ',
+        'Please select a valid Cluster',
+        optional=False  # this is the only configuration right now
+    )
+
+    client.config.plugin_set_value('cluster', cluster)
+    client.config.write_config()
 
 
 def _progress(cur, total):

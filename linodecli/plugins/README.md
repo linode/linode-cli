@@ -101,7 +101,7 @@ def call(args, context):
     # get a value from the user's config
     default_region = context.client.config.get_value('region')
 
-    # check if we set a value perviously
+    # check if we set a value previously
     our_value = context.client.config.plugin_get_value('configured')
 
     if our_value is None:
