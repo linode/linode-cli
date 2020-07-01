@@ -682,9 +682,10 @@ def call(args, context):
         print("You must set both {} and {}, or neither".format(ENV_ACCESS_KEY_NAME, ENV_SECRET_KEY_NAME))
         exit(1)
 
+    fresh_creds = False
     # not given on command line, so look them up
     if not access_key:
-        access_key, secret_key = _get_s3_creds(context.client)
+        access_key, secret_key, fresh_creds = _get_s3_creds(context.client)
 
     cluster = parsed.cluster
     if context.client.defaults:
@@ -697,6 +698,11 @@ def call(args, context):
         without specifying a cluster or having a valid OBJ key.
         """
         current_cluster = cluster
+        if current_cluster is None and not fresh_creds:
+            # this was an existing user before we added configurable default cluster
+            # so preserve the old behavior
+            current_cluster = "us-east-1"
+
         if current_cluster is None and not context.client.defaults:
             print("Error: cluster is required.")
             exit(1)
@@ -777,14 +783,16 @@ def _get_s3_creds(client, force=False):
                   This is used to rotate creds.
     :type force: bool
 
-    :returns: The access key and secret key for this user
-    :rtype: tuple(str, str)
+    :returns: The access key and secret key for this user, and if they were just generated
+    :rtype: tuple(str, str, bool)
     """
     access_key = client.config.plugin_get_value('access-key')
     secret_key = client.config.plugin_get_value('secret-key')
+    generated = False
 
     if force or access_key is None:
         # this means there are no stored s3 creds for this user - set them up
+        generated = True
 
         # before we do anything, can they do object storage?
         status, resp = client.call_operation('account', 'view')
@@ -842,7 +850,7 @@ def _get_s3_creds(client, force=False):
         client.config.plugin_set_value('secret-key', secret_key)
         client.config.write_config(silent=True)
 
-    return access_key, secret_key
+    return access_key, secret_key, generated
 
 
 def _configure_plugin(client):
