@@ -703,14 +703,6 @@ def call(args, context):
 
         if current_cluster is None:
             print("Error: No default cluster is configured.")
-            print("")
-
-            answer = input_helper("Configure now? [y/N] ")
-
-            if not answer or answer not in 'yY':
-                print('Exiting.')
-                exit(0)
-
             _configure_plugin(context.client)
             current_cluster = context.client.config.plugin_get_value('cluster')
 
@@ -855,7 +847,7 @@ def _configure_plugin(client):
     )['data']]
 
     cluster = client.config._default_thing_input(
-        'Default Cluster for operations.',
+        'Configure a default Cluster for operations.',
         clusters,
         'Default Cluster: ',
         'Please select a valid Cluster',
