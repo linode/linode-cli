@@ -6,7 +6,7 @@ from __future__ import print_function
 import argparse
 from getpass import getpass
 import json
-from os import path
+from os import path, environ
 
 
 def parse_boolean(value):
@@ -43,11 +43,17 @@ class PasswordPromptAction(argparse.Action):
         super(PasswordPromptAction, self).__init__(*args, **kwargs)
 
     def __call__(self, parser, namespace, values, option_string=None):
+        # if not provided on the command line, pull from the environment if it
+        # exists at this key
+        environ_key = "LINODE_CLI_{}".format(self.dest.upper())
+
         if values:
             if isinstance(values, str):
                 password = values
             else:
                 raise argparse.ArgumentTypeError('Expected a string (or leave blank for prompt)')
+        elif environ_key in environ:
+            password = environ.get(environ_key)
         else:
             prompt = 'Value for {}: '.format(self.dest)
             password = getpass(prompt)
