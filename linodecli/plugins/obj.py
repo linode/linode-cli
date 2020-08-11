@@ -24,6 +24,7 @@ try:
     from boto.exception import S3CreateError, S3ResponseError, BotoClientError
     from boto.s3.connection import OrdinaryCallingFormat
     from boto.s3.key import Key
+    from boto.s3.prefix import Prefix
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
@@ -83,20 +84,24 @@ def list_objects_or_buckets(get_client, args):
 
     if parsed.bucket:
         # list objects
+        if '/' in parsed.bucket:
+            bucket_name, prefix = parsed.bucket.split('/', 1)
+        else:
+            bucket_name = parsed.bucket
+            prefix = ''
+
         try:
-            bucket = client.get_bucket(parsed.bucket)
+            bucket = client.get_bucket(bucket_name)
         except S3ResponseError:
-            print('No bucket named '+parsed.bucket)
+            print('No bucket named '+bucket_name)
             sys.exit(2)
 
         data = []
-        for c in bucket.list():
-            if c.key.count('/') > 1 or ('/' in c.key and not c.key.endswith('/')):
-                continue
-
-            size = c.size
-            if size == 0:
+        for c in bucket.list(prefix=prefix, delimiter='/'):
+            if isinstance(c, Prefix):
                 size = 'DIR'
+            else:
+                size = c.size
 
             datetime = _convert_datetime(c.last_modified) if size != 'DIR' else ' '*16
 
@@ -559,12 +564,10 @@ def list_all_objects(get_client, args):
         print()
 
         for obj in b.list():
-            if obj.key.count('/') > 1 or ('/' in obj.key and not obj.key.endswith('/')):
-                continue
-
-            size = obj.size
-            if size == 0:
+            if isinstance(obj, Prefix):
                 size = 'DIR'
+            else:
+                size = obj.size
 
             print('{} {}   {}/{}'.format(
                 _convert_datetime(obj.last_modified) if size != 'DIR' else ' '*16,
