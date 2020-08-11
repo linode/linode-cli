@@ -77,7 +77,9 @@ def list_objects_or_buckets(get_client, args):
 
     parser.add_argument('bucket', metavar='NAME', type=str, nargs='?',
                         help="Optional.  If not given, lists all buckets.  If given, "
-                             "lists the contents of the given bucket.")
+                             "lists the contents of the given bucket.  May contain a "
+                             "/ followed by a directory path to show the contents of "
+                             "a directory within the named bucket.")
 
     parsed = parser.parse_args(args)
     client = get_client()
