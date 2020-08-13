@@ -9,7 +9,7 @@ CLEAN_TARGETS=( linodes volumes domains nodebalancers stackscripts images)
 for i in "${CLEAN_TARGETS[@]}"; do
     ENTITIES=( $(linode-cli "${i}" list --text --no-headers --format "id" --delimiter " ") )
 
-    if [ "${i}" = "stackscripts" || "${i}" = "images" ];
+    if [ "${i}" = "stackscripts" || "${i}" = "images" ]; then
         ENTITIES=( $(linode-cli "${i}" list --is_public false --text --no-headers --format "id" --delimiter " ") )
     fi
 
