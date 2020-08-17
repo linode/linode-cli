@@ -103,8 +103,9 @@ class CLI:
                 "type": info.get('type') or 'string',
                 "desc": info.get('description') or '',
                 "name": arg,
-                "format": info.get('format', None),
+                "format": info.get('x-linode-cli-format', info.get('format', None)),
             }
+
             # handle input lists
             if args[path]['type'] == 'array' and 'items' in info:
                 items = info['items']

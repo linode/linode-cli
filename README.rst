@@ -375,5 +375,7 @@ added to Linode's OpenAPI spec:
 +---------------------+----------+-------------------------------------------------------------------------------------------+
 |x-linode-cli-skip    | path     | If present and truthy, this method will not be available in the CLI.                      |
 +---------------------+----------+-------------------------------------------------------------------------------------------+
+|x-linode-cli-format  | property | Overrides the "format" given in this property for the CLI only.  Valid value is `file`.   |
++---------------------+----------+-------------------------------------------------------------------------------------------+
 
 .. _Specification Extensions: https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#specificationExtensions
