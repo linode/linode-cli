@@ -37,7 +37,6 @@ teardown() {
     assert_output --regexp "cli-test-1,us-east,1.16"
 }
 
-
 @test "it should remove all lke clusters" {
     LAST_TEST="TRUE"
 
