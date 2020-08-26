@@ -7,7 +7,7 @@ export LINODE_CLI_TOKEN=$1
 CLEAN_TARGETS=( linodes volumes domains nodebalancers stackscripts images lke)
 
 for i in "${CLEAN_TARGETS[@]}"; do
-    local deleteCmd="delete"
+    deleteCmd="delete"
 
     if [ "${i}" = "stackscripts" ] || [ "${i}" = "images" ]; then
         ENTITIES=( $(linode-cli "${i}" list --is_public false --text --no-headers --format "id" --delimiter " ") )
