@@ -179,7 +179,7 @@ class CLIOperation:
                     if arg.arg_type == 'string' and arg.arg_format == 'password':
                         # special case - password input
                         parser.add_argument('--'+arg.path, nargs='?', action=PasswordPromptAction)
-                    elif arg.arg_type == 'string' and arg.arg_format in ('ssl-cert','ssl-key'):
+                    elif arg.arg_type == 'string' and arg.arg_format in ('file','ssl-cert','ssl-key'):
                         parser.add_argument('--'+arg.path, metavar=arg.name,
                                             action=OptionalFromFileAction,
                                             type=TYPES[arg.arg_type])
