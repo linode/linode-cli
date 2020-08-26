@@ -106,6 +106,11 @@ class CLI:
                 "format": info.get('x-linode-cli-format', info.get('format', None)),
             }
 
+            # if this is coming in as json, stop here
+            if args[path]["format"] == "json":
+                args[path]["type"] = "object"
+                continue
+
             # handle input lists
             if args[path]['type'] == 'array' and 'items' in info:
                 items = info['items']
