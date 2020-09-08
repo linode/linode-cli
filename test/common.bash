@@ -83,6 +83,15 @@ removeVolumes() {
     done
 }
 
+removeLkeClusters() {
+    local cluster_ids="( $(LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN linode-cli --text --no-headers lke clusters-list | awk '{ print $1 }' | xargs) )"
+    local id
+
+    for id in $cluster_ids ; do
+        run bash -c "LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN linode-cli lke cluster-delete $id"
+    done
+}
+
 removeAll() {
     if [ "$1" = "stackscripts" ]; then
         entity_ids="( $(linode-cli $1 list --is_public=false --text --no-headers --format="id" | xargs) )"

@@ -373,7 +373,8 @@ added to Linode's OpenAPI spec:
 |x-linode-cli-display | property | If truthy, displays this as a column in output.  If a number, determines the ordering     |
 |                     |          | (left to right).                                                                          |
 +---------------------+----------+-------------------------------------------------------------------------------------------+
-|x-linode-cli-format  | property | Overrides the "format" given in this property for the CLI only.  Valid value is `file`.   |
+|x-linode-cli-format  | property | Overrides the "format" given in this property for the CLI only.  Valid values are `file`  |
+|                     |          | and `json`.                                                                               |
 +---------------------+----------+-------------------------------------------------------------------------------------------+
 |x-linode-cli-skip    | path     | If present and truthy, this method will not be available in the CLI.                      |
 +---------------------+----------+-------------------------------------------------------------------------------------------+

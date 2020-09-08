@@ -4,20 +4,25 @@ set -e
 
 export LINODE_CLI_TOKEN=$1
 
-CLEAN_TARGETS=( linodes volumes domains nodebalancers stackscripts images)
+CLEAN_TARGETS=( linodes volumes domains nodebalancers stackscripts images lke)
 
 for i in "${CLEAN_TARGETS[@]}"; do
-    ENTITIES=( $(linode-cli "${i}" list --text --no-headers --format "id" --delimiter " ") )
+    deleteCmd="delete"
 
     if [ "${i}" = "stackscripts" ] || [ "${i}" = "images" ]; then
         ENTITIES=( $(linode-cli "${i}" list --is_public false --text --no-headers --format "id" --delimiter " ") )
+    elif [ "${i}" == "lke" ]; then
+        ENTITIES=( $(linode-cli "${i}" clusters-list --text --no-headers --format "id" --delimiter " ") )
+        deleteCmd="cluster-delete"
+    else
+        ENTITIES=( $(linode-cli "${i}" list --text --no-headers --format "id" --delimiter " ") )
     fi
 
     declare ENTITIES
 
     if [ ${#ENTITIES[@]}  != "0" ]; then
         for id in "${ENTITIES[@]}"; do
-            linode-cli "${i}" delete "${id}"
+            linode-cli "${i}" "${deleteCmd}" "${id}"
         done
     fi
 done
