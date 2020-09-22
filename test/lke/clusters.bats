@@ -24,7 +24,7 @@ teardown() {
     run linode-cli lke cluster-create \
         --region us-east \
         --label cli-test-1 \
-        --node_pools.type g6-nanode-1 \
+        --node_pools.type g6-standard-1 \
         --node_pools.count 1 \
         --node_pools.disks '[{"type":"ext4","size":1024}]' \
         --k8s_version 1.16 \
