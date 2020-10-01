@@ -203,6 +203,15 @@ class CLIOperation:
                     for obj, item in zip(update_list, val):
                         obj[item_name] = item
 
+        # don't send along empty lists
+        to_delete = []
+        for k, v in lists.items():
+            if len(v) == 0:
+                to_delete.append(k)
+
+        for c in to_delete:
+            del lists[c]
+
         if lists:
             parsed = vars(parsed)
             parsed.update(lists)
