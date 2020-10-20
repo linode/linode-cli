@@ -34,7 +34,7 @@ RUN sed -i="" "s/data=body/data=body,verify=False/" /src/linode-cli/linodecli/cl
 # Override the base url in the openapi spec to the build argument
 ARG API_OVERRIDE=api.linode.com
 # Override the Spec url
-ARG SPEC=https://developers.linode.com/api/docs/v4/openapi.yaml
+ARG SPEC=https://www.linode.com/docs/api/openapi.yaml
 
 # Fetch the openapi spec, build and install the Linode CLI
 RUN curl --cacert ./cacert.pem -o ./openapi.yaml "${SPEC}" \

@@ -338,7 +338,7 @@ Running the tests is simple. The only requirements are that you have a .linode-c
 
 The openapi spec must first be saved to the base of the linode-cli project:
 
-   curl -o ./openapi.yaml https://developers.linode.com/api/docs/v4/openapi.yaml
+   curl -o ./openapi.yaml https://www.linode.com/docs/api/openapi.yaml
 
 Run the following command to build the tests container:
 
