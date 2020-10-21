@@ -41,7 +41,7 @@ setup(
     long_description=long_description,
     author="Linode",
     author_email='developers@linode.com',
-    url="https://www.linode.com/docs/api/openapi.yaml",
+    url="https://www.linode.com/docs/api/",
     packages=[
         'linodecli',
         'linodecli.plugins',
