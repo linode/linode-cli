@@ -41,7 +41,7 @@ setup(
     long_description=long_description,
     author="Linode",
     author_email='developers@linode.com',
-    url="https://developers.linode.com/api/v4",
+    url="https://www.linode.com/docs/api/",
     packages=[
         'linodecli',
         'linodecli.plugins',
