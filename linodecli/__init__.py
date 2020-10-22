@@ -308,7 +308,7 @@ def main():
 
         print()
         print("To reconfigure, call `linode-cli configure`")
-        print("For comprehensive documentation, visit https://www.linode.com/docs/api/openapi.yaml")
+        print("For comprehensive documentation, visit https://www.linode.com/docs/api/")
         exit(0)
 
 
