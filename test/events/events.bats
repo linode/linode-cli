@@ -20,10 +20,10 @@ teardown() {
     run linode-cli events
     assert_success
     assert_output --partial "linode-cli events [ACTION]"
-    assert_output --regexp "list.*List Events"
-    assert_output --regexp "view.*View Event"
-    assert_output --regexp "mark-read.*Mark Event as Read"
-    assert_output --regexp "mark-seen.*Mark Event as Seen"
+    assert_output --regexp "mark-read.*Event Mark as Read"
+    assert_output --regexp "mark-seen.*Event Mark as Seen"
+    assert_output --regexp "list.*Events List"
+    assert_output --regexp "view.*Event View"
 }
 
 @test "it should list events" {
