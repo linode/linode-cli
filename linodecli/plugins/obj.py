@@ -683,13 +683,14 @@ def call(args, context):
         os.environ.get(ENV_SECRET_KEY_NAME, None),
     )
 
-    if access_key and not secret_key or secret_key and not access_key:
-        print("You must set both {} and {}, or neither".format(ENV_ACCESS_KEY_NAME, ENV_SECRET_KEY_NAME))
-        exit(1)
+    if not "--help" in args:
+        if access_key and not secret_key or secret_key and not access_key:
+            print("You must set both {} and {}, or neither".format(ENV_ACCESS_KEY_NAME, ENV_SECRET_KEY_NAME))
+            exit(1)
 
-    # not given on command line, so look them up
-    if not access_key:
-        access_key, secret_key = _get_s3_creds(context.client)
+        # not given on command line, so look them up
+        if not access_key:
+            access_key, secret_key = _get_s3_creds(context.client)
 
     cluster = parsed.cluster
     if context.client.defaults:
@@ -707,7 +708,8 @@ def call(args, context):
             exit(1)
 
         if current_cluster is None:
-            print("Error: No default cluster is configured.")
+            print("Error: No default cluster is configured.  Either configure the CLI "
+                  "or invoke with --cluster to specify a cluster.")
             _configure_plugin(context.client)
             current_cluster = context.client.config.plugin_get_value('cluster')
 

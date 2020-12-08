@@ -36,17 +36,18 @@ def input_helper(prompt):
     else:
         return input(prompt)
 
+
 class CLIConfig:
     def __init__(self, base_url, username=None, skip_config=False):
         self.base_url = base_url
         self.username = username
-        self.config = self._get_config()
+        self.config = self._get_config(load=not skip_config)
         self.running_plugin = None
-        self.used_env_token = True
+        self.used_env_token = False
 
         self._configured = False
 
-        if not self.config.has_option('DEFAULT', 'default-user') and self.config.has_option('DEFAULT', 'token'):
+        if not skip_config and not self.config.has_option('DEFAULT', 'default-user') and self.config.has_option('DEFAULT', 'token'):
             self._handle_no_default_user()
 
         environ_token = os.environ.get(ENV_TOKEN_NAME, None)
@@ -69,7 +70,9 @@ class CLIConfig:
         self.username = username
 
     def default_username(self):
-        return self.config.get('DEFAULT', 'default-user')
+        if self.config.has_option('DEFAULT', "default-user"):
+            return self.config.get('DEFAULT', 'default-user')
+        return ""
 
     def update_namespace(self, namespace, new_dict):
         """
@@ -110,8 +113,12 @@ class CLIConfig:
         """
         Returns the token for a configured user
         """
-        t = os.environ.get(ENV_TOKEN_NAME, None)
-        return t if t else self.config.get(self.username or self.default_username(), "token")
+        if self.used_env_token:
+            return os.environ.get(ENV_TOKEN_NAME, None)
+
+        if self.config.has_option(self.username or self.default_username(), "token"):
+            return self.config.get(self.username or self.default_username(), "token")
+        return ""
 
     def remove_user(self, username):
         """
@@ -355,9 +362,20 @@ on your account to work correctly.""".format(TOKEN_GENERATION_URL))
 
         return "{}/{}".format(CONFIG_DIR, CONFIG_NAME)
 
-    def _get_config(self):
+    def _get_config(self, load=True):
+        """
+        Returns a new ConfigParser object that represents the CLI's configuration.
+        If load is false, we won't load the config from disk.
+
+        :param load: If True, load the config from the default path.  Otherwise,
+                     don't (and just return an empty ConfigParser)
+        :type load: bool
+        """
         conf = configparser.ConfigParser()
-        conf.read(self._get_config_path())
+
+        if load:
+            conf.read(self._get_config_path())
+
         return conf
 
     def _default_thing_input(self, ask, things, prompt, error, optional=True):

@@ -26,7 +26,7 @@ except:
 BASE_URL = 'https://api.linode.com/v4'
 
 
-cli = CLI(VERSION, BASE_URL, skip_config='--skip-config' in argv)
+cli = CLI(VERSION, BASE_URL, skip_config=('--skip-config' in argv or '--help' in argv))
 
 def main():
     ## Command Handling
