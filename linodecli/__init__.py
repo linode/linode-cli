@@ -253,6 +253,23 @@ def main():
         print("Plugin {} removed".format(plugin_name))
         exit(0)
 
+    if parsed.command == "completion":
+        if parsed.help or not parsed.action:
+            print("linode-cli completion [SHELL]")
+            print()
+            print("Prints shell completions for the requested shell to stdout. "
+                  "Currently, only completions for bash are available.")
+            exit(0)
+        if parsed.action == "bash":
+            # generate and print completions, then exit
+            completions = cli.get_completions()
+            print(completions)
+            exit(0)
+        else:
+            print("Completions are only available for bash at this time.  To retrieve "
+                  "these, please invoke as `linode-cli completion bash`.")
+            exit(1)
+
     # handle a help for the CLI
     if parsed.command is None or (parsed.command is None and  parsed.help):
         parser.print_help()
@@ -271,6 +288,14 @@ def main():
         pm_commands = [['register-plugin', 'remove-plugin']]
         table = SingleTable(pm_commands)
         table.inner_heading_row_border = False
+        print(table.table)
+
+        # other CLI commands
+        print()
+        print('Other CLI commands:')
+        other_commands = [['completion']]
+        table = SingleTable(other_commands)
+        table.inner_heading_row_border=False
         print(table.table)
 
         # commands generated from the spec (call the API directly)
