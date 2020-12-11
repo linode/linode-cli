@@ -785,6 +785,21 @@ def _get_s3_creds(client, force=False):
     if force or access_key is None:
         # this means there are no stored s3 creds for this user - set them up
 
+        # but first - is there actually a config?  If we got this far, creds aren't
+        # being provided by the environment, but if the CLI is running without a
+        # config, we shouldn't generate new keys (or we'd end up doing so with each
+        # request) - instead ask for them to be set up.
+        if client.config.get_value("token") is None:
+            print(
+                "You are running the Linode CLI without a configuration file, but "
+                "object storage keys were not configured.  Please set the following "
+                "variables in your environment: '{}' and '{}'.  If you'd rather ".format(
+                    ENV_ACCESS_KEY_NAME, ENV_SECRET_KEY_NAME
+                )+"configure the CLI, run `linode-cli configure` or unset the "
+                "'LINODE_CLI_TOKEN' environment variable."
+            )
+            exit(1)
+
         # before we do anything, can they do object storage?
         status, resp = client.call_operation('account', 'view')
 
