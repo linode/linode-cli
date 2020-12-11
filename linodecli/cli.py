@@ -396,7 +396,7 @@ complete -F _linode_cli linode-cli""")
         headers = {
             'Authorization': "Bearer {}".format(self.config.get_token()),
             'Content-Type': 'application/json',
-            'User-Agent': "linode-cli:{}".format(self.version),
+            'User-Agent': "linode-cli:{} python/{}.{}.{}".format(self.version, version_info[0], version_info[1], version_info[2]),
         }
 
         parsed_args = operation.parse_args(args)
