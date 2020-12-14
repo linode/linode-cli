@@ -271,10 +271,10 @@ class CLIConfig:
 initial setup.""")
 
         if ENV_TOKEN_NAME in os.environ:
-            print("""Using token from LINODE_TOKEN.
+            print("""Using token from {env_token_name}.
 Note that no token will be saved in your configuration file.
-    * If you lose or remove LINODE_TOKEN, Linode CLI will stop working.
-    * All profiles will use LINODE_TOKEN.""")
+    * If you lose or remove {env_token_name}.
+    * All profiles will use {env_token_name}.""".format(env_token_name=ENV_TOKEN_NAME))
             username = 'DEFAULT'
 
         else:
