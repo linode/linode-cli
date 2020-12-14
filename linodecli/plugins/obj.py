@@ -795,8 +795,8 @@ def _get_s3_creds(client, force=False):
                 "object storage keys were not configured.  Please set the following "
                 "variables in your environment: '{}' and '{}'.  If you'd rather ".format(
                     ENV_ACCESS_KEY_NAME, ENV_SECRET_KEY_NAME
-                )+"configure the CLI, run `linode-cli configure` or unset the "
-                "'LINODE_CLI_TOKEN' environment variable."
+                )+"configure the CLI, unset the 'LINODE_CLI_TOKEN' environment "
+                "variable and then run `linode-cli configure`."
             )
             exit(1)
 
