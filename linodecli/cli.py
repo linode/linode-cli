@@ -41,131 +41,57 @@ class CLI:
         self.config = CLIConfig(self.base_url, skip_config=skip_config)
         self.load_baked()
 
-    def _resolve_allOf(self, node):
+
+    def _parse_attrs(self, model, prefix=[]):
         """
-        Given the contents of an "allOf" node, returns the entire dct having parsed
-        all refs and combined all other nodes.
-
-        :param node: The contents of an 'allOf'
-        :type node: list
-        """
-        ret = {}
-
-        for cur in node:
-            data = cur
-            if '$ref' in cur:
-                data = self._resolve_ref(cur['$ref'])
-            props = {}
-            if 'properties' in data:
-                props = data['properties']
-            elif '$ref' in cur and '/properties/' in cur['$ref']:
-                # if we referenced a property, we got a property
-                props = data
-            else:
-                print("Warning: Resolved empty node for {} in {}".format(cur, node))
-            ret.update(props)
-        return ret
-
-
-    def _resolve_ref(self, ref):
-        """
-        Resolves a reference to the referenced component.
-
-        :param ref: A reference path, like '#/components/schemas/Linode'
-        :type ref: str
-
-        :returns: The resolved reference
-        :rtype: dct
-        """
-        path_parts = ref.split('/')[1:]
-        tmp = self.spec
-        for part in path_parts:
-            tmp = tmp[part]
-
-        return tmp
-
-    def _parse_args(self, node, prefix=[], args=None):
-        """
-        Given a node in a requestBody, parses out the properties and returns the
-        CLIArg info
-        """
-        if args is None:
-            args = {}
-
-        for arg, info in node.items():
-            if 'allOf' in info:
-                info = self._resolve_allOf(info['allOf'])
-            if '$ref' in info:
-                info = self._resolve_ref(info['$ref'])
-            if 'properties' in info:
-                self._parse_args(info['properties'], prefix=prefix+[arg], args=args)
-                continue # we can't edit this level of the tree
-            if info.get('readOnly'):
-                continue
-            path = '.'.join(prefix+[arg])
-            args[path] = {
-                "type": info.get('type') or 'string',
-                "desc": info.get('description') or '',
-                "name": arg,
-                "format": info.get('x-linode-cli-format', info.get('format', None)),
-            }
-
-            # if this is coming in as json, stop here
-            if args[path]["format"] == "json":
-                args[path]["type"] = "object"
-                continue
-
-            # handle input lists
-            if args[path]['type'] == 'array' and 'items' in info:
-                items = info['items']
-
-                if 'allOf' in items:
-                    # if items contain an "allOf", parse it down and format it
-                    # as is expected here
-                    items = self._resolve_allOf(items['allOf'])
-                    items = {"type":"object","items":items}
-                if '$ref' in items:
-                    # if it's just a ref, parse that out too
-                    items = self._resolve_ref(items['$ref'])
-
-                args[path]['item_type'] = items['type']
-
-                if (items['type'] == 'object' and 'properties' in items and
-                        not items.get('readOnly')):
-                    # this is a special case - each item has its own properties
-                    # that we need to capture separately
-                    item_args = self._parse_args(items['properties'], prefix=prefix+[arg])
-                    for _, v in item_args.items():
-                        v['list_item'] = path
-                    args.update(item_args)
-                    del args[path] # remove the base element, which is junk
-
-        return args
-
-    def _parse_properties(self, node, prefix=[]):
-        """
-        Given the value of a "properties" node, parses out the attributes and
-        returns them as a list
+        Parses attributes from a response model
         """
         attrs = []
-        for name, info in node.items():
-            if 'properties' in info:
-                attrs += self._parse_properties(info['properties'],
-                                                prefix+[name])
-            else:
-                item_type = None
-                item_container = info.get('items')
-                if item_container:
-                    item_type = item_container.get('type')
-                attrs.append(ModelAttr(
-                    '.'.join(prefix+[name]),
-                    info.get('x-linode-filterable') or False,
-                    info.get('x-linode-cli-display') or False,
-                    info.get('type') or 'string',
-                    color_map=info.get('x-linode-cli-color'),
-                    item_type=item_type))
+
+        for name, schema in model.properties.items():
+            if schema.properties is not None:
+                attrs += self._parse_attrs(schema, prefix=prefix+[name])
+                continue
+
+            item_type = None
+            if schema.items is not None:
+                item_type = schema.items.type
+
+            attrs.append(ModelAttr(
+                ".".join(prefix+[name]),
+                schema.extensions.get("linode-filterable", False),
+                schema.extensions.get("linode-cli-display", False),
+                schema.type or "string",
+                color_map=schema.extensions.get("linode-cli-color"),
+                item_type = item_type
+            ))
 
         return attrs
+
+    def _parse_args(self, data, prefix=[]):
+        args = []
+
+        if data.properties is not None:
+            for arg, schema in data.properties.items():
+                if schema.properties is not None:
+                    args += self._parse_args(schema, prefix=prefix+[arg])
+                    continue
+                desc = schema.description
+                this_arg = CLIArg(
+                    ".".join(prefix+[arg]),
+                    schema.type,
+                    desc.split('.')[0]+"." if desc else "",
+                    arg,
+                    schema.extensions.get("linode-cli-format", None),
+                    list_item=None, # TODO - handle list items (see _parse_args above)
+                )
+
+                if schema.items is not None:
+                    this_arg.arg_item_type = schema.items.type
+
+                args.append(this_arg)
+
+            return args
 
     def bake(self, spec):
         """
@@ -187,7 +113,7 @@ class CLI:
             for m in METHODS:
                 operation = getattr(pobj, m)
 
-                if operation is None or 'linode-cli-skip' not in operation.extensions:
+                if operation is None or 'linode-cli-skip' in operation.extensions:
                     # this method didn't exist of is being ignored
                     continue
 
@@ -197,143 +123,42 @@ class CLI:
                     print("warning: no action or operationId for {} {}".format(m.upper(), path))
                     continue
 
-                self.ops[command][action] = CLIOperation(m, path, operation.summary,
-                                 [], None, params, operation.servers or default_servers)
+                # figure out what the response model looks like
+                model = operation.responses['200'].content['application/json'].schema
+                attrs = []
+
+                if model.properties:
+                    if 'pages' in model.properties:
+                        # this is a paginated response - find the item's schema
+                        model = model.properties['data'].items
+
+                    attrs = self._parse_attrs(model)
+
+                # done that now
+
+                rows = model.extensions.get("linode-cli-rows", None)
+                nested_list = model.extensions.get("linode-cli-nested-list", None)
+
+                response_model = ResponseModel(attrs, rows=rows, nested_list=nested_list)
+
+                # figure out what the request model looks like, if we have one
+                cli_args = []
+                if operation.requestBody and operation.requestBody.content['application/json']:
+                    cli_args = self._parse_args(operation.requestBody.content['application/json'].schema)
+
+                self.ops[command][action] = CLIOperation(
+                    m,
+                    path,
+                    operation.summary,
+                    cli_args,
+                    response_model,
+                    params,
+                    operation.servers or default_servers
+                )
 
         # save these off - maybe not necessary?
         self.ops['_base_url'] = self.spec.servers[0].url
         self.ops['_spec_version'] = self.spec.info.version
-
-        # finish the baking
-        data_file = self._get_data_file()
-        with open(data_file, 'wb') as f:
-            pickle.dump(self.ops, f)
-
-    def old_bake(self, spec):
-        """
-        Generates ops and bakes them to a pickle
-        """
-        self.spec = spec
-        self.ops = {}
-        default_servers = [c['url'] for c in spec['servers']]
-
-        for path, data in self.spec['paths'].items():
-            command = data.get("x-linode-cli-command") or "default"
-            if command not in self.ops:
-                self.ops[command] = {}
-
-            params = []
-            if 'parameters' in data:
-                for info in data['parameters']:
-                    if '$ref' in info:
-                        info = self._resolve_ref(info['$ref'])
-                    params.append(URLParam(info['name'], info['schema']['type']))
-            for m in METHODS:
-                if m in data:
-                    if data[m].get('x-linode-cli-skip'):
-                        # some actions aren't available to the CLI - skip them
-                        continue
-
-                    action = data[m].get('x-linode-cli-action') or data[m].get('operationId')
-
-                    if action is None:
-                        print("warn: no operationId for {} {}".format(m.upper(), path))
-                        continue
-
-                    summary = data[m].get('summary') or ''
-
-                    use_servers = ([c['url'] for c in data[m]['servers']]
-                                   if 'servers' in data[m] else default_servers)
-
-                    args = {}
-                    required_fields = []
-                    if m in ('post','put') and 'requestBody' in data[m]:
-                        if 'application/json' in data[m]['requestBody']['content']:
-                            body_schema = data[m]['requestBody']['content']['application/json']['schema']
-
-                            if 'required' in body_schema:
-                                required_fields = body_schema['required']
-
-                            if 'allOf' in body_schema:
-                                body_schema = self._resolve_allOf(body_schema['allOf'])
-                            if 'required' in body_schema:
-                                required_fields += body_schema['required']
-                            if '$ref' in body_schema:
-                                body_schema = self._resolve_ref(body_schema['$ref'])
-                            if 'required' in body_schema:
-                                required_fields += body_schema['required']
-                            if 'properties' in body_schema:
-                                body_schema = body_schema['properties']
-                            if 'required' in body_schema:
-                                required_fields += body_schema['required']
-
-                            args = self._parse_args(body_schema, args={})
-
-                    response_model = None
-                    if ('200' in data[m]['responses'] and
-                        'application/json' in data[m]['responses']['200']['content']):
-                        resp_con = data[m]['responses']['200']['content']['application/json']['schema']
-
-                        if 'x-linode-cli-use-schema' in data[m]['responses']['200']['content']['application/json']:
-                            # this body is atypical, and defines its own columns
-                            # using this schema instead of the normal one.  This
-                            # is usually pairs with x-linode-cli-rows so to handle
-                            # endpoints that returns irregularly formatted data
-                            resp_con = data[m]['responses']['200']['content']['application/json']['x-linode-cli-use-schema']
-
-                        if '$ref' in resp_con:
-                            resp_con = self._resolve_ref(resp_con['$ref'])
-                        if 'allOf' in resp_con:
-                            resp_con.update(self._resolve_allOf(resp_con['allOf']))
-                        # handle pagination envelope
-                        if 'properties' in resp_con and 'pages' in resp_con['properties']:
-                            resp_con = resp_con['properties']
-                        if 'pages' in resp_con and 'data' in resp_con:
-                            if '$ref' in resp_con['data']['items']:
-                                resp_con = self._resolve_ref(resp_con['data']['items']['$ref'])
-                            else:
-                                resp_con = resp_con['data']['items']
-
-                        attrs = []
-                        if 'properties' in resp_con:
-                            attrs = self._parse_properties(resp_con['properties'])
-                            # maybe we have special columns?
-                            rows = data[m]['responses']['200']['content']['application/json'].get('x-linode-cli-rows') or None
-                            nested_list = data[m]['responses']['200']['content']['application/json'].get('x-linode-cli-nested-list') or None
-                            response_model = ResponseModel(attrs, rows=rows, nested_list=nested_list)
-
-                    cli_args = []
-
-                    for arg, info in args.items():
-                        new_arg = CLIArg(info['name'], info['type'], info['desc'].split('.')[0]+'.',
-                                         arg, info['format'], list_item=info.get('list_item'))
-
-                        if arg in required_fields:
-                            new_arg.required = True
-
-                        # handle arrays
-                        if 'item_type' in info:
-                            new_arg.arg_item_type = info['item_type']
-                        cli_args.append(new_arg)
-
-                    # looks for param names that will be obscured by args
-                    use_params = params[:]
-                    use_path = path
-                    for p in use_params:
-                        if p.name in args.keys():
-                            # if we found a parameter name that is also and argument name
-                            # append an underscore to both the parameter name and the
-                            # parameter name in the URL
-                            use_path = use_path.replace("{"+p.name+"}", "{"+p.name+"_}")
-                            p.name += '_'
-
-                    self.ops[command][action] = CLIOperation(m, use_path, summary,
-                                                             cli_args, response_model,
-                                                             use_params, use_servers)
-
-        # hide the base_url from the spec away
-        self.ops['_base_url'] = spec['servers'][0]['url']
-        self.ops['_spec_version'] = spec['info']['version']
 
         # finish the baking
         data_file = self._get_data_file()
