@@ -683,13 +683,14 @@ def call(args, context):
         os.environ.get(ENV_SECRET_KEY_NAME, None),
     )
 
-    if access_key and not secret_key or secret_key and not access_key:
-        print("You must set both {} and {}, or neither".format(ENV_ACCESS_KEY_NAME, ENV_SECRET_KEY_NAME))
-        exit(1)
+    if not "--help" in args:
+        if access_key and not secret_key or secret_key and not access_key:
+            print("You must set both {} and {}, or neither".format(ENV_ACCESS_KEY_NAME, ENV_SECRET_KEY_NAME))
+            exit(1)
 
-    # not given on command line, so look them up
-    if not access_key:
-        access_key, secret_key = _get_s3_creds(context.client)
+        # not given on command line, so look them up
+        if not access_key:
+            access_key, secret_key = _get_s3_creds(context.client)
 
     cluster = parsed.cluster
     if context.client.defaults:
@@ -707,7 +708,8 @@ def call(args, context):
             exit(1)
 
         if current_cluster is None:
-            print("Error: No default cluster is configured.")
+            print("Error: No default cluster is configured.  Either configure the CLI "
+                  "or invoke with --cluster to specify a cluster.")
             _configure_plugin(context.client)
             current_cluster = context.client.config.plugin_get_value('cluster')
 
@@ -782,6 +784,21 @@ def _get_s3_creds(client, force=False):
 
     if force or access_key is None:
         # this means there are no stored s3 creds for this user - set them up
+
+        # but first - is there actually a config?  If we got this far, creds aren't
+        # being provided by the environment, but if the CLI is running without a
+        # config, we shouldn't generate new keys (or we'd end up doing so with each
+        # request) - instead ask for them to be set up.
+        if client.config.get_value("token") is None:
+            print(
+                "You are running the Linode CLI without a configuration file, but "
+                "object storage keys were not configured.  Please set the following "
+                "variables in your environment: '{}' and '{}'.  If you'd rather ".format(
+                    ENV_ACCESS_KEY_NAME, ENV_SECRET_KEY_NAME
+                )+"configure the CLI, unset the 'LINODE_CLI_TOKEN' environment "
+                "variable and then run `linode-cli configure`."
+            )
+            exit(1)
 
         # before we do anything, can they do object storage?
         status, resp = client.call_operation('account', 'view')
