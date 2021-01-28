@@ -297,9 +297,9 @@ class CLI:
         with open(data_file, 'wb') as f:
             pickle.dump(self.ops, f)
 
-    def bake_completions(self):
+    def get_completions(self):
         """
-        Given a baked CLI, generates and saves a bash completion file
+        Generates and returns shell completions based on the baked spec
         """
         completion_template=Template("""# This is a generated file!  Do not modify!
 _linode_cli()
@@ -330,7 +330,13 @@ complete -F _linode_cli linode-cli""")
         command_blocks = [command_template.safe_substitute(command=op, actions=" ".join([act for act in actions.keys()])) for op, actions in self.ops.items()]
         rendered = completion_template.safe_substitute(actions=" ".join(self.ops.keys()),
                                                        command_items="\n        ".join(command_blocks))
+        return rendered
 
+    def bake_completions(self):
+        """
+        Given a baked CLI, generates and saves a bash completion file
+        """
+        rendered = self.get_completions()
         # save it off
         with open('linode-cli.sh', 'w') as f:
             print("Writing file...")

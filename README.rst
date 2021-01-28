@@ -129,6 +129,17 @@ in addition to its normal output.  If these warnings can interfere with your
 scripts or you otherwise want them disabled, simply add the ``--suppress-warnings``
 flag to prevent them from being emitted.
 
+Shell Completion
+""""""""""""""""
+
+To generate a completion file for a given shell type, use the ``completion`` command;
+for example to generate completions for bash run::
+
+   linode-cli completion bash
+
+The output of this command is suitable to be included in the relevant completion
+files to enable command completion on your shell.
+
 Environment Variables
 """""""""""""""""""""
 
