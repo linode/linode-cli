@@ -253,6 +253,69 @@ class CLIConfig:
         if not silent:
             print("\nConfig written to {}".format(self._get_config_path()))
 
+    def _get_token_web(self):
+        """
+        Handles OAuth authentication for the CLI.  This requires us to get a temporary
+        token over OAuth and then use it to create a permanent token for the CLI.
+        This function returns the token the CLI should use, or exits if anything
+        goes wrong.
+        """
+        url = "https://login.linode.com/oauth/authorize?client_id=e3dc6ddb291b4709ae54&response_type=token&scopes=*"
+        print("""Your browser will be directed to this URL to authenticate:
+
+{}
+
+If you are not automatically directed there, please copy/paste the link into your browser
+to continue..
+""".format(url))
+
+        browserToken = None
+        serv = None
+
+        from http import server
+        class Handler(server.BaseHTTPRequestHandler):
+            """
+            The issue here is that Login sends the token in the URL hash, meaning
+            that we cannot see it on the server side.  An attempt was made to
+            get the client (browser) to send an ajax request to pass it along,
+            but that's pretty gross and also isn't working.  Needs more thought.
+            """
+            def do_GET(self):
+                browserToken = self.path
+                self.send_response(200)
+                self.send_header("Content-type", "text/html")
+                self.end_headers()
+                self.wfile.write(bytes("""
+<h2>Success</h2><br/><p>You may return to your terminal to continue..</p>
+<script>
+// this is gross, sorry
+let r = new XMLHttpRequest('http://localhost:8123/?'+window.location.hash);
+r.open('POST', '/');
+r.send();
+</script>
+""", "utf-8"))
+
+            def do_POST(self):
+                print(vars(self))
+                print(self.path)
+                self.send_response(200)
+
+            #def log_message(self, form, *args):
+            #    """Don't actually log the request"""
+
+        # start a server to catch the response
+        serv = server.HTTPServer(("localhost",8123), Handler)
+
+        # TODO fix import
+        import webbrowser
+        webbrowser.open(url)
+
+        for i in range(4):
+            serv.handle_request() # just one
+
+
+        print("Got token {}".format(browserToken))
+
     def configure(self):
         """
         This assumes we're running interactively, and prompts the user
@@ -278,25 +341,35 @@ Note that no token will be saved in your configuration file.
             username = 'DEFAULT'
 
         else:
-            print("""
-First, we need a Personal Access Token.  To get one, please visit
-{} and click
-"Create a Personal Access Token".  The CLI needs access to everything
-on your account to work correctly.""".format(TOKEN_GENERATION_URL))
-
             while True:
-                config['token'] = input_helper("Personal Access Token: ")
+                print("""
+How would you like to configure the CLI?  [W]eb or [t]oken? """)
+                resp = input_helper("'w' for web or 't' for token: ")
+                if resp.lower() in "wt":
+                    break
 
-                u = self._do_get_request('/profile', token=config['token'], exit_on_error=False)
-                if "errors" in u:
-                    print("That token didn't work: {}".format(','.join([c["reason"] for c in u['errors']])))
-                    continue
+            if resp.lower() == "w":
+                config["token"] = self._get_token_web()
+            else:
+                print("""
+    First, we need a Personal Access Token.  To get one, please visit
+    {} and click
+    "Create a Personal Access Token".  The CLI needs access to everything
+    on your account to work correctly.""".format(TOKEN_GENERATION_URL))
 
-                username = u['username']
-                print()
-                print('Configuring {}'.format(username))
-                print()
-                break
+                while True:
+                    config['token'] = input_helper("Personal Access Token: ")
+
+                    u = self._do_get_request('/profile', token=config['token'], exit_on_error=False)
+                    if "errors" in u:
+                        print("That token didn't work: {}".format(','.join([c["reason"] for c in u['errors']])))
+                        continue
+
+                    username = u['username']
+                    print()
+                    print('Configuring {}'.format(username))
+                    print()
+                    break
 
         regions = [r['id'] for r in self._do_get_request('/regions')['data']]
         types = [t['id'] for t in self._do_get_request('/linode/types')['data']]
