@@ -281,7 +281,7 @@ Note that no token will be saved in your configuration file.
             print("""
 First, we need a Personal Access Token.  To get one, please visit
 {} and click
-"Add a Personal Access Token".  The CLI needs access to everything
+"Create a Personal Access Token".  The CLI needs access to everything
 on your account to work correctly.""".format(TOKEN_GENERATION_URL))
 
             while True:
@@ -326,14 +326,15 @@ on your account to work correctly.""".format(TOKEN_GENERATION_URL))
             self.config.add_section(username)
 
         if not is_default:
-            while True:
-                value = input_helper('Make active user? [y/N]: ')
+            if username != self.default_username():
+                while True:
+                    value = input_helper('Make active user? [y/N]: ')
 
-                if value.lower() in 'yn':
-                    is_default = value.lower() == 'y'
-                    break
-                elif not value.strip():
-                    break
+                    if value.lower() in 'yn':
+                        is_default = value.lower() == 'y'
+                        break
+                    elif not value.strip():
+                        break
 
             if not is_default: # they didn't change the default user
                 print('Active user will remain {}'.format(self.config.get('DEFAULT', 'default-user')))
