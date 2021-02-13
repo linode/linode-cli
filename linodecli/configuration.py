@@ -4,15 +4,19 @@ used elsewhere.
 """
 from __future__ import print_function
 
-
 import argparse
+from datetime import datetime
+import re
+from http import server
+import socket
+import webbrowser
 try:
     # python3
     import configparser
 except ImportError:
     # python2
     import ConfigParser as configparser
-from requests import get
+import requests
 import os
 import sys
 
@@ -24,6 +28,10 @@ CONFIG_DIR = os.environ.get('XDG_CONFIG_HOME', "{}/{}".format(os.path.expanduser
 
 CONFIG_NAME = 'linode-cli'
 TOKEN_GENERATION_URL='https://cloud.linode.com/profile/tokens'
+
+# This is used for web-based configuration
+# TODO - use an official app
+OAUTH_CLIENT_ID = 'e3dc6ddb291b4709ae54'
 
 
 def input_helper(prompt):
@@ -253,6 +261,38 @@ class CLIConfig:
         if not silent:
             print("\nConfig written to {}".format(self._get_config_path()))
 
+    def _username_for_token(self, token):
+        """
+        A helper function that returns the username assocaited with a token by
+        requesting it from the API
+        """
+        u = self._do_get_request('/profile', token=token, exit_on_error=False)
+        if "errors" in u:
+            print("That token didn't work: {}".format(','.join([c["reason"] for c in u['errors']])))
+            return None
+
+        return u['username']
+
+    def _get_token_terminal(self):
+        """
+        Handles prompting the user for a Personal Access Token and checking it
+        to ensure it works.
+        """
+        print("""
+First, we need a Personal Access Token.  To get one, please visit
+{} and click
+"Create a Personal Access Token".  The CLI needs access to everything
+on your account to work correctly.""".format(TOKEN_GENERATION_URL))
+
+        while True:
+            token = input_helper("Personal Access Token: ")
+
+            username = self._username_for_token(token)
+            if username is not None:
+                break
+
+        return username, token
+
     def _get_token_web(self):
         """
         Handles OAuth authentication for the CLI.  This requires us to get a temporary
@@ -260,7 +300,39 @@ class CLIConfig:
         This function returns the token the CLI should use, or exits if anything
         goes wrong.
         """
-        url = "https://login.linode.com/oauth/authorize?client_id=e3dc6ddb291b4709ae54&response_type=token&scopes=*"
+        temp_token = self._handle_oauth_callback()
+        username = self._username_for_token(temp_token)
+
+        if username is None:
+            print("OAuth failed.  Please try again of use a token for auth.")
+            sys.exit(1)
+
+        # the token returned via public oauth will expire in 2 hours, which
+        # isn't great.  Instead, we're gonna make a token that expires never
+        # and store that.
+        result = self._do_request(
+            requests.post,
+            "/profile/tokens",
+            token=temp_token,
+            # generate the actual token with a label like:
+            #  Linode CLI @ linode
+            # The creation date is already recoreded with the token, so
+            # this should be all the relevant info.
+            body={"label":"Linode CLI @ {}".format(
+                socket.gethostname()
+            )}
+        )
+
+        return username, result['token']
+
+    def _handle_oauth_callback(self):
+        """
+        Sends the user to a URL to perform an OAuth login for the CLI, then redirets
+        them to a locally-hosted page that captures teh token
+        """
+        url = "https://login.linode.com/oauth/authorize?client_id={}&response_type=token&scopes=*".format(
+            OAUTH_CLIENT_ID
+        )
         print("""Your browser will be directed to this URL to authenticate:
 
 {}
@@ -269,10 +341,6 @@ If you are not automatically directed there, please copy/paste the link into you
 to continue..
 """.format(url))
 
-        browserToken = None
-        serv = None
-
-        from http import server
         class Handler(server.BaseHTTPRequestHandler):
             """
             The issue here is that Login sends the token in the URL hash, meaning
@@ -281,40 +349,49 @@ to continue..
             but that's pretty gross and also isn't working.  Needs more thought.
             """
             def do_GET(self):
-                browserToken = self.path
+                if "token" in self.path:
+                    # we got a token!  Parse it out of the request
+                    token_part = self.path.split('/', 2)[2]
+
+                    m = re.search(r'access_token=([a-z0-9]+)', token_part)
+                    if m and len(m.groups()):
+                        self.server.token = m.groups()[0]
+
                 self.send_response(200)
                 self.send_header("Content-type", "text/html")
                 self.end_headers()
+
+                # TODO: Clean up this page and make it look nice
                 self.wfile.write(bytes("""
 <h2>Success</h2><br/><p>You may return to your terminal to continue..</p>
 <script>
 // this is gross, sorry
-let r = new XMLHttpRequest('http://localhost:8123/?'+window.location.hash);
-r.open('POST', '/');
+let r = new XMLHttpRequest('http://localhost:8123');
+r.open('GET', '/token/'+window.location.hash.substr(1));
 r.send();
 </script>
 """, "utf-8"))
 
-            def do_POST(self):
-                print(vars(self))
-                print(self.path)
-                self.send_response(200)
-
-            #def log_message(self, form, *args):
-            #    """Don't actually log the request"""
+            def log_message(self, form, *args):
+                """Don't actually log the request"""
 
         # start a server to catch the response
         serv = server.HTTPServer(("localhost",8123), Handler)
+        serv.token = None
 
-        # TODO fix import
-        import webbrowser
         webbrowser.open(url)
 
-        for i in range(4):
-            serv.handle_request() # just one
+        try:
+            while serv.token is None:
+                # serve requests one at a time until we get a token or are interrupted
+                serv.handle_request()
+        except KeyboardInterrupt:
+            print()
+            print("Giving up.  If you couldn't get web authentication to work, please "
+                  "try token auth, and open an issue at github.com/Linode/Linode-CLI")
+            sys.exit(1)
 
-
-        print("Got token {}".format(browserToken))
+        return serv.token
 
     def configure(self):
         """
@@ -349,27 +426,13 @@ How would you like to configure the CLI?  [W]eb or [t]oken? """)
                     break
 
             if resp.lower() == "w":
-                config["token"] = self._get_token_web()
+                username, config['token'] = self._get_token_web()
             else:
-                print("""
-    First, we need a Personal Access Token.  To get one, please visit
-    {} and click
-    "Create a Personal Access Token".  The CLI needs access to everything
-    on your account to work correctly.""".format(TOKEN_GENERATION_URL))
+                username, config['token'] = self._get_token_terminal()
 
-                while True:
-                    config['token'] = input_helper("Personal Access Token: ")
-
-                    u = self._do_get_request('/profile', token=config['token'], exit_on_error=False)
-                    if "errors" in u:
-                        print("That token didn't work: {}".format(','.join([c["reason"] for c in u['errors']])))
-                        continue
-
-                    username = u['username']
-                    print()
-                    print('Configuring {}'.format(username))
-                    print()
-                    break
+        print()
+        print('Configuring {}'.format(username))
+        print()
 
         regions = [r['id'] for r in self._do_get_request('/regions')['data']]
         types = [t['id'] for t in self._do_get_request('/linode/types')['data']]
@@ -487,14 +550,21 @@ How would you like to configure the CLI?  [W]eb or [t]oken? """)
 
     def _do_get_request(self, url, token=None, exit_on_error=True):
         """
+        Does helper get requests during configuration
+        """
+        return self._do_request(requests.get, url, token=token, exit_on_error=exit_on_error)
+
+    def _do_request(self, method, url, token=None, exit_on_error=None, body=None):
+        """
         Does helper requests during configuration
         """
         headers = {}
 
         if token is not None:
             headers["Authorization"] = "Bearer {}".format(token)
+            headers["Content-type"] = "application/json"
 
-        result = get(self.base_url+url, headers=headers)
+        result = method(self.base_url+url, headers=headers, json=body)
 
         if not 199 < result.status_code < 300:
             print("Could not contact {} - Error: {}".format(self.base_url+url,
