@@ -330,17 +330,6 @@ on your account to work correctly.""".format(TOKEN_GENERATION_URL))
         Sends the user to a URL to perform an OAuth login for the CLI, then redirets
         them to a locally-hosted page that captures teh token
         """
-        url = "https://login.linode.com/oauth/authorize?client_id={}&response_type=token&scopes=*".format(
-            OAUTH_CLIENT_ID
-        )
-        print("""Your browser will be directed to this URL to authenticate:
-
-{}
-
-If you are not automatically directed there, please copy/paste the link into your browser
-to continue..
-""".format(url))
-
         class Handler(server.BaseHTTPRequestHandler):
             """
             The issue here is that Login sends the token in the URL hash, meaning
@@ -366,18 +355,31 @@ to continue..
 <h2>Success</h2><br/><p>You may return to your terminal to continue..</p>
 <script>
 // this is gross, sorry
-let r = new XMLHttpRequest('http://localhost:8123');
+let r = new XMLHttpRequest('http://localhost:{port}');
 r.open('GET', '/token/'+window.location.hash.substr(1));
 r.send();
 </script>
-""", "utf-8"))
+""".format(port=self.server.server_address[1]), "utf-8"))
 
             def log_message(self, form, *args):
                 """Don't actually log the request"""
 
         # start a server to catch the response
-        serv = server.HTTPServer(("localhost",8123), Handler)
+        serv = server.HTTPServer(("localhost",0), Handler)
         serv.token = None
+
+        # figure out the URL to direct the user to and print out the prompt
+        url = "https://login.linode.com/oauth/authorize?client_id={}&response_type=token&scopes=*&redirect_uri=http://localhost:{}".format(
+            OAUTH_CLIENT_ID, serv.server_address[1]
+        )
+        print("""Your browser will be directed to this URL to authenticate:
+
+{}
+
+If you are not automatically directed there, please copy/paste the link into your browser
+to continue..
+""".format(url))
+
 
         webbrowser.open(url)
 
