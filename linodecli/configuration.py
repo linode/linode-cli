@@ -55,6 +55,8 @@ class CLIConfig:
 
         self._configured = False
 
+        self.configure_with_pat = "--token" in sys.argv
+
         if not skip_config and not self.config.has_option('DEFAULT', 'default-user') and self.config.has_option('DEFAULT', 'token'):
             self._handle_no_default_user()
 
@@ -372,7 +374,7 @@ r.send();
         url = "https://login.linode.com/oauth/authorize?client_id={}&response_type=token&scopes=*&redirect_uri=http://localhost:{}".format(
             OAUTH_CLIENT_ID, serv.server_address[1]
         )
-        print("""Your browser will be directed to this URL to authenticate:
+        print("""A browser should open directing you to this URL to authenticate:
 
 {}
 
@@ -390,7 +392,8 @@ to continue..
         except KeyboardInterrupt:
             print()
             print("Giving up.  If you couldn't get web authentication to work, please "
-                  "try token auth, and open an issue at github.com/Linode/Linode-CLI")
+                  "try token using a token by invoking with `linode-cli configure --token`, "
+                  "and open an issue at https://github.com/linode/linode-cli")
             sys.exit(1)
 
         return serv.token
@@ -409,8 +412,7 @@ to continue..
         is_default = not self.config.has_option('DEFAULT', 'default-user')
         username = None
 
-        print("""Welcome to the Linode CLI.  This will walk you through some
-initial setup.""")
+        print("""Welcome to the Linode CLI.  This will walk you through some initial setup.""")
 
         if ENV_TOKEN_NAME in os.environ:
             print("""Using token from {env_token_name}.
@@ -420,17 +422,15 @@ Note that no token will be saved in your configuration file.
             username = 'DEFAULT'
 
         else:
-            while True:
-                print("""
-How would you like to configure the CLI?  [W]eb or [t]oken? """)
-                resp = input_helper("'w' for web or 't' for token: ")
-                if resp.lower() in "wt":
-                    break
-
-            if resp.lower() == "w":
-                username, config['token'] = self._get_token_web()
-            else:
+            if self.configure_with_pat:
                 username, config['token'] = self._get_token_terminal()
+            else:
+                print()
+                print("The CLI will use its web-based authentication to log you in.  "
+                      "If you prefer to supply a Personal Access Token, use `linode-cli configure --token`. ")
+                print()
+                input_helper("Press enter to continue.  This will open a browser and proceed with authentication.")
+                username, config['token'] = self._get_token_web()
 
         print()
         print('Configuring {}'.format(username))
