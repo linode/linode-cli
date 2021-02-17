@@ -27,14 +27,14 @@ teardown() {
         --node_pools.type g6-standard-1 \
         --node_pools.count 1 \
         --node_pools.disks '[{"type":"ext4","size":1024}]' \
-        --k8s_version 1.16 \
+        --k8s_version 1.19 \
         --text \
         --delimiter "," \
         --no-headers \
         --format 'label,region,k8s_version' \
         --no-defaults
 
-    assert_output --regexp "cli-test-1,us-east,1.16"
+    assert_output --regexp "cli-test-1,us-east,1.19"
 }
 
 @test "it should remove all lke clusters" {
