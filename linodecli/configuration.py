@@ -33,6 +33,18 @@ TOKEN_GENERATION_URL='https://cloud.linode.com/profile/tokens'
 # TODO - use an official app
 OAUTH_CLIENT_ID = 'e3dc6ddb291b4709ae54'
 
+# in the event that we can't load the styled landing page from file, this will
+# do as a landing page
+DEFAULT_LANDING_PAGE = """
+<h2>Success</h2><br/><p>You may return to your terminal to continue..</p>
+<script>
+// this is gross, sorry
+let r = new XMLHttpRequest('http://localhost:{port}');
+r.open('GET', '/token/'+window.location.hash.substr(1));
+r.send();
+</script>
+"""
+
 
 def input_helper(prompt):
     """
@@ -332,6 +344,15 @@ on your account to work correctly.""".format(TOKEN_GENERATION_URL))
         Sends the user to a URL to perform an OAuth login for the CLI, then redirets
         them to a locally-hosted page that captures teh token
         """
+        # load up landing page HTML
+        landing_page_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), "oauth-landing-page.html")
+
+        try:
+            with open(landing_page_path) as f:
+                landing_page = f.read()
+        except:
+            landing_page = DEFAULT_LANDING_PAGE
+
         class Handler(server.BaseHTTPRequestHandler):
             """
             The issue here is that Login sends the token in the URL hash, meaning
@@ -353,15 +374,7 @@ on your account to work correctly.""".format(TOKEN_GENERATION_URL))
                 self.end_headers()
 
                 # TODO: Clean up this page and make it look nice
-                self.wfile.write(bytes("""
-<h2>Success</h2><br/><p>You may return to your terminal to continue..</p>
-<script>
-// this is gross, sorry
-let r = new XMLHttpRequest('http://localhost:{port}');
-r.open('GET', '/token/'+window.location.hash.substr(1));
-r.send();
-</script>
-""".format(port=self.server.server_address[1]), "utf-8"))
+                self.wfile.write(bytes(landing_page.format(port=self.server.server_address[1]), "utf-8"))
 
             def log_message(self, form, *args):
                 """Don't actually log the request"""

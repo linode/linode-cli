@@ -1,0 +1,46 @@
+<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 95vh;">
+<pre style="font-size: 8px;">                                                         
+ $M                         MVM                             
+ $VV$M                 $V**:..V                             
+  VVVVV$M         $V**:.......V                             
+  $VVVVVVV$$ $I*:.............F                             
+   VVVVVVVVV$*................F                             
+   VVVVVVVVVVI................*                             
+   $VVVVVVVVV$................*                             
+    VVVVVVVVV$:...............:                             
+    $VVVVVVVV$F...............:                             
+     $VVVVVVVV$..............:*                             
+       M$VVVVVM:.........:*IM                               
+         M$VVV$*......*F$                                   
+            M$VV..:F$                                       
+      M$       M$            V*$         M$$             MI 
+       VV$M              $I*...V         MVVVV$M      MV*.: 
+       $VVVVM        MV*:......F          $VVVVVV$M $*:...F 
+        VVVVVV$   MI*..........*            M$VVVVVV......$ 
+        VVVVVVVVM:.............*              M$VVVF.....:  
+        $VVVVVVV$*.............*           MI*:$VV$*...:FM  
+         VVVVVVVVV.............*MM      MV*...*$VV$:.*V     
+          MVVVVVVM..........:*V$VVV$  $*:.....* M$MIM       
+            M$VVV$*......:*V M$VVVVVVV........F             
+              M$VVI...:*V       $VVVVV.......:$             
+          M$    M$M:*V       MI*$VVVVV.....*$               
+           VV$             V*...$$VVVV..:FM                 
+           $VVV$        $*:.....V  $$V*V                    
+            VVVVV$   $F:........I                           
+            $VVVVVVM*...........F                           
+             $VVVVV$*.........:FM                           
+               $VVVVV.......*V                              
+                M$VVM....:FM                                
+                  M$$:.*$                                   
+                     $M                                     
+</pre>
+<h2 style="margin-bottom: 0;">Success!</h2>
+<p style="margin-top: 8px;">You may return to your terminal to continue.</p>
+</div>
+<script>
+/// we need to send the hash, which includes the generate access token, to the
+/// server (the CLI itself) since that won't be part of the URL sent by the browser.
+let r = new XMLHttpRequest('http://localhost:{port}');
+r.open('GET', '/token/'+window.location.hash.substr(1));
+r.send();
+</script>
