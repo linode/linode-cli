@@ -31,7 +31,7 @@ TOKEN_GENERATION_URL='https://cloud.linode.com/profile/tokens'
 
 # This is used for web-based configuration
 # TODO - use an official app
-OAUTH_CLIENT_ID = 'e3dc6ddb291b4709ae54'
+OAUTH_CLIENT_ID = 'e36db7f4ec4dcffe558f'
 
 # in the event that we can't load the styled landing page from file, this will
 # do as a landing page
