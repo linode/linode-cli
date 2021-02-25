@@ -374,7 +374,7 @@ on your account to work correctly.""".format(TOKEN_GENERATION_URL))
                 self.end_headers()
 
                 # TODO: Clean up this page and make it look nice
-                self.wfile.write(bytes(landing_page.format(port=self.server.server_address[1]), "utf-8"))
+                self.wfile.write(bytes(landing_page.format(port=self.server.server_address[1]).encode("utf-8")))
 
             def log_message(self, form, *args):
                 """Don't actually log the request"""
