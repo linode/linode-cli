@@ -30,8 +30,7 @@ CONFIG_NAME = 'linode-cli'
 TOKEN_GENERATION_URL='https://cloud.linode.com/profile/tokens'
 
 # This is used for web-based configuration
-# TODO - use an official app
-OAUTH_CLIENT_ID = 'e36db7f4ec4dcffe558f'
+OAUTH_CLIENT_ID = '5823b4627e45411d18e9'
 
 # in the event that we can't load the styled landing page from file, this will
 # do as a landing page
