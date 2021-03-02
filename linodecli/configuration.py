@@ -32,6 +32,11 @@ TOKEN_GENERATION_URL='https://cloud.linode.com/profile/tokens'
 # This is used for web-based configuration
 OAUTH_CLIENT_ID = '5823b4627e45411d18e9'
 
+# this is a list of browser that _should_ work for web-based auth.  This is mostly
+# intended to exclude lynx and other terminal browsers which could be opened, but
+# won't work.
+KNONW_GOOD_BROWSERS = set(('chrome', 'firefox', 'mozilla', 'netscape', 'opera', 'safari', 'chromium', 'chromium-browser'))
+
 # in the event that we can't load the styled landing page from file, this will
 # do as a landing page
 DEFAULT_LANDING_PAGE = """
@@ -434,7 +439,26 @@ Note that no token will be saved in your configuration file.
             username = 'DEFAULT'
 
         else:
-            if self.configure_with_pat:
+            # let's see if we _can_ use web
+            can_use_browser = True
+            try:
+                webbrowser.get()
+            except webbrowser.Error:
+                # there are no browsers installed
+                 can_use_browser = False
+
+            if can_use_browser and not KNONW_GOOD_BROWSERS.intersection(webbrowser._tryorder):
+                print()
+                print("This tool defaults to web-based authentication, however "
+                      "no known-working browsers were found.")
+
+                while True:
+                    r = input_helper("Try it anyway? [y/N]: ")
+                    if r.lower() in 'yn ':
+                        can_use_browser = r.lower() == 'y'
+                        break
+
+            if self.configure_with_pat or not can_use_browser:
                 username, config['token'] = self._get_token_terminal()
             else:
                 print()
