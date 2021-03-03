@@ -3,3 +3,4 @@ colorclass
 requests
 PyYAML
 enum34; python_version < '3.4'
+future; python_version < '3.4'
