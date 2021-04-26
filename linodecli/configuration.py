@@ -133,7 +133,9 @@ class CLIConfig:
             print("User {} is not configured.".format(username))
             sys.exit(1)
 
-        return self.update_namespace(namespace, dict(self.config.items(username)))
+        if self.config.has_section(username):
+            return self.update_namespace(namespace, dict(self.config.items(username)))
+        return namespace
 
     def get_token(self):
         """
