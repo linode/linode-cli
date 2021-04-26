@@ -26,7 +26,10 @@ except:
 BASE_URL = 'https://api.linode.com/v4'
 
 
-cli = CLI(VERSION, BASE_URL, skip_config=('--skip-config' in argv or '--help' in argv))
+# if any of these arguments are given, we don't need to prompt for configuration
+skip_config = any([c in argv for c in ('--skip-config', '--help', '--version')])
+
+cli = CLI(VERSION, BASE_URL, skip_config=skip_config)
 
 def main():
     ## Command Handling
