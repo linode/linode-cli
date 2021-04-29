@@ -70,5 +70,5 @@ teardown() {
     domainId=$(linode-cli domains list --format="id" --text --no-headers)
     run linode-cli events list --entity.id "$domainId" --entity.type "domain" --text --no-headers --delimiter ","
     assert_success
-    assert_output --regexp "[0-9]+,.*,domain_create,[0-9]+-[0-9][0-9]-.*,.*"
+        assert_output --regexp "[0-9]+,.*,domain_create,A[0-9]+.*,[0-9]+-[0-9][0-9]-.*,.*"
 }
