@@ -29,14 +29,14 @@ teardown() {
 @test "it should list events" {
     run linode-cli events list --text --no-headers --delimiter ","
     assert_success
-    assert_output --regexp "[0-9]+,.*,.*,[0-9]+-[0-9][0-9]-.*,[a-z]+,(True|False),(True|False)"
+    assert_output --regexp "[0-9]+,.*,.*,[0-9]+-[0-9][0-9]-.*,.*,[a-z]+.*"
 }
 
 @test "it should view an event" {
     event_id=$(linode-cli events list --format "id" --text --no-headers | xargs |  awk '{ print $1 }')
     run linode-cli events view "$event_id" --text --no-headers --delimiter ","
     assert_success
-    assert_output --regexp "[0-9]+,.*,.*,[0-9]+-[0-9][0-9]-.*,[a-z]+,(True|False),(True|False)"
+    assert_output --regexp "[0-9]+,.*,.*,[0-9]+-[0-9][0-9]-.*,.*,[a-z]+.*"
 }
 
 @test "it should mark an event as seen" {
@@ -45,7 +45,7 @@ teardown() {
     assert_success
     run linode-cli events view "$event_id" --text --no-headers --delimiter ","
     assert_success
-    assert_output --regexp "[0-9]+,.*,.*,[0-9]+-[0-9][0-9]-.*,[a-z]+,True,(True|False)"
+    assert_output --regexp "[0-9]+,.*,.*,[0-9]+-[0-9][0-9]-.*,.*,[a-z]+.*"
 }
 
 @test "it should mark an event as read" {
@@ -54,14 +54,14 @@ teardown() {
     assert_success
     run linode-cli events view "$event_id" --text --no-headers --delimiter ","
     assert_success
-    assert_output --regexp "[0-9]+,.*,.*,[0-9]+-[0-9][0-9]-.*,[a-z]+,(True|False),True"
+    assert_output --regexp "[0-9]+,.*,.*,[0-9]+-[0-9][0-9]-.*,.*,[a-z]+.*"
 }
 
 @test "it should filter events by entity id" {
     event_id=$(linode-cli events list --format "id" --text --no-headers | xargs |  awk '{ print $1 }')
     run linode-cli events list --id "$event_id" --text --no-headers --delimiter ","
     assert_success
-    assert_output --regexp "$event_id,.*,.*,[0-9]+-[0-9][0-9]-.*,[a-z]+,(True|False),True"
+    assert_output --regexp "$event_id,.*,.*,[0-9]+-[0-9][0-9]-.*,.*,[a-z]+.*"
 }
 
 @test "it should create a domain and filter for the domain events" {
@@ -70,5 +70,5 @@ teardown() {
     domainId=$(linode-cli domains list --format="id" --text --no-headers)
     run linode-cli events list --entity.id "$domainId" --entity.type "domain" --text --no-headers --delimiter ","
     assert_success
-    assert_output --regexp "[0-9]+,.*,domain_create,[0-9]+-[0-9][0-9]-.*,[a-z]+,(True|False),(True|False)"
+        assert_output --regexp "[0-9]+,.*,domain_create,A[0-9]+.*,[0-9]+-[0-9][0-9]-.*,.*"
 }
