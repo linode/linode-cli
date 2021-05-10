@@ -74,7 +74,9 @@ def call(args, context):
     parser.add_argument("--description", metavar="DESC", nargs="?",
                         help="A description for this Image.  Blank if omitted.")
     parser.add_argument("file", metavar="FILE",
-                        help="The image file to upload.")
+                        help="The image file to upload.  Should be a raw disk image "
+                             "compressed with gzip, in .img.gz format.  We recommend "
+                             "using unpartitioned images with an ext3 or ext4 filesystem.")
 
     parsed = parser.parse_args(args)
 
