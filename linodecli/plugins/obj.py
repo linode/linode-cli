@@ -210,12 +210,13 @@ def upload_object(get_client, args):
         print('No bucket named '+parsed.bucket)
         sys.exit(2)
 
+    policy = 'public-read' if parsed.acl_public else None
+
     for filename, file_path in to_upload:
         k = Key(bucket)
         k.key = filename
 
         print(filename)
-        policy = 'public-read' if parsed.acl_public else None
         k.set_contents_from_filename(file_path, cb=_progress, num_cb=100, policy=policy)
 
     for filename, file_path, file_size in to_multipart_upload:
