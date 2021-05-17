@@ -210,21 +210,22 @@ def upload_object(get_client, args):
         print('No bucket named '+parsed.bucket)
         sys.exit(2)
 
+    policy = 'public-read' if parsed.acl_public else None
+
     for filename, file_path in to_upload:
         k = Key(bucket)
         k.key = filename
 
         print(filename)
-        policy = 'public-read' if parsed.acl_public else None
         k.set_contents_from_filename(file_path, cb=_progress, num_cb=100, policy=policy)
 
     for filename, file_path, file_size in to_multipart_upload:
-        _do_multipart_upload(bucket, filename, file_path, file_size)
+        _do_multipart_upload(bucket, filename, file_path, file_size, policy)
 
     print('Done.')
 
 
-def _do_multipart_upload(bucket, filename, file_path, file_size):
+def _do_multipart_upload(bucket, filename, file_path, file_size, policy):
     """
     Handles the internals of a multipart upload for a large file.
 
@@ -236,8 +237,12 @@ def _do_multipart_upload(bucket, filename, file_path, file_size):
     :type file_path: str
     :param file_size: The size of this file in bytes (used for chunking)
     :type file_size: int
+    :param policy: The canned ACLs to include with the new key once the upload
+                   completes.  None for no ACLs, or "public-read" to make the
+                   key accessible publicly.
+    :type policy: str
     """
-    upload = bucket.initiate_multipart_upload(filename)
+    upload = bucket.initiate_multipart_upload(filename, policy=policy)
 
     num_chunks = int(math.ceil(file_size / MULTIPART_UPLOAD_CHUNK_SIZE))
     upload_exception = None
