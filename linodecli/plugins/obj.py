@@ -154,9 +154,24 @@ def delete_bucket(get_client, args):
 
     parser.add_argument('name', metavar='NAME', type=str,
                         help="The name of the bucket to remove.")
+    parser.add_argument('--recursive', action="store_true",
+                        help="If given, force removal of non-empty buckets by deleting "
+                             "all objects in the bucket before deleting the bucket.  For "
+                             "large buckets, this may take a while.")
 
     parsed = parser.parse_args(args)
     client = get_client()
+
+    if parsed.recursive:
+        try:
+            bucket = client.get_bucket(parsed.name)
+        except S3ResponseError:
+            print('No bucket named '+parsed.name)
+            sys.exit(2)
+
+        for c in bucket.list():
+            print("delete: {} {}".format(parsed.name, c.key))
+            bucket.delete_key(c)
 
     client.delete_bucket(parsed.name)
 
