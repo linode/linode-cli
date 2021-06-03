@@ -13,7 +13,7 @@ from sys import exit, prefix, stderr, version_info
 import requests
 
 from .operation import CLIArg, CLIOperation, URLParam
-from .response import ModelAttr, ResponseModel
+from .response import ModelAttr, ResponseModel, ComplexResponseModel
 from .configuration import CLIConfig
 from .output import OutputHandler, OutputMode
 
@@ -253,11 +253,30 @@ class CLI:
 
                         attrs = []
                         if 'properties' in resp_con:
-                            attrs = self._parse_properties(resp_con['properties'])
-                            # maybe we have special columns?
-                            rows = data[m]['responses']['200']['content']['application/json'].get('x-linode-cli-rows') or None
-                            nested_list = data[m]['responses']['200']['content']['application/json'].get('x-linode-cli-nested-list') or None
-                            response_model = ResponseModel(attrs, rows=rows, nested_list=nested_list)
+                            if action == 'getTaggedObjects':
+                                print(resp_con)
+                            if 'data' in resp_con['properties'] and 'oneOf' in resp_con['properties']['data'] and 'discriminator' in resp_con['properties']['data']:
+                                print("*"*100)
+                                print("DOING THE THING")
+                                value_model_map = {}
+                                for c in resp_con['properties']['data']["oneOf"]:
+                                    attrs = self._parse_properties(resp_con['properties'])
+                                    # maybe we have special columns?
+                                    rows = c.get('x-linode-cli-rows') or None
+                                    this_model = ResponseModel(attrs, rows=rows)
+                                    value_model_map[c["x-linode-ref-name"]] = this_model
+
+                                # this is a complex resposne
+                                response_model = ComplexResponseModel(
+                                    resp_con['properties']['data']["discriminator"]['propertyName'],
+                                    value_model_map,
+                                )
+                            else:
+                                attrs = self._parse_properties(resp_con['properties'])
+                                # maybe we have special columns?
+                                rows = data[m]['responses']['200']['content']['application/json'].get('x-linode-cli-rows') or None
+                                nested_list = data[m]['responses']['200']['content']['application/json'].get('x-linode-cli-nested-list') or None
+                                response_model = ResponseModel(attrs, rows=rows, nested_list=nested_list)
 
                     cli_args = []
 

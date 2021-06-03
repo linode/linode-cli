@@ -75,7 +75,6 @@ class ModelAttr:
 
         return value
 
-
 class ResponseModel:
     def __init__(self, attrs, rows=None, nested_list=None):
         self.attrs = attrs
@@ -126,3 +125,26 @@ class ResponseModel:
             return json['data']
         else:
             return [json]
+
+
+class ComplexResponseModel(ResponseModel):
+    def __init__(self, discriminator, model_map):
+        self.attrs = []
+        self.rows = []
+        self.nested_list=None
+        self.model_map =  model_map # x-linode-ref-name: resolved $ref in oneOf block
+        self.models = [c for c in self.model_map.values()]
+        self.discriminator = discriminator
+        print('='*100)
+        print("discriminator is {}".format(self.discriminator))
+        print("and model_map is {}".format(self.model_map))
+
+    def sort_groups(self, data):
+        result_map = {}
+        for c in data:
+            if self.model_map[c[self.discriminator]] not in result_map:
+                result_map[self.model_map[c[self.discriminator]]] = []
+            result_map[self.model_map[c[self.discriminator]]].append(c)
+
+        print(result_map)
+        return [c for c in result_map.keys()], [c for c in result_map.values()]

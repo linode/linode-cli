@@ -5,6 +5,8 @@ import json
 from terminaltables import SingleTable
 from sys import stdout
 
+from .response import ComplexResponseModel
+
 
 class OutputMode(Enum):
     table=1
@@ -35,20 +37,26 @@ class OutputHandler:
         :param columns: The columns to display
         :type columns: list[str]
         """
-        if columns is None:
-            columns = self._get_columns(response_model)
-            header = [c.column_name for c in columns]
-        else:
-            header = columns
+        models_to_print = [response_model]
+        data_groups = [data]
+        if isinstance(response_model, ComplexResponseModel):
+            models_to_print, data_groups = response_model.sort_groups(data)
 
-        if self.mode == OutputMode.table:
-            self._table_output(header, data, columns, title, to)
-        elif self.mode == OutputMode.delimited:
-            self._delimited_output(header, data, columns, to)
-        elif self.mode == OutputMode.json:
-            self._json_output(header, data, to)
-        elif self.mode == OutputMode.markdown:
-            self._markdown_output(header, data, columns, to)
+        for response_model, data in zip(models_to_print, data_groups):
+            if columns is None:
+                columns = self._get_columns(response_model)
+                header = [c.column_name for c in columns]
+            else:
+                header = columns
+
+            if self.mode == OutputMode.table:
+                self._table_output(header, data, columns, title, to)
+            elif self.mode == OutputMode.delimited:
+                self._delimited_output(header, data, columns, to)
+            elif self.mode == OutputMode.json:
+                self._json_output(header, data, to)
+            elif self.mode == OutputMode.markdown:
+                self._markdown_output(header, data, columns, to)
 
     def _get_columns(self, response_model):
         """
