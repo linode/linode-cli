@@ -260,11 +260,14 @@ class CLI:
                                 print("DOING THE THING")
                                 value_model_map = {}
                                 for c in resp_con['properties']['data']["oneOf"]:
-                                    attrs = self._parse_properties(resp_con['properties'])
+                                    this_model_title = c["x-linode-ref-name"]
+                                    c = self._resolve_ref(c['$ref'])
+                                    attrs = self._parse_properties(c['properties'])
                                     # maybe we have special columns?
                                     rows = c.get('x-linode-cli-rows') or None
                                     this_model = ResponseModel(attrs, rows=rows)
-                                    value_model_map[c["x-linode-ref-name"]] = this_model
+                                    this_model.title = this_model_title
+                                    value_model_map[this_model_title] = this_model
 
                                 # this is a complex resposne
                                 response_model = ComplexResponseModel(

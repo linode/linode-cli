@@ -37,12 +37,24 @@ class OutputHandler:
         :param columns: The columns to display
         :type columns: list[str]
         """
-        models_to_print = [response_model]
-        data_groups = [data]
+        is_complex = False
+        print_titles = False
+        to_output = {response_model: data}
         if isinstance(response_model, ComplexResponseModel):
-            models_to_print, data_groups = response_model.sort_groups(data)
+            is_complex = True
+            to_output = response_model.sort_groups(data)
+            if len(list(to_output.keys())) > 1:
+                print_titles = True
 
-        for response_model, data in zip(models_to_print, data_groups):
+        for response_model, data in to_output.items():
+            if print_titles and response_model.title:
+                print(response_model.title)
+
+            if is_complex:
+                data = response_model.fix_json(data)[0]
+                # reset columns for the next model
+                columns = None
+
             if columns is None:
                 columns = self._get_columns(response_model)
                 header = [c.column_name for c in columns]
