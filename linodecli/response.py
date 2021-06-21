@@ -4,6 +4,7 @@ on the OpenAPI spec.
 """
 from __future__ import print_function
 
+import base64
 import os
 import platform
 
@@ -59,7 +60,7 @@ def colorize_string(string, color):
 
 
 class ModelAttr:
-    def __init__(self, name, filterable, display, datatype, color_map=None, item_type=None):
+    def __init__(self, name, filterable, display, datatype, color_map=None, item_type=None, content_encoding=None):
         self.name = name
         self.value = None
         self.filterable = filterable
@@ -68,6 +69,7 @@ class ModelAttr:
         self.datatype = datatype
         self.color_map = color_map
         self.item_type = item_type
+        self.content_encoding = content_encoding
 
     def _get_value(self, model):
         """
@@ -79,6 +81,10 @@ class ModelAttr:
             if value is None:
                 return None
             value = value[part]
+
+        if self.content_encoding:
+            if self.content_encoding == "base64":
+                value = base64.b64decode(value.encode()).decode()
 
         return value
 

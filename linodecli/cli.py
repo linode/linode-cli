@@ -164,7 +164,8 @@ class CLI:
                     info.get('x-linode-cli-display') or False,
                     info.get('type') or 'string',
                     color_map=info.get('x-linode-cli-color'),
-                    item_type=item_type))
+                    item_type=item_type,
+                    content_encoding=info.get("contentEncoding")))
 
         return attrs
 
