@@ -14,7 +14,7 @@ import requests
 from openapi3 import OpenAPI
 
 from .operation import CLIArg, CLIOperation, URLParam
-from .response import ModelAttr, ResponseModel
+from .response import ModelAttr, ResponseModel, OpenAPIOperation
 from .configuration import CLIConfig
 from .output import OutputHandler, OutputMode
 
@@ -73,6 +73,7 @@ class CLI:
 
         if data.properties is not None:
             for arg, schema in data.properties.items():
+                print(schema)
                 if schema.properties is not None:
                     args += self._parse_args(schema, prefix=prefix+[arg])
                     continue
@@ -108,8 +109,6 @@ class CLI:
             if command not in self.ops:
                 self.ops[command] = {}
 
-            params = [URLParam(p.name, p.schema.type) for p in pobj.parameters]
-
             for m in METHODS:
                 operation = getattr(pobj, m)
 
@@ -123,42 +122,12 @@ class CLI:
                     print("warning: no action or operationId for {} {}".format(m.upper(), path))
                     continue
 
-                # figure out what the response model looks like
-                model = operation.responses['200'].content['application/json'].schema
-                attrs = []
-
-                if model.properties:
-                    if 'pages' in model.properties:
-                        # this is a paginated response - find the item's schema
-                        model = model.properties['data'].items
-
-                    attrs = self._parse_attrs(model)
-
-                # done that now
-
-                rows = model.extensions.get("linode-cli-rows", None)
-                nested_list = model.extensions.get("linode-cli-nested-list", None)
-
-                response_model = ResponseModel(attrs, rows=rows, nested_list=nested_list)
-
-                # figure out what the request model looks like, if we have one
-                cli_args = []
-                if operation.requestBody and operation.requestBody.content['application/json']:
-                    cli_args = self._parse_args(operation.requestBody.content['application/json'].schema)
-
-                self.ops[command][action] = CLIOperation(
-                    m,
-                    path,
-                    operation.summary,
-                    cli_args,
-                    response_model,
-                    params,
-                    operation.servers or default_servers
-                )
+                self.ops[command][action] = OpenAPIOperation(operation, m)
 
         # save these off - maybe not necessary?
         self.ops['_base_url'] = self.spec.servers[0].url
         self.ops['_spec_version'] = self.spec.info.version
+        self.ops['_spec'] = self.spec
 
         # finish the baking
         data_file = self._get_data_file()
@@ -195,7 +164,7 @@ complete -F _linode_cli linode-cli""")
             return 0
             ;;""")
 
-        command_blocks = [command_template.safe_substitute(command=op, actions=" ".join([act for act in actions.keys()])) for op, actions in self.ops.items()]
+        command_blocks = [command_template.safe_substitute(command=op, actions=" ".join([act for act in actions.keys()])) for op, actions in self.ops.items() if not op.startswith('_')]
         rendered = completion_template.safe_substitute(actions=" ".join(self.ops.keys()),
                                                        command_items="\n        ".join(command_blocks))
 
@@ -267,15 +236,16 @@ complete -F _linode_cli linode-cli""")
             'User-Agent': "linode-cli:{} python/{}.{}.{}".format(self.version, version_info[0], version_info[1], version_info[2]),
         }
 
-        parsed_args = operation.parse_args(args)
+        # TODO
+        # parsed_args = operation.parse_args(args)
 
         url = operation.url.format(**vars(parsed_args))
 
-        if operation.method == 'get':
+        if method == 'get':
             url+='?page={}'.format(self.page)
 
         body = None
-        if operation.method == 'get':
+        if method == 'get':
             if filter_header is not None:
                 # plugins can specify their own filters - use those by default
                 headers["X-Filter"] = json.dumps(filter_header)
@@ -283,9 +253,9 @@ complete -F _linode_cli linode-cli""")
                 # otherwise, get filters from the CLI call
                 filters = vars(parsed_args)
                 # remove URL parameters
-                for p in operation.params:
-                    if p.name in filters:
-                        del filters[p.name]
+                #for p in operation.params:
+                #    if p.name in filters:
+                #        del filters[p.name]
                 # remove empty filters
                 filters = {k: v for k, v in filters.items() if v is not None}
                 # apply filter, if any
@@ -420,13 +390,15 @@ complete -F _linode_cli linode-cli""")
         operation = self.ops[command][action]
 
         result = self.do_request(operation, args)
+        
+        operation.print_output(self.output_handler, result.json(), result.status_code)
 
-        operation.process_response_json(result.json(), self.output_handler)
+        #operation.process_response_json(result.json(), self.output_handler)
 
-        if (self.output_handler.mode == OutputMode.table and 'pages' in result.json()
-            and result.json()['pages'] > 1):
-            print('Page {} of {}.  Call with --page [PAGE] to load a different page.'.format(
-                result.json()['page'], result.json()['pages']))
+        #if (self.output_handler.mode == OutputMode.table and 'pages' in result.json()
+        #    and result.json()['pages'] > 1):
+        #    print('Page {} of {}.  Call with --page [PAGE] to load a different page.'.format(
+        #        result.json()['page'], result.json()['pages']))
 
     def configure(self):
         """
