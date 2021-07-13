@@ -12,6 +12,7 @@ import os
 from sys import exit
 
 PLUGIN_BASE = 'linode-cli image-upload'
+MAX_UPLOAD_SIZE = 5 * 1024 * 1024 * 1024 # 5GB
 
 
 def _progress(cur, total):
@@ -92,6 +93,11 @@ def call(args, context):
 
     if not os.path.isfile(filepath):
         print("No file at {}; must be a path to a valid file.".format(filepath))
+        exit(2)
+
+    # make sure it's not larger than the max upload size
+    if os.path.getsize(filepath) > MAX_UPLOAD_SIZE:
+        print("File {} is too large; compressed size must be less than 5GB".format(filepath))
         exit(2)
 
     label = parsed.label or os.path.basename(filepath)
