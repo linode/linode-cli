@@ -84,10 +84,6 @@ def call(args, context):
     # get default region populated
     context.client.config.update(parsed)
 
-    if not parsed.region:
-        print("No region provided.  Please set a default region or use --region")
-        exit(1)
-
     # make sure the file exists and is ready to upload
     filepath = os.path.expanduser(parsed.file)
 
@@ -99,6 +95,10 @@ def call(args, context):
     if os.path.getsize(filepath) > MAX_UPLOAD_SIZE:
         print("File {} is too large; compressed size must be less than 5GB".format(filepath))
         exit(2)
+
+    if not parsed.region:
+        print("No region provided.  Please set a default region or use --region")
+        exit(1)
 
     label = parsed.label or os.path.basename(filepath)
 
