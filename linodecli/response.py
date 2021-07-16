@@ -4,7 +4,23 @@ on the OpenAPI spec.
 """
 from __future__ import print_function
 
-from colorclass import Color
+
+CLEAR_COLOR = "\x1b[0m"
+COLOR_CODE_MAP = {
+    "red": "\x1b[31m",
+    "green": "\x1b[32m",
+    "yellow": "\x1b[33m",
+    "black": "\x1b[30m",
+    "white": "\x1b[40m",
+}
+
+
+def colorize_string(string, color):
+    col = COLOR_CODE_MAP.get(color, CLEAR_COLOR)
+
+    return "{}{}{}".format(
+        col, string, CLEAR_COLOR,
+    )
 
 
 class ModelAttr:
@@ -51,7 +67,7 @@ class ModelAttr:
             # apply colors
             value = str(value) # just in case
             color = self.color_map.get(value) or self.color_map['default_']
-            value = str(Color('{'+color+'}'+value+'{/'+color+'}'))
+            value = colorize_string(value, color)
 
         if value is None:
             # don't print the word "None"

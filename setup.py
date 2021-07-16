@@ -49,7 +49,6 @@ setup(
     license="BSD 3-Clause License",
     install_requires=[
         "terminaltables",
-        "colorclass",
         "requests",
         "PyYAML",
         "future; python_version <= '3.0.0'"

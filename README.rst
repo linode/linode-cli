@@ -389,8 +389,8 @@ added to Linode's OpenAPI spec:
 +-----------------------------+-------------+-------------------------------------------------------------------------------------------+
 |x-linode-cli-action          | method      | The action name for operations under this path. If not present, operationId is used.      |
 +-----------------------------+-------------+-------------------------------------------------------------------------------------------+
-|x-linode-cli-color           | property    | If present, defines key-value pairs of property value: color.  Colors must be understood  |
-|                             |             | by colorclass.Color.  Must include a default.                                             |
+|x-linode-cli-color           | property    | If present, defines key-value pairs of property value: color.  Colors must be one of      |
+|                             |             | "red", "green", "yellow", "white", and "black".  Must include a default.                  |
 +-----------------------------+-------------+-------------------------------------------------------------------------------------------+
 |x-linode-cli-command         | path        | The command name for operations under this path. If not present, "default" is used.       |
 +-----------------------------+-------------+-------------------------------------------------------------------------------------------+
