@@ -116,7 +116,7 @@ class CLIConfig:
 
         return argparse.Namespace(**ns_dict)
 
-    def update(self, namespace):
+    def update(self, namespace, allowed_defaults):
         """
         This updates a Namespace (as returned by ArgumentParser) with config values
         if they aren't present in the Namespace already.
@@ -133,8 +133,12 @@ class CLIConfig:
             print("User {} is not configured.".format(username))
             sys.exit(1)
 
-        if self.config.has_section(username):
-            return self.update_namespace(namespace, dict(self.config.items(username)))
+        if self.config.has_section(username) and allowed_defaults:
+            update_dicts = {
+                default_key: self.config.get(username, default_key)
+                for default_key  in allowed_defaults if self.config.has_option(username, default_key)
+            }
+            return self.update_namespace(namespace, update_dicts)
         return namespace
 
     def get_token(self):

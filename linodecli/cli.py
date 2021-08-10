@@ -204,7 +204,10 @@ class CLI:
 
                     args = {}
                     required_fields = []
+                    allowed_defaults = None
                     if m in ('post','put') and 'requestBody' in data[m]:
+                        allowed_defaults = data[m]['requestBody'].get("x-linode-cli-allowed-defaults", None)
+
                         if 'application/json' in data[m]['requestBody']['content']:
                             body_schema = data[m]['requestBody']['content']['application/json']['schema']
 
@@ -286,7 +289,8 @@ class CLI:
 
                     self.ops[command][action] = CLIOperation(m, use_path, summary,
                                                              cli_args, response_model,
-                                                             use_params, use_servers)
+                                                             use_params, use_servers,
+                                                             allowed_defaults=allowed_defaults)
 
         # hide the base_url from the spec away
         self.ops['_base_url'] = spec['servers'][0]['url']
@@ -431,7 +435,7 @@ complete -F _linode_cli linode-cli""")
                     headers["X-Filter"] = json.dumps(filters)
         else:
             if self.defaults:
-                parsed_args = self.config.update(parsed_args)
+                parsed_args = self.config.update(parsed_args, operation.allowed_defaults)
 
             to_json = {k: v for k, v in vars(parsed_args).items() if v is not None}
 
