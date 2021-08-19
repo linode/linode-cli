@@ -188,13 +188,14 @@ class CLIOperation:
                                             type=TYPES[arg.arg_type])
 
         parsed = parser.parse_args(args)
-
         lists = {}
         # group list items as expected
         for arg_name, list_name in list_items:
-            item_name = arg_name.split('.')[-1]
+            item_name = arg_name.split(list_name)[1][1:]
             if hasattr(parsed, arg_name):
                 val = getattr(parsed, arg_name) or []
+                if not val:
+                    continue
                 if  list_name not in lists:
                     new_list = [{item_name: c} for c in val]
                     lists[list_name] = new_list
@@ -202,6 +203,33 @@ class CLIOperation:
                     update_list = lists[list_name]
                     for obj, item in zip(update_list, val):
                         obj[item_name] = item
+
+        # break out list items with periods in their name into objects.  This
+        # allows supporting nested lists
+        for _, cur_list in lists.items():
+            # for each list in lists
+            for item in cur_list:
+                # for each item in the list (these are dicts)
+                new_dicts = {}
+                remove_keys = []
+                for k, v in item.items():
+                    # if there's a period in the key, split it into a dict and
+                    # possibly merge it with a dict that came from a prior split
+                    #
+                    # XXX: This only supports one layer of nested dicts in lists
+                    if "." in k:
+                        dict_key, key = k.split('.', 1)
+                        if dict_key in new_dicts:
+                            new_dicts[dict_key][key] = v
+                        else:
+                            new_dicts[dict_key] = {key: v}
+                        remove_keys.append(k)
+
+                # remove the original keys
+                for key in remove_keys:
+                    del item[key]
+                # and add the combined keys
+                item.update(new_dicts)
 
         # don't send along empty lists
         to_delete = []
@@ -218,6 +246,7 @@ class CLIOperation:
             for name, _ in list_items:
                 del parsed[name]
             parsed = argparse.Namespace(**parsed)
+
 
         return parsed
 
