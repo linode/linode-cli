@@ -123,7 +123,7 @@ class CLIOperation:
     responses with the help of their ResponseModel
     """
     def __init__(self, method, url, summary, args, response_model,
-                 params, servers):
+                 params, servers, allowed_defaults = None):
         self.method = method
         self._url = url
         self.summary = summary
@@ -131,6 +131,7 @@ class CLIOperation:
         self.response_model = response_model
         self.params = params
         self.servers = servers
+        self.allowed_defaults = allowed_defaults
 
     @property
     def url(self):
