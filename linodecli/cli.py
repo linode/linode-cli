@@ -101,6 +101,8 @@ class CLI:
                 continue # we can't edit this level of the tree
             if info.get('readOnly'):
                 continue
+            if '$ref' in info:
+                info = self._resolve_ref(info['$ref'])
             path = '.'.join(prefix+[arg])
             args[path] = {
                 "type": info.get('type') or 'string',
