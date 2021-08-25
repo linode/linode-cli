@@ -34,7 +34,7 @@ teardown() {
         --format 'label,region,k8s_version' \
         --no-defaults
 
-    assert_output --regexp "cli-test-1,us-east,1.19"
+    assert_output --regexp "cli-test-1,us-east,1.21"
 }
 
 @test "it should remove all lke clusters" {
