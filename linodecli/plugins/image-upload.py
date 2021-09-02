@@ -82,7 +82,7 @@ def call(args, context):
     parsed = parser.parse_args(args)
 
     # get default region populated
-    context.client.config.update(parsed)
+    context.client.config.update(parsed, ["region"])
 
     # make sure the file exists and is ready to upload
     filepath = os.path.expanduser(parsed.file)
