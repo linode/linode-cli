@@ -69,7 +69,7 @@ teardown() {
 
 	assert_failure
 	assert_output --partial "Request failed: 400"
-	assert_output --partial "type	A valid Linode type by that ID was not found"
+	assert_output --partial "type	A valid plan type by that ID was not found"
 }
 
 @test "it should resize the linode to the next size plan" {
