@@ -35,7 +35,7 @@ teardown() {
     assert_success
 
     assert_line --index 0 --regexp "^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}"
-    assert_line --index 0 --regexp "ipv4,True,li[0-9].*-[0-9].*\.members.linode.com,.*,[0-9][0-9][0-9][0-9][0-9][0-9][0-9]*"
+    assert_line --index 0 --regexp "ipv4,True,[0-9]{1,3}\-[0-9]{1,3}\-[0-9]{1,3}\-[0-9]{1,3}\.ip.linodeusercontent.com,.*,[0-9][0-9][0-9][0-9][0-9][0-9][0-9]*"
     assert_line --index 1 --regexp "ipv6,True,,.*,[0-9][0-9][0-9][0-9][0-9][0-9]*"
 
     # Gnarly Ipv6 Regex
