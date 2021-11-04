@@ -35,7 +35,7 @@ teardown() {
         local kernelWithFields
 
         for kernelWithFields in $kernelsList ; do
-            run bash -c "echo $kernelWithFields | egrep 'linode/.*,.*,(False|True),(False|True),(i386|x86_64),(False|True)'"
+            run bash -c "echo $kernelWithFields | egrep 'linode/.*,.*,(False|True),(False|True),(i386|x86_64),(False|True),(False|True),20.*'"
             [ "$status" -eq 0 ]
         done
     }
@@ -54,5 +54,5 @@ teardown() {
 
     assert_success
     assert_output --partial "id,version,kvm,architecture,pvops,deprecated,built"
-    assert_output --regexp "linode/.*,.*,(False|True),(False|True),(i386|x86_64),(False|True)"
+    assert_output --regexp "linode/.*,.*,(False|True),(False|True),(i386|x86_64),(False|True),(False|True),20.*"
 }
