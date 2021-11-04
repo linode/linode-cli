@@ -31,7 +31,7 @@ teardown() {
 
 @test "it should display id,label,version,kvm,xen,architecture,pvops fields" {
     kernelFieldsReturned() {
-        local kernelsList=$(linode-cli kernels list --text --no-headers --delimiter "," --format "id,version,kvm,xen,architecture,pvops")
+        local kernelsList=$(linode-cli kernels list --text --no-headers --delimiter "," --format "id,version,kvm,architecture,pvops,deprecated,built")
         local kernelWithFields
 
         for kernelWithFields in $kernelsList ; do
@@ -48,11 +48,11 @@ teardown() {
     kernelId=$1
 
     run linode-cli kernels view $kernelId \
-        --format "id,version,kvm,xen,architecture,pvops" \
+        --format "id,version,kvm,architecture,pvops,deprecated,built" \
         --text \
         --delimiter ","
 
     assert_success
-    assert_output --partial "id,version,kvm,xen,architecture,pvops"
+    assert_output --partial "id,version,kvm,architecture,pvops,deprecated,built"
     assert_output --regexp "linode/.*,.*,(False|True),(False|True),(i386|x86_64),(False|True)"
 }
