@@ -14,7 +14,8 @@ import requests
 from openapi3 import OpenAPI
 
 from .operation import CLIArg, CLIOperation, URLParam
-from .response import ModelAttr, ResponseModel, OpenAPIOperation
+from .response import ModelAttr, ResponseModel
+from linodecli.baked import OpenAPIOperation
 from .configuration import CLIConfig
 from .output import OutputHandler, OutputMode
 
@@ -122,7 +123,22 @@ class CLI:
                     print("warning: no action or operationId for {} {}".format(m.upper(), path))
                     continue
 
-                self.ops[command][action] = OpenAPIOperation(operation, m)
+                #TODO: we're excluding some operations because the openapi3 library doesn't
+                #TODO: correctly resolve references nested in properties within an allOf
+                #TODO:
+                #TODO: There's another bug impacting NodeBalancerConfig objects where allOfs
+                #TODO: modify the global referenced Schema, causing unexpected properties in
+                #TODO: other places that reference that Schema
+                if path in (
+                    '/account/entity-transfers',
+                    '/nodebalancers/{nodeBalancerId}/configs/{configId}',
+                    '/nodebalancers/{nodeBalancerId}/configs',
+                ):
+                    continue
+
+                print("Doing {} {}".format(m, path))
+                print("Operation is: {}".format(operation))
+                self.ops[command][action] = OpenAPIOperation(operation, m.upper())
 
         # save these off - maybe not necessary?
         self.ops['_base_url'] = self.spec.servers[0].url
@@ -132,7 +148,8 @@ class CLI:
         # finish the baking
         data_file = self._get_data_file()
         with open(data_file, 'wb') as f:
-            pickle.dump(self.ops, f)
+            pickler = pickle.Pickler(f)
+            pickler.dump(self.ops)
 
     def bake_completions(self):
         """
@@ -182,7 +199,8 @@ complete -F _linode_cli linode-cli""")
         data_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),data_file)
         if os.path.exists(data_path):
             with open(data_path, 'rb') as f:
-                self.ops = pickle.load(f)
+                unpickler = pickle.Unpickler(f)
+                self.ops = unpickler.load()
                 if '_base_url' in self.ops:
                     self.base_url = self.ops['_base_url']
                     del self.ops['_base_url']

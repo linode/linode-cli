@@ -128,17 +128,47 @@ class ResponseModel:
             return [json]
 
 
+
+
 class OpenAPIOperation:
+    """
+    A wrapper class for information parsed from the OpenAPI spec for a single operation.
+    This is the class that should be pickled when building the CLI.
+    """
     def __init__(self, operation, method):
         """
         Wraps an openapi3.Operation object and handles pulling out values relevant
-        to the Linode CLI
+        to the Linode CLI.
+
+        .. note::
+           This function runs _before pickling!  As such, this is the only place
+           where the OpenAPI3 objects can be accessed safely (as they are not
+           usable when unpickled!)
         """
-        self.operation = operation
-        print(self.operation)
-        print(self.operation._root)
+        #: The method to use when invoking this operation
         self.method = method
 
+        server = operation.servers[0].url if operation.servers else operation._root.servers[0].url
+        #: The URL to call to invoke this operation
+        self.url = server + operation.path[-2]
+
+        #: This operation's summary for the help screen
+        self.summary = operation.summary
+        #: This operation's long description for the help screen
+        self.description = operation.description.split(".")[0]
+
+        #: The responses this operation understands
+        self.responses = {}
+
+        for code, data in operation.responses.items():
+            if "application/json" in data.content:
+                self.responses[code] = OpenAPIResponse(data.content['application/json'])
+            else:
+                print("WARNING: Operation {} {} has invalid response for code {}".format(
+                    self.method,
+                    self.url,
+                    code,
+                ))
 
     def print_output(self, output_handler, response, response_status):
         """
@@ -153,21 +183,10 @@ class OpenAPIOperation:
 
         print("Response schema is {}".format(response_schema))
 
-    def _is_paginated(self, response):
+class OpenAPIResponse:
+    def __init__(self, response):
         """
-        Returns True if this operation has a paginate response
+        :param response: The Response object in the OpenAPI spec
+        :type response: openapi3.Response
         """
-        return (
-            len(self.response.properties) == 4 and
-            all([c in self.response.properties for c in ('pages', 'page', 'results', 'data')])
-        )
-
-    @property
-    def url(self):
-        """
-        Returns the URL for requests to this Operation
-        """
-        print(self.operation)
-        print(self.operation._root)
-        server = self.operation.servers[0].url if self.operation.servers else self.operation._root.servers[0].url
-        return  + self.path[-2]
+        self.is_paginated = _is_paginated(response)
