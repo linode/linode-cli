@@ -125,14 +125,8 @@ class CLI:
 
                 #TODO: we're excluding some operations because the openapi3 library doesn't
                 #TODO: correctly resolve references nested in properties within an allOf
-                #TODO:
-                #TODO: There's another bug impacting NodeBalancerConfig objects where allOfs
-                #TODO: modify the global referenced Schema, causing unexpected properties in
-                #TODO: other places that reference that Schema
                 if path in (
                     '/account/entity-transfers',
-                    '/nodebalancers/{nodeBalancerId}/configs/{configId}',
-                    '/nodebalancers/{nodeBalancerId}/configs',
                 ):
                     continue
 
