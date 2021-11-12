@@ -123,13 +123,7 @@ class CLI:
                     print("warning: no action or operationId for {} {}".format(m.upper(), path))
                     continue
 
-                #TODO: we're excluding some operations because the openapi3 library doesn't
-                #TODO: correctly resolve references nested in properties within an allOf
-                if path in (
-                    '/account/entity-transfers',
-                ):
-                    continue
-
+                # TODO: Remove debugging
                 print("Doing {} {}".format(m, path))
                 print("Operation is: {}".format(operation))
                 self.ops[command][action] = OpenAPIOperation(operation, m.upper())
