@@ -360,23 +360,27 @@ Specification Extensions
 In order to be more useful, the following `Specification Extensions`_ have been
 added to Linode's OpenAPI spec:
 
-+---------------------+----------+-------------------------------------------------------------------------------------------+
-|Attribute            | Location | Purpose                                                                                   |
-+---------------------+----------+-------------------------------------------------------------------------------------------+
-|x-linode-cli-action  | method   | The action name for operations under this path. If not present, operationId is used.      |
-+---------------------+----------+-------------------------------------------------------------------------------------------+
-|x-linode-cli-color   | property | If present, defines key-value pairs of property value: color.  Colors must be understood  |
-|                     |          | by colorclass.Color.  Must include a default.                                             |
-+---------------------+----------+-------------------------------------------------------------------------------------------+
-|x-linode-cli-command | path     | The command name for operations under this path. If not present, "default" is used.       |
-+---------------------+----------+-------------------------------------------------------------------------------------------+
-|x-linode-cli-display | property | If truthy, displays this as a column in output.  If a number, determines the ordering     |
-|                     |          | (left to right).                                                                          |
-+---------------------+----------+-------------------------------------------------------------------------------------------+
-|x-linode-cli-format  | property | Overrides the "format" given in this property for the CLI only.  Valid values are `file`  |
-|                     |          | and `json`.                                                                               |
-+---------------------+----------+-------------------------------------------------------------------------------------------+
-|x-linode-cli-skip    | path     | If present and truthy, this method will not be available in the CLI.                      |
-+---------------------+----------+-------------------------------------------------------------------------------------------+
++------------------------+------------+-------------------------------------------------------------------------------------------+
+|Attribute               | Location   | Purpose                                                                                   |
++------------------------+------------+-------------------------------------------------------------------------------------------+
+|x-linode-cli-action     | method     | The action name for operations under this path. If not present, operationId is used.      |
++------------------------+------------+-------------------------------------------------------------------------------------------+
+|x-linode-cli-color      | property   | If present, defines key-value pairs of property value: color.  Colors must be understood  |
+|                        |            | by colorclass.Color.  Must include a default.                                             |
++------------------------+------------+-------------------------------------------------------------------------------------------+
+|x-linode-cli-command    | path       | The command name for operations under this path. If not present, "default" is used.       |
++------------------------+------------+-------------------------------------------------------------------------------------------+
+|x-linode-cli-display    | property   | If truthy, displays this as a column in output.  If a number, determines the ordering     |
+|                        |            | (left to right).                                                                          |
++------------------------+------------+-------------------------------------------------------------------------------------------+
+|x-linode-cli-format     | property   | Overrides the "format" given in this property for the CLI only.  Valid values are `file`  |
+|                        |            | and `json`.                                                                               |
++------------------------+------------+-------------------------------------------------------------------------------------------+
+|x-linode-cli-skip       | path       | If present and truthy, this method will not be available in the CLI.                      |
++------------------------+------------+-------------------------------------------------------------------------------------------+
+|x-linode-cli-use-schema | media type | TODO                                                                                      |
++------------------------+------------+-------------------------------------------------------------------------------------------+
+|x-linode-cli-rows       | ???        | TODO                                                                                      |
++------------------------+------------+-------------------------------------------------------------------------------------------+
 
 .. _Specification Extensions: https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#specificationExtensions

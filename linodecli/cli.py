@@ -123,10 +123,15 @@ class CLI:
                     print("warning: no action or operationId for {} {}".format(m.upper(), path))
                     continue
 
+                #TODO: There's a bug in the openapi3 library that causes some $refs
+                #TODO: nested in schema properties to not be resolved.
+                if path in ('/lke/clusters/{clusterId}/pools/{poolId}', ):
+                    continue
+
                 # TODO: Remove debugging
                 print("Doing {} {}".format(m, path))
                 print("Operation is: {}".format(operation))
-                self.ops[command][action] = OpenAPIOperation(operation, m.upper())
+                self.ops[command][action] = OpenAPIOperation(operation, m, pobj.parameters)
 
         # save these off - maybe not necessary?
         self.ops['_base_url'] = self.spec.servers[0].url
