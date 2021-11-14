@@ -1,5 +1,5 @@
 from linodecli.baked.response import OpenAPIResponse
-from linodecli.baked.request import OpenAPIRequest
+from linodecli.baked.request import OpenAPIRequest, OpenAPIFilteringRequest
 
 
 class OpenAPIOperationParameter:
@@ -13,6 +13,9 @@ class OpenAPIOperationParameter:
         """
         self.name = parameter.name
         self.type = parameter.schema.type
+
+    def __repr__(self):
+        return "<OpenAPIOperationParameter {}>".format(self.name)
 
 
 class OpenAPIOperation:
@@ -47,17 +50,6 @@ class OpenAPIOperation:
 
         self.request = None
 
-        if method in ('post', 'put') and operation.requestBody:
-            if 'application/json' in operation.requestBody.content:
-                self.request = OpenAPIRequest(operation.requestBody.content['application/json'])
-            else:
-                print(
-                    "WARNING: {} {} has no valid requestBody (must be application/json)!".format(
-                         self.method,
-                         self.url,
-                    )
-                )
-
         self.params = [
             OpenAPIOperationParameter(c) for c in params
         ]
@@ -81,6 +73,22 @@ class OpenAPIOperation:
         if '200' in operation.responses and 'application/json' in operation.responses['200'].content:
             self.response_model = OpenAPIResponse(operation.responses['200'].content['application/json'])
 
+
+        if method in ('post', 'put') and operation.requestBody:
+            if 'application/json' in operation.requestBody.content:
+                self.request = OpenAPIRequest(operation.requestBody.content['application/json'])
+            else:
+                print(
+                    "WARNING: {} {} has no valid requestBody (must be application/json)!".format(
+                         self.method,
+                         self.url,
+                    )
+                )
+        elif method in ('get',):
+            # for get requests, self.request is all filterable fields of the response model
+            if self.response_model:
+                self.request = OpenAPIFilteringRequest(self.response_model)
+
     @property
     def args(self):
-        return self.request.args if self.request else []
+        return self.request.attrs if self.request else []
