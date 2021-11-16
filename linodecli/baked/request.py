@@ -110,26 +110,11 @@ class OpenAPIRequest:
                         accepts.
         :type request: openapi3.MediaType
         """
-        schema_override = request.extensions.get("x-linode-cli-use-schema")
-        if schema_override:
+        schema_override = request.extensions.get("linode-cli-use-schema")
+        if schema_override and False: # TODO - schema overrides are dicts right now
             self.attrs = _parse_request_model(schema_override)
         else:
             self.attrs = _parse_request_model(request.schema)
-
-
-def _parse_filterable_schema(schema):
-    """
-    Given a schema that may contain filterable elements, returns the filterable
-    elements as OpenAPIRequestArgs.
-
-    :param schema: The schema whose properties may be filterable
-    :type schema: openapi3.Schema
-
-    :returns: A list of filterable arguments found in the schema
-    :rtype: list[OpenAPIRequestArg]
-    """
-    # TODO - finish this!  It should recurse through the model to find all filterable
-    # TODO - elements and returns them as _parse_request_model does
 
 
 class OpenAPIFilteringRequest:
@@ -139,23 +124,18 @@ class OpenAPIFilteringRequest:
     for 200 Response from an endpoint.  This only applies to paginated collection
     endpoints where filters are accepted.
     """
-    def __init__(self, schema):
+    def __init__(self, response_model):
         """
-        :param schema: The schema of the 200 response for this operation.
+        :param response_model: The parsed response model whose properties may be
+                               filterable.
 
-                       It is an error to send this any schema that does not
-                       represent a pagination envelope (i.e. has the properties
-                       "pages", "page", "results", and "data", where "data" is
-                       an array whose items attribute defines the schema we can
-                       filter by).
-        :type schema: openapi3.MediaType
+                               The provided response model **must** be a paginated
+                               response, or else the call to this constructor would
+                               be invalid (as only paginated collections may be filtered).
+        :type response_model: linodecli.baked.response.OpenAPIResponse
         """
         # enforce the above requirements for parameters to this constructor
-        if (
-            len(schema.properties) != 4
-            or any([c not in schema.properties for c in ("pages","page","results","data")])
-            or schema.data.type != "array"
-        ):
+        if not response_model.is_paginated:
             raise ValueError(
                 "Non-paginated schema {} send to OpenAPIFilteringRequest constructor!".format(
                     schema
@@ -163,4 +143,4 @@ class OpenAPIFilteringRequest:
             )
 
         # actually parse out what we can filter by
-        self.attrs = _parse_filterable_schema(schema.properties['data'].items)
+        self.attrs = [c for c in response_model.attrs if c.filterable]

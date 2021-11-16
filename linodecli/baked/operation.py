@@ -86,7 +86,7 @@ class OpenAPIOperation:
                 )
         elif method in ('get',):
             # for get requests, self.request is all filterable fields of the response model
-            if self.response_model:
+            if self.response_model and self.response_model.is_paginated:
                 self.request = OpenAPIFilteringRequest(self.response_model)
 
     @property

@@ -36,11 +36,17 @@ class OpenAPIResponseAttr:
         self.value = None
 
         #: If this attribute is filterable in GET requests
-        self.filterable = schema.extensions.get("x-linode-filterable")
+        self.filterable = schema.extensions.get("linode-filterable")
+
+        #: The description of this argument, for help display.  Only used for filterable attributes.
+        self.description = schema.description.split(".")[0] if schema.description else ""
+
+        #: No response model fields are required. This is only used for filterable attributes.
+        self.required = False
 
         #: If this attribute should be displayed by default, and where in the output table
         #: it should be displayed
-        self.display = schema.extensions.get("x-linode-cli-display")
+        self.display = schema.extensions.get("linode-cli-display")
 
         #: The name of the column header for this attribute.  This is the schema's name
         #: without the full path to it
@@ -50,13 +56,21 @@ class OpenAPIResponseAttr:
         self.datatype = schema.type
 
         #: How we should associate values of this attribute to output colors
-        self.color_map = schema.extensions.get("x-linode-cli-color")
+        self.color_map = schema.extensions.get("linode-cli-color")
 
         #: The type for items in this attribute, if this attribute is a list
         self.item_type = None
         if schema.type == "array":
             print("My name is {} and my path is {}".format(name, schema.path))
             self.item_type = schema.items.type
+
+    @property
+    def path(self):
+        """
+        This is a helper for filterable fields to return the json path to this
+        element in a response.
+        """
+        return self.name
 
 
 def _parse_response_model(schema, prefix=None):
@@ -101,10 +115,17 @@ class OpenAPIResponse:
         """
         self.is_paginated = _is_paginated(response)
 
-        schema_override = response.extensions.get("x-linode-cli-use-schema")
-        if schema_override:
+        schema_override = response.extensions.get("linode-cli-use-schema")
+        #TODO: To alleviate the below, we may consider changing how the x-linode-cli-use-schema
+        #TODO: works; maybe instead of defining a freeform schema, it must be a ref pointing to
+        #TODO: a schema in #/components/schemas?
+        if schema_override and False: # TODO - schema overrides are dicts right now
             self.attrs = _parse_response_model(schema_override)
+        elif self.is_paginated:
+            # for paginated responses, the model we're parsing is the item in the paginated
+            # response, not the pagination envelope
+            self.attrs = _parse_response_model(response.schema.properties['data'].items)
         else:
             self.attrs = _parse_response_model(response.schema)
-        self.rows = response.schema.extensions.get("x-linode-cli-rows")
-        self.nested_list = response.extensions.get("x-linode-cli-nested-list")
+        self.rows = response.schema.extensions.get("linode-cli-rows")
+        self.nested_list = response.extensions.get("linode-cli-nested-list")

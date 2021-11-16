@@ -382,5 +382,7 @@ added to Linode's OpenAPI spec:
 +------------------------+------------+-------------------------------------------------------------------------------------------+
 |x-linode-cli-rows       | ???        | TODO                                                                                      |
 +------------------------+------------+-------------------------------------------------------------------------------------------+
+|x-linode-filterable     | schema     | If this field may be filtered on in paginated requests.                                   |
++------------------------+------------+-------------------------------------------------------------------------------------------+
 
 .. _Specification Extensions: https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#specificationExtensions
