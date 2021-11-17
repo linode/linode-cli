@@ -20,6 +20,10 @@ teardown() {
     fi
 }
 
+@test "remove all volumes prior to running tests" {
+    run removeVolumes
+}
+
 @test "it should fail to resize a volume smaller" {
     createVolume
     volume_id=$(linode-cli volumes list --text --no-headers --format="id")
