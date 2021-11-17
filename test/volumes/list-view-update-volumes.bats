@@ -24,6 +24,10 @@ teardown() {
     fi
 }
 
+@test "remove volumes prior to tests" {
+    run removeVolumes
+}
+
 @test "it should list volumes" {
     run createVolume
     run linode-cli volumes list \
