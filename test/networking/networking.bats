@@ -34,6 +34,12 @@ teardown() {
 
     assert_success
 
+    # temporary debugging
+    local linodesResult=$(linode-cli linodes list --delimiter="," --text --no-headers)
+    run bash -c "echo $linodesResult"
+    local result=$(linode-cli networking ips-list --delimiter="," --text --no-headers)
+    run bash -c "echo $result"
+
     assert_line --index 0 --regexp "^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}"
     assert_line --index 0 --regexp "ipv4,True,[0-9]{1,3}\-[0-9]{1,3}\-[0-9]{1,3}\-[0-9]{1,3}\.ip.linodeusercontent.com,.*,[0-9][0-9][0-9][0-9][0-9][0-9][0-9]*"
     assert_line --index 1 --regexp "ipv6,True,,.*,[0-9][0-9][0-9][0-9][0-9][0-9]*"
