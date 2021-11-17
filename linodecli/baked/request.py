@@ -38,13 +38,13 @@ class OpenAPIRequestArg:
 
         #: The type accepted for this argument. This will ultimately determine what
         #: we accept in the ArgumentParser
-        self.type = "object" if self.format == "json" else schema.type
+        self.datatype = "object" if self.format == "json" else schema.type or "string"
 
         #: The type of item accepted in this list; if None, this is not a list
         self.item_type = None
 
         # handle the type for list values if this is an array
-        if self.type == "array" and schema.items:
+        if self.datatype == "array" and schema.items:
             self.item_type = schema.items.type
 
         # make sure we're not doing something wrong

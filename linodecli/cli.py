@@ -16,6 +16,8 @@ from openapi3 import OpenAPI
 from .operation import CLIArg, CLIOperation, URLParam
 from .response import ModelAttr, ResponseModel
 from linodecli.baked import OpenAPIOperation
+from linodecli.cmd.parser import parse_args
+from linodecli.cmd.json import flatten_response
 from .configuration import CLIConfig
 from .output import OutputHandler, OutputMode
 
@@ -247,8 +249,7 @@ complete -F _linode_cli linode-cli""")
             'User-Agent': "linode-cli:{} python/{}.{}.{}".format(self.version, version_info[0], version_info[1], version_info[2]),
         }
 
-        # TODO
-        # parsed_args = operation.parse_args(args)
+        parsed_args = parse_args(operation, args)
 
         url = operation.url.format(**vars(parsed_args))
 
@@ -402,14 +403,12 @@ complete -F _linode_cli linode-cli""")
 
         result = self.do_request(operation, args)
         
-        operation.print_output(self.output_handler, result.json(), result.status_code)
+        self.output_handler.print(operation.response_model, flatten_response(operation, result))
 
-        #operation.process_response_json(result.json(), self.output_handler)
-
-        #if (self.output_handler.mode == OutputMode.table and 'pages' in result.json()
-        #    and result.json()['pages'] > 1):
-        #    print('Page {} of {}.  Call with --page [PAGE] to load a different page.'.format(
-        #        result.json()['page'], result.json()['pages']))
+        if (self.output_handler.mode == OutputMode.table and operation.response_model.is_paginated
+            and result.json()['pages'] > 1):
+            print('Page {} of {}.  Call with --page [PAGE] to load a different page.'.format(
+                result.json()['page'], result.json()['pages']))
 
     def configure(self):
         """

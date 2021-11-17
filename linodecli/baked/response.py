@@ -46,14 +46,14 @@ class OpenAPIResponseAttr:
 
         #: If this attribute should be displayed by default, and where in the output table
         #: it should be displayed
-        self.display = schema.extensions.get("linode-cli-display")
+        self.display = schema.extensions.get("linode-cli-display") or 0
 
         #: The name of the column header for this attribute.  This is the schema's name
         #: without the full path to it
         self.column_name = name
 
         #: The type of data this attribute contains
-        self.datatype = schema.type
+        self.datatype = schema.type or "string"
 
         #: How we should associate values of this attribute to output colors
         self.color_map = schema.extensions.get("linode-cli-color")

@@ -44,6 +44,8 @@ setup(
     url="https://www.linode.com/docs/api/",
     packages=[
         'linodecli',
+        'linodecli.baked',
+        'linodecli.cmd',
         'linodecli.plugins',
     ],
     license="BSD 3-Clause License",
