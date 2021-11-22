@@ -122,8 +122,10 @@ class CLIOperation:
     are responsible for parsing their own arguments and processing their
     responses with the help of their ResponseModel
     """
-    def __init__(self, method, url, summary, args, response_model,
+    def __init__(self, command, action, method, url, summary, args, response_model,
                  params, servers, allowed_defaults = None):
+        self.command = command
+        self.action = action
         self.method = method
         self._url = url
         self.summary = summary
@@ -149,7 +151,10 @@ class CLIOperation:
         list_items = []
 
         #  build an argparse
-        parser = argparse.ArgumentParser(description=self.summary)
+        parser = argparse.ArgumentParser(
+            prog="linode-cli {} {}".format(self.command, self.action),
+            description=self.summary,
+        )
         for param in self.params:
             parser.add_argument(param.name, metavar=param.name,
                                 type=TYPES[param.param_type])
