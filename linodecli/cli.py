@@ -289,10 +289,18 @@ class CLI:
                             use_path = use_path.replace("{"+p.name+"}", "{"+p.name+"_}")
                             p.name += '_'
 
-                    self.ops[command][action] = CLIOperation(m, use_path, summary,
-                                                             cli_args, response_model,
-                                                             use_params, use_servers,
-                                                             allowed_defaults=allowed_defaults)
+                    self.ops[command][action] = CLIOperation(
+                        command,
+                        action,
+                        m,
+                        use_path,
+                        summary,
+                        cli_args,
+                        response_model,
+                        use_params,
+                        use_servers,
+                        allowed_defaults=allowed_defaults,
+                    )
 
         # hide the base_url from the spec away
         self.ops['_base_url'] = spec['servers'][0]['url']
