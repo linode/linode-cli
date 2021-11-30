@@ -94,7 +94,7 @@ teardown() {
         --format="size"
 
     assert_failure
-    assert_output --partial "usage: linode-cli [-h] [--label label] [--tags tags] volumeId"
+    assert_output --partial "usage: linode-cli volumes update [-h] [--label label] [--tags tags] volumeId"
     assert_output --partial "linode-cli: error: unrecognized arguments: --size=15"
 }
 
