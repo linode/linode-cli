@@ -33,7 +33,7 @@ teardown() {
         --delimiter=","
 
     assert_success
-    assert_output --regexp "[0-9]+,A[0-9]+,(creating|active),10,us-east"
+    assert_output --regexp "[0-9]+,[A-Za-z0-9]+,(creating|active),10,us-east"
 }
 
 @test "it should view a single volume" {
@@ -44,7 +44,7 @@ teardown() {
         --format="id,label,size,region"
 
     assert_success
-    assert_output --regexp "$volume_id,A[0-9]+,10,us-east"
+    assert_output --regexp "$volume_id,[A-Za-z0-9]+,10,us-east"
 }
 
 @test "it should update a volume label" {
@@ -92,7 +92,7 @@ teardown() {
 
     assert_failure
     assert_output --partial "usage: linode-cli volumes update [-h] [--label label] [--tags tags] volumeId"
-    assert_output --partial "linode-cli: error: unrecognized arguments: --size=15"
+    assert_output --partial "linode-cli volumes update: error: unrecognized arguments: --size=15"
 }
 
 @test "it should remove all volumes and unique tags" {
