@@ -12,7 +12,8 @@ load '../common'
 setup() {
     suiteName="list-view-update-volumes"
     setToken "$suiteName"
-    export volume_id=$(linode-cli volumes list --text --no-headers --delimiter="," --format="id")
+    # we only want a single volume id, so if there are more volumes on the account, just look at the first one
+    export volume_id=$(linode-cli volumes list --text --no-headers --delimiter="," --format="id" | head -n1)
 }
 
 teardown() {
@@ -22,10 +23,6 @@ teardown() {
         rm .tmp-volume-tag
         clearToken "$suiteName"
     fi
-}
-
-@test "remove volumes prior to tests" {
-    run removeVolumes
 }
 
 @test "it should list volumes" {
