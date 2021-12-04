@@ -184,35 +184,38 @@ def upload_object(get_client, args):
     """
     Uploads an object to object storage
     """
+    import glob
     parser = argparse.ArgumentParser(PLUGIN_BASE+' put')
 
-    parser.add_argument('file', metavar='FILE', type=str, nargs='+',
-                        help="The files to upload.")
+    parser.add_argument('file', metavar='FILES_FOLDERS', type=str, nargs='+',
+                        help="The files or folders to upload.")
     parser.add_argument('bucket', metavar='BUCKET', type=str,
                         help="The bucket to put a file in.")
     parser.add_argument('--acl-public', action='store_true',
                         help="If set, the new object can be downloaded without "
                              "authentication.")
-    #parser.add_argument('--recursive', action='store_true',
-    #                    help="If set, upload directories recursively.")
+    parser.add_argument('--recursive', action='store_true',
+                        help="If set, upload directories recursively.")
 
     parsed = parser.parse_args(args)
     client = get_client()
-
+    file_list = [] # [filename, filepath, filesize]
     to_upload = []
     to_multipart_upload = []
     for c in parsed.file:
         # find the object
         file_path = os.path.expanduser(c)
 
-        if not os.path.isfile(file_path):
-            print('No file {}'.format(file_path))
-            sys.exit(5)
+        if os.path.isdir(file_path):
+            if parsed.recursive:
+                files = glob.glob(file_path+'**', recursive=True)
+            else:
+                files = [file_path + f for f in os.listdir(file_path) if os.path.isfile(file_path + f)]
+            file_list.extend([[item, os.path.basename(item), os.path.getsize(item)] for item in files if os.path.isfile(item)]) # The double isfile check here is needed because glob.glob returns folders
+        elif os.path.isfile(file_path):
+            file_list.append([file_path, os.path.basename(file_path), os.path.getsize(file_path)])
 
-        filename = os.path.split(file_path)[-1]
-
-        file_size = os.path.getsize(file_path)
-
+    for file_path, filename, file_size in file_list:
         if file_size >= UPLOAD_MAX_FILE_SIZE:
             to_multipart_upload.append((filename, file_path, file_size))
         else:
