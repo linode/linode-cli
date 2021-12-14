@@ -15,6 +15,12 @@ from terminaltables import SingleTable
 from math import ceil
 from linodecli.configuration import input_helper
 
+try:
+    from urllib.parse import quote_plus
+except ImportError:
+    # python2
+    from urllib import quote_plus
+
 
 ENV_ACCESS_KEY_NAME = "LINODE_CLI_OBJ_ACCESS_KEY"
 ENV_SECRET_KEY_NAME = "LINODE_CLI_OBJ_SECRET_KEY"
@@ -229,7 +235,7 @@ def upload_object(get_client, args):
 
     for filename, file_path in to_upload:
         k = Key(bucket)
-        k.key = filename
+        k.key = quote_plus(filename)
 
         print(filename)
         k.set_contents_from_filename(file_path, cb=_progress, num_cb=100, policy=policy)
