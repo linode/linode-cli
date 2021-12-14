@@ -3,6 +3,7 @@ import argparse
 import base64
 from datetime import datetime
 import getpass
+import glob
 import math
 import socket
 import sys
@@ -180,11 +181,31 @@ def delete_bucket(get_client, args):
     sys.exit(0)
 
 
+def _collect_files(file_path):
+    """
+    Finds all files in a directory, recursively, and returns them as a list
+    """
+    files = glob.glob(file_path+'/**', recursive=True)
+    ret = []
+
+    for f in files:
+        if os.path.isfile(f):
+            ret += [f]
+
+    return ret
+
+
+def _trim_prefix(filename, prefix):
+    """
+    Removes a prefix from a filename; usually this is the first path segment
+    """
+    return os.path.relpath(filename, prefix)
+
+
 def upload_object(get_client, args):
     """
     Uploads an object to object storage
     """
-    import glob
     parser = argparse.ArgumentParser(PLUGIN_BASE+' put')
 
     parser.add_argument('file', metavar='FILES_FOLDERS', type=str, nargs='+',
@@ -208,10 +229,10 @@ def upload_object(get_client, args):
 
         if os.path.isdir(file_path):
             if parsed.recursive:
-                files = glob.glob(file_path+'**', recursive=True)
+                files = _collect_files(file_path)
             else:
                 files = [file_path + f for f in os.listdir(file_path) if os.path.isfile(file_path + f)]
-            file_list.extend([[item, os.path.basename(item), os.path.getsize(item)] for item in files if os.path.isfile(item)]) # The double isfile check here is needed because glob.glob returns folders
+            file_list.extend([[item, _trim_prefix(item, file_path), os.path.getsize(item)] for item in files])
         elif os.path.isfile(file_path):
             file_list.append([file_path, os.path.basename(file_path), os.path.getsize(file_path)])
 
