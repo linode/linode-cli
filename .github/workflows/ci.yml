@@ -1,0 +1,51 @@
+name: ci
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to build'
+        required: true
+
+jobs:
+  bake:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['2.x', '3.x']
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+      - run: python -m linodecli bake "https://raw.githubusercontent.com/linode/linode-api-docs/${{ github.event.inputs.version }}/openapi.yaml" --skip-config
+      - uses: actions/upload-artifact@v2
+        with:
+          name: baked-pickle-${{ matrix.python-version }}
+          path: data-[23]
+
+  build:
+    needs:
+      - bake
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+      - uses: actions/download-artifact@v2
+        with:
+          path: linodecli
+      - run: |
+          python -m pip install --upgrade pip
+          python -m pip install wheel
+          python setup.py bdist_wheel --universal
+      - uses: actions/upload-artifact@v2
+        with:
+          name: dist
+          path: dist/*
