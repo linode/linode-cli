@@ -19,6 +19,7 @@ from .output import OutputHandler, OutputMode
 
 
 METHODS = ('get','post','put','delete')
+PIP_CMD = "pip3" if version_info.major == 3 else "pip"
 
 
 class CLI:
@@ -534,8 +535,8 @@ complete -F _linode_cli linode-cli""")
                     print("The API responded with version {}, which is newer than "
                           "the CLI's version of {}.  Please update the CLI to get "
                           "access to the newest features.  You can update with a "
-                          "simple `pip install --upgrade linode-cli`".format(
-                              spec_version, self.spec_version
+                          "simple `{} install --upgrade linode-cli`".format(
+                              spec_version, self.spec_version, PIP_CMD,
                           ), file=stderr)
 
         if not 199 < result.status_code < 399 and not skip_error_handling:

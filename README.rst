@@ -10,7 +10,7 @@ Installation
 
 From pypi::
 
-   pip install linode-cli
+   pip3 install linode-cli
 
 From source::
 
@@ -28,7 +28,7 @@ Upgrading
 
 To upgrade to the latest version of the Linode CLI::
 
-   pip install linode-cli --upgrade
+   pip3 install linode-cli --upgrade
 
 Usage
 -----
