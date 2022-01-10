@@ -114,6 +114,12 @@ class URLParam:
         self.name = name
         self.param_type = param_type
 
+    def clone(self):
+        """
+        Returns a new URLParam that is exactly like this one
+        """
+        return URLParam(self.name, self.param_type)
+
 
 class CLIOperation:
     """
