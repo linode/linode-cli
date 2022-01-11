@@ -280,10 +280,12 @@ class CLI:
                         cli_args.append(new_arg)
 
                     # looks for param names that will be obscured by args
-                    use_params = params[:]
+                    # clone the params since they're shared by all methods in this
+                    # path, and we only want to modify this method's params
+                    use_params = [c.clone() for c in params]
                     use_path = path
                     for p in use_params:
-                        if p.name in args.keys():
+                        if p.name in args.keys():# or (m == 'get' and p.name in model_attrs):
                             # if we found a parameter name that is also and argument name
                             # append an underscore to both the parameter name and the
                             # parameter name in the URL
