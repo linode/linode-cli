@@ -5,7 +5,7 @@ import argparse
 from importlib import import_module
 import os
 import pkg_resources
-from sys import argv, exit
+from sys import argv, exit, version_info, stderr
 
 import requests
 import yaml
@@ -30,6 +30,24 @@ BASE_URL = 'https://api.linode.com/v4'
 skip_config = any([c in argv for c in ('--skip-config', '--help', '--version')])
 
 cli = CLI(VERSION, BASE_URL, skip_config=skip_config)
+
+
+def warn_python2_eol():
+    """
+    Prints a warning the first time each day that the CLI is used under python2.
+    This is included to help users upgrade to python3 before python2 support is
+    dropped in the CLI.
+    """
+    if version_info.major < 3:
+        print(
+            "You are running the Linode CLI using python 2, which reached its end of life on "
+            "Jan 1st, 2020.  The Linode CLI will be dropping support for python 2, and "
+            "upgrading your installation is strongly encouraged so that you can continue "
+            "to receive updates.\n\nFor information about upgrading your installation, see "
+            "our official guide:\n\nhttps://www.linode.com/docs/guides/upgrade-to-linode-cli-python-3/",
+            file=stderr,
+        )
+
 
 def main():
     ## Command Handling
@@ -103,6 +121,9 @@ def main():
     cli.suppress_warnings = parsed.suppress_warnings
     cli.page = parsed.page
     cli.debug_request = parsed.debug
+
+    if not cli.suppress_warnings:
+        warn_python2_eol()
 
     if parsed.as_user:
         # if they are acting as a non-default user, set it up early
