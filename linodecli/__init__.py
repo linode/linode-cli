@@ -40,8 +40,8 @@ def warn_python2_eol():
     """
     if version_info.major < 3:
         print(
-            "You are running the Linode CLI using python 2, which reached its end of life on "
-            "Jan 1st, 2020.  The Linode CLI will be dropping support for python 2, and "
+            "You are running the Linode CLI using Python 2, which reached its end of life on "
+            "Jan 1st, 2020.  The Linode CLI will be dropping support for Python 2, and "
             "upgrading your installation is strongly encouraged so that you can continue "
             "to receive updates.\n\nFor information about upgrading your installation, see "
             "our official guide:\n\nhttps://www.linode.com/docs/guides/upgrade-to-linode-cli-python-3/",
