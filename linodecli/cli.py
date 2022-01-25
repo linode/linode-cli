@@ -305,6 +305,15 @@ class CLI:
                         allowed_defaults=allowed_defaults,
                     )
 
+        # remove any empty commands (those that have no actions)
+        to_remove = []
+        for command, actions in self.ops.items():
+            if len(actions) == 0:
+                to_remove.append(command)
+
+        for command in to_remove:
+            del self.ops[command]
+
         # hide the base_url from the spec away
         self.ops['_base_url'] = spec['servers'][0]['url']
         self.ops['_spec_version'] = spec['info']['version']
