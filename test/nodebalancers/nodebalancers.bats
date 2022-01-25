@@ -4,7 +4,7 @@ load '../test_helper/bats-assert/load'
 load '../test_helper/bats-support/load'
 load '../common'
 
-export nodebalancerCreated="[0-9]+,balancer[0-9]+,us-east,nb-[0-9]+-[0-9]+-[0-9]+-[0-9]+.ip.linodeusercontent.com,0"
+export nodebalancerCreated="[0-9]+,balancer[0-9]+,us-east,[0-9]+-[0-9]+-[0-9]+-[0-9]+.ip.linodeusercontent.com,0"
 
 setup() {
 	suiteName="nodebalancers"
