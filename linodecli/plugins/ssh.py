@@ -13,16 +13,6 @@ import subprocess
 from sys import exit, platform, version_info
 
 
-def input_helper(prompt):
-    """
-    Handles python2 and python3 differences in input command
-    """
-    if version_info[0] == 2:
-        # python2 input is scary - we want raw_input
-        return raw_input(prompt)
-    else:
-        return input(prompt)
-
 
 def call(args, context):
     """

@@ -216,12 +216,12 @@ def main():
             print('Plugin name conflicts with internal CLI plugin - registration failed.')
             exit(13)
         elif plugin_name in plugins.available(cli.config):
-            from linodecli.configuration import input_helper
+            from linodecli.configuration import input
 
             # this isn't an internal plugin, so warn that we're re-registering it
             print("WARNING: Plugin {} is already registered.".format(plugin_name))
             print("")
-            answer = input_helper("Allow re-registration of {}? [y/N] ".format(plugin_name))
+            answer = input("Allow re-registration of {}? [y/N] ".format(plugin_name))
 
             if not answer or answer not in 'yY':
                 print('Registration aborted.')

@@ -10,12 +10,7 @@ import re
 from http import server
 import socket
 import webbrowser
-try:
-    # python3
-    import configparser
-except ImportError:
-    # python2
-    import ConfigParser as configparser
+import configparser
 import requests
 import os
 import sys
@@ -48,17 +43,6 @@ r.open('GET', '/token/'+window.location.hash.substr(1));
 r.send();
 </script>
 """
-
-
-def input_helper(prompt):
-    """
-    Handles python2 and python3 differences in input command
-    """
-    if sys.version_info[0] == 2:
-        # python2 input is scary - we want raw_input
-        return raw_input(prompt)
-    else:
-        return input(prompt)
 
 
 class CLIConfig:
@@ -309,7 +293,7 @@ First, we need a Personal Access Token.  To get one, please visit
 on your account to work correctly.""".format(TOKEN_GENERATION_URL))
 
         while True:
-            token = input_helper("Personal Access Token: ")
+            token = input("Personal Access Token: ")
 
             username = self._username_for_token(token)
             if username is not None:
@@ -459,7 +443,7 @@ Note that no token will be saved in your configuration file.
                       "no known-working browsers were found.")
 
                 while True:
-                    r = input_helper("Try it anyway? [y/N]: ")
+                    r = input("Try it anyway? [y/N]: ")
                     if r.lower() in 'yn ':
                         can_use_browser = r.lower() == 'y'
                         break
@@ -471,7 +455,7 @@ Note that no token will be saved in your configuration file.
                 print("The CLI will use its web-based authentication to log you in.  "
                       "If you prefer to supply a Personal Access Token, use `linode-cli configure --token`. ")
                 print()
-                input_helper("Press enter to continue.  This will open a browser and proceed with authentication.")
+                input("Press enter to continue.  This will open a browser and proceed with authentication.")
                 username, config['token'] = self._get_token_web()
 
         print()
@@ -508,7 +492,7 @@ Note that no token will be saved in your configuration file.
         if not is_default:
             if username != self.default_username():
                 while True:
-                    value = input_helper('Make active user? [y/N]: ')
+                    value = input('Make active user? [y/N]: ')
 
                     if value.lower() in 'yn':
                         is_default = value.lower() == 'y'
@@ -572,7 +556,7 @@ Note that no token will be saved in your configuration file.
 
         ret = ''
         while True:
-            choice = input_helper(prompt)
+            choice = input(prompt)
 
             if choice:
                 try:
@@ -668,7 +652,7 @@ Note that no token will be saved in your configuration file.
         print()
 
         while True:
-            username = input_helper('Active user: ')
+            username = input('Active user: ')
 
             if username in users:
                 self.config.set('DEFAULT', 'default-user', username)
