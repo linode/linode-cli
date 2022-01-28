@@ -9,7 +9,7 @@ here = path.abspath(path.dirname(__file__))
 
 
 # get the long description from the README.rst
-with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
+with open(path.join(here, "README.rst"), encoding="utf-8") as f:
     long_description = f.read()
 
 
@@ -21,8 +21,8 @@ def get_baked_files():
     """
     data_files = []
 
-    if path.isfile('linode-cli.sh'):
-        data_files.append(('/etc/bash_completion.d', ['linode-cli.sh']))
+    if path.isfile("linode-cli.sh"):
+        data_files.append(("/etc/bash_completion.d", ["linode-cli.sh"]))
 
     return data_files
 
@@ -40,21 +40,21 @@ setup(
     description="CLI for the Linode API",
     long_description=long_description,
     author="Linode",
-    author_email='developers@linode.com',
+    author_email="developers@linode.com",
     url="https://www.linode.com/docs/api/",
     packages=[
-        'linodecli',
-        'linodecli.plugins',
+        "linodecli",
+        "linodecli.plugins",
     ],
     license="BSD 3-Clause License",
     install_requires=[
         "terminaltables",
         "requests",
         "PyYAML",
-        "future; python_version <= '3.0.0'"
+        "future; python_version <= '3.0.0'",
     ],
     extras_require={
-        ":python_version<'3.4'": ['enum34'],
+        ":python_version<'3.4'": ["enum34"],
     },
     entry_points={
         "console_scripts": [
@@ -63,5 +63,5 @@ setup(
     },
     data_files=get_baked_files(),
     python_requires=">=2.7",
-    include_package_data=True
+    include_package_data=True,
 )

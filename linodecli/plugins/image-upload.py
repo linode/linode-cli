@@ -13,8 +13,8 @@ from sys import exit
 
 import requests
 
-PLUGIN_BASE = 'linode-cli image-upload'
-MAX_UPLOAD_SIZE = 5 * 1024 * 1024 * 1024 # 5GB
+PLUGIN_BASE = "linode-cli image-upload"
+MAX_UPLOAD_SIZE = 5 * 1024 * 1024 * 1024  # 5GB
 
 
 def _progress(cur, total):
@@ -23,8 +23,8 @@ def _progress(cur, total):
     """
     percent = "{0:.1f}".format(100 * (cur / float(total)))
     progress = int(100 * cur // total)
-    bar = ('#' * progress) + ('-' * (100 - progress))
-    print('\r |{}| {}%'.format(bar, percent), end='', flush=True)
+    bar = ("#" * progress) + ("-" * (100 - progress))
+    print("\r |{}| {}%".format(bar, percent), end="", flush=True)
 
 
 class UploadProgressHelper:
@@ -32,6 +32,7 @@ class UploadProgressHelper:
     Handles streaming uploads with python's requests library while printing a
     progress bar.
     """
+
     def __init__(self, filepath, chunk_size=5242880):
         self.filepath = filepath
         self.chunk_size = chunk_size
@@ -44,7 +45,7 @@ class UploadProgressHelper:
         are streamed from disk in chunks of the given size.  This will also update
         the progress bar.
         """
-        with open(self.filepath, 'rb') as upload_file:
+        with open(self.filepath, "rb") as upload_file:
             while True:
                 data = upload_file.read(self.chunk_size)
                 if not data:
@@ -64,22 +65,36 @@ def call(args, context):
     """
     parser = argparse.ArgumentParser(PLUGIN_BASE, add_help=True)
 
-    parser.add_argument("--region", metavar="REGION", nargs="?", 
-                        help="The region to upload the image to.  The uploaded "
-                             "image will be available to deploy in all regions, "
-                             "but initial deploys will be faster in the same region. "
-                             "Uploads will be faster to regions closer to you. "
-                             "Your default configured region is used if this is "
-                             "omitted.")
-    parser.add_argument("--label", metavar="LABEL", nargs="?",
-                        help="Label for the new Image.  If omitted, the filename "
-                             "will be used.")
-    parser.add_argument("--description", metavar="DESC", nargs="?",
-                        help="A description for this Image.  Blank if omitted.")
-    parser.add_argument("file", metavar="FILE",
-                        help="The image file to upload.  Should be a raw disk image "
-                             "compressed with gzip, in .img.gz format.  We recommend "
-                             "using unpartitioned images with an ext3 or ext4 filesystem.")
+    parser.add_argument(
+        "--region",
+        metavar="REGION",
+        nargs="?",
+        help="The region to upload the image to.  The uploaded "
+        "image will be available to deploy in all regions, "
+        "but initial deploys will be faster in the same region. "
+        "Uploads will be faster to regions closer to you. "
+        "Your default configured region is used if this is "
+        "omitted.",
+    )
+    parser.add_argument(
+        "--label",
+        metavar="LABEL",
+        nargs="?",
+        help="Label for the new Image.  If omitted, the filename " "will be used.",
+    )
+    parser.add_argument(
+        "--description",
+        metavar="DESC",
+        nargs="?",
+        help="A description for this Image.  Blank if omitted.",
+    )
+    parser.add_argument(
+        "file",
+        metavar="FILE",
+        help="The image file to upload.  Should be a raw disk image "
+        "compressed with gzip, in .img.gz format.  We recommend "
+        "using unpartitioned images with an ext3 or ext4 filesystem.",
+    )
 
     parsed = parser.parse_args(args)
 
@@ -95,7 +110,11 @@ def call(args, context):
 
     # make sure it's not larger than the max upload size
     if os.path.getsize(filepath) > MAX_UPLOAD_SIZE:
-        print("File {} is too large; compressed size must be less than 5GB".format(filepath))
+        print(
+            "File {} is too large; compressed size must be less than 5GB".format(
+                filepath
+            )
+        )
         exit(2)
 
     if not parsed.region:
@@ -113,14 +132,18 @@ def call(args, context):
 
     if status != 200:
         if status == 401:
-            print("Your token was not authorized to use this endpoint.  Please "
-                  "reconfigure the CLI with `linode-cli configure` to ensure you "
-                  "can make this request.")
+            print(
+                "Your token was not authorized to use this endpoint.  Please "
+                "reconfigure the CLI with `linode-cli configure` to ensure you "
+                "can make this request."
+            )
             exit(3)
         if status == 404:
-            print("It looks like you are not in the Machine Images Beta, and therefore "
-                  "cannot upload images yet.  Please stay tuned, or open a support ticket "
-                  "to request access.")
+            print(
+                "It looks like you are not in the Machine Images Beta, and therefore "
+                "cannot upload images yet.  Please stay tuned, or open a support ticket "
+                "to request access."
+            )
             exit(4)
         print("Upload failed with status {}; response was {}".format(status, resp))
         exit(3)
@@ -131,7 +154,9 @@ def call(args, context):
 
     # attempt to do the upload - use a streaming upload so that large files won't
     # be loaded entirely into memory
-    requests.put(upload_url, headers={
+    requests.put(
+        upload_url,
+        headers={
             "Content-type": "application/octet-stream",
         },
         data=UploadProgressHelper(filepath),

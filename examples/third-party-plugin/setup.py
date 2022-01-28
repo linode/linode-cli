@@ -13,11 +13,11 @@ setup(
     description="Example third party plugin for the Linode CLI",
     # replace these fields with information about yourself or your organization
     author="linode",
-    author_email='developers@linode.com',
+    author_email="developers@linode.com",
     # in this case, the plugin is a single file, so that file is listed here
     # replace with the name of your plugin file, or use ``packages=[]`` to list
     # whole python modules to include
     py_modules=[
-        'example_third_party_plugin',
+        "example_third_party_plugin",
     ],
 )

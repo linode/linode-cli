@@ -8,15 +8,21 @@ from terminaltables import SingleTable
 
 
 class OutputMode(Enum):
-    table=1
-    delimited=2
-    json=3
-    markdown=4
+    table = 1
+    delimited = 2
+    json = 3
+    markdown = 4
 
 
 class OutputHandler:
-    def __init__(self, mode=OutputMode.table, delimiter='\t', headers=True,
-                 pretty_json=False, columns=None):
+    def __init__(
+        self,
+        mode=OutputMode.table,
+        delimiter="\t",
+        headers=True,
+        pretty_json=False,
+        columns=None,
+    ):
         self.mode = mode
         self.delimiter = delimiter
         self.pretty_json = pretty_json
@@ -56,12 +62,16 @@ class OutputHandler:
         Based on the configured columns, returns columns from a response model
         """
         if self.columns is None:
-            columns = [attr for attr in sorted(response_model.attrs, key=lambda c: c.display) if attr.display]
-        elif self.columns == '*':
+            columns = [
+                attr
+                for attr in sorted(response_model.attrs, key=lambda c: c.display)
+                if attr.display
+            ]
+        elif self.columns == "*":
             columns = [attr for attr in response_model.attrs]
         else:
             columns = []
-            for col in self.columns.split(','):
+            for col in self.columns.split(","):
                 for attr in response_model.attrs:
                     if attr.column_name == col:
                         response_model.attrs.remove(attr)
@@ -82,18 +92,18 @@ class OutputHandler:
         content = []
 
         if isinstance(columns[0], str):
-            content=data
+            content = data
         else:
             for model in data:
                 content.append([attr.render_value(model) for attr in columns])
 
         if self.headers:
-            content = [header]+content
+            content = [header] + content
 
         tab = SingleTable(content)
 
         if title is not None:
-            tab.title=title
+            tab.title = title
 
         if not self.headers:
             tab.inner_heading_row_border = False
@@ -104,7 +114,7 @@ class OutputHandler:
         """
         Prints data in delimited format with the given delimiter
         """
-        content=[]
+        content = []
 
         if isinstance(columns[0], str):
             content = data
@@ -113,7 +123,7 @@ class OutputHandler:
                 content.append([attr.get_string(model) for attr in columns])
 
         if self.headers:
-            content=[header]+content
+            content = [header] + content
 
         for row in content:
             print(self.delimiter.join(row), file=to)
@@ -123,16 +133,22 @@ class OutputHandler:
         Prints data in JSON format
         """
         content = []
-        if len(data) and isinstance(data[0], dict): # we got delimited json in
+        if len(data) and isinstance(data[0], dict):  # we got delimited json in
             # parse down to the value we display
             for row in data:
                 content.append(self._select_json_elements(header, row))
-        else: # this is a list
+        else:  # this is a list
             for row in data:
                 content.append({h: v for h, v in zip(header, row)})
 
-        print(json.dumps(content, indent=2 if self.pretty_json else None,
-                         sort_keys=self.pretty_json), file=to)
+        print(
+            json.dumps(
+                content,
+                indent=2 if self.pretty_json else None,
+                sort_keys=self.pretty_json,
+            ),
+            file=to,
+        )
 
     def _select_json_elements(self, keys, json):
         """
@@ -157,14 +173,16 @@ class OutputHandler:
         content = []
 
         if isinstance(columns[0], str):
-            content=data
+            content = data
         else:
             for model in data:
-                content.append([attr.render_value(model, colorize=False) for attr in columns])
+                content.append(
+                    [attr.render_value(model, colorize=False) for attr in columns]
+                )
 
         if header:
-            print('| ' + ' | '.join([str(c) for c in header]) + ' |')
-            print('|---' * len(header) + '|')
+            print("| " + " | ".join([str(c) for c in header]) + " |")
+            print("|---" * len(header) + "|")
 
         for row in content:
-            print('| ' + ' | '.join([str(c) for c in row]) + ' |')
+            print("| " + " | ".join([str(c) for c in row]) + " |")

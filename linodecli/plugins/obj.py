@@ -23,21 +23,22 @@ try:
     from boto.s3.connection import OrdinaryCallingFormat
     from boto.s3.key import Key
     from boto.s3.prefix import Prefix
+
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
 
 
 # replace {} with the cluster name
-BASE_URL_TEMPLATE = '{}.linodeobjects.com'
-BASE_WEBSITE_TEMPLATE = 'website-{}.linodeobjects.com'
+BASE_URL_TEMPLATE = "{}.linodeobjects.com"
+BASE_WEBSITE_TEMPLATE = "website-{}.linodeobjects.com"
 
 # for all date output
-DATE_FORMAT = '%Y-%m-%d %H:%M'
-INCOMING_DATE_FORMAT = '%Y-%m-%dT%H:%M:%S.%fZ'
+DATE_FORMAT = "%Y-%m-%d %H:%M"
+INCOMING_DATE_FORMAT = "%Y-%m-%dT%H:%M:%S.%fZ"
 
 # for help commands
-PLUGIN_BASE = 'linode-cli obj'
+PLUGIN_BASE = "linode-cli obj"
 
 # constant error messages
 NO_SCOPES_ERROR = """Your OAuth token isn't authorized to create Object Storage keys.
@@ -71,39 +72,44 @@ def list_objects_or_buckets(get_client, args):
     """
     Lists buckets or objects
     """
-    parser = argparse.ArgumentParser(PLUGIN_BASE+' ls')
+    parser = argparse.ArgumentParser(PLUGIN_BASE + " ls")
 
-    parser.add_argument('bucket', metavar='NAME', type=str, nargs='?',
-                        help="Optional.  If not given, lists all buckets.  If given, "
-                             "lists the contents of the given bucket.  May contain a "
-                             "/ followed by a directory path to show the contents of "
-                             "a directory within the named bucket.")
+    parser.add_argument(
+        "bucket",
+        metavar="NAME",
+        type=str,
+        nargs="?",
+        help="Optional.  If not given, lists all buckets.  If given, "
+        "lists the contents of the given bucket.  May contain a "
+        "/ followed by a directory path to show the contents of "
+        "a directory within the named bucket.",
+    )
 
     parsed = parser.parse_args(args)
     client = get_client()
 
     if parsed.bucket:
         # list objects
-        if '/' in parsed.bucket:
-            bucket_name, prefix = parsed.bucket.split('/', 1)
+        if "/" in parsed.bucket:
+            bucket_name, prefix = parsed.bucket.split("/", 1)
         else:
             bucket_name = parsed.bucket
-            prefix = ''
+            prefix = ""
 
         try:
             bucket = client.get_bucket(bucket_name)
         except S3ResponseError:
-            print('No bucket named '+bucket_name)
+            print("No bucket named " + bucket_name)
             sys.exit(2)
 
         data = []
-        for c in bucket.list(prefix=prefix, delimiter='/'):
+        for c in bucket.list(prefix=prefix, delimiter="/"):
             if isinstance(c, Prefix):
-                size = 'DIR'
+                size = "DIR"
             else:
                 size = c.size
 
-            datetime = _convert_datetime(c.last_modified) if size != 'DIR' else ' '*16
+            datetime = _convert_datetime(c.last_modified) if size != "DIR" else " " * 16
 
             data.append([datetime, size, c.name])
 
@@ -116,9 +122,7 @@ def list_objects_or_buckets(get_client, args):
         # list buckets
         buckets = client.get_all_buckets()
 
-        data = [
-                [_convert_datetime(b.creation_date), b.name] for b in buckets
-        ]
+        data = [[_convert_datetime(b.creation_date), b.name] for b in buckets]
 
         tab = _borderless_table(data)
         print(tab.table)
@@ -130,17 +134,18 @@ def create_bucket(get_client, args):
     """
     Creates a new bucket
     """
-    parser = argparse.ArgumentParser(PLUGIN_BASE+' mb')
+    parser = argparse.ArgumentParser(PLUGIN_BASE + " mb")
 
-    parser.add_argument('name', metavar='NAME', type=str,
-                        help="The name of the bucket to create.")
+    parser.add_argument(
+        "name", metavar="NAME", type=str, help="The name of the bucket to create."
+    )
 
     parsed = parser.parse_args(args)
     client = get_client()
 
     client.create_bucket(parsed.name)
 
-    print('Bucket {} created'.format(parsed.name))
+    print("Bucket {} created".format(parsed.name))
     sys.exit(0)
 
 
@@ -148,14 +153,18 @@ def delete_bucket(get_client, args):
     """
     Deletes a bucket
     """
-    parser = argparse.ArgumentParser(PLUGIN_BASE+' rb')
+    parser = argparse.ArgumentParser(PLUGIN_BASE + " rb")
 
-    parser.add_argument('name', metavar='NAME', type=str,
-                        help="The name of the bucket to remove.")
-    parser.add_argument('--recursive', action="store_true",
-                        help="If given, force removal of non-empty buckets by deleting "
-                             "all objects in the bucket before deleting the bucket.  For "
-                             "large buckets, this may take a while.")
+    parser.add_argument(
+        "name", metavar="NAME", type=str, help="The name of the bucket to remove."
+    )
+    parser.add_argument(
+        "--recursive",
+        action="store_true",
+        help="If given, force removal of non-empty buckets by deleting "
+        "all objects in the bucket before deleting the bucket.  For "
+        "large buckets, this may take a while.",
+    )
 
     parsed = parser.parse_args(args)
     client = get_client()
@@ -164,7 +173,7 @@ def delete_bucket(get_client, args):
         try:
             bucket = client.get_bucket(parsed.name)
         except S3ResponseError:
-            print('No bucket named '+parsed.name)
+            print("No bucket named " + parsed.name)
             sys.exit(2)
 
         for c in bucket.list():
@@ -182,16 +191,20 @@ def upload_object(get_client, args):
     """
     Uploads an object to object storage
     """
-    parser = argparse.ArgumentParser(PLUGIN_BASE+' put')
+    parser = argparse.ArgumentParser(PLUGIN_BASE + " put")
 
-    parser.add_argument('file', metavar='FILE', type=str, nargs='+',
-                        help="The files to upload.")
-    parser.add_argument('bucket', metavar='BUCKET', type=str,
-                        help="The bucket to put a file in.")
-    parser.add_argument('--acl-public', action='store_true',
-                        help="If set, the new object can be downloaded without "
-                             "authentication.")
-    #parser.add_argument('--recursive', action='store_true',
+    parser.add_argument(
+        "file", metavar="FILE", type=str, nargs="+", help="The files to upload."
+    )
+    parser.add_argument(
+        "bucket", metavar="BUCKET", type=str, help="The bucket to put a file in."
+    )
+    parser.add_argument(
+        "--acl-public",
+        action="store_true",
+        help="If set, the new object can be downloaded without " "authentication.",
+    )
+    # parser.add_argument('--recursive', action='store_true',
     #                    help="If set, upload directories recursively.")
 
     parsed = parser.parse_args(args)
@@ -204,7 +217,7 @@ def upload_object(get_client, args):
         file_path = os.path.expanduser(c)
 
         if not os.path.isfile(file_path):
-            print('No file {}'.format(file_path))
+            print("No file {}".format(file_path))
             sys.exit(5)
 
         filename = os.path.split(file_path)[-1]
@@ -220,10 +233,10 @@ def upload_object(get_client, args):
     try:
         bucket = client.get_bucket(parsed.bucket)
     except S3ResponseError:
-        print('No bucket named '+parsed.bucket)
+        print("No bucket named " + parsed.bucket)
         sys.exit(2)
 
-    policy = 'public-read' if parsed.acl_public else None
+    policy = "public-read" if parsed.acl_public else None
 
     for filename, file_path in to_upload:
         k = Key(bucket)
@@ -235,7 +248,7 @@ def upload_object(get_client, args):
     for filename, file_path, file_size in to_multipart_upload:
         _do_multipart_upload(bucket, filename, file_path, file_size, policy)
 
-    print('Done.')
+    print("Done.")
 
 
 def _do_multipart_upload(bucket, filename, file_path, file_size, policy):
@@ -265,8 +278,10 @@ def _do_multipart_upload(bucket, filename, file_path, file_size, policy):
     try:
         with open(file_path, "rb") as f:
             for i in range(num_chunks):
-                print(" Part {}".format(i+1))
-                upload.upload_part_from_file(f, i+1, cb=_progress, num_cb=100, size=MULTIPART_UPLOAD_CHUNK_SIZE)
+                print(" Part {}".format(i + 1))
+                upload.upload_part_from_file(
+                    f, i + 1, cb=_progress, num_cb=100, size=MULTIPART_UPLOAD_CHUNK_SIZE
+                )
     except Exception as e:
         print("Upload failed!  Cleaning up!")
         upload.cancel_upload()
@@ -279,15 +294,22 @@ def get_object(get_client, args):
     """
     Retrieves an uploaded object and writes it to a file
     """
-    parser = argparse.ArgumentParser(PLUGIN_BASE+' get')
+    parser = argparse.ArgumentParser(PLUGIN_BASE + " get")
 
-    parser.add_argument('bucket', metavar='BUCKET', type=str,
-                        help="The bucket the file is in.")
-    parser.add_argument('file', metavar='OBJECT', type=str,
-                        help="The object to retrieve.")
-    parser.add_argument('destination', metavar='LOCAL_FILE', type=str, nargs='?',
-                        help='The destination file. If omitted, uses the object '
-                             'name and saves to the current directory.')
+    parser.add_argument(
+        "bucket", metavar="BUCKET", type=str, help="The bucket the file is in."
+    )
+    parser.add_argument(
+        "file", metavar="OBJECT", type=str, help="The object to retrieve."
+    )
+    parser.add_argument(
+        "destination",
+        metavar="LOCAL_FILE",
+        type=str,
+        nargs="?",
+        help="The destination file. If omitted, uses the object "
+        "name and saves to the current directory.",
+    )
 
     parsed = parser.parse_args(args)
     client = get_client()
@@ -302,30 +324,32 @@ def get_object(get_client, args):
     try:
         bucket = client.get_bucket(parsed.bucket)
     except S3ResponseError:
-        print('No bucket named '+parsed.bucket)
+        print("No bucket named " + parsed.bucket)
         sys.exit(2)
 
     k = bucket.get_key(parsed.file)
 
     if k is None:
-        print('No {} in {}'.format(parsed.file, parsed.bucket))
+        print("No {} in {}".format(parsed.file, parsed.bucket))
         sys.exit(2)
 
     k.get_contents_to_filename(destination, cb=_progress, num_cb=100)
 
-    print('Done.')
+    print("Done.")
 
 
 def delete_object(get_client, args):
     """
     Removes a file from a bucket
     """
-    parser = argparse.ArgumentParser(PLUGIN_BASE+' del')
+    parser = argparse.ArgumentParser(PLUGIN_BASE + " del")
 
-    parser.add_argument('bucket', metavar='BUCKET', type=str,
-                        help="The bucket to delete from.")
-    parser.add_argument('file', metavar='OBJECT', type=str,
-                        help="The object to remove.")
+    parser.add_argument(
+        "bucket", metavar="BUCKET", type=str, help="The bucket to delete from."
+    )
+    parser.add_argument(
+        "file", metavar="OBJECT", type=str, help="The object to remove."
+    )
 
     parsed = parser.parse_args(args)
     client = get_client()
@@ -334,42 +358,48 @@ def delete_object(get_client, args):
     try:
         bucket = client.get_bucket(parsed.bucket)
     except S3ResponseError:
-        print('No bucket named '+parsed.bucket)
+        print("No bucket named " + parsed.bucket)
         sys.exit(2)
 
     k = bucket.get_key(parsed.file)
 
     if k is None:
-        print('No {} in {}'.format(parsed.file, parsed.bucket))
+        print("No {} in {}".format(parsed.file, parsed.bucket))
         sys.exit(2)
 
     # delete the key
     k.delete()
 
-    print('{} removed from {}'.format(parsed.file, parsed.bucket))
+    print("{} removed from {}".format(parsed.file, parsed.bucket))
 
 
 def generate_url(get_client, args):
     """
     Generates a URL to an object
     """
-    parser = argparse.ArgumentParser(PLUGIN_BASE+' signurl')
+    parser = argparse.ArgumentParser(PLUGIN_BASE + " signurl")
 
-    parser.add_argument('bucket', metavar='BUCKET', type=str,
-                        help="The bucket containing the object.")
-    parser.add_argument('file', metavar='OBJECT', type=str,
-                        help="The object to sign a URL to.")
-    parser.add_argument('expiry', metavar='EXPIRY', type=str,
-                        help="When this link should expire.  Treated as an epoch "
-                             "time if a number. If starts with a '+' treated as "
-                             "an offset.")
+    parser.add_argument(
+        "bucket", metavar="BUCKET", type=str, help="The bucket containing the object."
+    )
+    parser.add_argument(
+        "file", metavar="OBJECT", type=str, help="The object to sign a URL to."
+    )
+    parser.add_argument(
+        "expiry",
+        metavar="EXPIRY",
+        type=str,
+        help="When this link should expire.  Treated as an epoch "
+        "time if a number. If starts with a '+' treated as "
+        "an offset.",
+    )
 
     parsed = parser.parse_args(args)
     client = get_client()
 
     now = datetime.now()
 
-    if parsed.expiry.startswith('+'):
+    if parsed.expiry.startswith("+"):
         # this is an offset in seconds
         offset = int(parsed.expiry[1:])
     else:
@@ -380,13 +410,13 @@ def generate_url(get_client, args):
     try:
         bucket = client.get_bucket(parsed.bucket)
     except S3ResponseError:
-        print('No bucket named '+parsed.bucket)
+        print("No bucket named " + parsed.bucket)
         sys.exit(2)
 
     k = bucket.get_key(parsed.file)
 
     if k is None:
-        print('No {} in {}'.format(parsed.file, parsed.bucket))
+        print("No {} in {}".format(parsed.file, parsed.bucket))
         sys.exit(2)
 
     url = k.generate_url(offset)
@@ -398,35 +428,45 @@ def set_acl(get_client, args):
     """
     Modify Access Control List for a Bucket or Objects
     """
-    parser = argparse.ArgumentParser(PLUGIN_BASE+' setacl')
+    parser = argparse.ArgumentParser(PLUGIN_BASE + " setacl")
 
-    parser.add_argument('bucket', metavar='BUCKET', type=str,
-                        help="The bucket to modify.")
-    parser.add_argument('file', metavar='OBJECT', type=str, nargs='?',
-                        help="Optional.  The object to modify.  If omitted, modifies "
-                             "the ACLs for the entire bucket.")
-    parser.add_argument('--acl-public', action='store_true',
-                        help="If given, makes the target publicly readable.")
-    parser.add_argument('--acl-private', action='store_true',
-                        help="If given, makes the target private.")
+    parser.add_argument(
+        "bucket", metavar="BUCKET", type=str, help="The bucket to modify."
+    )
+    parser.add_argument(
+        "file",
+        metavar="OBJECT",
+        type=str,
+        nargs="?",
+        help="Optional.  The object to modify.  If omitted, modifies "
+        "the ACLs for the entire bucket.",
+    )
+    parser.add_argument(
+        "--acl-public",
+        action="store_true",
+        help="If given, makes the target publicly readable.",
+    )
+    parser.add_argument(
+        "--acl-private", action="store_true", help="If given, makes the target private."
+    )
 
     parsed = parser.parse_args(args)
     client = get_client()
 
     # make sure the call is sane
     if parsed.acl_public and parsed.acl_private:
-        print('You may not set the ACL to public and private in the same call')
+        print("You may not set the ACL to public and private in the same call")
         sys.exit(1)
 
     if not parsed.acl_public and not parsed.acl_private:
-        print('You must choose an ACL to apply')
+        print("You must choose an ACL to apply")
         sys.exit(1)
 
     # get the bucket
     try:
         bucket = client.get_bucket(parsed.bucket)
     except S3ResponseError:
-        print('No bucket named '+parsed.bucket)
+        print("No bucket named " + parsed.bucket)
         sys.exit(2)
 
     act_on = bucket
@@ -435,27 +475,39 @@ def set_acl(get_client, args):
         k = bucket.get_key(parsed.file)
 
         if k is None:
-            print('No {} in {}'.format(parsed.file, parsed.bucket))
+            print("No {} in {}".format(parsed.file, parsed.bucket))
             sys.exit(2)
 
         act_on = k
 
-    act_on.set_acl('public-read' if parsed.acl_public else 'private')
-    print('ACL updated')
+    act_on.set_acl("public-read" if parsed.acl_public else "private")
+    print("ACL updated")
 
 
 def enable_static_site(get_client, args):
     """
     Turns a bucket into a static website
     """
-    parser = argparse.ArgumentParser(PLUGIN_BASE+' ws-create')
+    parser = argparse.ArgumentParser(PLUGIN_BASE + " ws-create")
 
-    parser.add_argument('bucket', metavar='BUCKET', type=str,
-                        help="The bucket to turn into a static site")
-    parser.add_argument('--ws-index', metavar='INDEX', type=str,
-                        help='The file to serve as the index of the website')
-    parser.add_argument('--ws-error', metavar='ERROR', type=str,
-                        help='The file to serve as the error page of the website')
+    parser.add_argument(
+        "bucket",
+        metavar="BUCKET",
+        type=str,
+        help="The bucket to turn into a static site",
+    )
+    parser.add_argument(
+        "--ws-index",
+        metavar="INDEX",
+        type=str,
+        help="The file to serve as the index of the website",
+    )
+    parser.add_argument(
+        "--ws-error",
+        metavar="ERROR",
+        type=str,
+        help="The file to serve as the error page of the website",
+    )
 
     parsed = parser.parse_args(args)
     client = get_client()
@@ -464,26 +516,31 @@ def enable_static_site(get_client, args):
     try:
         bucket = client.get_bucket(parsed.bucket)
     except S3ResponseError:
-        print('No bucket named '+parsed.bucket)
+        print("No bucket named " + parsed.bucket)
         sys.exit(2)
 
     # make the site
-    bucket.set_acl('public-read')
+    bucket.set_acl("public-read")
     bucket.configure_website(parsed.ws_index, parsed.ws_error)
     print(
-        'Static site now available at https://{}.website-{}.linodeobjects.com'.format(
+        "Static site now available at https://{}.website-{}.linodeobjects.com".format(
             parsed.bucket, client.obj_cluster
-    ))
+        )
+    )
 
 
 def static_site_info(get_client, args):
     """
     Returns info about a configured static site
     """
-    parser = argparse.ArgumentParser(PLUGIN_BASE+' ws-info')
+    parser = argparse.ArgumentParser(PLUGIN_BASE + " ws-info")
 
-    parser.add_argument('bucket', metavar='BUCKET', type=str,
-                        help="The bucket to return static site information on.")
+    parser.add_argument(
+        "bucket",
+        metavar="BUCKET",
+        type=str,
+        help="The bucket to return static site information on.",
+    )
 
     parsed = parser.parse_args(args)
     client = get_client()
@@ -492,32 +549,38 @@ def static_site_info(get_client, args):
     try:
         bucket = client.get_bucket(parsed.bucket)
     except S3ResponseError:
-        print('No bucket named '+parsed.bucket)
+        print("No bucket named " + parsed.bucket)
         sys.exit(2)
 
     info = bucket.get_website_configuration()
 
-    index = info['WebsiteConfiguration']['IndexDocument']['Suffix']
-    error = info['WebsiteConfiguration']['ErrorDocument']['Key']
+    index = info["WebsiteConfiguration"]["IndexDocument"]["Suffix"]
+    error = info["WebsiteConfiguration"]["ErrorDocument"]["Key"]
 
-    print('Bucket {}: Website configuration'.format(parsed.bucket))
-    print('Website endpoint: {}.{}'.format(
-            parsed.bucket,
-            BASE_WEBSITE_TEMPLATE.format(client.host.split('.')[0])
-    ))
-    print('Index document: {}'.format(index))
-    print('Error document: {}'.format(error))
+    print("Bucket {}: Website configuration".format(parsed.bucket))
+    print(
+        "Website endpoint: {}.{}".format(
+            parsed.bucket, BASE_WEBSITE_TEMPLATE.format(client.host.split(".")[0])
+        )
+    )
+    print("Index document: {}".format(index))
+    print("Error document: {}".format(error))
 
 
 def show_usage(get_client, args):
     """
     Shows space used by all buckets in this cluster, and total space
     """
-    parser = argparse.ArgumentParser(PLUGIN_BASE+' du')
+    parser = argparse.ArgumentParser(PLUGIN_BASE + " du")
 
-    parser.add_argument('bucket', metavar='BUCKET', type=str, nargs='?',
-                        help="Optional.  If given, only shows usage for that bucket. "
-                             "If omitted, shows usage for all buckets.")
+    parser.add_argument(
+        "bucket",
+        metavar="BUCKET",
+        type=str,
+        nargs="?",
+        help="Optional.  If given, only shows usage for that bucket. "
+        "If omitted, shows usage for all buckets.",
+    )
 
     parsed = parser.parse_args(args)
     client = get_client()
@@ -526,7 +589,7 @@ def show_usage(get_client, args):
         try:
             buckets = [client.get_bucket(parsed.bucket)]
         except S3ResponseError:
-            print('No bucket named '+parsed.bucket)
+            print("No bucket named " + parsed.bucket)
             sys.exit(2)
     else:
         # all buckets
@@ -535,7 +598,7 @@ def show_usage(get_client, args):
     grand_total = 0
     for b in buckets:
         # find total size of each
-        total = num  = 0
+        total = num = 0
         for obj in b.list():
             num += 1
             total += obj.size
@@ -544,12 +607,14 @@ def show_usage(get_client, args):
 
         total = _denominate(total)
 
-        tab = _borderless_table([[_pad_to(total, length=7), '{} objects'.format(num), b.name]])
+        tab = _borderless_table(
+            [[_pad_to(total, length=7), "{} objects".format(num), b.name]]
+        )
         print(tab.table)
 
     if len(buckets) > 1:
-        print('--------')
-        print('{} Total'.format(_denominate(grand_total)))
+        print("--------")
+        print("{} Total".format(_denominate(grand_total)))
 
     exit(0)
 
@@ -559,7 +624,7 @@ def _denominate(total):
     Coverts bucket size to human readable bytes.
     """
     total = float(total)
-    denomination = ["KB", "MB","GB","TB"]
+    denomination = ["KB", "MB", "GB", "TB"]
     for x in denomination:
         if total > 1024:
             total = total / 1024
@@ -569,11 +634,12 @@ def _denominate(total):
             break
     return total
 
+
 def list_all_objects(get_client, args):
     """
     Lists all objects in all buckets
     """
-    parser = argparse.ArgumentParser(PLUGIN_BASE+' la')
+    parser = argparse.ArgumentParser(PLUGIN_BASE + " la")
     parsed = parser.parse_args(args)
     client = get_client()
 
@@ -585,16 +651,18 @@ def list_all_objects(get_client, args):
 
         for obj in b.list():
             if isinstance(obj, Prefix):
-                size = 'DIR'
+                size = "DIR"
             else:
                 size = obj.size
 
-            print('{} {}   {}/{}'.format(
-                _convert_datetime(obj.last_modified) if size != 'DIR' else ' '*16,
-                _pad_to(size, 9, right_align=True),
-                b.name,
-                obj.key
-            ))
+            print(
+                "{} {}   {}/{}".format(
+                    _convert_datetime(obj.last_modified) if size != "DIR" else " " * 16,
+                    _pad_to(size, 9, right_align=True),
+                    b.name,
+                    obj.key,
+                )
+            )
 
     exit(0)
 
@@ -603,10 +671,15 @@ def disable_static_site(get_client, args):
     """
     Disables static site for a bucket
     """
-    parser = argparse.ArgumentParser(PLUGIN_BASE+' du')
+    parser = argparse.ArgumentParser(PLUGIN_BASE + " du")
 
-    parser.add_argument('bucket', metavar='BUCKET', type=str, nargs='?',
-                        help="The bucket to disable static site for.")
+    parser.add_argument(
+        "bucket",
+        metavar="BUCKET",
+        type=str,
+        nargs="?",
+        help="The bucket to disable static site for.",
+    )
 
     parsed = parser.parse_args(args)
     client = get_client()
@@ -615,30 +688,30 @@ def disable_static_site(get_client, args):
     try:
         bucket = client.get_bucket(parsed.bucket)
     except S3ResponseError:
-        print('No bucket named '+parsed.bucket)
+        print("No bucket named " + parsed.bucket)
         sys.exit(2)
 
     # make the site
     bucket.delete_website_configuration()
-    print('Website configuration deleted for {}'.format(parsed.bucket))
+    print("Website configuration deleted for {}".format(parsed.bucket))
 
 
 COMMAND_MAP = {
-    'mb': create_bucket,
-    'rb': delete_bucket,
-    'ls': list_objects_or_buckets,
-    'la': list_all_objects,
-    'du': show_usage,
-    'put': upload_object,
-    'get': get_object,
-    'rm': delete_object,
-    'del': delete_object,
+    "mb": create_bucket,
+    "rb": delete_bucket,
+    "ls": list_objects_or_buckets,
+    "la": list_all_objects,
+    "du": show_usage,
+    "put": upload_object,
+    "get": get_object,
+    "rm": delete_object,
+    "del": delete_object,
     #'sync': sync_dir, TODO - syncs a directory
-    'signurl': generate_url,
-    'setacl': set_acl,
-    'ws-create': enable_static_site,
-    'ws-info': static_site_info,
-    'ws-delete': disable_static_site,
+    "signurl": generate_url,
+    "setacl": set_acl,
+    "ws-create": enable_static_site,
+    "ws-info": static_site_info,
+    "ws-delete": disable_static_site,
     #'info': get_info,
 }
 
@@ -649,24 +722,35 @@ def call(args, context):
     """
     if not HAS_BOTO:
         # we can't do anything - ask for an install
-        pip_version = 'pip3' if sys.version[0] == 3 else 'pip'
+        pip_version = "pip3" if sys.version[0] == 3 else "pip"
 
-        print("This plugin requires the 'boto' module.  Please install it by running "
-              "'{} install boto'".format(pip_version))
+        print(
+            "This plugin requires the 'boto' module.  Please install it by running "
+            "'{} install boto'".format(pip_version)
+        )
 
-        sys.exit(2) # requirements not met - we can't go on
+        sys.exit(2)  # requirements not met - we can't go on
 
     parser = argparse.ArgumentParser(PLUGIN_BASE, add_help=False)
-    parser.add_argument('command', metavar='COMMAND', nargs='?', type=str,
-                        help='The command to execute in object storage')
-    parser.add_argument('--cluster', metavar='CLUSTER', type=str,
-                        help='The cluster to use for the operation')
+    parser.add_argument(
+        "command",
+        metavar="COMMAND",
+        nargs="?",
+        type=str,
+        help="The command to execute in object storage",
+    )
+    parser.add_argument(
+        "--cluster",
+        metavar="CLUSTER",
+        type=str,
+        help="The cluster to use for the operation",
+    )
 
     parsed, args = parser.parse_known_args(args)
 
     # don't mind --no-defaults if it's there; the top-level parser already took care of it
     try:
-        args.remove('--no-defaults')
+        args.remove("--no-defaults")
     except ValueError:
         pass
 
@@ -686,11 +770,13 @@ def call(args, context):
         tab.inner_heading_row_border = False
         print(tab.table)
         print()
-        print("Additionally, you can regenerate your Object Storage keys using the "
-              "'regenerate-keys' command or configure defaults for the plugin using "
-              "the 'configure' command.")
+        print(
+            "Additionally, you can regenerate your Object Storage keys using the "
+            "'regenerate-keys' command or configure defaults for the plugin using "
+            "the 'configure' command."
+        )
         print()
-        print('See --help for individual commands for more information')
+        print("See --help for individual commands for more information")
 
         exit(0)
 
@@ -703,7 +789,11 @@ def call(args, context):
 
     if not "--help" in args:
         if access_key and not secret_key or secret_key and not access_key:
-            print("You must set both {} and {}, or neither".format(ENV_ACCESS_KEY_NAME, ENV_SECRET_KEY_NAME))
+            print(
+                "You must set both {} and {}, or neither".format(
+                    ENV_ACCESS_KEY_NAME, ENV_SECRET_KEY_NAME
+                )
+            )
             exit(1)
 
         # not given on command line, so look them up
@@ -712,7 +802,7 @@ def call(args, context):
 
     cluster = parsed.cluster
     if context.client.defaults:
-        cluster = cluster or context.client.config.plugin_get_value('cluster')
+        cluster = cluster or context.client.config.plugin_get_value("cluster")
 
     def get_client():
         """
@@ -726,10 +816,12 @@ def call(args, context):
             exit(1)
 
         if current_cluster is None:
-            print("Error: No default cluster is configured.  Either configure the CLI "
-                  "or invoke with --cluster to specify a cluster.")
+            print(
+                "Error: No default cluster is configured.  Either configure the CLI "
+                "or invoke with --cluster to specify a cluster."
+            )
             _configure_plugin(context.client)
-            current_cluster = context.client.config.plugin_get_value('cluster')
+            current_cluster = context.client.config.plugin_get_value("cluster")
 
         return _get_boto_client(current_cluster, access_key, secret_key)
 
@@ -738,32 +830,34 @@ def call(args, context):
             COMMAND_MAP[parsed.command](get_client, args)
         except S3ResponseError as e:
             if e.error_code:
-                print('Error: {}'.format(e.error_code))
+                print("Error: {}".format(e.error_code))
             else:
                 print(e)
             sys.exit(4)
         except S3CreateError as e:
-            print('Error: {}'.format(e))
+            print("Error: {}".format(e))
             sys.exit(5)
         except BotoClientError as e:
-            message_parts = e.message.split(':')
+            message_parts = e.message.split(":")
             if len(message_parts) > 0:
-                message = ':'.join(message_parts[0:])
+                message = ":".join(message_parts[0:])
             else:
                 message = e.message
-            print('Error: {}'.format(message))
+            print("Error: {}".format(message))
             sys.exit(6)
     elif parsed.command == "regenerate-keys":
         print("Regenerating Object Storage keys..")
         _get_s3_creds(context.client, force=True)
         print("Done.")
-        print("Warning: Your old Object Storage keys _were not_ automatically expired!  If you want "
-              "to expire them, see `linode-cli object-storage keys-list` and "
-              "`linode-cli object-storage keys-delete [KEYID]`.")
+        print(
+            "Warning: Your old Object Storage keys _were not_ automatically expired!  If you want "
+            "to expire them, see `linode-cli object-storage keys-list` and "
+            "`linode-cli object-storage keys-delete [KEYID]`."
+        )
     elif parsed.command == "configure":
         _configure_plugin(context.client)
     else:
-        print('No command {}'.format(parsed.command))
+        print("No command {}".format(parsed.command))
         sys.exit(1)
 
 
@@ -772,10 +866,12 @@ def _get_boto_client(cluster, access_key, secret_key):
     Returns a boto client object that can be used to communicate with the Object
     Storage cluster.
     """
-    client = boto.connect_s3(aws_access_key_id=access_key,
-                             aws_secret_access_key=secret_key,
-                             host=BASE_URL_TEMPLATE.format(cluster),
-                             calling_format=OrdinaryCallingFormat())
+    client = boto.connect_s3(
+        aws_access_key_id=access_key,
+        aws_secret_access_key=secret_key,
+        host=BASE_URL_TEMPLATE.format(cluster),
+        calling_format=OrdinaryCallingFormat(),
+    )
 
     # set this for later use
     client.obj_cluster = cluster
@@ -797,8 +893,8 @@ def _get_s3_creds(client, force=False):
     :returns: The access key and secret key for this user
     :rtype: tuple(str, str)
     """
-    access_key = client.config.plugin_get_value('access-key')
-    secret_key = client.config.plugin_get_value('secret-key')
+    access_key = client.config.plugin_get_value("access-key")
+    secret_key = client.config.plugin_get_value("secret-key")
 
     if force or access_key is None:
         # this means there are no stored s3 creds for this user - set them up
@@ -813,13 +909,14 @@ def _get_s3_creds(client, force=False):
                 "object storage keys were not configured.  Please set the following "
                 "variables in your environment: '{}' and '{}'.  If you'd rather ".format(
                     ENV_ACCESS_KEY_NAME, ENV_SECRET_KEY_NAME
-                )+"configure the CLI, unset the 'LINODE_CLI_TOKEN' environment "
+                )
+                + "configure the CLI, unset the 'LINODE_CLI_TOKEN' environment "
                 "variable and then run `linode-cli configure`."
             )
             exit(1)
 
         # before we do anything, can they do object storage?
-        status, resp = client.call_operation('account', 'view')
+        status, resp = client.call_operation("account", "view")
 
         if status != 200:
             if status == 401:
@@ -831,28 +928,28 @@ def _get_s3_creds(client, force=False):
                 print(NO_ACCESS_ERROR)
                 sys.exit(4)
             # something went wrong - give up
-            print('Key generation failed!')
+            print("Key generation failed!")
             sys.exit(4)
 
         # label caps at 50 characters - trim some stuff maybe
         # static characters in label account for 13 total
         # timestamp is 10 more
         # allow 13 characters both for username and hostname
-        timestamp_part = str(time.time()).split('.')[0]
+        timestamp_part = str(time.time()).split(".")[0]
         truncated_user = getpass.getuser()[:13]
         truncated_hostname = socket.gethostname()[:13]
 
-        creds_label = 'linode-cli-{}@{}-{}'.format(
-                truncated_user,
-                truncated_hostname,
-                timestamp_part)
+        creds_label = "linode-cli-{}@{}-{}".format(
+            truncated_user, truncated_hostname, timestamp_part
+        )
 
         if len(creds_label) > 50:
             # if this is somehow still too long, trim from the front
-            creds_label = creds_label[50-len(creds_label):]
+            creds_label = creds_label[50 - len(creds_label) :]
 
-        status, resp = client.call_operation('object-storage', 'keys-create',
-                                             ['--label', "{}".format(creds_label)])
+        status, resp = client.call_operation(
+            "object-storage", "keys-create", ["--label", "{}".format(creds_label)]
+        )
 
         if status != 200:
             if status == 401:
@@ -864,14 +961,14 @@ def _get_s3_creds(client, force=False):
                 print(NO_ACCESS_ERROR)
                 sys.exit(4)
             # something went wrong - give up
-            print('Key generation failed!')
+            print("Key generation failed!")
             sys.exit(3)
 
-        access_key = resp['access_key']
-        secret_key = resp['secret_key']
+        access_key = resp["access_key"]
+        secret_key = resp["secret_key"]
 
-        client.config.plugin_set_value('access-key', access_key)
-        client.config.plugin_set_value('secret-key', secret_key)
+        client.config.plugin_set_value("access-key", access_key)
+        client.config.plugin_set_value("secret-key", secret_key)
         client.config.write_config(silent=True)
 
     return access_key, secret_key
@@ -881,20 +978,22 @@ def _configure_plugin(client):
     """
     Configures a default cluster value.
     """
-    clusters = [c['id'] for c in client.config._do_get_request(
-        '/object-storage/clusters',
-        token=client.config.get_value('token')
-    )['data']]
+    clusters = [
+        c["id"]
+        for c in client.config._do_get_request(
+            "/object-storage/clusters", token=client.config.get_value("token")
+        )["data"]
+    ]
 
     cluster = client.config._default_thing_input(
-        'Configure a default Cluster for operations.',
+        "Configure a default Cluster for operations.",
         clusters,
-        'Default Cluster: ',
-        'Please select a valid Cluster',
-        optional=False  # this is the only configuration right now
+        "Default Cluster: ",
+        "Please select a valid Cluster",
+        optional=False,  # this is the only configuration right now
     )
 
-    client.config.plugin_set_value('cluster', cluster)
+    client.config.plugin_set_value("cluster", cluster)
     client.config.write_config()
 
 
@@ -904,8 +1003,8 @@ def _progress(cur, total):
     """
     percent = ("{0:.1f}").format(100 * (cur / float(total)))
     progress = int(100 * cur // total)
-    bar = ('#' * progress) + ('-' * (100 - progress))
-    print('\r |{}| {}%'.format(bar, percent), end='\r')
+    bar = ("#" * progress) + ("-" * (100 - progress))
+    print("\r |{}| {}%".format(bar, percent), end="\r")
 
     if cur == total:
         print()
@@ -920,8 +1019,8 @@ def _borderless_table(data):
     tab.inner_heading_row_border = False
     tab.inner_column_border = False
     tab.outer_border = False
-    tab.padding_left=0
-    tab.padding_right=2
+    tab.padding_left = 0
+    tab.padding_right = 2
 
     return tab
 
@@ -941,7 +1040,7 @@ def _pad_to(val, length=10, right_align=False):
     padding = ""
 
     if len(ret) < 10:
-        padding = " "*(10-len(ret))
+        padding = " " * (10 - len(ret))
 
     if right_align:
         ret = padding + ret

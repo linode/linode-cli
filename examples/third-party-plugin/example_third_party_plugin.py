@@ -10,9 +10,10 @@ information.
 #: register it.  This is required for all third party plugins.
 PLUGIN_NAME = "example-plugin"
 
+
 def call(args, context):
     """
     This is the entrypoint for the plugin when invoked through the CLI.  See the
     docs linked above for more information.
     """
-    print('Hello world!')
+    print("Hello world!")
