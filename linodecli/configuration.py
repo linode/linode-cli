@@ -5,7 +5,6 @@ used elsewhere.
 from __future__ import print_function
 
 import argparse
-from datetime import datetime
 import re
 from http import server
 import socket

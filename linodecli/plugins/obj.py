@@ -1,6 +1,5 @@
 from __future__ import print_function
 import argparse
-import base64
 from datetime import datetime
 import getpass
 import math
@@ -8,9 +7,6 @@ import socket
 import sys
 import time
 import os
-from subprocess import call as spcall, Popen, PIPE
-import hashlib
-import shutil
 from terminaltables import SingleTable
 from math import ceil
 from linodecli.configuration import input_helper
