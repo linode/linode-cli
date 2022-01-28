@@ -4,9 +4,9 @@ Classes related to OpenAPI-defined operations and their arguments and parameters
 from __future__ import print_function
 
 import argparse
-from getpass import getpass
 import json
-from os import path, environ
+from getpass import getpass
+from os import environ, path
 
 
 def parse_boolean(value):

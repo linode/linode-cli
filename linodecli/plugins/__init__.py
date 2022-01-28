@@ -1,8 +1,7 @@
+import sys
 from importlib import import_module
 from os import listdir
 from os.path import dirname
-import sys
-
 
 _available_files = listdir(dirname(__file__))
 available_local = [f[:-3] for f in _available_files if f.endswith('.py') and f != '__init__.py']

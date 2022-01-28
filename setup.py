@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-from io import open
-from setuptools import setup
-from os import path
 import subprocess
+from io import open
+from os import path
 
+from setuptools import setup
 
 here = path.abspath(path.dirname(__file__))
 

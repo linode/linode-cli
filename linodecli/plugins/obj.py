@@ -1,23 +1,25 @@
 from __future__ import print_function
+
 import argparse
-from datetime import datetime
 import getpass
 import math
+import os
 import socket
 import sys
 import time
-import os
-from terminaltables import SingleTable
+from datetime import datetime
 from math import ceil
-from linodecli.configuration import input_helper
 
+from terminaltables import SingleTable
+
+from linodecli.configuration import input_helper
 
 ENV_ACCESS_KEY_NAME = "LINODE_CLI_OBJ_ACCESS_KEY"
 ENV_SECRET_KEY_NAME = "LINODE_CLI_OBJ_SECRET_KEY"
 
 try:
     import boto
-    from boto.exception import S3CreateError, S3ResponseError, BotoClientError
+    from boto.exception import BotoClientError, S3CreateError, S3ResponseError
     from boto.s3.connection import OrdinaryCallingFormat
     from boto.s3.key import Key
     from boto.s3.prefix import Prefix

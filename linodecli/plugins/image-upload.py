@@ -6,10 +6,12 @@ Usage:
    linode-cli image-upload --region us-east --label my-image /path/to/image.gz
 """
 from __future__ import print_function
+
 import argparse
-import requests
 import os
 from sys import exit
+
+import requests
 
 PLUGIN_BASE = 'linode-cli image-upload'
 MAX_UPLOAD_SIZE = 5 * 1024 * 1024 * 1024 # 5GB

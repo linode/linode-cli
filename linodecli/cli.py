@@ -3,20 +3,19 @@ Responsible for managing spec and routing commands to operations.
 """
 from __future__ import print_function
 
-from distutils.version import StrictVersion, LooseVersion
 import json
 import os
 import pickle
+from distutils.version import LooseVersion, StrictVersion
 from string import Template
 from sys import exit, prefix, stderr, version_info
 
 import requests
 
-from .operation import CLIArg, CLIOperation, URLParam
-from .response import ModelAttr, ResponseModel
 from .configuration import CLIConfig
+from .operation import CLIArg, CLIOperation, URLParam
 from .output import OutputHandler, OutputMode
-
+from .response import ModelAttr, ResponseModel
 
 METHODS = ('get','post','put','delete')
 PIP_CMD = "pip3" if version_info.major == 3 else "pip"

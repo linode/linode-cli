@@ -6,18 +6,21 @@ from __future__ import print_function
 
 import argparse
 import re
-from http import server
 import socket
 import webbrowser
+from http import server
+
 try:
     # python3
     import configparser
 except ImportError:
     # python2
     import ConfigParser as configparser
-import requests
+
 import os
 import sys
+
+import requests
 
 ENV_TOKEN_NAME='LINODE_CLI_TOKEN'
 

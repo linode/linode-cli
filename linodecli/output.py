@@ -1,9 +1,10 @@
 from __future__ import print_function
 
-from enum import Enum
 import json
-from terminaltables import SingleTable
+from enum import Enum
 from sys import stdout
+
+from terminaltables import SingleTable
 
 
 class OutputMode(Enum):

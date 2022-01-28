@@ -2,21 +2,21 @@
 from __future__ import print_function
 
 import argparse
-from importlib import import_module
 import os
-import pkg_resources
-from sys import argv, exit, version_info, stderr
+from importlib import import_module
+from sys import argv, exit, stderr, version_info
 
+import pkg_resources
 import requests
 import yaml
 from terminaltables import SingleTable
 
-from .cli import CLI
-from .response import ModelAttr, ResponseModel
-from .operation import CLIArg, CLIOperation, URLParam
-from .output import OutputMode
 from linodecli import plugins
 
+from .cli import CLI
+from .operation import CLIArg, CLIOperation, URLParam
+from .output import OutputMode
+from .response import ModelAttr, ResponseModel
 
 # this might not be installed at the time of building
 try:
