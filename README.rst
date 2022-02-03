@@ -12,6 +12,10 @@ From pypi::
 
    pip3 install linode-cli
 
+From Homebrew::
+
+   brew install linode-cli
+
 From source::
 
    git clone git@github.com:linode/linode-cli.git
@@ -29,6 +33,10 @@ Upgrading
 To upgrade to the latest version of the Linode CLI::
 
    pip3 install linode-cli --upgrade
+
+If Linode CLI was installed using Homebrew::
+
+   brew upgrade linode-cli
 
 Usage
 -----
