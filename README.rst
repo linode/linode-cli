@@ -30,6 +30,24 @@ To upgrade to the latest version of the Linode CLI::
 
    pip3 install linode-cli --upgrade
 
+Community Distributions
+-----------------------
+
+The Linode CLI is also available through the following unofficial channels thanks
+to our awesome community!  Please note that these distributions are not included
+in our release testing.
+
+Homebrew
+^^^^^^^^
+
+Installation::
+
+   brew install linode-cli
+
+Upgrading::
+
+   brew upgrade linode-cli
+
 Usage
 -----
 
