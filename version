@@ -3,11 +3,12 @@
 #   ./bin/version
 #       Prints the current version
 
-from distutils.version import LooseVersion
-import subprocess
-import sys
 import os
 import re
+import subprocess
+import sys
+from distutils.version import LooseVersion
+
 
 def get_version(ref="HEAD"):
     describe = call('git describe {}'.format(ref))
