@@ -135,8 +135,18 @@ def call(args, context):
         print("Linode ERROR:")
         print(res)
         exit(1)
+
     existing_rules = result[data.rule_type]  # type: list
-    existing_labels = [r["label"] for r in existing_rules]
+
+    try:
+        existing_labels = [r["label"] for r in existing_rules]
+    except KeyError:
+        error = """
+        ERROR: Found unlabled rules, unsafe to edit rules one at a time
+        Use `linode-cli firewalls rules-update` instead
+        """
+        exit(error)
+
     matching_labels_count = existing_labels.count(data.RULE_LABEL)
     if matching_labels_count > 1:
         error = "ERROR: Found more than one match for label {}, can't use this plugin"
