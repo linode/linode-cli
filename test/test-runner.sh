@@ -64,7 +64,7 @@ fi
 clean_accounts
 
 # Run all tests in parallel
-find . -name "*.bats" -not \( -path './test_helper*' \) | parallel --will-cite --jobs 2 bats
+find . -name "*.bats" -not \( -path './test_helper*' \) | parallel --will-cite --jobs 2 bats --formatter junit
 
 # Preserve tests exit code:
 tests_status=$?
