@@ -94,7 +94,7 @@ class CLI:
         for arg, info in node.items():
             if "allOf" in info:
                 info = self._resolve_allOf(info["allOf"])
-            if "$ref" in info:
+            while "$ref" in info:
                 info = self._resolve_ref(info["$ref"])
             if "properties" in info:
                 self._parse_args(info["properties"], prefix=prefix + [arg], args=args)
