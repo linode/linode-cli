@@ -44,7 +44,7 @@ teardown() {
         --format="id,label,size,region"
 
     assert_success
-    assert_output --regexp "$volume_id,[A-Za-z0-9]+,10,us-east"
+    assert_output --regexp "$volume_id,[A-Za-z0-9-]+,[0-9]+,us-east"
 }
 
 @test "it should update a volume label" {

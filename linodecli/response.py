@@ -15,8 +15,8 @@ DO_COLORS = True
 if platform.system() == "Windows":
     ver = platform.version()
 
-    if '.' in ver:
-        ver = ver.split('.', 1)[0]
+    if "." in ver:
+        ver = ver.split(".", 1)[0]
 
     try:
         verNum = int(ver)
@@ -54,17 +54,21 @@ def colorize_string(string, color):
     col = COLOR_CODE_MAP.get(color, CLEAR_COLOR)
 
     return "{}{}{}".format(
-        col, string, CLEAR_COLOR,
+        col,
+        string,
+        CLEAR_COLOR,
     )
 
 
 class ModelAttr:
-    def __init__(self, name, filterable, display, datatype, color_map=None, item_type=None):
+    def __init__(
+        self, name, filterable, display, datatype, color_map=None, item_type=None
+    ):
         self.name = name
         self.value = None
         self.filterable = filterable
         self.display = display
-        self.column_name = self.name.split('.')[-1]
+        self.column_name = self.name.split(".")[-1]
         self.datatype = datatype
         self.color_map = color_map
         self.item_type = item_type
@@ -75,7 +79,7 @@ class ModelAttr:
         """
         # walk down json paths to find the value
         value = model
-        for part in self.name.split('.'):
+        for part in self.name.split("."):
             if value is None:
                 return None
             value = value[part]
@@ -96,17 +100,17 @@ class ModelAttr:
         value = self._get_value(model)
 
         if isinstance(value, list):
-            value = ', '.join([str(c) for c in value])
+            value = ", ".join([str(c) for c in value])
 
         if colorize and self.color_map is not None:
             # apply colors
-            value = str(value) # just in case
-            color = self.color_map.get(value) or self.color_map['default_']
+            value = str(value)  # just in case
+            color = self.color_map.get(value) or self.color_map["default_"]
             value = colorize_string(value, color)
 
         if value is None:
             # don't print the word "None"
-            value = ''
+            value = ""
 
         return value
 
@@ -118,9 +122,9 @@ class ModelAttr:
         value = self._get_value(model)
 
         if value is None:
-            value = ''
+            value = ""
         elif isinstance(value, list):
-            value = ' '.join([str(c) for c in value])
+            value = " ".join([str(c) for c in value])
         else:
             value = str(value)
 
@@ -142,7 +146,7 @@ class ResponseModel:
             ret = []
             for c in self.rows:
                 cur = json
-                for part in c.split('.'):
+                for part in c.split("."):
                     cur = cur.get(part)
 
                 if not cur:
@@ -159,8 +163,8 @@ class ResponseModel:
         elif self.nested_list:
             # we need to explode the rows into one row per entry in the nested list,
             # copying the external values
-            if 'pages' in json:
-                json = json['data']
+            if "pages" in json:
+                json = json["data"]
 
             ret = []
             if not isinstance(json, list):
@@ -173,7 +177,7 @@ class ResponseModel:
                     ret.append(cobj)
 
             return ret
-        elif 'pages' in json:
-            return json['data']
+        elif "pages" in json:
+            return json["data"]
         else:
             return [json]

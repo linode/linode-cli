@@ -26,7 +26,7 @@ teardown() {
 
 @test "it should fail to resize a volume smaller" {
     createVolume
-    volume_id=$(linode-cli volumes list --text --no-headers --format="id")
+    volume_id=$(linode-cli volumes list --text --no-headers --format="id" | tail -n1)
     #  we can't resize a busy volume; wait for a few seconds for the creation to finish
     sleep 5
     run linode-cli volumes resize $volume_id \
@@ -40,7 +40,7 @@ teardown() {
 }
 
 @test "it should fail to resize a volume greater than 10240gb" {
-    volume_id=$(linode-cli volumes list --text --no-headers --format="id")
+    volume_id=$(linode-cli volumes list --text --no-headers --format="id" | tail -n1)
     run linode-cli volumes resize $volume_id \
         --size=1024893405 \
         --text \
@@ -57,7 +57,7 @@ teardown() {
 }
 
 @test "it should resize a volume" {
-    volume_id=$(linode-cli volumes list --text --no-headers --format="id")
+    volume_id=$(linode-cli volumes list --text --no-headers --format="id" | tail -n1)
     run linode-cli volumes resize $volume_id \
         --size=11 \
         --text \
