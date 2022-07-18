@@ -100,13 +100,12 @@ class CLIArg:
     """
 
     def __init__(
-        self, name, arg_type, description, path, arg_format, example, list_item=None
+        self, name, arg_type, description, path, arg_format, list_item=None
     ):
         self.name = name
         self.arg_type = arg_type
         self.arg_format = arg_format
         self.description = description.replace("\n", "").replace("\r", "")
-        self.example = example
         self.path = path
         self.arg_item_type = None  # populated during baking for arrays
         self.required = False  # this is set during baking
@@ -150,6 +149,7 @@ class CLIOperation:
         params,
         servers,
         allowed_defaults=None,
+        example=None,
     ):
         self.command = command
         self.action = action
@@ -161,6 +161,7 @@ class CLIOperation:
         self.params = params
         self.servers = servers
         self.allowed_defaults = allowed_defaults
+        self.example = example
 
     @property
     def url(self):

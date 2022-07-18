@@ -547,7 +547,6 @@ def main():
             print(operation.summary)
             print()
             if operation.args:
-                examples = []
                 print("Arguments:")
                 for arg in sorted(operation.args, key=lambda s: not s.required):
                     print(
@@ -559,14 +558,10 @@ def main():
                             arg.description,
                         )
                     )
-                    arg_example = ' --{}="{}"'.format(arg.path, arg.example)
-                    examples.append(arg_example)
-                example = "".join(examples)
-                print()
-                print("Example:")
-                print(
-                    "  linode-cli {} {} {}".format(parsed.command, parsed.action, example)
-                )
+                if operation.example:
+                    print()
+                    print("Example:")
+                    print(operation.example)
 
             elif operation.method == "get" and parsed.action == "list":
                 filterable_attrs = [
