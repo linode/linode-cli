@@ -404,12 +404,10 @@ def main():
         print()
         print("Available commands:")
 
-        content = [c for c in cli.ops.keys()]
+        content = [c for c in sorted(cli.ops.keys())]
         proc = []
-        for i in range(0, len(content), 3):
-            proc.append(content[i : i + 3])
-        if content[i + 3 :]:
-            proc.append(content[i + 3 :])
+        for i in range(0, len(content)):
+            proc.append(content[i : i + 1])
 
         table = SingleTable(proc)
         table.inner_heading_row_border = False
