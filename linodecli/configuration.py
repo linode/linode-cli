@@ -575,7 +575,7 @@ Note that no token will be saved in your configuration file.
         if not is_default:
             if username != self.default_username():
                 while True:
-                    value = input_helper("Make active user? [y/N]: ")
+                    value = input("Make this user the default when using the CLI? [y/N]: ")
 
                     if value.lower() in "yn":
                         is_default = value.lower() == "y"
