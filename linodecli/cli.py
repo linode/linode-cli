@@ -107,6 +107,7 @@ class CLI:
             args[path] = {
                 "type": info.get("type") or "string",
                 "desc": info.get("description") or "",
+                "example": info.get("example") or "",
                 "name": arg,
                 "format": info.get("x-linode-cli-format", info.get("format", None)),
             }
@@ -317,6 +318,7 @@ class CLI:
                             info["desc"].split(".")[0] + ".",
                             arg,
                             info["format"],
+                            info["example"],
                             list_item=info.get("list_item"),
                         )
 

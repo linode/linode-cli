@@ -547,6 +547,7 @@ def main():
             print(operation.summary)
             print()
             if operation.args:
+                examples = []
                 print("Arguments:")
                 for arg in sorted(operation.args, key=lambda s: not s.required):
                     print(
@@ -558,6 +559,15 @@ def main():
                             arg.description,
                         )
                     )
+                    arg_example = f' --{arg.path}="{arg.example}"'
+                    examples.append(arg_example)
+                example = "".join(examples)
+                print()
+                print("Example:")
+                print(
+                    f"  linode-cli {parsed.command} {parsed.action} {example}", end=""
+                )
+
             elif operation.method == "get" and parsed.action == "list":
                 filterable_attrs = [
                     attr for attr in operation.response_model.attrs if attr.filterable

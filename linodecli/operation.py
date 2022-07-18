@@ -99,11 +99,14 @@ class CLIArg:
     are defined in a requestBody in the api spec.
     """
 
-    def __init__(self, name, arg_type, description, path, arg_format, list_item=None):
+    def __init__(
+        self, name, arg_type, description, path, arg_format, example, list_item=None
+    ):
         self.name = name
         self.arg_type = arg_type
         self.arg_format = arg_format
         self.description = description.replace("\n", "").replace("\r", "")
+        self.example = example
         self.path = path
         self.arg_item_type = None  # populated during baking for arrays
         self.required = False  # this is set during baking
@@ -178,6 +181,7 @@ class CLIOperation:
         parser = argparse.ArgumentParser(
             prog="linode-cli {} {}".format(self.command, self.action),
             description=self.summary,
+            example=self.example,
         )
         for param in self.params:
             parser.add_argument(
