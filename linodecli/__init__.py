@@ -559,13 +559,13 @@ def main():
                             arg.description,
                         )
                     )
-                    arg_example = f' --{arg.path}="{arg.example}"'
+                    arg_example = ' --{}="{}"'.format(arg.path, arg.example)
                     examples.append(arg_example)
                 example = "".join(examples)
                 print()
                 print("Example:")
                 print(
-                    f"  linode-cli {parsed.command} {parsed.action} {example}", end=""
+                    "  linode-cli {} {} {}".format(parsed.command, parsed.action, example)
                 )
 
             elif operation.method == "get" and parsed.action == "list":
