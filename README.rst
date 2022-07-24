@@ -423,5 +423,16 @@ added to Linode's OpenAPI spec:
 +x-linode-cli-allowed-defaults| requestBody | Tells the CLI what configured defaults apply to this request.  Value values are "region", |
 +                             |             | "image", and "type".                                                                      |
 +-----------------------------+-------------+-------------------------------------------------------------------------------------------+
++x-linode-cli-nested-list     | content-type| Tells the CLI to flatten a single object into multiple table rows based on the keys       |
+|                             |             | included in this value.  Values should be comma-delimited JSON paths, and must all be     |
+|                             |             | present on response objects.                                                              |
+|                             |             |                                                                                           |
+|                             |             | When used, a new key ``_split`` is added to each flattened object whose value is the last |
+|                             |             | segment of the JSON path used to generate the flattened object from the source.           |
++-----------------------------+-------------+-------------------------------------------------------------------------------------------+
+|x-linode-cli-use-schema      | content-type| Overrides the normal schema for the object and uses this instead.  Especially useful when |
+|                             |             | paired with ``x-linode-cli-nested-list``, allowing a schema to describe the flattened     |
+|                             |             | object instead of the original object.                                                    |
++-----------------------------+-------------+-------------------------------------------------------------------------------------------+
 
 .. _Specification Extensions: https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#specificationExtensions
