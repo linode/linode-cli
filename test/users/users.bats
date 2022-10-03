@@ -25,7 +25,7 @@ teardown() {
     echo "export user=$uniqueUser" > .tmp-user
     run linode-cli users create \
         --username $uniqueUser \
-        --email $uniqueUser@localhost \
+        --email $uniqueUser@linode.com \
         --restricted true \
         --text \
         --no-headers
