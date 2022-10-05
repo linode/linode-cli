@@ -553,7 +553,7 @@ def main():
                         "  --{}: {}{}".format(
                             arg.path,
                             "(required) "
-                            if operation.method == "post" and arg.required
+                            if operation.method in {"post", "put"} and arg.required
                             else "",
                             arg.description,
                         )
