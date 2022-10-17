@@ -545,7 +545,7 @@ Note that no token will be saved in your configuration file.
         regions = [r["id"] for r in self._do_get_request("/regions")["data"]]
         types = [t["id"] for t in self._do_get_request("/linode/types")["data"]]
         images = [i["id"] for i in self._do_get_request("/images")["data"]]
-        sshkeys = [s["label"] for s in self._do_get_request("/profile/sshkeys")["data"]]
+        authorized_keys = [s["label"] for s in self._do_get_request("/profile/sshkeys", token=config["token"])["data"]]
 
         # get the preferred things
         config["region"] = self._default_thing_input(
@@ -569,9 +569,9 @@ Note that no token will be saved in your configuration file.
             "Please select a valid Image, or press Enter to skip",
         )
 
-        config["sshkey"] = self._default_thing_input(
+        config["authorized_keys"] = self._default_thing_input(
             "Default SSH Key to deploy with new Linodes.",
-            sshkeys,
+            authorized_keys,
             "Default SSH Key (Optional): ",
             "Please select a valid SSH Key, or press Enter to skip",
         )
@@ -734,7 +734,7 @@ Note that no token will be saved in your configuration file.
                 self.config.set(username, "region", self.config.get("DEFAULT", "region"))
                 self.config.set(username, "type", self.config.get("DEFAULT", "type"))
                 self.config.set(username, "image", self.config.get("DEFAULT", "image"))
-                self.config.set(username, "sshkey", self.config.get("DEFAULT", "sshkey"))
+                self.config.set(username, "authorized_keys", self.config.get("DEFAULT", "authorized_keys"))
 
                 self.write_config(silent=True)
             else:
