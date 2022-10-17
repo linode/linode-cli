@@ -18,9 +18,9 @@ install: check-prerequisites requirements build
 
 .PHONY: build
 build: clean
-	python -m linodecli bake ${SPEC} --skip-config
+#	python -m linodecli bake ${SPEC} --skip-config
 	python3 -m linodecli bake ${SPEC} --skip-config
-	cp data-2 linodecli/
+#	cp data-2 linodecli/
 	cp data-3 linodecli/
 	$(PYCMD) setup.py bdist_wheel --universal
 
