@@ -1,0 +1,47 @@
+name: Bug Report
+description: File a bug report
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: input
+    id: cli-version
+    attributes:
+      label: CLI Version
+      description: What version of linode-cli are you running? `linode-cli -v`
+      placeholder: linode-cli 5.24.0 Built off spec version 4.138.0
+    validations:
+      required: true
+  - type: textarea
+    id: resources
+    attributes:
+      label: Command
+      description: The command executed to encounter this bug. Please ensure that all sensitive data has been removed.
+      placeholder: |
+        volumes attach
+        linodes create
+  - type: textarea
+    id: output
+    attributes:
+      label: Output
+      description: The output of the command affected by the bug. Please ensure that all sensitive data has been removed.
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What should have happened?
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: What actually happened?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to Reproduce
+      description: If you are able to reproduce this issue, please list the steps below.
+    validations:
+      required: true
