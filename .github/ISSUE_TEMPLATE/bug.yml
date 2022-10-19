@@ -17,8 +17,7 @@ body:
       label: Command
       description: The command executed to encounter this bug. Please ensure that all sensitive data has been removed.
       placeholder: |
-        volumes attach
-        linodes create
+        linode-cli linodes create --type g6-standard-1 --region us-southeast
   - type: textarea
     id: output
     attributes:
@@ -43,5 +42,3 @@ body:
     attributes:
       label: Steps to Reproduce
       description: If you are able to reproduce this issue, please list the steps below.
-    validations:
-      required: true
