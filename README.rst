@@ -151,6 +151,16 @@ you can execute the following::
 
     linode-cli linodes create --region us-east --type g6-nanode-1 --tags tag1 --tags tag2
 
+Specifying Nested Arguments
+"""""""""""""""""""""""""
+
+When running certain commands, you may need to specify an argument that is nested
+in another field. These arguments can be specified using a ``.`` delimited path to
+the argument. For example, to create a firewall with an inbound policy of ``DROP``
+and an outbound policy of ``ACCEPT``, you can execute the following::
+
+    linode-cli firewalls create --label example-firewall --rules.outbound_policy ACCEPT --rules.inbound_policy DROP
+
 Suppressing Defaults
 """"""""""""""""""""
 
