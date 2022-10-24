@@ -396,6 +396,10 @@ Contributing
 This CLI is generated based on the OpenAPI specification for Linode's API.  As
 such, many changes are made directly to the spec.
 
+Please follow the `Contributing Guidelines`_ when making a contribution.
+
+.. _Contributing Guidelines: https://github.com/linode/linode-cli/blob/master/CONTRIBUTING.md
+
 Specification Extensions
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
