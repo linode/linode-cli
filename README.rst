@@ -141,6 +141,16 @@ you don't have access to a browser where you're configuring the CLI, pass the
 When configuring multiple users using web-based configuration, you may need to
 log out of cloud.linode.com before configuring a second user.
 
+Specifying List Arguments
+"""""""""""""""""""""""""
+
+When running certain commands, you may need to specify multiple values for a list
+argument. This can be done by specifying the argument multiple times for each
+value in the list. For example, to create a Linode with multiple ``tags``
+you can execute the following::
+
+    linode-cli linodes create --region us-east --type g6-nanode-1 --tags tag1 --tags tag2
+
 Suppressing Defaults
 """"""""""""""""""""
 
