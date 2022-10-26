@@ -1,0 +1,24 @@
+FROM python:3.9-slim-buster AS builder
+
+WORKDIR /src
+
+COPY requirements.txt .
+
+RUN apt-get update && \
+    apt-get install -y make git && \
+    pip3 install -r requirements.txt
+
+COPY . .
+
+RUN make build
+
+FROM python:3.9-slim-buster
+
+COPY --from=builder /src/dist /dist
+
+RUN pip3 install /dist/*.whl
+
+RUN useradd -ms /bin/bash user
+USER user:user
+
+ENTRYPOINT ["linode-cli"]
