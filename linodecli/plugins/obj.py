@@ -275,13 +275,27 @@ def _do_multipart_upload(bucket, filename, file_path, file_size, policy):
 
     print("{} ({} parts)".format(filename, num_chunks))
 
+    num_tries = 3
+    retry_delay = 2
+
     try:
         with open(file_path, "rb") as f:
             for i in range(num_chunks):
                 print(" Part {}".format(i + 1))
-                upload.upload_part_from_file(
-                    f, i + 1, cb=_progress, num_cb=100, size=MULTIPART_UPLOAD_CHUNK_SIZE
-                )
+                for i in range(num_tries):
+                    try:
+                        upload.upload_part_from_file(
+                            f, i + 1, cb=_progress, num_cb=100, size=MULTIPART_UPLOAD_CHUNK_SIZE
+                        )
+                    except S3ResponseError:
+                        if i < num_tries - 1:
+                            print( "  Part failed ({} of {} attempts). Retrying in {} seconds...".format(i + 1, num_tries, retry_delay))
+                            time.sleep(retry_delay)
+                            continue
+                        else:
+                            raise
+                    else:
+                        break
     except Exception as e:
         print("Upload failed!  Cleaning up!")
         upload.cancel_upload()
