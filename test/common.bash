@@ -14,6 +14,11 @@ fi
 if [ -z "$uniqueTag" ]; then
     export uniqueTag="$(date +%s)-tag"
 fi
+#
+# A Unique user to use in user related tests
+if [ -z "$uniqueUser" ]; then
+    export uniqueUser="test-user-$(date +%s)"
+fi
 
 createLinode() {
     local region=${1:-us-east}
