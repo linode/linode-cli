@@ -2,7 +2,6 @@
 Handles configuring the cli, as well as loading configs so that they can be
 used elsewhere.
 """
-from __future__ import print_function
 
 import argparse
 import re
@@ -39,8 +38,7 @@ OAUTH_CLIENT_ID = "5823b4627e45411d18e9"
 # this is a list of browser that _should_ work for web-based auth.  This is mostly
 # intended to exclude lynx and other terminal browsers which could be opened, but
 # won't work.
-KNOWN_GOOD_BROWSERS = set(
-    (
+KNOWN_GOOD_BROWSERS = {
         "chrome",
         "firefox",
         "mozilla",
@@ -50,8 +48,7 @@ KNOWN_GOOD_BROWSERS = set(
         "chromium",
         "chromium-browser",
         "epiphany",
-    )
-)
+}
 
 # in the event that we can't load the styled landing page from file, this will
 # do as a landing page

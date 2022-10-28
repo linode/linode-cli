@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import subprocess
-from io import open
 from os import path
 
 from setuptools import setup

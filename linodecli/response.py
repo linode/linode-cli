@@ -2,7 +2,6 @@
 Classes related to parsing responses and display output from the API, based
 on the OpenAPI spec.
 """
-from __future__ import print_function
 
 import os
 import platform

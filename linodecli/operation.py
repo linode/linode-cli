@@ -1,7 +1,6 @@
 """
 Classes related to OpenAPI-defined operations and their arguments and parameters.
 """
-from __future__ import print_function
 
 import argparse
 import json
@@ -41,7 +40,7 @@ class PasswordPromptAction(argparse.Action):
     """
 
     def __init__(self, *args, **kwargs):
-        super(PasswordPromptAction, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def __call__(self, parser, namespace, values, option_string=None):
         # if not provided on the command line, pull from the environment if it

@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import argparse
 import getpass
 import math
@@ -999,7 +997,7 @@ def _progress(cur, total):
     """
     Draws the upload progress bar.
     """
-    percent = ("{0:.1f}").format(100 * (cur / float(total)))
+    percent = ("{:.1f}").format(100 * (cur / float(total)))
     progress = int(100 * cur // total)
     bar = ("#" * progress) + ("-" * (100 - progress))
     print("\r |{}| {}%".format(bar, percent), end="\r")
