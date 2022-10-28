@@ -12,8 +12,6 @@ from math import ceil
 
 from terminaltables import SingleTable
 
-from linodecli.configuration import input_helper
-
 ENV_ACCESS_KEY_NAME = "LINODE_CLI_OBJ_ACCESS_KEY"
 ENV_SECRET_KEY_NAME = "LINODE_CLI_OBJ_SECRET_KEY"
 

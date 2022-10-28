@@ -508,7 +508,7 @@ Note that no token will be saved in your configuration file.
                 )
 
                 while True:
-                    r = input_helper("Try it anyway? [y/N]: ")
+                    r = input("Try it anyway? [y/N]: ")
                     if r.lower() in "yn ":
                         can_use_browser = r.lower() == "y"
                         break
@@ -522,7 +522,7 @@ Note that no token will be saved in your configuration file.
                     "If you prefer to supply a Personal Access Token, use `linode-cli configure --token`. "
                 )
                 print()
-                input_helper(
+                input(
                     "Press enter to continue.  This will open a browser and proceed with authentication."
                 )
                 username, config["token"] = self._get_token_web()
@@ -733,7 +733,7 @@ Note that no token will be saved in your configuration file.
         print()
 
         while True:
-            username = input_helper("Active user: ")
+            username = input("Active user: ")
 
             if username in users:
                 self.config.set("DEFAULT", "default-user", username)

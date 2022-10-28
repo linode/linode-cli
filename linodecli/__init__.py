@@ -277,7 +277,7 @@ def main():
             # this isn't an internal plugin, so warn that we're re-registering it
             print("WARNING: Plugin {} is already registered.".format(plugin_name))
             print("")
-            answer = input_helper(
+            answer = input(
                 "Allow re-registration of {}? [y/N] ".format(plugin_name)
             )
 
