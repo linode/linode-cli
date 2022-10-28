@@ -18,7 +18,9 @@ COPY --from=builder /src/dist /dist
 
 RUN pip3 install /dist/*.whl
 
-RUN useradd -ms /bin/bash user
-USER user:user
+RUN useradd -ms /bin/bash cli
+USER cli:cli
+
+VOLUME /home/cli/.config
 
 ENTRYPOINT ["linode-cli"]
