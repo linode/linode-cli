@@ -152,7 +152,7 @@ you can execute the following::
     linode-cli linodes create --region us-east --type g6-nanode-1 --tags tag1 --tags tag2
 
 Specifying Nested Arguments
-"""""""""""""""""""""""""
+"""""""""""""""""""""""""""
 
 When running certain commands, you may need to specify an argument that is nested
 in another field. These arguments can be specified using a ``.`` delimited path to
