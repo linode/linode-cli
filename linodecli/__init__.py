@@ -271,8 +271,6 @@ def main():
             )
             exit(13)
         elif plugin_name in plugins.available(cli.config):
-            from linodecli.configuration import input
-
             # this isn't an internal plugin, so warn that we're re-registering it
             print("WARNING: Plugin {} is already registered.".format(plugin_name))
             print("")
