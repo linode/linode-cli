@@ -340,8 +340,8 @@ Building from Source
 In order to successfully build the CLI, your system will require the following:
 
  * The ``make`` command
- * ``python`` and ``python3`` (both versions are required to build a package)
- * ``pip`` and ``pip3`` (to install ``requirements.txt`` for both python versions)
+ * ``python3``
+ * ``pip3`` (to install ``requirements.txt``)
 
 Before attempting a build, install python dependencies like this::
 
@@ -357,11 +357,7 @@ be used when generating the CLI.  A yaml or json file is accepted.
 
 To install the package as part of the build process, use this command::
 
-   make install PYTHON=3
-
-When using ``install``, the ``PYTHON`` argument is optional - if provided, it
-will install the CLI for that version of python.  Valid values are ``2`` and
-``3``, and it will default to ``3``.
+   make install
 
 Testing
 -------
@@ -431,13 +427,13 @@ added to Linode's OpenAPI spec:
 +-----------------------------+-------------+-------------------------------------------------------------------------------------------+
 |x-linode-cli-action          | method      | The action name for operations under this path. If not present, operationId is used.      |
 +-----------------------------+-------------+-------------------------------------------------------------------------------------------+
-|x-linode-cli-color           | property    | If present, defines key-value pairs of property value: color.  Colors must be one of      |
-|                             |             | "red", "green", "yellow", "white", and "black".  Must include a default.                  |
+|x-linode-cli-color           | property    | If present, defines key-value pairs of property value: color.  Colors must be one of      |
+|                             |             | "red", "green", "yellow", "white", and "black".  Must include a default.                  |
 +-----------------------------+-------------+-------------------------------------------------------------------------------------------+
 |x-linode-cli-command         | path        | The command name for operations under this path. If not present, "default" is used.       |
 +-----------------------------+-------------+-------------------------------------------------------------------------------------------+
 |x-linode-cli-display         | property    | If truthy, displays this as a column in output.  If a number, determines the ordering     |
-|                             |             | (left to right).                                                                          |
+|                             |             | (left to right).                                                                          |
 +-----------------------------+-------------+-------------------------------------------------------------------------------------------+
 |x-linode-cli-format          | property    | Overrides the "format" given in this property for the CLI only.  Valid values are `file`  |
 |                             |             | and `json`.                                                                               |
