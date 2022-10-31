@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import argparse
 import getpass
 import math
@@ -11,8 +9,6 @@ from datetime import datetime
 from math import ceil
 
 from terminaltables import SingleTable
-
-from linodecli.configuration import input_helper
 
 ENV_ACCESS_KEY_NAME = "LINODE_CLI_OBJ_ACCESS_KEY"
 ENV_SECRET_KEY_NAME = "LINODE_CLI_OBJ_SECRET_KEY"
@@ -1001,7 +997,7 @@ def _progress(cur, total):
     """
     Draws the upload progress bar.
     """
-    percent = ("{0:.1f}").format(100 * (cur / float(total)))
+    percent = ("{:.1f}").format(100 * (cur / float(total)))
     progress = int(100 * cur // total)
     bar = ("#" * progress) + ("-" * (100 - progress))
     print("\r |{}| {}%".format(bar, percent), end="\r")

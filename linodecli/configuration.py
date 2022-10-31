@@ -2,7 +2,6 @@
 Handles configuring the cli, as well as loading configs so that they can be
 used elsewhere.
 """
-from __future__ import print_function
 
 import argparse
 import re
@@ -39,8 +38,7 @@ OAUTH_CLIENT_ID = "5823b4627e45411d18e9"
 # this is a list of browser that _should_ work for web-based auth.  This is mostly
 # intended to exclude lynx and other terminal browsers which could be opened, but
 # won't work.
-KNOWN_GOOD_BROWSERS = set(
-    (
+KNOWN_GOOD_BROWSERS = {
         "chrome",
         "firefox",
         "mozilla",
@@ -50,8 +48,7 @@ KNOWN_GOOD_BROWSERS = set(
         "chromium",
         "chromium-browser",
         "epiphany",
-    )
-)
+}
 
 # in the event that we can't load the styled landing page from file, this will
 # do as a landing page
@@ -64,17 +61,6 @@ r.open('GET', '/token/'+window.location.hash.substr(1));
 r.send();
 </script>
 """
-
-
-def input_helper(prompt):
-    """
-    Handles python2 and python3 differences in input command
-    """
-    if sys.version_info[0] == 2:
-        # python2 input is scary - we want raw_input
-        return raw_input(prompt)
-    else:
-        return input(prompt)
 
 
 class CLIConfig:
@@ -346,7 +332,7 @@ on your account to work correctly.""".format(
         )
 
         while True:
-            token = input_helper("Personal Access Token: ")
+            token = input("Personal Access Token: ")
 
             username = self._username_for_token(token)
             if username is not None:
@@ -519,7 +505,7 @@ Note that no token will be saved in your configuration file.
                 )
 
                 while True:
-                    r = input_helper("Try it anyway? [y/N]: ")
+                    r = input("Try it anyway? [y/N]: ")
                     if r.lower() in "yn ":
                         can_use_browser = r.lower() == "y"
                         break
@@ -533,7 +519,7 @@ Note that no token will be saved in your configuration file.
                     "If you prefer to supply a Personal Access Token, use `linode-cli configure --token`. "
                 )
                 print()
-                input_helper(
+                input(
                     "Press enter to continue.  This will open a browser and proceed with authentication."
                 )
                 username, config["token"] = self._get_token_web()
@@ -641,7 +627,7 @@ Note that no token will be saved in your configuration file.
 
         ret = ""
         while True:
-            choice = input_helper(prompt)
+            choice = input(prompt)
 
             if choice:
                 try:
@@ -744,7 +730,7 @@ Note that no token will be saved in your configuration file.
         print()
 
         while True:
-            username = input_helper("Active user: ")
+            username = input("Active user: ")
 
             if username in users:
                 self.config.set("DEFAULT", "default-user", username)

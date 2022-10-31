@@ -1,5 +1,4 @@
 #!/usr/local/bin/python3
-from __future__ import print_function
 
 import argparse
 import os
@@ -272,12 +271,10 @@ def main():
             )
             exit(13)
         elif plugin_name in plugins.available(cli.config):
-            from linodecli.configuration import input_helper
-
             # this isn't an internal plugin, so warn that we're re-registering it
             print("WARNING: Plugin {} is already registered.".format(plugin_name))
             print("")
-            answer = input_helper(
+            answer = input(
                 "Allow re-registration of {}? [y/N] ".format(plugin_name)
             )
 
@@ -404,7 +401,7 @@ def main():
         print()
         print("Available commands:")
 
-        content = [c for c in cli.ops.keys()]
+        content = [c for c in sorted(cli.ops.keys())]
         proc = []
         for i in range(0, len(content), 3):
             proc.append(content[i : i + 3])
