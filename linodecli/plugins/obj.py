@@ -60,20 +60,25 @@ access, or ask them to generate Object Storage Keys for you."""
 # Files larger than this need to be uploaded via a multipart upload
 UPLOAD_MAX_FILE_SIZE = 1024 * 1024 * 1024 * 5
 # This is how big (in MB) the chunks of the file that we upload will be
-# This is a float so that division works like we want later
-MULTIPART_UPLOAD_CHUNK_SIZE_DEFAULT = 1024.0
+MULTIPART_UPLOAD_CHUNK_SIZE_DEFAULT = 1024
 
-def restricted_float_arg_type(max, min=0.0):
+def restricted_int_arg_type(max, min=1):
     """
-    An ArgumentParser arg type for floats that restricts the value to between `min` and `max`
+    An ArgumentParser arg type for integers that restricts the value to between `min` and `max`
     (inclusive for both.)
     """
-    def restricted_float(string):
-        value = float(string)
+    def restricted_int(string):
+        err_msg = "Value must be an integer between {} and {}".format(min, max)
+        try:
+            value = int(string)
+        except ValueError:
+            # argparse can handle ValueErrors, but shows an unfriendly "invalid restricted_int
+            # value: '0.1'" message, so catch and raise with a better message.
+            raise argparse.ArgumentTypeError(err_msg)
         if value < min or value > max:
-            raise argparse.ArgumentTypeError("Value must be between {} and {}".format(min, max))
+            raise argparse.ArgumentTypeError(err_msg)
         return value
-    return restricted_float
+    return restricted_int
 
 
 
@@ -215,7 +220,7 @@ def upload_object(get_client, args):
     )
     parser.add_argument(
         "--chunk-size",
-        type=restricted_float_arg_type(5120.0),
+        type=restricted_int_arg_type(5120),
         default=MULTIPART_UPLOAD_CHUNK_SIZE_DEFAULT,
         help="The size of file chunks when uploading large files, in MB."
     )
@@ -288,7 +293,8 @@ def _do_multipart_upload(bucket, filename, file_path, file_size, policy, chunk_s
     """
     upload = bucket.initiate_multipart_upload(filename, policy=policy)
 
-    num_chunks = int(math.ceil(file_size / chunk_size))
+    # convert chunk_size to float so that division works like we want
+    num_chunks = int(math.ceil(file_size / float(chunk_size)))
 
     print("{} ({} parts)".format(filename, num_chunks))
 
