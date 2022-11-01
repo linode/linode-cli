@@ -569,12 +569,18 @@ Note that no token will be saved in your configuration file.
             "Please select a valid Image, or press Enter to skip",
         )
 
-        config["authorized_keys"] = self._default_thing_input(
-            "Default SSH Key to deploy with new Linodes.",
-            authorized_keys,
-            "Default SSH Key (Optional): ",
-            "Please select a valid SSH Key, or press Enter to skip",
-        )
+        res = self._do_get_request("/profile/sshkeys", token=config["token"])
+        if res['data']:
+            config["use_profile_ssh_keys"] = self._default_thing_input(
+                "If true use the ssh keys added to your Linode Profile for new Linode Instances.",
+                [True,False],
+                "Default Option (Optional): ",
+                "Please select a valid Option, or press Enter to skip",
+            )
+
+        # check if there are ssh keys added to the profile
+        # if so offer the option to default use the profiles ssh keys for linodes
+        # set config["use_ssh_keys"] true/false
 
         # save off the new configuration
         if username != "DEFAULT" and not self.config.has_section(username):
