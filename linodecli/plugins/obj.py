@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import argparse
 import getpass
 import math
@@ -11,8 +9,6 @@ from datetime import datetime
 from math import ceil
 
 from terminaltables import SingleTable
-
-from linodecli.configuration import input_helper
 
 ENV_ACCESS_KEY_NAME = "LINODE_CLI_OBJ_ACCESS_KEY"
 ENV_SECRET_KEY_NAME = "LINODE_CLI_OBJ_SECRET_KEY"
@@ -63,9 +59,27 @@ access, or ask them to generate Object Storage Keys for you."""
 
 # Files larger than this need to be uploaded via a multipart upload
 UPLOAD_MAX_FILE_SIZE = 1024 * 1024 * 1024 * 5
-# This is how big the chunks of the file that we upload will be
-# This is a float so that division works like we want later
-MULTIPART_UPLOAD_CHUNK_SIZE = 1024 * 1024 * 1024 * 5.0
+# This is how big (in MB) the chunks of the file that we upload will be
+MULTIPART_UPLOAD_CHUNK_SIZE_DEFAULT = 1024
+
+def restricted_int_arg_type(max, min=1):
+    """
+    An ArgumentParser arg type for integers that restricts the value to between `min` and `max`
+    (inclusive for both.)
+    """
+    def restricted_int(string):
+        err_msg = "Value must be an integer between {} and {}".format(min, max)
+        try:
+            value = int(string)
+        except ValueError:
+            # argparse can handle ValueErrors, but shows an unfriendly "invalid restricted_int
+            # value: '0.1'" message, so catch and raise with a better message.
+            raise argparse.ArgumentTypeError(err_msg)
+        if value < min or value > max:
+            raise argparse.ArgumentTypeError(err_msg)
+        return value
+    return restricted_int
+
 
 
 def list_objects_or_buckets(get_client, args):
@@ -204,6 +218,12 @@ def upload_object(get_client, args):
         action="store_true",
         help="If set, the new object can be downloaded without " "authentication.",
     )
+    parser.add_argument(
+        "--chunk-size",
+        type=restricted_int_arg_type(5120),
+        default=MULTIPART_UPLOAD_CHUNK_SIZE_DEFAULT,
+        help="The size of file chunks when uploading large files, in MB."
+    )
     # parser.add_argument('--recursive', action='store_true',
     #                    help="If set, upload directories recursively.")
 
@@ -237,6 +257,7 @@ def upload_object(get_client, args):
         sys.exit(2)
 
     policy = "public-read" if parsed.acl_public else None
+    chunk_size = 1024 * 1024 * parsed.chunk_size
 
     for filename, file_path in to_upload:
         k = Key(bucket)
@@ -246,12 +267,12 @@ def upload_object(get_client, args):
         k.set_contents_from_filename(file_path, cb=_progress, num_cb=100, policy=policy)
 
     for filename, file_path, file_size in to_multipart_upload:
-        _do_multipart_upload(bucket, filename, file_path, file_size, policy)
+        _do_multipart_upload(bucket, filename, file_path, file_size, policy, chunk_size)
 
     print("Done.")
 
 
-def _do_multipart_upload(bucket, filename, file_path, file_size, policy):
+def _do_multipart_upload(bucket, filename, file_path, file_size, policy, chunk_size):
     """
     Handles the internals of a multipart upload for a large file.
 
@@ -267,25 +288,41 @@ def _do_multipart_upload(bucket, filename, file_path, file_size, policy):
                    completes.  None for no ACLs, or "public-read" to make the
                    key accessible publicly.
     :type policy: str
+    :param chunk_size: The size of chunks to upload, in bytes.
+    :type chunk_size: int
     """
     upload = bucket.initiate_multipart_upload(filename, policy=policy)
 
-    num_chunks = int(math.ceil(file_size / MULTIPART_UPLOAD_CHUNK_SIZE))
-    upload_exception = None
+    # convert chunk_size to float so that division works like we want
+    num_chunks = int(math.ceil(file_size / float(chunk_size)))
 
     print("{} ({} parts)".format(filename, num_chunks))
+
+    num_tries = 3
+    retry_delay = 2
 
     try:
         with open(file_path, "rb") as f:
             for i in range(num_chunks):
                 print(" Part {}".format(i + 1))
-                upload.upload_part_from_file(
-                    f, i + 1, cb=_progress, num_cb=100, size=MULTIPART_UPLOAD_CHUNK_SIZE
-                )
-    except Exception as e:
+                for attempt in range(num_tries):
+                    try:
+                        upload.upload_part_from_file(
+                            f, i + 1, cb=_progress, num_cb=100, size=chunk_size
+                        )
+                    except S3ResponseError:
+                        if attempt < num_tries - 1:
+                            print( "  Part failed ({} of {} attempts). Retrying in {} seconds...".format(attempt + 1, num_tries, retry_delay))
+                            time.sleep(retry_delay)
+                            continue
+                        else:
+                            raise
+                    else:
+                        break
+    except Exception:
         print("Upload failed!  Cleaning up!")
         upload.cancel_upload()
-        raise upload_exception
+        raise
 
     upload.complete_upload()
 
@@ -1001,7 +1038,7 @@ def _progress(cur, total):
     """
     Draws the upload progress bar.
     """
-    percent = ("{0:.1f}").format(100 * (cur / float(total)))
+    percent = ("{:.1f}").format(100 * (cur / float(total)))
     progress = int(100 * cur // total)
     bar = ("#" * progress) + ("-" * (100 - progress))
     print("\r |{}| {}%".format(bar, percent), end="\r")

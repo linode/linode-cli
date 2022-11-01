@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import subprocess
-from io import open
 from os import path
 
 from setuptools import setup
@@ -62,6 +61,6 @@ setup(
         ]
     },
     data_files=get_baked_files(),
-    python_requires=">=2.7",
+    python_requires=">=3.6",
     include_package_data=True,
 )
