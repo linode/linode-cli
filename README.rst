@@ -23,6 +23,21 @@ This will need to be repeated on each pull.  For a build to succeed, see
 
 .. _Building from Source: #building-from-source
 
+Docker Hub
+^^^^^^^^^^
+
+The Linode CLI can also be downloaded and run using the image available on `Docker Hub`_.
+
+.. _Docker Hub:: https://hub.docker.com/r/linode/cli
+
+Using a Linode API Token::
+
+    docker run --rm -it -e LINODE_CLI_TOKEN=$LINODE_TOKEN linode/cli:latest linodes list
+
+Using an existing config file::
+
+    docker run --rm -it -v $HOME/.config/linode-cli:/home/cli/.config/linode-cli linode/cli:latest linodes list
+
 Upgrading
 ---------
 
