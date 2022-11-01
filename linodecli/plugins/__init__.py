@@ -47,7 +47,7 @@ def invoke(name, args, context):
             print(
                 "Expected module '{}' not found.  Either {} is misconfigured, "
                 "or the backing module was uninstalled.".format(
-                    plugin_moduel_name, name
+                    plugin_module_name, name
                 )
             )
             sys.exit(10)
