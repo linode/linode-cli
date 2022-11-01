@@ -3,9 +3,10 @@ Handles configuring the cli, as well as loading configs so that they can be
 used elsewhere.
 """
 
-import argparse
 import re
+import json
 import socket
+import argparse
 import webbrowser
 from http import server
 
@@ -120,6 +121,8 @@ class CLIConfig:
                 # plugins set config options that start with 'plugin-' - these don't
                 # get included in the updated namespace
                 continue
+            if k in ns_dict and isinstance(k, list):
+                ns_dict[k].append(new_dict[k])
             if k in ns_dict and ns_dict[k] is None:
                 ns_dict[k] = new_dict[k]
 
@@ -145,11 +148,20 @@ class CLIConfig:
             sys.exit(1)
 
         if self.config.has_section(username) and allowed_defaults:
-            update_dicts = {
-                default_key: self.config.get(username, default_key)
-                for default_key in allowed_defaults
-                if self.config.has_option(username, default_key)
-            }
+            # update_dicts = {
+            #     default_key: self.config.get(username, default_key)
+            #     for default_key in allowed_defaults
+            #     if self.config.has_option(username, default_key)
+            #     }
+            update_dicts = {}
+            for default_key in allowed_defaults:
+                if not self.config.has_option(username, default_key):
+                    continue
+                value = self.config.get(username, default_key)
+                if default_key == 'authorized_users':
+                    update_dicts[default_key] = [value]
+                else:
+                    update_dicts[default_key] = value
             return self.update_namespace(namespace, update_dicts)
         return namespace
 
@@ -531,7 +543,6 @@ Note that no token will be saved in your configuration file.
         regions = [r["id"] for r in self._do_get_request("/regions")["data"]]
         types = [t["id"] for t in self._do_get_request("/linode/types")["data"]]
         images = [i["id"] for i in self._do_get_request("/images")["data"]]
-        authorized_keys = [s["label"] for s in self._do_get_request("/profile/sshkeys", token=config["token"])["data"]]
 
         # get the preferred things
         config["region"] = self._default_thing_input(
@@ -556,10 +567,10 @@ Note that no token will be saved in your configuration file.
         )
 
         res = self._do_get_request("/profile/sshkeys", token=config["token"])
-        if res['data']:
-            config["use_profile_ssh_keys"] = self._default_thing_input(
-                "If true use the ssh keys added to your Linode Profile for new Linode Instances.",
-                [True,False],
+        if 'data' in res:
+            config["authorized_users"] = self._default_thing_input(
+                "Do you want to use the following username as a authorized_user on New Linodes?",
+                [username],
                 "Default Option (Optional): ",
                 "Please select a valid Option, or press Enter to skip",
             )
