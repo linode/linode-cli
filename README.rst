@@ -28,7 +28,7 @@ Docker Hub
 
 The Linode CLI can also be downloaded and run using the image available on `Docker Hub`_.
 
-.. _Docker Hub:: https://hub.docker.com/r/linode/cli
+.. _Docker Hub: https://hub.docker.com/r/linode/cli
 
 Using a Linode API Token::
 
