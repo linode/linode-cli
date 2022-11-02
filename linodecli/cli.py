@@ -207,6 +207,9 @@ class CLI:
                         print("warn: no operationId for {} {}".format(m.upper(), path))
                         continue
 
+                    if not isinstance(action, list):
+                        action = [action]
+
                     summary = data[m].get("summary") or ""
 
                     use_servers = (
@@ -344,9 +347,9 @@ class CLI:
                             )
                             p.name += "_"
 
-                    self.ops[command][action] = CLIOperation(
+                    self.ops[command][', '.join(action)] = CLIOperation(
                         command,
-                        action,
+                        action[0],
                         m,
                         use_path,
                         summary,
@@ -668,14 +671,19 @@ complete -F _linode_cli linode-cli"""
         Given a command, action, and remaining kwargs, finds and executes the
         action
         """
+
         if command not in self.ops:
             print("Command not found: {}".format(command))
             exit(1)
-        elif action not in self.ops[command]:
+
+        operation = None
+        for name, op in self.ops[command].items():
+            if action in name.split(', '):
+                operation = op
+
+        if operation is None:
             print("No action {} for command {}".format(action, command))
             exit(1)
-
-        operation = self.ops[command][action]
 
         result = self.do_request(operation, args)
 
