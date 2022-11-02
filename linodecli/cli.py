@@ -18,7 +18,7 @@ from .response import ModelAttr, ResponseModel
 
 METHODS = ("get", "post", "put", "delete")
 PIP_CMD = "pip3" if version_info.major == 3 else "pip"
-ACTION_SEPARATOR = ", "
+ACTION_DELIMITER = ", "
 
 class CLI:
     """
@@ -347,7 +347,7 @@ class CLI:
                             )
                             p.name += "_"
 
-                    self.ops[command][ACTION_SEPARATOR.join(action)] = CLIOperation(
+                    self.ops[command][ACTION_DELIMITER.join(action)] = CLIOperation(
                         command,
                         action[0],
                         m,
@@ -417,7 +417,7 @@ complete -F _linode_cli linode-cli"""
                 # Ensure that action aliases are separated
                 command=op, actions=" ".join([
                     act for action_key in actions.keys()
-                    for act in action_key.split(ACTION_SEPARATOR)])
+                    for act in action_key.split(ACTION_DELIMITER)])
             )
             for op, actions in self.ops.items()
         ]
@@ -683,7 +683,7 @@ complete -F _linode_cli linode-cli"""
 
         operation = None
         for name, op in self.ops[command].items():
-            if action in name.split(ACTION_SEPARATOR):
+            if action in name.split(ACTION_DELIMITER):
                 operation = op
 
         if operation is None:
