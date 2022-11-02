@@ -18,7 +18,7 @@ from .response import ModelAttr, ResponseModel
 
 METHODS = ("get", "post", "put", "delete")
 PIP_CMD = "pip3" if version_info.major == 3 else "pip"
-
+ACTION_SEPARATOR = ", "
 
 class CLI:
     """
@@ -347,7 +347,7 @@ class CLI:
                             )
                             p.name += "_"
 
-                    self.ops[command][', '.join(action)] = CLIOperation(
+                    self.ops[command][ACTION_SEPARATOR.join(action)] = CLIOperation(
                         command,
                         action[0],
                         m,
@@ -414,14 +414,19 @@ complete -F _linode_cli linode-cli"""
 
         command_blocks = [
             command_template.safe_substitute(
-                command=op, actions=" ".join([act for act in actions.keys()])
+                # Ensure that action aliases are separated
+                command=op, actions=" ".join([
+                    v for act in actions.keys()
+                    for v in act.split(ACTION_SEPARATOR)])
             )
             for op, actions in self.ops.items()
         ]
+
         rendered = completion_template.safe_substitute(
             actions=" ".join(self.ops.keys()),
             command_items="\n        ".join(command_blocks),
         )
+
         return rendered
 
     def bake_completions(self):
@@ -678,7 +683,7 @@ complete -F _linode_cli linode-cli"""
 
         operation = None
         for name, op in self.ops[command].items():
-            if action in name.split(', '):
+            if action in name.split(ACTION_SEPARATOR):
                 operation = op
 
         if operation is None:
