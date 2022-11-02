@@ -416,8 +416,8 @@ complete -F _linode_cli linode-cli"""
             command_template.safe_substitute(
                 # Ensure that action aliases are separated
                 command=op, actions=" ".join([
-                    v for act in actions.keys()
-                    for v in act.split(ACTION_SEPARATOR)])
+                    act for action_key in actions.keys()
+                    for act in action_key.split(ACTION_SEPARATOR)])
             )
             for op, actions in self.ops.items()
         ]
