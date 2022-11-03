@@ -443,7 +443,7 @@ added to Linode's OpenAPI spec:
 |x-linode-cli-skip            | path        | If present and truthy, this method will not be available in the CLI.                      |
 +-----------------------------+-------------+-------------------------------------------------------------------------------------------+
 +x-linode-cli-allowed-defaults| requestBody | Tells the CLI what configured defaults apply to this request. Valid defaults are "region",|
-+                             |             | "image", "authorized_keys", and "type".                                                   |
++                             |             | "image", "authorized_users", and "type".                                                  |
 +-----------------------------+-------------+-------------------------------------------------------------------------------------------+
 +x-linode-cli-nested-list     | content-type| Tells the CLI to flatten a single object into multiple table rows based on the keys       |
 |                             |             | included in this value.  Values should be comma-delimited JSON paths, and must all be     |
