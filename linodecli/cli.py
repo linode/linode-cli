@@ -211,6 +211,7 @@ class CLI:
                     if isinstance(action, list):
                         if len(action) < 1:
                             print("warn: empty list for action {}".format(m.upper()))
+                            continue
 
                         action_aliases = action[1:]
                         action = action[0]
