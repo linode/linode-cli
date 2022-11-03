@@ -11,7 +11,7 @@ from distutils.version import LooseVersion
 
 
 def get_version(ref="HEAD"):
-    describe = call('git describe {}'.format(ref))
+    describe = call('git describe {} --tags'.format(ref))
 
     parts = LooseVersion(describe).version[:3]
     return tuple(parts)
