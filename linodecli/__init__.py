@@ -519,7 +519,8 @@ def main():
             print("linode-cli {} [ACTION]".format(parsed.command))
             print()
             print("Available actions: ")
-            content = [[action, op.summary] for action, op in actions.items()]
+
+            content = [[', '.join([action, *op.action_aliases]), op.summary] for action, op in actions.items()]
 
             header = ["action", "summary"]
             table = SingleTable([header] + content)

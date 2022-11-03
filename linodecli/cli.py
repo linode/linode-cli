@@ -18,7 +18,6 @@ from .response import ModelAttr, ResponseModel
 
 METHODS = ("get", "post", "put", "delete")
 PIP_CMD = "pip3" if version_info.major == 3 else "pip"
-ACTION_DELIMITER = ", "
 
 class CLI:
     """
@@ -207,8 +206,14 @@ class CLI:
                         print("warn: no operationId for {} {}".format(m.upper(), path))
                         continue
 
-                    if not isinstance(action, list):
-                        action = [action]
+                    action_aliases = None
+
+                    if isinstance(action, list):
+                        if len(action) < 1:
+                            print("warn: empty list for action {}".format(m.upper()))
+
+                        action_aliases = action[1:]
+                        action = action[0]
 
                     summary = data[m].get("summary") or ""
 
@@ -347,9 +352,9 @@ class CLI:
                             )
                             p.name += "_"
 
-                    self.ops[command][ACTION_DELIMITER.join(action)] = CLIOperation(
+                    self.ops[command][action] = CLIOperation(
                         command,
-                        action[0],
+                        action,
                         m,
                         use_path,
                         summary,
@@ -358,6 +363,7 @@ class CLI:
                         use_params,
                         use_servers,
                         allowed_defaults=allowed_defaults,
+                        action_aliases=action_aliases,
                     )
 
         # remove any empty commands (those that have no actions)
@@ -414,10 +420,7 @@ complete -F _linode_cli linode-cli"""
 
         command_blocks = [
             command_template.safe_substitute(
-                # Ensure that action aliases are separated
-                command=op, actions=" ".join([
-                    act for action_key in actions.keys()
-                    for act in action_key.split(ACTION_DELIMITER)])
+                command=op, actions=" ".join([act for act in actions.keys()])
             )
             for op, actions in self.ops.items()
         ]
@@ -681,14 +684,19 @@ complete -F _linode_cli linode-cli"""
             print("Command not found: {}".format(command))
             exit(1)
 
-        operation = None
-        for name, op in self.ops[command].items():
-            if action in name.split(ACTION_DELIMITER):
-                operation = op
+        operation = self.ops[command][action] if action in self.ops[command] else None
 
         if operation is None:
-            print("No action {} for command {}".format(action, command))
-            exit(1)
+            # Find the matching alias
+            for op in self.ops[command].values():
+                if action in op.action_aliases:
+                    operation = op
+                    break
+
+            # Fail if no matching alias was found
+            if operation is None:
+                print("No action {} for command {}".format(action, command))
+                exit(1)
 
         result = self.do_request(operation, args)
 
