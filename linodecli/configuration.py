@@ -115,14 +115,17 @@ class CLIConfig:
         then reconstruct it with the exploded dict.
         """
         ns_dict = vars(namespace)
+        warn_dict = {}
         for k in new_dict:
             if k.startswith("plugin-"):
                 # plugins set config options that start with 'plugin-' - these don't
                 # get included in the updated namespace
                 continue
             if k in ns_dict and ns_dict[k] is None:
+                warn_dict[k] = new_dict[k]
                 ns_dict[k] = new_dict[k]
 
+        print("using default values: {}, use --no-defaults flag to disable defaults".format(warn_dict))
         return argparse.Namespace(**ns_dict)
 
     def update(self, namespace, allowed_defaults):
