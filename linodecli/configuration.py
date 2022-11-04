@@ -543,6 +543,7 @@ Note that no token will be saved in your configuration file.
         regions = [r["id"] for r in self._do_get_request("/regions")["data"]]
         types = [t["id"] for t in self._do_get_request("/linode/types")["data"]]
         images = [i["id"] for i in self._do_get_request("/images")["data"]]
+        auth_users = [u["username"] for u in self._do_get_request("/account/users", token=config["token"])["data"] if "ssh_keys" in u]
 
         # get the preferred things
         config["region"] = self._default_thing_input(
@@ -566,18 +567,13 @@ Note that no token will be saved in your configuration file.
             "Please select a valid Image, or press Enter to skip",
         )
 
-        res = self._do_get_request("/profile/sshkeys", token=config["token"])
-        if 'data' in res:
+        if auth_users:
             config["authorized_users"] = self._default_thing_input(
-                "Do you want to use the following username as a authorized_user on New Linodes?",
-                [username],
-                "Default Option (Optional): ",
-                "Please select a valid Option, or press Enter to skip",
-            )
-
-        # check if there are ssh keys added to the profile
-        # if so offer the option to default use the profiles ssh keys for linodes
-        # set config["use_ssh_keys"] true/false
+                    "Select the user that should be given default SSH access to new Linodes.",
+                    auth_users,
+                    "Default Option (Optional): ",
+                    "Please select a valid Option, or press Enter to skip",
+                )
 
         # save off the new configuration
         if username != "DEFAULT" and not self.config.has_section(username):
