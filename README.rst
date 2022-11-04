@@ -179,7 +179,7 @@ and an outbound policy of ``ACCEPT``, you can execute the following::
 Suppressing Defaults
 """"""""""""""""""""
 
-If you configured default values for ``image``, ``authorized_keys``, ``region``,
+If you configured default values for ``image``, ``authorized_users``, ``region``,
 and Linode ``type``, they will be sent for all requests that accept them if you
 do not specify a different value.  If you want to send a request *without* these
 arguments, you must invoke the CLI with the ``--no-defaults`` option.
