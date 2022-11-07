@@ -3,9 +3,10 @@ Handles configuring the cli, as well as loading configs so that they can be
 used elsewhere.
 """
 
-import argparse
 import re
+import json
 import socket
+import argparse
 import webbrowser
 from http import server
 
@@ -121,6 +122,8 @@ class CLIConfig:
                 # plugins set config options that start with 'plugin-' - these don't
                 # get included in the updated namespace
                 continue
+            if k in ns_dict and isinstance(k, list):
+                ns_dict[k].append(new_dict[k])
             if k in ns_dict and ns_dict[k] is None:
                 warn_dict[k] = new_dict[k]
                 ns_dict[k] = new_dict[k]
@@ -148,11 +151,20 @@ class CLIConfig:
             sys.exit(1)
 
         if self.config.has_section(username) and allowed_defaults:
-            update_dicts = {
-                default_key: self.config.get(username, default_key)
-                for default_key in allowed_defaults
-                if self.config.has_option(username, default_key)
-            }
+            # update_dicts = {
+            #     default_key: self.config.get(username, default_key)
+            #     for default_key in allowed_defaults
+            #     if self.config.has_option(username, default_key)
+            #     }
+            update_dicts = {}
+            for default_key in allowed_defaults:
+                if not self.config.has_option(username, default_key):
+                    continue
+                value = self.config.get(username, default_key)
+                if default_key == 'authorized_users':
+                    update_dicts[default_key] = [value]
+                else:
+                    update_dicts[default_key] = value
             return self.update_namespace(namespace, update_dicts)
         return namespace
 
@@ -534,6 +546,7 @@ Note that no token will be saved in your configuration file.
         regions = [r["id"] for r in self._do_get_request("/regions")["data"]]
         types = [t["id"] for t in self._do_get_request("/linode/types")["data"]]
         images = [i["id"] for i in self._do_get_request("/images")["data"]]
+        auth_users = [u["username"] for u in self._do_get_request("/account/users", token=config["token"])["data"] if "ssh_keys" in u]
 
         # get the preferred things
         config["region"] = self._default_thing_input(
@@ -556,6 +569,14 @@ Note that no token will be saved in your configuration file.
             "Default Image (Optional): ",
             "Please select a valid Image, or press Enter to skip",
         )
+
+        if auth_users:
+            config["authorized_users"] = self._default_thing_input(
+                    "Select the user that should be given default SSH access to new Linodes.",
+                    auth_users,
+                    "Default Option (Optional): ",
+                    "Please select a valid Option, or press Enter to skip",
+                )
 
         # save off the new configuration
         if username != "DEFAULT" and not self.config.has_section(username):
@@ -712,11 +733,10 @@ Note that no token will be saved in your configuration file.
                 self.config.set("DEFAULT", "default-user", username)
                 self.config.add_section(username)
                 self.config.set(username, "token", token)
-                self.config.set(
-                    username, "region", self.config.get("DEFAULT", "region")
-                )
+                self.config.set(username, "region", self.config.get("DEFAULT", "region"))
                 self.config.set(username, "type", self.config.get("DEFAULT", "type"))
                 self.config.set(username, "image", self.config.get("DEFAULT", "image"))
+                self.config.set(username, "authorized_keys", self.config.get("DEFAULT", "authorized_keys"))
 
                 self.write_config(silent=True)
             else:

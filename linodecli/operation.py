@@ -146,6 +146,7 @@ class CLIOperation:
         params,
         servers,
         allowed_defaults=None,
+        action_aliases=None,
     ):
         self.command = command
         self.action = action
@@ -157,6 +158,7 @@ class CLIOperation:
         self.params = params
         self.servers = servers
         self.allowed_defaults = allowed_defaults
+        self.action_aliases = action_aliases or []
 
     @property
     def url(self):
