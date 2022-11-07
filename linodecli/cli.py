@@ -19,7 +19,6 @@ from .response import ModelAttr, ResponseModel
 METHODS = ("get", "post", "put", "delete")
 PIP_CMD = "pip3" if version_info.major == 3 else "pip"
 
-
 class CLI:
     """
     Responsible for loading or baking a spec and handling incoming commands
@@ -207,6 +206,16 @@ class CLI:
                         print("warn: no operationId for {} {}".format(m.upper(), path))
                         continue
 
+                    action_aliases = None
+
+                    if isinstance(action, list):
+                        if len(action) < 1:
+                            print("warn: empty list for action {}".format(m.upper()))
+                            continue
+
+                        action_aliases = action[1:]
+                        action = action[0]
+
                     summary = data[m].get("summary") or ""
 
                     use_servers = (
@@ -355,6 +364,7 @@ class CLI:
                         use_params,
                         use_servers,
                         allowed_defaults=allowed_defaults,
+                        action_aliases=action_aliases,
                     )
 
         # remove any empty commands (those that have no actions)
@@ -415,10 +425,12 @@ complete -F _linode_cli linode-cli"""
             )
             for op, actions in self.ops.items()
         ]
+
         rendered = completion_template.safe_substitute(
             actions=" ".join(self.ops.keys()),
             command_items="\n        ".join(command_blocks),
         )
+
         return rendered
 
     def bake_completions(self):
@@ -668,14 +680,24 @@ complete -F _linode_cli linode-cli"""
         Given a command, action, and remaining kwargs, finds and executes the
         action
         """
+
         if command not in self.ops:
             print("Command not found: {}".format(command))
             exit(1)
-        elif action not in self.ops[command]:
-            print("No action {} for command {}".format(action, command))
-            exit(1)
 
-        operation = self.ops[command][action]
+        operation = self.ops[command][action] if action in self.ops[command] else None
+
+        if operation is None:
+            # Find the matching alias
+            for op in self.ops[command].values():
+                if action in op.action_aliases:
+                    operation = op
+                    break
+
+            # Fail if no matching alias was found
+            if operation is None:
+                print("No action {} for command {}".format(action, command))
+                exit(1)
 
         result = self.do_request(operation, args)
 
