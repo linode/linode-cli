@@ -174,7 +174,7 @@ def main():
     if not cli.suppress_warnings:
         warn_python2_eol()
 
-    if parsed.as_user:
+    if parsed.as_user and not skip_config:
         # if they are acting as a non-default user, set it up early
         cli.config.set_user(parsed.as_user)
 
