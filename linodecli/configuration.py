@@ -127,8 +127,8 @@ class CLIConfig:
             if k in ns_dict and ns_dict[k] is None:
                 warn_dict[k] = new_dict[k]
                 ns_dict[k] = new_dict[k]
-
-        print("using default values: {}, use --no-defaults flag to disable defaults".format(warn_dict))
+        if not any(x in ['--suppress-warnings', '--no-headers'] for x in sys.argv):
+            print("using default values: {}, use --no-defaults flag to disable defaults".format(warn_dict))
         return argparse.Namespace(**ns_dict)
 
     def update(self, namespace, allowed_defaults):
