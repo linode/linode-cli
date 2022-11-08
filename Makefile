@@ -26,4 +26,5 @@ check-prerequisites:
 clean:
 	rm -f linodecli/data-*
 	rm -f linode-cli.sh
-	rm -f dist/*
+	rm -f data-*
+	rm -rf dist
