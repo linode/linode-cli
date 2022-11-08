@@ -5,8 +5,9 @@ Responsible for managing spec and routing commands to operations.
 import json
 import os
 import pickle
+import re
 from distutils.version import LooseVersion, StrictVersion
-from string import Template
+from string import Template, digits, ascii_lowercase
 from sys import exit, prefix, stderr, version_info
 
 import requests
@@ -217,6 +218,14 @@ class CLI:
                         action = action[0]
 
                     summary = data[m].get("summary") or ""
+
+                    # Resolve the documentation URL
+                    tags = data[m].get("tags")
+                    if tags is not None and len(tags) > 0 and len(summary) > 0:
+                        tag_path = self._flatten_url_path(tags[0])
+                        summary_path = self._flatten_url_path(summary)
+
+                        summary += f"\nAPI Documentation: https://www.linode.com/docs/api/{tag_path}/#{summary_path}"
 
                     use_servers = (
                         [c["url"] for c in data[m]["servers"]]
@@ -674,6 +683,12 @@ complete -F _linode_cli linode-cli"""
                 None, data, title="errors", to=stderr, columns=["field", "reason"]
             )
         exit(1)
+
+    @staticmethod
+    def _flatten_url_path(tag):
+        new_tag = tag.lower()
+        new_tag = re.sub(r"[^a-z ]", "", new_tag).replace(' ', '-')
+        return new_tag
 
     def handle_command(self, command, action, args):
         """
