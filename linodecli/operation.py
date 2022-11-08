@@ -145,6 +145,7 @@ class CLIOperation:
         response_model,
         params,
         servers,
+        docs_url=None,
         allowed_defaults=None,
         action_aliases=None,
     ):
@@ -157,6 +158,7 @@ class CLIOperation:
         self.response_model = response_model
         self.params = params
         self.servers = servers
+        self.docs_url = docs_url
         self.allowed_defaults = allowed_defaults
         self.action_aliases = action_aliases or []
 

@@ -220,12 +220,12 @@ class CLI:
                     summary = data[m].get("summary") or ""
 
                     # Resolve the documentation URL
+                    docs_url = None
                     tags = data[m].get("tags")
                     if tags is not None and len(tags) > 0 and len(summary) > 0:
                         tag_path = self._flatten_url_path(tags[0])
                         summary_path = self._flatten_url_path(summary)
-
-                        summary += f"\nAPI Documentation: https://www.linode.com/docs/api/{tag_path}/#{summary_path}"
+                        docs_url = f"https://www.linode.com/docs/api/{tag_path}/#{summary_path}"
 
                     use_servers = (
                         [c["url"] for c in data[m]["servers"]]
@@ -372,6 +372,7 @@ class CLI:
                         response_model,
                         use_params,
                         use_servers,
+                        docs_url=docs_url,
                         allowed_defaults=allowed_defaults,
                         action_aliases=action_aliases,
                     )
