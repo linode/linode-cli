@@ -7,7 +7,7 @@ import os
 import pickle
 import re
 from distutils.version import LooseVersion, StrictVersion
-from string import Template, digits, ascii_lowercase
+from string import Template
 from sys import exit, prefix, stderr, version_info
 
 import requests
