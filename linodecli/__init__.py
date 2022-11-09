@@ -543,6 +543,8 @@ def main():
                 print(" [{}]".format(pname), end="")
             print()
             print(operation.summary)
+            if operation.docs_url:
+                print(f"API Documentation: {operation.docs_url}")
             print()
             if operation.args:
                 print("Arguments:")
