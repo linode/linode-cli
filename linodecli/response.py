@@ -79,7 +79,7 @@ class ModelAttr:
         # walk down json paths to find the value
         value = model
         for part in self.name.split("."):
-            if value is None:
+            if value is None or value == {}:
                 return None
             value = value[part]
 
