@@ -2,11 +2,11 @@
 Handles configuring the cli, as well as loading configs so that they can be
 used elsewhere.
 """
-from __future__ import print_function
 
-import argparse
 import re
+import json
 import socket
+import argparse
 import webbrowser
 from http import server
 
@@ -39,8 +39,7 @@ OAUTH_CLIENT_ID = "5823b4627e45411d18e9"
 # this is a list of browser that _should_ work for web-based auth.  This is mostly
 # intended to exclude lynx and other terminal browsers which could be opened, but
 # won't work.
-KNOWN_GOOD_BROWSERS = set(
-    (
+KNOWN_GOOD_BROWSERS = {
         "chrome",
         "firefox",
         "mozilla",
@@ -50,8 +49,7 @@ KNOWN_GOOD_BROWSERS = set(
         "chromium",
         "chromium-browser",
         "epiphany",
-    )
-)
+}
 
 # in the event that we can't load the styled landing page from file, this will
 # do as a landing page
@@ -64,17 +62,6 @@ r.open('GET', '/token/'+window.location.hash.substr(1));
 r.send();
 </script>
 """
-
-
-def input_helper(prompt):
-    """
-    Handles python2 and python3 differences in input command
-    """
-    if sys.version_info[0] == 2:
-        # python2 input is scary - we want raw_input
-        return raw_input(prompt)
-    else:
-        return input(prompt)
 
 
 class CLIConfig:
@@ -129,14 +116,19 @@ class CLIConfig:
         then reconstruct it with the exploded dict.
         """
         ns_dict = vars(namespace)
+        warn_dict = {}
         for k in new_dict:
             if k.startswith("plugin-"):
                 # plugins set config options that start with 'plugin-' - these don't
                 # get included in the updated namespace
                 continue
+            if k in ns_dict and isinstance(k, list):
+                ns_dict[k].append(new_dict[k])
             if k in ns_dict and ns_dict[k] is None:
+                warn_dict[k] = new_dict[k]
                 ns_dict[k] = new_dict[k]
-
+        if not any(x in ['--suppress-warnings', '--no-headers'] for x in sys.argv):
+            print("using default values: {}, use --no-defaults flag to disable defaults".format(warn_dict))
         return argparse.Namespace(**ns_dict)
 
     def update(self, namespace, allowed_defaults):
@@ -159,11 +151,20 @@ class CLIConfig:
             sys.exit(1)
 
         if self.config.has_section(username) and allowed_defaults:
-            update_dicts = {
-                default_key: self.config.get(username, default_key)
-                for default_key in allowed_defaults
-                if self.config.has_option(username, default_key)
-            }
+            # update_dicts = {
+            #     default_key: self.config.get(username, default_key)
+            #     for default_key in allowed_defaults
+            #     if self.config.has_option(username, default_key)
+            #     }
+            update_dicts = {}
+            for default_key in allowed_defaults:
+                if not self.config.has_option(username, default_key):
+                    continue
+                value = self.config.get(username, default_key)
+                if default_key == 'authorized_users':
+                    update_dicts[default_key] = [value]
+                else:
+                    update_dicts[default_key] = value
             return self.update_namespace(namespace, update_dicts)
         return namespace
 
@@ -346,7 +347,7 @@ on your account to work correctly.""".format(
         )
 
         while True:
-            token = input_helper("Personal Access Token: ")
+            token = input("Personal Access Token: ")
 
             username = self._username_for_token(token)
             if username is not None:
@@ -519,7 +520,7 @@ Note that no token will be saved in your configuration file.
                 )
 
                 while True:
-                    r = input_helper("Try it anyway? [y/N]: ")
+                    r = input("Try it anyway? [y/N]: ")
                     if r.lower() in "yn ":
                         can_use_browser = r.lower() == "y"
                         break
@@ -533,7 +534,7 @@ Note that no token will be saved in your configuration file.
                     "If you prefer to supply a Personal Access Token, use `linode-cli configure --token`. "
                 )
                 print()
-                input_helper(
+                input(
                     "Press enter to continue.  This will open a browser and proceed with authentication."
                 )
                 username, config["token"] = self._get_token_web()
@@ -545,6 +546,7 @@ Note that no token will be saved in your configuration file.
         regions = [r["id"] for r in self._do_get_request("/regions")["data"]]
         types = [t["id"] for t in self._do_get_request("/linode/types")["data"]]
         images = [i["id"] for i in self._do_get_request("/images")["data"]]
+        auth_users = [u["username"] for u in self._do_get_request("/account/users", token=config["token"])["data"] if "ssh_keys" in u]
 
         # get the preferred things
         config["region"] = self._default_thing_input(
@@ -568,6 +570,14 @@ Note that no token will be saved in your configuration file.
             "Please select a valid Image, or press Enter to skip",
         )
 
+        if auth_users:
+            config["authorized_users"] = self._default_thing_input(
+                    "Select the user that should be given default SSH access to new Linodes.",
+                    auth_users,
+                    "Default Option (Optional): ",
+                    "Please select a valid Option, or press Enter to skip",
+                )
+
         # save off the new configuration
         if username != "DEFAULT" and not self.config.has_section(username):
             self.config.add_section(username)
@@ -575,7 +585,7 @@ Note that no token will be saved in your configuration file.
         if not is_default:
             if username != self.default_username():
                 while True:
-                    value = input_helper("Make active user? [y/N]: ")
+                    value = input("Make this user the default when using the CLI? [y/N]: ")
 
                     if value.lower() in "yn":
                         is_default = value.lower() == "y"
@@ -641,7 +651,7 @@ Note that no token will be saved in your configuration file.
 
         ret = ""
         while True:
-            choice = input_helper(prompt)
+            choice = input(prompt)
 
             if choice:
                 try:
@@ -723,11 +733,10 @@ Note that no token will be saved in your configuration file.
                 self.config.set("DEFAULT", "default-user", username)
                 self.config.add_section(username)
                 self.config.set(username, "token", token)
-                self.config.set(
-                    username, "region", self.config.get("DEFAULT", "region")
-                )
+                self.config.set(username, "region", self.config.get("DEFAULT", "region"))
                 self.config.set(username, "type", self.config.get("DEFAULT", "type"))
                 self.config.set(username, "image", self.config.get("DEFAULT", "image"))
+                self.config.set(username, "authorized_keys", self.config.get("DEFAULT", "authorized_keys"))
 
                 self.write_config(silent=True)
             else:
@@ -744,7 +753,7 @@ Note that no token will be saved in your configuration file.
         print()
 
         while True:
-            username = input_helper("Active user: ")
+            username = input("Active user: ")
 
             if username in users:
                 self.config.set("DEFAULT", "default-user", username)

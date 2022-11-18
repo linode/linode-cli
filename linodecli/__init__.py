@@ -1,5 +1,4 @@
 #!/usr/local/bin/python3
-from __future__ import print_function
 
 import argparse
 import os
@@ -175,7 +174,7 @@ def main():
     if not cli.suppress_warnings:
         warn_python2_eol()
 
-    if parsed.as_user:
+    if parsed.as_user and not skip_config:
         # if they are acting as a non-default user, set it up early
         cli.config.set_user(parsed.as_user)
 
@@ -272,12 +271,10 @@ def main():
             )
             exit(13)
         elif plugin_name in plugins.available(cli.config):
-            from linodecli.configuration import input_helper
-
             # this isn't an internal plugin, so warn that we're re-registering it
             print("WARNING: Plugin {} is already registered.".format(plugin_name))
             print("")
-            answer = input_helper(
+            answer = input(
                 "Allow re-registration of {}? [y/N] ".format(plugin_name)
             )
 
@@ -404,7 +401,7 @@ def main():
         print()
         print("Available commands:")
 
-        content = [c for c in cli.ops.keys()]
+        content = [c for c in sorted(cli.ops.keys())]
         proc = []
         for i in range(0, len(content), 3):
             proc.append(content[i : i + 3])
@@ -522,7 +519,8 @@ def main():
             print("linode-cli {} [ACTION]".format(parsed.command))
             print()
             print("Available actions: ")
-            content = [[action, op.summary] for action, op in actions.items()]
+
+            content = [[', '.join([action, *op.action_aliases]), op.summary] for action, op in actions.items()]
 
             header = ["action", "summary"]
             table = SingleTable([header] + content)
@@ -545,6 +543,8 @@ def main():
                 print(" [{}]".format(pname), end="")
             print()
             print(operation.summary)
+            if operation.docs_url:
+                print(f"API Documentation: {operation.docs_url}")
             print()
             if operation.args:
                 print("Arguments:")
@@ -553,7 +553,7 @@ def main():
                         "  --{}: {}{}".format(
                             arg.path,
                             "(required) "
-                            if operation.method == "post" and arg.required
+                            if operation.method in {"post", "put"} and arg.required
                             else "",
                             arg.description,
                         )

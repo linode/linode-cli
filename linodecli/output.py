@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import json
 from enum import Enum
 from sys import stdout

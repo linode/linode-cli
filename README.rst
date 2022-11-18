@@ -23,6 +23,21 @@ This will need to be repeated on each pull.  For a build to succeed, see
 
 .. _Building from Source: #building-from-source
 
+Docker Hub
+^^^^^^^^^^
+
+The Linode CLI can also be downloaded and run using the image available on `Docker Hub`_.
+
+.. _Docker Hub: https://hub.docker.com/r/linode/cli
+
+Using a Linode API Token::
+
+    docker run --rm -it -e LINODE_CLI_TOKEN=$LINODE_TOKEN linode/cli:latest linodes list
+
+Using an existing config file::
+
+    docker run --rm -it -v $HOME/.config/linode-cli:/home/cli/.config/linode-cli linode/cli:latest linodes list
+
 Upgrading
 ---------
 
@@ -141,14 +156,36 @@ you don't have access to a browser where you're configuring the CLI, pass the
 When configuring multiple users using web-based configuration, you may need to
 log out of cloud.linode.com before configuring a second user.
 
+Specifying List Arguments
+"""""""""""""""""""""""""
+
+When running certain commands, you may need to specify multiple values for a list
+argument. This can be done by specifying the argument multiple times for each
+value in the list. For example, to create a Linode with multiple ``tags``
+you can execute the following::
+
+    linode-cli linodes create --region us-east --type g6-nanode-1 --tags tag1 --tags tag2
+
+Specifying Nested Arguments
+"""""""""""""""""""""""""""
+
+When running certain commands, you may need to specify an argument that is nested
+in another field. These arguments can be specified using a ``.`` delimited path to
+the argument. For example, to create a firewall with an inbound policy of ``DROP``
+and an outbound policy of ``ACCEPT``, you can execute the following::
+
+    linode-cli firewalls create --label example-firewall --rules.outbound_policy ACCEPT --rules.inbound_policy DROP
+
 Suppressing Defaults
 """"""""""""""""""""
 
-If you configured default values for ``image``, ``region``, and Linode ``type``, they
-will be sent for all requests that accept them if you do not specify a different
-value.  If you want to send a request *without* these arguments, you must invoke
-the CLI with the ``--no-defaults`` option.  For example, to create a Linode with
-no ``image`` after a default Image has been configured, you would do this::
+If you configured default values for ``image``, ``authorized_users``, ``region``,
+and Linode ``type``, they will be sent for all requests that accept them if you
+do not specify a different value.  If you want to send a request *without* these
+arguments, you must invoke the CLI with the ``--no-defaults`` option.
+
+For example, to create a Linode with no ``image`` after a default Image has been
+configured, you would do this::
 
    linode-cli linodes create --region us-east --type g5-standard-2 --no-defaults
 
@@ -320,8 +357,8 @@ Building from Source
 In order to successfully build the CLI, your system will require the following:
 
  * The ``make`` command
- * ``python`` and ``python3`` (both versions are required to build a package)
- * ``pip`` and ``pip3`` (to install ``requirements.txt`` for both python versions)
+ * ``python3``
+ * ``pip3`` (to install ``requirements.txt``)
 
 Before attempting a build, install python dependencies like this::
 
@@ -337,11 +374,7 @@ be used when generating the CLI.  A yaml or json file is accepted.
 
 To install the package as part of the build process, use this command::
 
-   make install PYTHON=3
-
-When using ``install``, the ``PYTHON`` argument is optional - if provided, it
-will install the CLI for that version of python.  Valid values are ``2`` and
-``3``, and it will default to ``3``.
+   make install
 
 Testing
 -------
@@ -396,6 +429,10 @@ Contributing
 This CLI is generated based on the OpenAPI specification for Linode's API.  As
 such, many changes are made directly to the spec.
 
+Please follow the `Contributing Guidelines`_ when making a contribution.
+
+.. _Contributing Guidelines: https://github.com/linode/linode-cli/blob/master/CONTRIBUTING.md
+
 Specification Extensions
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -407,21 +444,32 @@ added to Linode's OpenAPI spec:
 +-----------------------------+-------------+-------------------------------------------------------------------------------------------+
 |x-linode-cli-action          | method      | The action name for operations under this path. If not present, operationId is used.      |
 +-----------------------------+-------------+-------------------------------------------------------------------------------------------+
-|x-linode-cli-color           | property    | If present, defines key-value pairs of property value: color.  Colors must be one of      |
-|                             |             | "red", "green", "yellow", "white", and "black".  Must include a default.                  |
+|x-linode-cli-color           | property    | If present, defines key-value pairs of property value: color.  Colors must be one of      |
+|                             |             | "red", "green", "yellow", "white", and "black".  Must include a default.                  |
 +-----------------------------+-------------+-------------------------------------------------------------------------------------------+
 |x-linode-cli-command         | path        | The command name for operations under this path. If not present, "default" is used.       |
 +-----------------------------+-------------+-------------------------------------------------------------------------------------------+
 |x-linode-cli-display         | property    | If truthy, displays this as a column in output.  If a number, determines the ordering     |
-|                             |             | (left to right).                                                                          |
+|                             |             | (left to right).                                                                          |
 +-----------------------------+-------------+-------------------------------------------------------------------------------------------+
 |x-linode-cli-format          | property    | Overrides the "format" given in this property for the CLI only.  Valid values are `file`  |
 |                             |             | and `json`.                                                                               |
 +-----------------------------+-------------+-------------------------------------------------------------------------------------------+
 |x-linode-cli-skip            | path        | If present and truthy, this method will not be available in the CLI.                      |
 +-----------------------------+-------------+-------------------------------------------------------------------------------------------+
-+x-linode-cli-allowed-defaults| requestBody | Tells the CLI what configured defaults apply to this request.  Value values are "region", |
-+                             |             | "image", and "type".                                                                      |
++x-linode-cli-allowed-defaults| requestBody | Tells the CLI what configured defaults apply to this request. Valid defaults are "region",|
++                             |             | "image", "authorized_users", and "type".                                                  |
++-----------------------------+-------------+-------------------------------------------------------------------------------------------+
++x-linode-cli-nested-list     | content-type| Tells the CLI to flatten a single object into multiple table rows based on the keys       |
+|                             |             | included in this value.  Values should be comma-delimited JSON paths, and must all be     |
+|                             |             | present on response objects.                                                              |
+|                             |             |                                                                                           |
+|                             |             | When used, a new key ``_split`` is added to each flattened object whose value is the last |
+|                             |             | segment of the JSON path used to generate the flattened object from the source.           |
++-----------------------------+-------------+-------------------------------------------------------------------------------------------+
+|x-linode-cli-use-schema      | content-type| Overrides the normal schema for the object and uses this instead.  Especially useful when |
+|                             |             | paired with ``x-linode-cli-nested-list``, allowing a schema to describe the flattened     |
+|                             |             | object instead of the original object.                                                    |
 +-----------------------------+-------------+-------------------------------------------------------------------------------------------+
 
 .. _Specification Extensions: https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#specificationExtensions

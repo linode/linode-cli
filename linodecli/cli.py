@@ -1,11 +1,11 @@
 """
 Responsible for managing spec and routing commands to operations.
 """
-from __future__ import print_function
 
 import json
 import os
 import pickle
+import re
 from distutils.version import LooseVersion, StrictVersion
 from string import Template
 from sys import exit, prefix, stderr, version_info
@@ -19,7 +19,6 @@ from .response import ModelAttr, ResponseModel
 
 METHODS = ("get", "post", "put", "delete")
 PIP_CMD = "pip3" if version_info.major == 3 else "pip"
-
 
 class CLI:
     """
@@ -94,7 +93,7 @@ class CLI:
         for arg, info in node.items():
             if "allOf" in info:
                 info = self._resolve_allOf(info["allOf"])
-            if "$ref" in info:
+            while "$ref" in info:
                 info = self._resolve_ref(info["$ref"])
             if "properties" in info:
                 self._parse_args(info["properties"], prefix=prefix + [arg], args=args)
@@ -208,7 +207,25 @@ class CLI:
                         print("warn: no operationId for {} {}".format(m.upper(), path))
                         continue
 
+                    action_aliases = None
+
+                    if isinstance(action, list):
+                        if len(action) < 1:
+                            print("warn: empty list for action {}".format(m.upper()))
+                            continue
+
+                        action_aliases = action[1:]
+                        action = action[0]
+
                     summary = data[m].get("summary") or ""
+
+                    # Resolve the documentation URL
+                    docs_url = None
+                    tags = data[m].get("tags")
+                    if tags is not None and len(tags) > 0 and len(summary) > 0:
+                        tag_path = self._flatten_url_path(tags[0])
+                        summary_path = self._flatten_url_path(summary)
+                        docs_url = f"https://www.linode.com/docs/api/{tag_path}/#{summary_path}"
 
                     use_servers = (
                         [c["url"] for c in data[m]["servers"]]
@@ -355,7 +372,9 @@ class CLI:
                         response_model,
                         use_params,
                         use_servers,
+                        docs_url=docs_url,
                         allowed_defaults=allowed_defaults,
+                        action_aliases=action_aliases,
                     )
 
         # remove any empty commands (those that have no actions)
@@ -416,10 +435,12 @@ complete -F _linode_cli linode-cli"""
             )
             for op, actions in self.ops.items()
         ]
+
         rendered = completion_template.safe_substitute(
             actions=" ".join(self.ops.keys()),
             command_items="\n        ".join(command_blocks),
         )
+
         return rendered
 
     def bake_completions(self):
@@ -664,19 +685,35 @@ complete -F _linode_cli linode-cli"""
             )
         exit(1)
 
+    @staticmethod
+    def _flatten_url_path(tag):
+        new_tag = tag.lower()
+        new_tag = re.sub(r"[^a-z ]", "", new_tag).replace(' ', '-')
+        return new_tag
+
     def handle_command(self, command, action, args):
         """
         Given a command, action, and remaining kwargs, finds and executes the
         action
         """
+
         if command not in self.ops:
             print("Command not found: {}".format(command))
             exit(1)
-        elif action not in self.ops[command]:
-            print("No action {} for command {}".format(action, command))
-            exit(1)
 
-        operation = self.ops[command][action]
+        operation = self.ops[command][action] if action in self.ops[command] else None
+
+        if operation is None:
+            # Find the matching alias
+            for op in self.ops[command].values():
+                if action in op.action_aliases:
+                    operation = op
+                    break
+
+            # Fail if no matching alias was found
+            if operation is None:
+                print("No action {} for command {}".format(action, command))
+                exit(1)
 
         result = self.do_request(operation, args)
 

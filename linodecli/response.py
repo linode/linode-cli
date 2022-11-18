@@ -2,7 +2,6 @@
 Classes related to parsing responses and display output from the API, based
 on the OpenAPI spec.
 """
-from __future__ import print_function
 
 import os
 import platform
@@ -80,7 +79,7 @@ class ModelAttr:
         # walk down json paths to find the value
         value = model
         for part in self.name.split("."):
-            if value is None:
+            if value is None or value == {}:
                 return None
             value = value[part]
 
@@ -166,15 +165,26 @@ class ResponseModel:
             if "pages" in json:
                 json = json["data"]
 
+            nested_lists = [c.strip() for c in self.nested_list.split(",")]
             ret = []
-            if not isinstance(json, list):
-                json = [json]
-            for cur in json:
-                nlist = cur.get(self.nested_list)
-                for item in nlist:
-                    cobj = {k: v for k, v in cur.items() if k != self.nested_list}
-                    cobj[self.nested_list] = item
-                    ret.append(cobj)
+
+            for nested_list in nested_lists:
+                path_parts = nested_list.split(".")
+
+                if not isinstance(json, list):
+                    json = [json]
+                for cur in json:
+
+                    nlist_path = cur
+                    for p in path_parts:
+                      nlist_path = nlist_path.get(p)
+                    nlist = nlist_path
+
+                    for item in nlist:
+                        cobj = {k: v for k, v in cur.items() if k != path_parts[0]}
+                        cobj["_split"] = path_parts[-1]
+                        cobj[path_parts[0]] = item
+                        ret.append(cobj)
 
             return ret
         elif "pages" in json:

@@ -1,7 +1,6 @@
 """
 Classes related to OpenAPI-defined operations and their arguments and parameters.
 """
-from __future__ import print_function
 
 import argparse
 import json
@@ -41,7 +40,7 @@ class PasswordPromptAction(argparse.Action):
     """
 
     def __init__(self, *args, **kwargs):
-        super(PasswordPromptAction, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def __call__(self, parser, namespace, values, option_string=None):
         # if not provided on the command line, pull from the environment if it
@@ -146,7 +145,9 @@ class CLIOperation:
         response_model,
         params,
         servers,
+        docs_url=None,
         allowed_defaults=None,
+        action_aliases=None,
     ):
         self.command = command
         self.action = action
@@ -157,7 +158,9 @@ class CLIOperation:
         self.response_model = response_model
         self.params = params
         self.servers = servers
+        self.docs_url = docs_url
         self.allowed_defaults = allowed_defaults
+        self.action_aliases = action_aliases or []
 
     @property
     def url(self):

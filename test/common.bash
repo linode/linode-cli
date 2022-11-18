@@ -14,6 +14,11 @@ fi
 if [ -z "$uniqueTag" ]; then
     export uniqueTag="$(date +%s)-tag"
 fi
+#
+# A Unique user to use in user related tests
+if [ -z "$uniqueUser" ]; then
+    export uniqueUser="test-user-$(date +%s)"
+fi
 
 createLinode() {
     local region=${1:-us-east}
@@ -47,7 +52,7 @@ createVolume() {
 }
 
 shutdownLinodes() {
-    local linode_ids="( $(LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN linode-cli --text --no-headers linodes list | awk '{ print $1 }' | xargs) )"
+    local linode_ids="( $(LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN linode-cli --text --no-headers linodes list --format "id,tags" | grep -v "linuke-keep" | awk '{ print $1 }' | xargs) )"
     local id
 
     for id in $linode_ids ; do
@@ -56,7 +61,7 @@ shutdownLinodes() {
 }
 
 removeLinodes() {
-    local linode_ids="( $(LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN linode-cli --text --no-headers linodes list | awk '{ print $1 }' | xargs) )"
+    local linode_ids="( $(LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN linode-cli --text --no-headers linodes list --format "id,tags" | grep -v "linuke-keep" | awk '{ print $1 }' | xargs) )"
     local id
 
     for id in $linode_ids ; do
@@ -65,7 +70,7 @@ removeLinodes() {
 }
 
 removeDomains() {
-    local domain_ids="( $( linode-cli domains list --format "id" --text --no-headers ) )"
+    local domain_ids="( $(LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN linode-cli --text --no-headers domains list --format "id,tags" | grep -v "linuke-keep" | awk '{ print $1 }' |  xargs) )"
     local id
 
     for id in $domain_ids ; do
@@ -75,7 +80,7 @@ removeDomains() {
 }
 
 removeVolumes() {
-    local volume_ids="( $(linode-cli volumes list --text --no-headers --format="id" | xargs) )"
+    local volume_ids="( $(LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN linode-cli --text --no-headers volumes list --format "id,tags" | grep -v "linuke-keep" | awk '{ print $1 }' |  xargs) )"
     local id
 
     for id in $volume_ids ; do
@@ -84,7 +89,7 @@ removeVolumes() {
 }
 
 removeLkeClusters() {
-    local cluster_ids="( $(LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN linode-cli --text --no-headers lke clusters-list | awk '{ print $1 }' | xargs) )"
+    local cluster_ids="( $(LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN linode-cli --text --no-headers lke clusters-list --format "id,tags" | grep -v "linuke-keep" | awk '{ print $1 }' |  xargs) )"
     local id
 
     for id in $cluster_ids ; do
@@ -94,9 +99,9 @@ removeLkeClusters() {
 
 removeAll() {
     if [ "$1" = "stackscripts" ]; then
-        entity_ids="( $(linode-cli $1 list --is_public=false --text --no-headers --format="id" | xargs) )"
+        entity_ids="( $(linode-cli --is_public=false --text --no-headers $1 list --format="id,tags" | grep -v "linuke-keep" | awk '{ print $1 }' | xargs) )"
     else
-        entity_ids="( $(linode-cli $1 list --text --no-headers --format="id" | xargs) )"
+        entity_ids="( $(linode-cli --text --no-headers $1 list --format="id,tags" | grep -v "linuke-keep" | awk '{ print $1 }' | xargs) )"
     fi
 
     local id
