@@ -1,14 +1,15 @@
 import argparse
 import json
+import re
 import termios
 import sys
+from typing import Callable, Tuple, Any
+from ipaddress import ip_address, IPv4Address
 
 from terminaltables import PorcelainTable
 
-
 BOLD = "\033[1m"
 NOT_BOLD = "\033[0m"
-
 
 # plugin-scoped variables
 # setup terminal states
@@ -16,6 +17,109 @@ orig_term = termios.tcgetattr(sys.stdin.fileno())
 new_term = termios.tcgetattr(sys.stdin.fileno())
 # new terminal becomes unbuffered
 new_term[3] = (new_term[3] & ~termios.ICANON & ~termios.ECHO)
+
+
+class InputValidation:
+    @staticmethod
+    def input(input_text: str, validator: Callable[[str], None]):
+        while True:
+            value = input(input_text)
+            try:
+                validator(value)
+            except ValueError as err:
+                print("Invalid Input: {}".format("; ".join(err.args)))
+                continue
+
+            return value
+
+    @staticmethod
+    def input_io(rules):
+        raw_terminal()
+
+        print("[I]nbound or [O]utbound?")
+        segment = " "
+        while segment not in "io":
+            segment = sys.stdin.read(1).lower()
+
+        change = rules["inbound"]
+        if segment == "o":
+            change = rules["outbound"]
+
+        revert_terminal()
+
+        return change
+
+    @staticmethod
+    def optional(validator):
+        def callback(value):
+            if value.strip() == "":
+                return
+
+            validator(value)
+
+        return callback
+
+    @staticmethod
+    def int():
+        def callback(value):
+            if not value.isnumeric():
+                raise ValueError("Expected an integer, got {}".format(value))
+
+        return callback
+
+    @staticmethod
+    def index_of(ref_list, allow_append=False):
+        def callback(value):
+            if not value.isnumeric():
+                raise ValueError("Expected an integer, got {}".format(value))
+
+            value_int = int(value)
+
+            if value_int < 0 or value_int >= len(ref_list) + (1 if allow_append else 0):
+                raise ValueError("Invalid index {}".format(value_int))
+
+        return callback
+
+    @staticmethod
+    def regex(pattern, error_msg):
+        def callback(value):
+            pattern_compiled = re.compile(pattern)
+
+            if not re.fullmatch(pattern_compiled, value):
+                raise ValueError(error_msg)
+
+        return callback
+
+    @staticmethod
+    def one_of(valid_choices):
+        def callback(value):
+            if value.lower() not in [choice.lower() for choice in valid_choices]:
+                raise ValueError("Invalid choice: {}; must be one of {}"
+                                 .format(value, ', '.join(valid_choices)))
+
+        return callback
+
+    @staticmethod
+    def ip_list():
+        def callback(value):
+            for ip in value.split(","):
+                ip = ip.strip()
+
+                # IP ranges are required
+                ip_parts = ip.split('/')
+
+                if len(ip_parts) != 2:
+                    raise ValueError("Invalid IP: {}; IPs must be in IP/mask format.".format(ip))
+
+                if not ip_parts[1].isnumeric():
+                    raise ValueError("Invalid IP: {}; IP masks must be numeric".format(ip))
+
+                try:
+                    ip_address(ip_parts[0])
+                except ValueError:
+                    raise ValueError("Invalid IP: {}".format(ip))
+
+        return callback
 
 
 def raw_terminal():
@@ -86,7 +190,7 @@ def redraw(firewall, rules):
     )
 
 
-def print_rules_table(rules, offset=0):
+def print_rules_table(rules):
     """
     Prints a table of rules to the screen with a given index offset
     """
@@ -98,21 +202,25 @@ def print_rules_table(rules, offset=0):
     rows = []
 
     for ind, cur in enumerate(rules):
-        addrs = ", ".join(
-                (cur["addresses"]["ipv4"] if "ipv4" in cur["addresses"] else cur["addresses"]["ipv6"])
-        )
+        addrs = []
+        if "ipv4" in cur["addresses"]:
+            addrs.extend(cur["addresses"]["ipv4"])
+
+        if "ipv6" in cur["addresses"]:
+            addrs.extend(cur["addresses"]["ipv6"])
+
         rows.append(
             [
-                ind+offset,
+                ind,
                 cur["label"] if "label" in cur else "",
                 cur["protocol"],
                 cur["action"],
                 cur["ports"] if "ports" in cur else "",
-                addrs,
+                ", ".join(addrs),
             ]
         )
 
-    tab = PorcelainTable([header]+rows)
+    tab = PorcelainTable([header] + rows)
     tab.inner_heading_row_border = True
     print(tab.table)
 
@@ -129,7 +237,7 @@ def draw_rules(rules):
     print_rules_table(rules["inbound"])
     print()
     print("{bold}Outbound Rules:{nobold}".format(bold=BOLD, nobold=NOT_BOLD))
-    print_rules_table(rules["outbound"], len(rules["inbound"]))
+    print_rules_table(rules["outbound"])
 
 
 ##
@@ -158,31 +266,7 @@ class StopSave(Exception):
 #
 # Where the incoming dict is the current state of the firewall rules (which will be
 # modified), and the return value if whether or not we need to redraw the whole screen
-## 
-
-def toggle_inbound_policy(rules):
-    """
-    Updates inbound policy and calls for full redraw
-    """
-    if rules["inbound_policy"] == "ACCEPT":
-        rules["inbound_policy"] = "DROP"
-    else:
-        rules["inbound_policy"] = "ACCEPT"
-
-    return True
-
-
-def toggle_outbound_policy(rules):
-    """
-    Updates outbound policy and calls for full redraw
-    """
-    if rules["outbound_policy"] == "ACCEPT":
-        rules["outbound_policy"] = "DROP"
-    else:
-        rules["outbound_policy"] = "ACCEPT"
-
-    return True
-
+##
 
 def save_quit(rules):
     raise StopSave()
@@ -196,59 +280,84 @@ def add_rule(rules):
     """
     Adds a new firewall rule
     """
-    print("[I]nbound or [O]utbound?")
-    segment = " "
-    while segment not in "io":
-        segment = sys.stdin.read(1).lower()
+    change = InputValidation.input_io(rules)
 
-    revert_terminal()
-    
-    # TODO - generic functions for these, and autocomplete long strings (i.e. "accept" for "a" or "acc")
-    while True:
-        ind = input("Index: ")
-        try:
-            ind = int(ind)
-            break
-        except ValueError:
-            continue
+    ind = 0
+    if len(change) > 0:
+        ind_str = InputValidation.input(
+            "Index (Optional): ",
+            InputValidation.optional(
+                InputValidation.index_of(change, allow_append=True))).strip()
 
-    label = input("Label: ")
+        if ind_str == "":
+            ind = len(change)
+        else:
+            ind = int(ind_str)
 
-    protocol = " "
+    label = InputValidation.input(
+        "Rule Label (Optional): ",
+        InputValidation.optional(InputValidation.regex(
+            "^[a-zA-Z0-9\\-\\_\\.]{3,32}$",
+            "Label must include only ASCII letters, numbers, underscores, periods, and dashes."))).strip()
 
-    while protocol not in ("TCP","UDP"):
-        protocol = input("Protocol (TCP/UDP): ").upper()
+    protocol = InputValidation.input(
+        "Protocol (TCP/UDP/ICMP/IPENCAP): ",
+        InputValidation.one_of({"TCP", "UDP", "ICMP", "IPENCAP"}))
+    protocol = protocol.upper()
 
-    action = " "
-    while action not in ("ACCEPT", "DROP"):
-        action = input("Action (ACCEPT/DROP): ").upper()
+    action = InputValidation.input(
+        "Action (ACCEPT/DROP): ", InputValidation.one_of({"ACCEPT", "DROP"}))
+    action = action.upper()
 
-    port = input("Port: ")
+    # Ports are now allowed for ICMP and IPENCAP protocols
+    port = None
 
-    addresses = [c.strip() for c in input("Addresses (comma serparated): ").split(",")]
+    if protocol not in ["ICMP", "IPENCAP"]:
+        port = InputValidation.input(
+            "Ports: ",
+            InputValidation.regex(
+                "^[0-9\\,\\- ]*$",
+                "Input may be a single port, a range of ports, or a "
+                "comma-separated list of single ports and port ranges."))
 
-    # do it
-    change = rules["inbound"]
-    if segment == "o":
-        change = rules["outbound"]
-        ind -= len(rules["inbound"])
+    addresses = InputValidation.input(
+        "Addresses (comma separated): ",
+        InputValidation.ip_list(),
+    )
+
+    addresses_ipv4 = []
+    addresses_ipv6 = []
+
+    for ip in addresses.split():
+        ip = ip.strip()
+
+        addresses_ipv4.append(ip) if type(ip_address(ip.split("/")[0])) is IPv4Address \
+            else addresses_ipv6.append(ip)
 
     # make the new rule
     new_rule = {
-        "ports": port,
         "protocol": protocol,
-        "addresses": {
-            "ipv4": addresses, # TODO handle v6 and validating addresses
-        },
+        "addresses": {},
         "action": action,
     }
+
+    # Ports are rejected for ICMP and IPENCAP protocols
+    if port is not None:
+        new_rule["ports"] = port
+
+    # The API will reject empty lists, let's make sure
+    # they're only included if necessary
+    if len(addresses_ipv4) > 0:
+        new_rule["addresses"]["ipv4"] = addresses_ipv4
+
+    if len(addresses_ipv6) > 0:
+        new_rule["addresses"]["ipv6"] = addresses_ipv6
 
     if label:
         # this field must be omitted unless it is set
         new_rule["label"] = label
 
-    # TODO - insert at index
-    change.append(new_rule)
+    change.insert(ind, new_rule)
 
     return False
 
@@ -257,22 +366,22 @@ def remove_rule(rules):
     """
     Removes a rule (by index)
     """
-    revert_terminal()
+    change = InputValidation.input_io(rules)
 
-    ind = input("Index to remove: ")
-
-    try:
-        ind = int(ind)
-    except ValueError:
+    if len(change) < 1:
+        print("No entires to remove")
         return False
 
-    change = rules["inbound"]
-    if ind >= len(rules["inbound"]):
-        change = rules["outbound"]
-        ind -= len(rules["inbound"])
+    ind_str = InputValidation.input(
+        "Index to remove: ", InputValidation.optional(
+            InputValidation.index_of(change))
+    ).strip()
 
-    if ind >= 0 and ind < len(change):
-        del change[ind]
+    # No changes to be made
+    if ind_str == "":
+        return False
+
+    del change[int(ind_str)]
 
     return False
 
@@ -280,41 +389,37 @@ def remove_rule(rules):
 def swap_rules(rules):
     revert_terminal()
 
-    a = input("Swap index: ")
-    b = input("With index: ")
+    change = InputValidation.input_io(rules)
 
-    try:
-        a = int(a)
-        b = int(b)
-    except ValueError:
+    a_str = InputValidation.input(
+        "Swap index: ", InputValidation.optional(
+            InputValidation.index_of(change))).strip()
+
+    if a_str == "":
         return False
 
-    change = rules["inbound"]
-    if a < len(change) and b >= len(change):
-        # can't swap between inbound and outbound
+    b_str = InputValidation.input(
+        "With index: ", InputValidation.optional(
+            InputValidation.index_of(change))).strip()
+
+    if b_str == "":
         return False
 
-    if a >= len(change):
-        change = rules["outbound"]
-        a -= len(rules["inbound"])
-        b -= len(rules["inbound"])
+    a, b = int(a_str), int(b_str)
 
-    tmp = change[a]
-    change[a] = change[b]
-    change[b] = tmp
+    change[a], change[b] = change[b], change[a]
 
     return False
 
 
 ACTION_MAP = {
-    "i": toggle_inbound_policy,
-    "o": toggle_outbound_policy,
     "w": save_quit,
     "q": quit,
     "a": add_rule,
     "r": remove_rule,
     "s": swap_rules,
 }
+
 
 ##
 # Logic
@@ -325,9 +430,8 @@ def get_action():
     Prints the action prompt and returns the action to run
     """
     print()
-    print("Global: Toggle [I]nbound or [O]utbound Policy")
     print("Rules: [A]dd, [R]emove, or [S]wap")
-    print("[W]rtie settings or [Q]uit")
+    print("[W]rite settings or [Q]uit")
 
     selection = " "
 
@@ -345,7 +449,6 @@ def mainloop(firewall, rules):
     full_redraw = True
     save = False
 
-    
     while True:
         try:
             if full_redraw:
@@ -377,17 +480,15 @@ def call(args, context):
     parser.add_argument('firewall_id', help="The ID of the firewall to edit.")
     parsed = parser.parse_args(args)
 
-    
     # fetch the info and start going
     firewall, rules = _get_firewall(parsed.firewall_id, context.client)
-
 
     while True:
         save = mainloop(firewall, rules)
 
         # then update the rules
         if save:
-            print("Saving..")
+            print("Saving Firewall configuration..")
             code, errors = context.client.call_operation("firewalls", "rules-update", args=[
                 parsed.firewall_id,
                 "--inbound", json.dumps(rules["inbound"]),
@@ -398,7 +499,7 @@ def call(args, context):
             if code == 200:
                 print("Rules updated successfully!")
                 break
-            else: 
+            else:
                 print("Error editing rules: {}: {}".format(code, errors))
                 # block to see the error, then re-enter the editor
                 sys.stdin.read(1)
