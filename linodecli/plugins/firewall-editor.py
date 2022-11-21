@@ -476,7 +476,7 @@ def call(args, context):
     """
     Invokes the Interactive Firewall Plugin
     """
-    parser = argparse.ArgumentParser("firewall", add_help=True)
+    parser = argparse.ArgumentParser("firewall-editor", add_help=True)
     parser.add_argument('firewall_id', help="The ID of the firewall to edit.")
     parsed = parser.parse_args(args)
 
