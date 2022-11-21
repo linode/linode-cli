@@ -198,7 +198,7 @@ def print_rules_table(rules):
         print("None")
         return
 
-    header = ["ind", "label", "protocol", "action", "ports", "addresses"]
+    header = ["#", "label", "protocol", "action", "ports", "addresses"]
     rows = []
 
     for ind, cur in enumerate(rules):
