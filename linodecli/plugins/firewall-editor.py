@@ -328,7 +328,7 @@ def add_rule(rules):
     addresses_ipv4 = []
     addresses_ipv6 = []
 
-    for ip in addresses.split():
+    for ip in addresses.split(','):
         ip = ip.strip()
 
         addresses_ipv4.append(ip) if type(ip_address(ip.split("/")[0])) is IPv4Address \
