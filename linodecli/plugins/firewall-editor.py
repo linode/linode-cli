@@ -412,12 +412,23 @@ def swap_rules(rules):
     return False
 
 
+def toggle_policy(policy_key):
+    def callback(rules):
+        rules[policy_key] = "DROP" if rules[policy_key] == "ACCEPT" else "ACCEPT"
+
+        return True
+
+    return callback
+
+
 ACTION_MAP = {
     "w": save_quit,
     "q": quit,
     "a": add_rule,
     "r": remove_rule,
     "s": swap_rules,
+    "i": toggle_policy("inbound_policy"),
+    "o": toggle_policy("outbound_policy")
 }
 
 
@@ -431,6 +442,7 @@ def get_action():
     """
     print()
     print("Rules: [A]dd, [R]emove, or [S]wap")
+    print("Policy: Toggle [I]nbound or [O]utbound")
     print("[W]rite settings or [Q]uit")
 
     selection = " "
