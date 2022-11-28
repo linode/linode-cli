@@ -101,6 +101,14 @@ def main():
         help="For listing actions, specifies the page to request",
     )
     parser.add_argument(
+        "--page-size",
+        metavar="PAGESIZE",
+        type=int,
+        default=100,
+        help="For listing actions, specifies the number of items per page, "
+        "accepts any value between 25 and 500",
+    )
+    parser.add_argument(
         "--all",
         action="store_true",
         help="If set, displays all possible columns instead of "
@@ -169,6 +177,7 @@ def main():
     cli.defaults = not parsed.no_defaults
     cli.suppress_warnings = parsed.suppress_warnings
     cli.page = parsed.page
+    cli.page_size = parsed.page_size
     cli.debug_request = parsed.debug
 
     if not cli.suppress_warnings:
