@@ -1,8 +1,8 @@
 name: OCI Image Publish
 on:
-  push:
-    tags:
-      - '[0-9]+.[0-9]+.[0-9]+' # We only want to run on version tags
+  workflow_dispatch: null
+  release:
+    types: [ published ]
 jobs:
   oci_publish:
     name: Build and publish the OCI image
@@ -10,6 +10,11 @@ jobs:
     steps:
       - name: Clone Repository
         uses: actions/checkout@e2f20e631ae6d7dd3b768f56a5d2af784dd54791 # pin@v2
+
+      - name: setup python 3
+        uses: actions/setup-python@75f3110429a8c05be0e1bf360334e4cced2b63fa # pin@v2
+        with:
+          python-version: '3.x'
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@e81a89b1732b9c48d79cd809d8d81d79c4647a18 # pin@v2
@@ -23,6 +28,17 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      # This is necessary as we want to ensure that version tags
+      # are properly formatted before passing them into the
+      # DockerFile.
+      - name: Get CLI version
+        run: |
+          export CLI_VERSION=$(./version)
+          echo "CLI_VERSION=$CLI_VERSION" >> $GITHUB_OUTPUT
+        env:
+          LINODE_CLI_VERSION: ${{ github.event.release.tag_name }}
+        id: cli_version
+
       - name: Build and push to DockerHub
         uses: docker/build-push-action@c56af957549030174b10d6867f20e78cfd7debc5 # pin@v3
         with:
@@ -30,4 +46,5 @@ jobs:
           file: Dockerfile-release
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: linode/cli:${{ github.ref_name }},linode/cli:latest
+          tags: linode/cli:${{ steps.cli_version.outputs.CLI_VERSION }},linode/cli:latest
+          build-args: linode_cli_version=${{ steps.cli_version.outputs.CLI_VERSION }}

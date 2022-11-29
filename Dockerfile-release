@@ -1,5 +1,7 @@
 FROM python:3.9-slim-buster AS builder
 
+ARG linode_cli_version
+
 WORKDIR /src
 
 COPY requirements.txt .
@@ -10,7 +12,7 @@ RUN apt-get update && \
 
 COPY . .
 
-RUN make build
+RUN LINODE_CLI_VERSION=$linode_cli_version make build
 
 FROM python:3.9-slim-buster
 
@@ -20,6 +22,5 @@ RUN pip3 install /dist/*.whl boto==2.49.0
 
 RUN useradd -ms /bin/bash cli
 USER cli:cli
-
 
 ENTRYPOINT ["linode-cli"]

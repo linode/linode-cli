@@ -9,9 +9,24 @@ import subprocess
 import sys
 from distutils.version import LooseVersion
 
+ENV_LINODE_CLI_VERSION = "LINODE_CLI_VERSION"
+
+
+def get_version_env():
+    return os.getenv(ENV_LINODE_CLI_VERSION)
+
 
 def get_version(ref="HEAD"):
-    describe = call('git describe {} --tags'.format(ref))
+    # We want to override the version if an environment variable is specified.
+    # This is useful for certain release and testing pipelines.
+    describe = get_version_env()
+
+    if describe is None:
+        describe = call('git describe {} --tags'.format(ref))
+
+    # Strip the `v` prefix if specified
+    if describe.startswith("v"):
+        describe = describe[1:]
 
     parts = LooseVersion(describe).version[:3]
     return tuple(parts)

@@ -1,0 +1,21 @@
+name-template: 'v$NEXT_PATCH_VERSION'
+tag-template: 'v$NEXT_PATCH_VERSION'
+categories:
+  - title: '🚀 Added'
+    label: 'added-feature'
+  - title: '🧰 Changed'
+    label: 'changed'
+  - title: "⚠️ Deprecated"
+    label: "deprecated"
+  - title: "⚠️ Removed"
+    label: "removed"
+  - title: '🐛 Bug Fixes'
+    label: 'bugfix'
+  - title: "⚠️ Security"
+    label: "security"
+change-template: '- $TITLE @$AUTHOR (#$NUMBER)'
+no-changes-template: "- No changes"
+template: |
+  ## Changes
+
+  $CHANGES

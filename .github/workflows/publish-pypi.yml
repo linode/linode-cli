@@ -1,0 +1,38 @@
+name: release
+on:
+  workflow_dispatch: null
+  release:
+    types: [ published ]
+jobs:
+  pypi-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # pin@v3
+
+      - name: Update system packages
+        run: sudo apt-get update -y
+
+      - name: Install make
+        run: sudo apt-get install -y build-essential
+
+      - name: Setup Python
+        uses: actions/setup-python@75f3110429a8c05be0e1bf360334e4cced2b63fa # pin@v2
+        with:
+          python-version: '3.x'
+
+      - name: Install Python deps
+        run: pip install wheel
+
+      - name: Install package requirements
+        run: make requirements
+
+      - name: Build the package
+        run: make build
+        env:
+          LINODE_CLI_VERSION: ${{ github.event.release.tag_name }}
+
+      - name: Publish the release artifacts to PyPI
+        uses: pypa/gh-action-pypi-publish@37f50c210e3d2f9450da2cd423303d6a14a6e29f # pin@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
