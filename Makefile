@@ -2,7 +2,10 @@
 # Makefile for more convenient building of the Linode CLI and its baked content
 #
 
-SPEC ?= https://www.linode.com/docs/api/openapi.yaml
+SPEC_VERSION ?= latest
+ifndef SPEC
+override SPEC = $(shell ./resolve_spec_url ${SPEC_VERSION})
+endif
 
 install: check-prerequisites requirements build
 	ls dist/ | xargs -I{} pip3 install --force dist/{}
