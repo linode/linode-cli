@@ -546,7 +546,16 @@ Note that no token will be saved in your configuration file.
         regions = [r["id"] for r in self._do_get_request("/regions")["data"]]
         types = [t["id"] for t in self._do_get_request("/linode/types")["data"]]
         images = [i["id"] for i in self._do_get_request("/images")["data"]]
-        auth_users = [u["username"] for u in self._do_get_request("/account/users", token=config["token"])["data"] if "ssh_keys" in u]
+
+        is_full_access = self._check_full_access(config["token"])
+
+        auth_users = []
+
+        if is_full_access:
+            auth_users = [u["username"] for u in self._do_get_request(
+                "/account/users",
+                exit_on_error=False,
+                token=config["token"])["data"] if "ssh_keys" in u]
 
         # get the preferred things
         config["region"] = self._default_thing_input(
@@ -679,6 +688,19 @@ Note that no token will be saved in your configuration file.
             requests.get, url, token=token, exit_on_error=exit_on_error
         )
 
+    @staticmethod
+    def _handle_response_status(response, exit_on_error=None):
+        if 199 < response.status_code < 300:
+            return
+
+        print(
+            "Could not contact {} - Error: {}".format(
+                response.url, response.status_code
+            )
+        )
+        if exit_on_error:
+            sys.exit(4)
+
     def _do_request(self, method, url, token=None, exit_on_error=None, body=None):
         """
         Does helper requests during configuration
@@ -691,16 +713,21 @@ Note that no token will be saved in your configuration file.
 
         result = method(self.base_url + url, headers=headers, json=body)
 
-        if not 199 < result.status_code < 300:
-            print(
-                "Could not contact {} - Error: {}".format(
-                    self.base_url + url, result.status_code
-                )
-            )
-            if exit_on_error:
-                sys.exit(4)
+        self._handle_response_status(result, exit_on_error=exit_on_error)
 
         return result.json()
+
+    def _check_full_access(self, token):
+        headers = {
+            "Authorization": "Bearer {}".format(token),
+            "Content-Type": "application/json"
+        }
+
+        result = requests.get(self.base_url + "/profile/grants", headers=headers)
+
+        self._handle_response_status(result, exit_on_error=True)
+
+        return result.status_code == 204
 
     def _handle_no_default_user(self):
         """
