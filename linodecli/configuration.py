@@ -688,6 +688,19 @@ Note that no token will be saved in your configuration file.
             requests.get, url, token=token, exit_on_error=exit_on_error
         )
 
+    @staticmethod
+    def _handle_response_status(response, exit_on_error=None):
+        if 199 < response.status_code < 300:
+            return
+
+        print(
+            "Could not contact {} - Error: {}".format(
+                response.url, response.status_code
+            )
+        )
+        if exit_on_error:
+            sys.exit(4)
+
     def _do_request(self, method, url, token=None, exit_on_error=None, body=None):
         """
         Does helper requests during configuration
@@ -700,14 +713,7 @@ Note that no token will be saved in your configuration file.
 
         result = method(self.base_url + url, headers=headers, json=body)
 
-        if not 199 < result.status_code < 300:
-            print(
-                "Could not contact {} - Error: {}".format(
-                    self.base_url + url, result.status_code
-                )
-            )
-            if exit_on_error:
-                sys.exit(4)
+        self._handle_response_status(result, exit_on_error=exit_on_error)
 
         return result.json()
 
@@ -717,17 +723,9 @@ Note that no token will be saved in your configuration file.
             "Content-Type": "application/json"
         }
 
-        target_url = self.base_url + "/profile/grants"
+        result = requests.get(self.base_url + "/profile/grants", headers=headers)
 
-        result = requests.get(target_url, headers=headers)
-
-        if not 199 < result.status_code < 300:
-            print(
-                "Could not contact {} - Error: {}".format(
-                    target_url, result.status_code
-                )
-            )
-            sys.exit(4)
+        self._handle_response_status(result, exit_on_error=True)
 
         return result.status_code == 204
 
