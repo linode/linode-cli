@@ -546,7 +546,16 @@ Note that no token will be saved in your configuration file.
         regions = [r["id"] for r in self._do_get_request("/regions")["data"]]
         types = [t["id"] for t in self._do_get_request("/linode/types")["data"]]
         images = [i["id"] for i in self._do_get_request("/images")["data"]]
-        auth_users = [u["username"] for u in self._do_get_request("/account/users", token=config["token"])["data"] if "ssh_keys" in u]
+
+        is_full_access = self._check_full_access(config["token"])
+
+        auth_users = []
+
+        if is_full_access:
+            auth_users = [u["username"] for u in self._do_get_request(
+                "/account/users",
+                exit_on_error=False,
+                token=config["token"])["data"] if "ssh_keys" in u]
 
         # get the preferred things
         config["region"] = self._default_thing_input(
@@ -701,6 +710,26 @@ Note that no token will be saved in your configuration file.
                 sys.exit(4)
 
         return result.json()
+
+    def _check_full_access(self, token):
+        headers = {
+            "Authorization": "Bearer {}".format(token),
+            "Content-Type": "application/json"
+        }
+
+        target_url = self.base_url + "/profile/grants"
+
+        result = requests.get(target_url, headers=headers)
+
+        if not 199 < result.status_code < 300:
+            print(
+                "Could not contact {} - Error: {}".format(
+                    target_url, result.status_code
+                )
+            )
+            sys.exit(4)
+
+        return result.status_code == 204
 
     def _handle_no_default_user(self):
         """
