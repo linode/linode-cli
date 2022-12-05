@@ -17,6 +17,7 @@ teardown() {
 }
 
 @test "it should not list any ips available on an account without linodes" {
+    run removeAll "linodes"
     run linode-cli networking ips-list \
         --text \
         --no-headers
@@ -54,18 +55,6 @@ teardown() {
 
     assert_success
     assert_output --regexp "^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}"
-}
-
-@test "it should fail to allocate an additional public ipv4 address" {
-    run linode-cli networking ip-add \
-        --type=ipv4 \
-        --linode_id=$linode_id \
-        --public=true \
-        --text \
-        --no-headers
-
-    assert_failure
-    assert_output --partial "Additional IPv4 addresses require technical justification.  Please open a Support Ticket describing your requirement"
 }
 
 @test "it should allocate an additional private ipv4 address" {

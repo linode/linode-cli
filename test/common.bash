@@ -2,12 +2,19 @@
 
 # Get an available image and set it as an env variable
 if [ -z "$test_image" ]; then
-    export test_image=$(linode-cli images list --format id --text --no-header | egrep "linode\/.*" | head -n 1)
+    export test_image=$(LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN linode-cli images list --format id --text --no-header | egrep "linode\/.*" | head -n 1)
 fi
 
 # Random pass to use persistently thorough test run
 if [ -z "$random_pass" ]; then
     export random_pass=$(openssl rand -base64 32)
+fi
+
+if [ -z "$random_key_public" ]; then
+    key_path=/tmp/cli-e2e-key
+    ssh-keygen -q -t rsa -N '' -f "${key_path}" <<<y >/dev/null 2>&1
+    export random_key_private="${key_path}"
+    export random_key_public=${key_path}.pub
 fi
 
 # A Unique tag to use in tag related tests
@@ -22,8 +29,8 @@ fi
 
 createLinode() {
     local region=${1:-us-east}
-    local linode_type=$(linode-cli linodes types --text --no-headers --format="id" | xargs | awk '{ print $1 }')
-    local test_image=$(linode-cli images list --format id --text --no-header | egrep "linode\/.*" | head -n 1)
+    local linode_type=$(LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN linode-cli linodes types --text --no-headers --format="id" | xargs | awk '{ print $1 }')
+    local test_image=$(LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN linode-cli images list --format id --text --no-header | egrep "linode\/.*" | head -n 1)
     local random_pass=$(openssl rand -base64 32)
     run bash -c "LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN linode-cli linodes create --type=$linode_type --region $region --image=$test_image --root_pass=$random_pass"
 
@@ -116,8 +123,8 @@ removeTag() {
 }
 
 createLinodeAndWait() {
-    local test_image=$(linode-cli images list --format id --text --no-header | egrep "linode\/.*" | head -n 1)
-    local default_plan=$(linode-cli linodes types --text --no-headers --format="id" | xargs | awk '{ print $1 }')
+    local test_image=$(LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN linode-cli images list --format id --text --no-header | egrep "linode\/.*" | head -n 1)
+    local default_plan=$(LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN linode-cli linodes types --text --no-headers --format="id" | xargs | awk '{ print $1 }')
     local linode_image=${1:-$test_image}
     local linode_type=${2:-$default_plan}
 
@@ -136,7 +143,7 @@ createLinodeAndWait() {
     until [[ $(LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN linode-cli linodes view $linode_id --format="status" --text --no-headers) = "running" ]]; do
         echo 'still provisioning'
         sleep 5 # Wait 5 seconds before checking status again, to rate-limit ourselves
-        if (( $SECONDS > 180 )); then
+        if (( $SECONDS > 240 )); then
             echo "Failed to provision.. Failed after $SECONDS seconds" >&3
             assert_failure # Fail test, linode did not boot in time
             break
@@ -144,22 +151,6 @@ createLinodeAndWait() {
     done
 }
 
-waitForSsh() {
-    local linode_label=$(linode-cli linodes list --format "label" --text --no-headers)
-    local linode_ip=$(linode-cli linodes list --format "ipv4" --text --no-headers)
-
-    # Wait until SSH is available
-    SECONDS=0
-    sshUp=$(nc -z -G 2 "$linode_ip" 22  || echo "port closed")
-
-    while [ "$sshUp" == "port closed" ]; do
-        # Timeout if it takes more than 15 seconds for ssh availability
-        if (( "$SECONDS" > 15)); then
-            break
-        fi
-        sshUp=$(nc -z -G 2 "$linode_ip" 22 || echo "port closed")
-    done
-}
 
 setToken() {
     source $PWD/.env

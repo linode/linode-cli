@@ -13,7 +13,7 @@ EXAMPLE_SCRIPT="echo foo > test.sh"
 
 setup() {
 	suiteName="stackscripts"
-	images=$(linode-cli images list --format id --text --no-headers | egrep "linode\/.*")
+	images=$(LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN linode-cli images list --format id --text --no-headers | egrep "linode\/.*")
 	setToken "$suiteName"
 }
 

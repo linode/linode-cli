@@ -13,6 +13,7 @@ from terminaltables import SingleTable
 from linodecli import plugins
 
 from .cli import CLI
+from .configuration import ENV_TOKEN_NAME
 from .operation import CLIArg, CLIOperation, URLParam
 from .output import OutputMode
 from .response import ModelAttr, ResponseModel
@@ -29,7 +30,6 @@ BASE_URL = "https://api.linode.com/v4"
 skip_config = any([c in argv for c in ("--skip-config", "--help", "--version")])
 
 cli = CLI(VERSION, BASE_URL, skip_config=skip_config)
-
 
 def warn_python2_eol():
     """

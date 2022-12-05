@@ -38,7 +38,7 @@ teardown() {
 }
 
 @test "it should view the linode configuration" {
-    linode_id=$(linode-cli --text --no-headers linodes list | awk '{ print $1 }' | xargs)
+    linode_id=$(linode-cli --text --no-headers linodes list --label cli-1 | awk '{ print $1 }' | xargs)
     run linode-cli linodes view "$linode_id" \
         --text \
         --delimiter "," \
@@ -87,7 +87,7 @@ teardown() {
         --type=$linode_type \
         --region=$linode_region \
         --root_pass $random_pass
-    local linode_id=$(linode-cli linodes list --format="id" --text --no-headers)
+    local linode_id=$(linode-cli linodes list --label cli-2 --format="id" --text --no-headers)
 
     SECONDS=0
     until [[ $(linode-cli linodes view $linode_id --format="status" --text --no-headers) = "offline" ]]; do
@@ -116,7 +116,7 @@ teardown() {
 }
 
 @test "it should add a tag a linode" {
-    local linode_id=$(linode-cli --text --no-headers linodes list | awk '{ print $1 }' | xargs)
+    local linode_id=$(linode-cli --text --no-headers linodes list --label cli-2 | awk '{ print $1 }' | xargs)
     echo "export tag=$uniqueTag" > .tmp-linode-tag
 
     run linode-cli linodes update $linode_id \

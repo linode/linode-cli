@@ -33,7 +33,7 @@ teardown() {
         --delimiter=","
 
     assert_success
-    assert_output --regexp "[0-9]+,[A-Za-z0-9]+,(creating|active),10,us-east"
+    assert_output --regexp "[0-9]+,[A-Za-z0-9]+,(creating|active),10,[a-z-]+"
 }
 
 @test "it should view a single volume" {
@@ -44,7 +44,7 @@ teardown() {
         --format="id,label,size,region"
 
     assert_success
-    assert_output --regexp "$volume_id,[A-Za-z0-9-]+,[0-9]+,us-east"
+    assert_output --regexp "$volume_id,[A-Za-z0-9-]+,[0-9]+,[a-z-]+"
 }
 
 @test "it should update a volume label" {
