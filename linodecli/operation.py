@@ -3,7 +3,9 @@ Classes related to OpenAPI-defined operations and their arguments and parameters
 """
 
 import argparse
+import glob
 import json
+import platform
 from getpass import getpass
 from os import environ, path
 
@@ -72,6 +74,16 @@ class OptionalFromFileAction(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         if isinstance(values, str):
             input_path = path.expanduser(values)
+
+            # Windows doesn't natively expand globs, so we should implement it here
+            if platform.system() == "Windows" and "*" in input_path:
+                results = glob.glob(input_path, recursive=True)
+
+                if len(results) < 1:
+                    raise argparse.ArgumentError("File matching pattern {} not found".format(input_path))
+
+                input_path = results[0]
+
             if path.exists(input_path) and path.isfile(input_path):
                 with open(input_path) as f:
                     data = f.read()

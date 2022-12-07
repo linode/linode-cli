@@ -7,7 +7,9 @@ Usage:
 """
 
 import argparse
+import glob
 import os
+import platform
 from sys import exit
 
 import requests
@@ -102,6 +104,19 @@ def call(args, context):
 
     # make sure the file exists and is ready to upload
     filepath = os.path.expanduser(parsed.file)
+
+    # Windows doesn't natively expand globs, so we should implement it here
+    if platform.system() == "Windows" and "*" in filepath:
+        results = glob.glob(filepath, recursive=True)
+
+        if len(results) < 1:
+            print("No file found matching pattern {}".format(filepath))
+            exit(2)
+
+        if len(results) > 1:
+            print("warn: Found multiple files matching pattern {}, using {}".format(filepath, results[0]))
+
+        filepath = results[0]
 
     if not os.path.isfile(filepath):
         print("No file at {}; must be a path to a valid file.".format(filepath))

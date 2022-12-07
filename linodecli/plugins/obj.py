@@ -1,7 +1,9 @@
 import argparse
 import getpass
+import glob
 import math
 import os
+import platform
 import socket
 import sys
 import time
@@ -235,6 +237,18 @@ def upload_object(get_client, args):
     for c in parsed.file:
         # find the object
         file_path = os.path.expanduser(c)
+
+        # Windows doesn't natively expand globs, so we should implement it here
+        if platform.system() == "Windows" and "*" in file_path:
+            results = glob.glob(file_path, recursive=True)
+            if len(results) < 1:
+                print("No file found matching pattern {}".format(file_path))
+                exit(5)
+
+            if len(results) > 1:
+                print("warn: Found multiple files matching pattern {}, using {}".format(file_path, results[0]))
+
+            file_path = results[0]
 
         if not os.path.isfile(file_path):
             print("No file {}".format(file_path))
@@ -1038,6 +1052,10 @@ def _progress(cur, total):
     """
     Draws the upload progress bar.
     """
+    # We can't divide by zero :)
+    if total == 0.0:
+        return
+
     percent = ("{:.1f}").format(100 * (cur / float(total)))
     progress = int(100 * cur // total)
     bar = ("#" * progress) + ("-" * (100 - progress))
