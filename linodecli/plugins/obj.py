@@ -245,6 +245,9 @@ def upload_object(get_client, args):
                 print("No file found matching pattern {}".format(file_path))
                 exit(5)
 
+            if len(results) > 1:
+                print("warn: Found multiple files matching pattern {}, using {}".format(file_path, results[0]))
+
             file_path = results[0]
 
         if not os.path.isfile(file_path):
@@ -1049,6 +1052,10 @@ def _progress(cur, total):
     """
     Draws the upload progress bar.
     """
+    # We can't divide by zero :)
+    if total == 0.0:
+        return
+
     percent = ("{:.1f}").format(100 * (cur / float(total)))
     progress = int(100 * cur // total)
     bar = ("#" * progress) + ("-" * (100 - progress))

@@ -113,6 +113,9 @@ def call(args, context):
             print("No file found matching pattern {}".format(filepath))
             exit(2)
 
+        if len(results) > 1:
+            print("warn: Found multiple files matching pattern {}, using {}".format(filepath, results[0]))
+
         filepath = results[0]
 
     if not os.path.isfile(filepath):
