@@ -31,7 +31,7 @@ teardown() {
     assert_output --partial "[USERNAME@]LABEL  The label of the Linode to SSH into, optionally with a"
     assert_output --partial "username before it in USERNAME@LABEL format. If no"
     assert_output --partial "username is given, defaults to the current user."
-    assert_output --partial "optional arguments:"
+    assert_output --partial "option"
     assert_output --partial "-h, --help        show this help message and exit"
     assert_output --partial "-6                If given, uses the Linode's SLAAC address for SSH."
 }
@@ -39,7 +39,9 @@ teardown() {
 @test "it should create a linode and wait for it to be running" {
     alpine_image=$(linode-cli images list --format "id" --text --no-headers | grep 'alpine' | xargs | awk '{ print $1 }')
 	plan=$(linode-cli linodes types --text --no-headers --format="id" | xargs | awk '{ print $1 }')
-	ssh_key="$(cat ~/.ssh/id_rsa.pub)"
+
+	ssh_key="$(cat $random_key_public)"
+
 	createLinodeAndWait "$alpine_image" "$plan" "$ssh_key"
 	assert_success
 }
@@ -54,11 +56,21 @@ teardown() {
     LAST_TEST="TRUE"
     ## Figure out a better way to get IP of a linode label
     linode_label=$(linode-cli linodes list --format "label" --text --no-headers)
+    linode_ip=$(linode-cli linodes list --format "ipv4" --text --no-headers)
 
-    # Replace this with polling for ssh port open
-    sleep 25
+    # Poll until SSH is available
+    SECONDS=0
+    until nc -z $linode_ip 22
+    do
+        sleep 1
 
-	run linode-cli ssh "root@$linode_label" -oStrictHostKeyChecking=no uname -r
+        if (( $SECONDS > 240 )); then
+            echo "Timeout elapsed! Could not connect to SSH in time"
+            assert_failure  # This will fail the test
+        fi
+    done
+
+	run linode-cli ssh "root@$linode_label" -i "${random_key_private}" -oStrictHostKeyChecking=no uname -r
 	assert_success
 	# Assert the kernel version matching this regex:
 	assert_output --regexp "[0-9]\.[0-9]*\.[0-9]*-.*-virt"

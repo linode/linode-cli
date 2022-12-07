@@ -83,15 +83,15 @@ class CLIConfig:
         ):
             self._handle_no_default_user()
 
-        environ_token = os.environ.get(ENV_TOKEN_NAME, None)
+        environ_token = os.getenv(ENV_TOKEN_NAME, None)
 
         if (
             not self.config.has_option("DEFAULT", "default-user")
             and not skip_config
-            and not environ_token
+            and environ_token is None
         ):
             self.configure()
-        elif environ_token:
+        elif environ_token is not None:
             self.used_env_token = True
 
     def set_user(self, username):
@@ -485,6 +485,7 @@ to continue..
         # yet
         is_default = not self.config.has_option("DEFAULT", "default-user")
         username = None
+        token = None
 
         print(
             """Welcome to the Linode CLI.  This will walk you through some initial setup."""
@@ -500,6 +501,7 @@ Note that no token will be saved in your configuration file.
                 )
             )
             username = "DEFAULT"
+            token = os.getenv(ENV_TOKEN_NAME)
 
         else:
             # let's see if we _can_ use web
@@ -539,6 +541,8 @@ Note that no token will be saved in your configuration file.
                 )
                 username, config["token"] = self._get_token_web()
 
+            token = config["token"]
+
         print()
         print("Configuring {}".format(username))
         print()
@@ -547,7 +551,7 @@ Note that no token will be saved in your configuration file.
         types = [t["id"] for t in self._do_get_request("/linode/types")["data"]]
         images = [i["id"] for i in self._do_get_request("/images")["data"]]
 
-        is_full_access = self._check_full_access(config["token"])
+        is_full_access = self._check_full_access(token)
 
         auth_users = []
 
@@ -555,7 +559,7 @@ Note that no token will be saved in your configuration file.
             auth_users = [u["username"] for u in self._do_get_request(
                 "/account/users",
                 exit_on_error=False,
-                token=config["token"])["data"] if "ssh_keys" in u]
+                token=token)["data"] if "ssh_keys" in u]
 
         # get the preferred things
         config["region"] = self._default_thing_input(

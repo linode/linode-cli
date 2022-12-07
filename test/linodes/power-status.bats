@@ -42,7 +42,7 @@ teardown() {
     until [[ $(linode-cli linodes view $linode_id --format="status" --text --no-headers) = "running" ]]; do
         echo 'still provisioning'
         sleep 5 # Rate limit ourselves
-        if (( $SECONDS > 180 )); then
+        if (( $SECONDS > 240 )); then
             echo "Timeout elapsed! Linode did not boot in time"
             assert_failure  # This will fail the test
             break
@@ -55,7 +55,7 @@ teardown() {
     until [[ $(linode-cli linodes view $linode_id --format="status" --text --no-headers) = "running" ]]; do
         echo "still provisioning"
         sleep 5 # Rate limit ourselves
-        if (( $SECONDS > 180 )); then
+        if (( $SECONDS > 240 )); then
             echo "Timeout elapsed! Linode did not boot in time"
             assert_failure  # This will fail the test
             break
