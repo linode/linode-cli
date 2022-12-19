@@ -208,6 +208,8 @@ for example to generate completions for bash run::
 The output of this command is suitable to be included in the relevant completion
 files to enable command completion on your shell.
 
+Currently supports Bash and Fish.
+
 Environment Variables
 """""""""""""""""""""
 

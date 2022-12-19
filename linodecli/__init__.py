@@ -354,18 +354,22 @@ def main():
             print()
             print(
                 "Prints shell completions for the requested shell to stdout. "
-                "Currently, only completions for bash are available."
+                "Currently, only completions for bash and fish are available."
             )
             exit(0)
         if parsed.action == "bash":
             # generate and print completions, then exit
-            completions = cli.get_completions()
+            completions = cli.get_bash_completions()
+            print(completions)
+            exit(0)
+        if parsed.action == "fish":
+            completions = cli.get_fish_completions()
             print(completions)
             exit(0)
         else:
             print(
-                "Completions are only available for bash at this time.  To retrieve "
-                "these, please invoke as `linode-cli completion bash`."
+                "Completions are only available for bash and fish at this time.  To retrieve "
+                "these, please invoke as `linode-cli completion bash` or `linode-cli completion fish`."
             )
             exit(1)
 
