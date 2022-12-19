@@ -39,10 +39,11 @@ teardown() {
         --priority=4 \
         --service=telnet \
         --target=8.8.8.8 \
-        --weight=4 $domainId \
+        --weight=4 \
         --text \
         --no-header \
-        --delimiter=","
+        --delimiter="," \
+        $domainId
 
     assert_success
     assert_output --regexp "[0-9]+,SRV,_telnet._tcp,8.8.8.8,0,4,4"

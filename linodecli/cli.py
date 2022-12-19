@@ -30,6 +30,7 @@ class CLI:
         self.spec = {}
         self.defaults = True  # whether to use default values for arguments
         self.page = 1
+        self.page_size = 100
         self.debug_request = False
         self.version = version
         self.base_url = base_url
@@ -557,7 +558,7 @@ complete -F _linode_cli linode-cli"""
         url = operation.url.format(**vars(parsed_args))
 
         if operation.method == "get":
-            url += "?page={}".format(self.page)
+            url += "?page={}&page_size={}".format(self.page, self.page_size)
 
         body = None
         if operation.method == "get":

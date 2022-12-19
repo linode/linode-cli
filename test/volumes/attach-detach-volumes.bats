@@ -23,7 +23,7 @@
 #     linode_id=$(linode-cli linodes list --format="id" --text --no-headers)
 #     run linode-cli volumes create --label="attachedVolume" --size=10 --linode_id=$linode_id --text --no-headers --delimiter="," --format="id,label,size,region,linode_id"
 #     assert_success
-#     assert_output --regexp "[0-9]+,attachedVolume,10,us-east,$linode_id"
+#     assert_output --regexp "[0-9]+,attachedVolume,10,[a-z-]+,$linode_id"
 # }
 
 # @test "it should detach from linode" {
@@ -40,7 +40,7 @@
 #     linode_id=$(linode-cli linodes list --format="id" --text --no-headers)
 #     run linode-cli volumes attach --linode_id=$linode_id $volume_id --text --no-headers --delimiter="," --format="id,label,size,region,linode_id"
 #     assert_success
-#     assert_output --regexp "$volume_id,attachedVolume,10,us-east,$linode_id"
+#     assert_output --regexp "$volume_id,attachedVolume,10,[a-z-]+,$linode_id"
 # }
 
 # @test "it should fail to remove while attached" {

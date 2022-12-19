@@ -52,7 +52,6 @@ teardown() {
 
     assert_failure
     assert_output --partial "Request failed: 400"
-    assert_output --partial "image	image is not valid"
 }
 
 @test "it should rebuild the linode" {

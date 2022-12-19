@@ -1,0 +1,40 @@
+name: E2E Test Suite
+on:
+  workflow_dispatch: null
+  push:
+    branches:
+      - master
+jobs:
+  integration_tests:
+    name: Run integration tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone Repository
+        uses: actions/checkout@5a4ac9002d0be2fb38bd78e4b4dbde5606d7042f # pin@v2
+
+      - name: Update system packages
+        run: sudo apt-get update -y
+
+      - name: Install system deps
+        run: sudo apt-get install -y build-essential bats parallel netcat
+
+      - name: Setup Python
+        uses: actions/setup-python@75f3110429a8c05be0e1bf360334e4cced2b63fa # pin@v2
+        with:
+          python-version: '3.x'
+
+      - name: Install Python deps
+        run: pip install wheel
+
+      - name: Install the CLI
+        run: make install
+
+      - name: Download submodules
+        run: git submodule init && git submodule update
+
+      - name: Run the E2E test suite
+        run: echo "y" | ./test/test-runner.sh --allow-delete-resources --from-env --no-parallel
+        # We do not have multiple CLI testing accounts at the moment
+        env:
+          TOKEN_1: ${{ secrets.LINODE_TOKEN }}
+          TOKEN_2: ${{ secrets.LINODE_TOKEN }}
