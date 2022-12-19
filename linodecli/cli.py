@@ -402,11 +402,11 @@ class CLI:
         """
         completion_template = Template(
                 """# This is a generated file! Do not modify!
-complete -c linode-cli -n "not __fish_seen_subcommand_from $subcommands" -x -a '$subcommands'
+complete -c linode-cli -n "not __fish_seen_subcommand_from $subcommands" -x -a '$subcommands --help'
 $command_items""")
 
         command_template = Template(
-            """complete -c linode-cli -n "__fish_seen_subcommand_from $command" -x -a '$actions'"""
+            """complete -c linode-cli -n "__fish_seen_subcommand_from $command" -x -a '$actions --help'"""
         )
 
         command_blocks = [
