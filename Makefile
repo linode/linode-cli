@@ -20,6 +20,10 @@ build: clean
 requirements:
 	pip3 install -r requirements.txt
 
+.PHONY: requirements
+lint:
+	pylint linodecli
+
 .PHONY: check-prerequisites
 check-prerequisites:
 	@ pip3 -v >/dev/null
