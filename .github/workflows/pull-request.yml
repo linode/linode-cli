@@ -1,0 +1,13 @@
+name: Pull Request Actions
+on:
+  pull_request: null
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run pylint
+        uses: cclauss/GitHub-Action-for-pylint@0.7.0
+        with:
+          args: linodecli
+
