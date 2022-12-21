@@ -9,5 +9,5 @@ jobs:
       - name: Run pylint
         uses: cclauss/GitHub-Action-for-pylint@0.7.0
         with:
-          args: linodecli
+          args: pylint linodecli
 
