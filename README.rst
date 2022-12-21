@@ -208,6 +208,10 @@ for example to generate completions for bash run::
 The output of this command is suitable to be included in the relevant completion
 files to enable command completion on your shell.
 
+This command currently supports completions bash and fish shells.
+
+Use ``bashcompinit`` on zsh with the bash completions for support on zsh shells.
+
 Environment Variables
 """""""""""""""""""""
 
