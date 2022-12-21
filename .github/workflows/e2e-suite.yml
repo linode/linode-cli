@@ -3,7 +3,7 @@ on:
   workflow_dispatch: null
   push:
     branches:
-      - master
+      - main
 jobs:
   integration_tests:
     name: Run integration tests
