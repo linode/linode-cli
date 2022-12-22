@@ -10,7 +10,11 @@ LINODE_DOCS_REPO = "linode/linode-api-docs"
 
 
 def get_latest_tag():
-    data = requests.get(f"https://api.github.com/repos/{LINODE_DOCS_REPO}/releases/latest")
+    data = requests.get(f"https://api.github.com/repos/{LINODE_DOCS_REPO}/reelases/latest")
+
+    if data.status_code != 200:
+        raise RuntimeError("Got error from GitHub API: {}".format(data.json()))
+
     return data.json()["tag_name"]
 
 
