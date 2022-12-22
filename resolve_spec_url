@@ -2,6 +2,7 @@
 # Usage:
 #   ./resolve_latest_spec
 #       Prints the URL of the latest Linode OpenAPI spec on GitHub
+import os
 import sys
 
 import requests
@@ -10,7 +11,15 @@ LINODE_DOCS_REPO = "linode/linode-api-docs"
 
 
 def get_latest_tag():
-    data = requests.get(f"https://api.github.com/repos/{LINODE_DOCS_REPO}/reelases/latest")
+    headers = {}
+
+    token = os.getenv("GITHUB_TOKEN")
+    if token is not None:
+        headers["Authorization"] = f"Bearer {token}"
+
+    data = requests.get(
+        f"https://api.github.com/repos/{LINODE_DOCS_REPO}/releases/latest",
+        headers=headers)
 
     if data.status_code != 200:
         raise RuntimeError("Got error from GitHub API: {}".format(data.json()))
