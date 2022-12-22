@@ -47,4 +47,6 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: true
           tags: linode/cli:${{ steps.cli_version.outputs.CLI_VERSION }},linode/cli:latest
-          build-args: linode_cli_version=${{ steps.cli_version.outputs.CLI_VERSION }}
+          build-args: |
+            linode_cli_version=${{ steps.cli_version.outputs.CLI_VERSION }}
+            github_token=${{ secrets.GITHUB_TOKEN }}
