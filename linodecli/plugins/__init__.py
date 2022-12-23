@@ -47,15 +47,17 @@ def invoke(name, args, context):
         try:
             plugin = import_module(plugin_module_name)
         except ImportError:
-            print(f"Expected module '{plugin_module_name}' not found.  "
-                  "Either {name} is misconfigured, or the backing module was uninstalled.")
+            print(
+                f"Expected module '{plugin_module_name}' not found.  "
+                "Either {name} is misconfigured, or the backing module was uninstalled."
+            )
             sys.exit(10)
         plugin.call(args, context)
     else:
         raise ValueError("No plugin named {name}")
 
 
-class PluginContext: # pylint: disable=too-few-public-methods
+class PluginContext:  # pylint: disable=too-few-public-methods
     """
     This class contains all context information provided to plugins when invoked.
     This includes access to the underlying CLI object to access the user's account,

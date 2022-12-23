@@ -12,17 +12,19 @@ class OutputMode(Enum):
     """
     Enum for output modes
     """
+
     table = 1
     delimited = 2
     json = 3
     markdown = 4
 
 
-class OutputHandler: # pylint: disable=too-few-public-methods
+class OutputHandler:  # pylint: disable=too-few-public-methods
     """
     Handles formatting the output of commands used in Linode CLI
     """
-    def __init__( # pylint: disable=too-many-arguments
+
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         mode=OutputMode.table,
         delimiter="\t",
@@ -36,7 +38,9 @@ class OutputHandler: # pylint: disable=too-few-public-methods
         self.headers = headers
         self.columns = columns
 
-    def print(self, response_model, data, title=None, to=stdout, columns=None): # pylint: disable=too-many-arguments
+    def print(
+        self, response_model, data, title=None, to=stdout, columns=None
+    ):  # pylint: disable=too-many-arguments
         """
         :param response_model: The Model corresponding to this response
         :type response_model: ResponseModel
@@ -92,7 +96,9 @@ class OutputHandler: # pylint: disable=too-few-public-methods
 
         return columns
 
-    def _table_output(self, header, data, columns, title, to): # pylint: disable=too-many-arguments
+    def _table_output(
+        self, header, data, columns, title, to
+    ):  # pylint: disable=too-many-arguments
         """
         Pretty-prints data in a table
         """

@@ -114,7 +114,9 @@ def call(args, context):
             sys.exit(2)
 
         if len(results) > 1:
-            print(f"warn: Found multiple files matching pattern {filepath}, using {results[0]}")
+            print(
+                f"warn: Found multiple files matching pattern {filepath}, using {results[0]}"
+            )
 
         filepath = results[0]
 

@@ -80,13 +80,14 @@ class OptionalFromFileAction(argparse.Action):
                 results = glob.glob(input_path, recursive=True)
 
                 if len(results) < 1:
-                    raise argparse.ArgumentError(self,
-                            f"File matching pattern {input_path} not found")
+                    raise argparse.ArgumentError(
+                        self, f"File matching pattern {input_path} not found"
+                    )
 
                 input_path = results[0]
 
             if path.exists(input_path) and path.isfile(input_path):
-                with open(input_path, encoding='utf-8') as f:
+                with open(input_path, encoding="utf-8") as f:
                     data = f.read()
                 setattr(namespace, self.dest, data)
             else:
@@ -105,13 +106,15 @@ TYPES = {
 }
 
 
-class CLIArg: # pylint: disable=too-many-instance-attributes,too-few-public-methods
+class CLIArg:  # pylint: disable=too-many-instance-attributes,too-few-public-methods
     """
     An argument passed to the CLI with a flag, such as `--example value`.  These
     are defined in a requestBody in the api spec.
     """
 
-    def __init__(self, name, arg_type, description, path, arg_format, list_item=None): # pylint: disable=too-many-arguments,redefined-outer-name
+    def __init__(
+        self, name, arg_type, description, path, arg_format, list_item=None
+    ):  # pylint: disable=too-many-arguments,redefined-outer-name
         self.name = name
         self.arg_type = arg_type
         self.arg_format = arg_format
@@ -122,7 +125,7 @@ class CLIArg: # pylint: disable=too-many-instance-attributes,too-few-public-meth
         self.list_item = list_item
 
 
-class URLParam: # pylint: disable=too-few-public-methods
+class URLParam:  # pylint: disable=too-few-public-methods
     """
     An argument passed to the CLI positionally. These are defined in a path in
     the OpenAPI spec, in a "parameters" block
@@ -139,7 +142,7 @@ class URLParam: # pylint: disable=too-few-public-methods
         return URLParam(self.name, self.param_type)
 
 
-class CLIOperation: # pylint: disable=too-many-instance-attributes
+class CLIOperation:  # pylint: disable=too-many-instance-attributes
     """
     A single operation described by the OpenAPI spec.  An operation is a method
     on a path, and should have a unique operationId to identify it.  Operations
@@ -147,7 +150,7 @@ class CLIOperation: # pylint: disable=too-many-instance-attributes
     responses with the help of their ResponseModel
     """
 
-    def __init__( # pylint: disable=too-many-arguments
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         command,
         action,
@@ -183,7 +186,9 @@ class CLIOperation: # pylint: disable=too-many-instance-attributes
         base_url = self.servers[0]
         return base_url + "/" + self._url
 
-    def parse_args(self, args): # pylint: disable=too-many-locals,too-many-branches,too-many-statements
+    def parse_args(
+        self, args
+    ):  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
         """
         Given sys.argv after the operation name, parse args based on the params
         and args of this operation
@@ -320,7 +325,9 @@ class CLIOperation: # pylint: disable=too-many-instance-attributes
 
         return parsed
 
-    def process_response_json(self, json, handler): # pylint: disable=redefined-outer-name
+    def process_response_json(
+        self, json, handler
+    ):  # pylint: disable=redefined-outer-name
         """
         Processes the response as JSON and prints
         """

@@ -68,11 +68,13 @@ UPLOAD_MAX_FILE_SIZE = 1024 * 1024 * 1024 * 5
 # This is how big (in MB) the chunks of the file that we upload will be
 MULTIPART_UPLOAD_CHUNK_SIZE_DEFAULT = 1024
 
-def restricted_int_arg_type(max, min=1): # pylint: disable=redefined-builtin
+
+def restricted_int_arg_type(max, min=1):  # pylint: disable=redefined-builtin
     """
     An ArgumentParser arg type for integers that restricts the value to between `min` and `max`
     (inclusive for both.)
     """
+
     def restricted_int(string):
         err_msg = f"Value must be an integer between {min} and {max}"
         try:
@@ -84,8 +86,8 @@ def restricted_int_arg_type(max, min=1): # pylint: disable=redefined-builtin
         if value < min or value > max:
             raise argparse.ArgumentTypeError(err_msg)
         return value
-    return restricted_int
 
+    return restricted_int
 
 
 def list_objects_or_buckets(get_client, args):
@@ -208,7 +210,7 @@ def delete_bucket(get_client, args):
     sys.exit(0)
 
 
-def upload_object(get_client, args): # pylint: disable=too-many-locals
+def upload_object(get_client, args):  # pylint: disable=too-many-locals
     """
     Uploads an object to object storage
     """
@@ -229,7 +231,7 @@ def upload_object(get_client, args): # pylint: disable=too-many-locals
         "--chunk-size",
         type=restricted_int_arg_type(5120),
         default=MULTIPART_UPLOAD_CHUNK_SIZE_DEFAULT,
-        help="The size of file chunks when uploading large files, in MB."
+        help="The size of file chunks when uploading large files, in MB.",
     )
     # parser.add_argument('--recursive', action='store_true',
     #                    help="If set, upload directories recursively.")
@@ -251,8 +253,10 @@ def upload_object(get_client, args): # pylint: disable=too-many-locals
                 sys.exit(5)
 
             if len(results) > 1:
-                print("warn: Found multiple files matching pattern "
-                      f"{file_path}, using {results[0]}")
+                print(
+                    "warn: Found multiple files matching pattern "
+                    f"{file_path}, using {results[0]}"
+                )
 
             file_path = results[0]
 
@@ -292,7 +296,9 @@ def upload_object(get_client, args): # pylint: disable=too-many-locals
     print("Done.")
 
 
-def _do_multipart_upload(bucket, filename, file_path, file_size, policy, chunk_size): # pylint: disable=too-many-arguments
+def _do_multipart_upload(
+    bucket, filename, file_path, file_size, policy, chunk_size
+):  # pylint: disable=too-many-arguments
     """
     Handles the internals of a multipart upload for a large file.
 
@@ -332,8 +338,10 @@ def _do_multipart_upload(bucket, filename, file_path, file_size, policy, chunk_s
                         )
                     except S3ResponseError:
                         if attempt < num_tries - 1:
-                            print(f"  Part failed ({attempt+1} of {num_tries} attempts). "
-                                  f"Retrying in {retry_delay} seconds...")
+                            print(
+                                f"  Part failed ({attempt+1} of {num_tries} attempts). "
+                                f"Retrying in {retry_delay} seconds..."
+                            )
                             time.sleep(retry_delay)
                             continue
                         raise
@@ -579,8 +587,10 @@ def enable_static_site(get_client, args):
     # make the site
     bucket.set_acl("public-read")
     bucket.configure_website(parsed.ws_index, parsed.ws_error)
-    print("Static site now available at "
-          f"https://{parsed.bucket}.website-{client.obj_cluster}.linodeobjects.com")
+    print(
+        "Static site now available at "
+        f"https://{parsed.bucket}.website-{client.obj_cluster}.linodeobjects.com"
+    )
 
 
 def static_site_info(get_client, args):
@@ -658,9 +668,7 @@ def show_usage(get_client, args):
 
         total = _denominate(total)
 
-        tab = _borderless_table(
-            [[_pad_to(total, length=7), f"{num} objects", b.name]]
-        )
+        tab = _borderless_table([[_pad_to(total, length=7), f"{num} objects", b.name]])
         print(tab.table)
 
     if len(buckets) > 1:
@@ -708,7 +716,7 @@ def list_all_objects(get_client):
                 f"{_convert_datetime(obj.last_modified) if size != 'DIR' else ' ' * 16} "
                 f"{_pad_to(size, 9, right_align=True)}   "
                 f"{b.name}/{obj.key}"
-                )
+            )
 
     sys.exit(0)
 
@@ -762,7 +770,7 @@ COMMAND_MAP = {
 }
 
 
-def call(args, context): # pylint: disable=too-many-branches,too-many-statements
+def call(args, context):  # pylint: disable=too-many-branches,too-many-statements
     """
     This is called when the plugin is invoked
     """
@@ -770,8 +778,10 @@ def call(args, context): # pylint: disable=too-many-branches,too-many-statements
         # we can't do anything - ask for an install
         pip_version = "pip3" if sys.version[0] == 3 else "pip"
 
-        print("This plugin requires the 'boto' module.  Please install it by running "
-            f"'{pip_version} install boto'")
+        print(
+            "This plugin requires the 'boto' module.  Please install it by running "
+            f"'{pip_version} install boto'"
+        )
 
         sys.exit(2)  # requirements not met - we can't go on
 
@@ -833,7 +843,9 @@ def call(args, context): # pylint: disable=too-many-branches,too-many-statements
 
     if not "--help" in args:
         if access_key and not secret_key or secret_key and not access_key:
-            print(f"You must set both {ENV_ACCESS_KEY_NAME} and {ENV_SECRET_KEY_NAME}, or neither")
+            print(
+                f"You must set both {ENV_ACCESS_KEY_NAME} and {ENV_SECRET_KEY_NAME}, or neither"
+            )
             sys.exit(1)
 
         # not given on command line, so look them up
@@ -976,11 +988,13 @@ def _get_s3_creds(client, force=False):
         # static characters in label account for 13 total
         # timestamp is 10 more
         # allow 13 characters both for username and hostname
-        timestamp_part = str(time.time()).split('.', maxsplit=1)[0]
+        timestamp_part = str(time.time()).split(".", maxsplit=1)[0]
         truncated_user = getpass.getuser()[:13]
         truncated_hostname = socket.gethostname()[:13]
 
-        creds_label = f"linode-cli-{truncated_user}@{truncated_hostname}-{timestamp_part}"
+        creds_label = (
+            f"linode-cli-{truncated_user}@{truncated_hostname}-{timestamp_part}"
+        )
 
         if len(creds_label) > 50:
             # if this is somehow still too long, trim from the front
@@ -1019,12 +1033,12 @@ def _configure_plugin(client):
     """
     clusters = [
         c["id"]
-        for c in client.config._do_get_request( # pylint: disable=protected-access
+        for c in client.config._do_get_request(  # pylint: disable=protected-access
             "/object-storage/clusters", token=client.config.get_value("token")
         )["data"]
     ]
 
-    cluster = client.config._default_thing_input( # pylint: disable=protected-access
+    cluster = client.config._default_thing_input(  # pylint: disable=protected-access
         "Configure a default Cluster for operations.",
         clusters,
         "Default Cluster: ",
@@ -1075,7 +1089,7 @@ def _convert_datetime(datetime_str):
     return datetime.strptime(datetime_str, INCOMING_DATE_FORMAT).strftime(DATE_FORMAT)
 
 
-def _pad_to(val, length=10, right_align=False): # pylint: disable=unused-argument
+def _pad_to(val, length=10, right_align=False):  # pylint: disable=unused-argument
     """
     Pads val to be at minimum length characters long
     """

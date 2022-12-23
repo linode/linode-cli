@@ -37,15 +37,15 @@ OAUTH_CLIENT_ID = "5823b4627e45411d18e9"
 # intended to exclude lynx and other terminal browsers which could be opened, but
 # won't work.
 KNOWN_GOOD_BROWSERS = {
-        "chrome",
-        "firefox",
-        "mozilla",
-        "netscape",
-        "opera",
-        "safari",
-        "chromium",
-        "chromium-browser",
-        "epiphany",
+    "chrome",
+    "firefox",
+    "mozilla",
+    "netscape",
+    "opera",
+    "safari",
+    "chromium",
+    "chromium-browser",
+    "epiphany",
 }
 
 # in the event that we can't load the styled landing page from file, this will
@@ -65,6 +65,7 @@ class CLIConfig:
     """
     Generates the necessary config for the Linode CLI
     """
+
     def __init__(self, base_url, username=None, skip_config=False):
         self.base_url = base_url
         self.username = username
@@ -130,8 +131,10 @@ class CLIConfig:
             if k in ns_dict and ns_dict[k] is None:
                 warn_dict[k] = new_dict[k]
                 ns_dict[k] = new_dict[k]
-        if not any(x in ['--suppress-warnings', '--no-headers'] for x in sys.argv):
-            print(f"using default values: {warn_dict}, use --no-defaults flag to disable defaults")
+        if not any(x in ["--suppress-warnings", "--no-headers"] for x in sys.argv):
+            print(
+                f"using default values: {warn_dict}, use --no-defaults flag to disable defaults"
+            )
         return argparse.Namespace(**ns_dict)
 
     def update(self, namespace, allowed_defaults):
@@ -164,7 +167,7 @@ class CLIConfig:
                 if not self.config.has_option(username, default_key):
                     continue
                 value = self.config.get(username, default_key)
-                if default_key == 'authorized_users':
+                if default_key == "authorized_users":
                     update_dicts[default_key] = [value]
                 else:
                     update_dicts[default_key] = value
@@ -188,8 +191,10 @@ class CLIConfig:
         this exits with error
         """
         if self.default_username() == username:
-            print(f"Cannot remote {username} as they are the default user! You can "
-                "change the default user with: `linode-cli set-user USERNAME`")
+            print(
+                f"Cannot remote {username} as they are the default user! You can "
+                "change the default user with: `linode-cli set-user USERNAME`"
+            )
             sys.exit(1)
 
         if self.config.has_section(username):
@@ -308,7 +313,7 @@ class CLIConfig:
         if not os.path.exists(f"{os.path.expanduser('~')}/.config"):
             os.makedirs(f"{os.path.expanduser('~')}/.config")
 
-        with open(self._get_config_path(), "w", encoding='utf-8') as f:
+        with open(self._get_config_path(), "w", encoding="utf-8") as f:
             self.config.write(f)
 
         if not silent:
@@ -332,11 +337,13 @@ class CLIConfig:
         Handles prompting the user for a Personal Access Token and checking it
         to ensure it works.
         """
-        print(f"""
+        print(
+            f"""
 First, we need a Personal Access Token.  To get one, please visit
 {TOKEN_GENERATION_URL} and click
 "Create a Personal Access Token".  The CLI needs access to everything
-on your account to work correctly.""")
+on your account to work correctly."""
+        )
 
         while True:
             token = input("Personal Access Token: ")
@@ -388,7 +395,7 @@ on your account to work correctly.""")
         )
 
         try:
-            with open(landing_page_path, encoding='utf-8') as f:
+            with open(landing_page_path, encoding="utf-8") as f:
                 landing_page = f.read()
         except:
             landing_page = DEFAULT_LANDING_PAGE
@@ -426,7 +433,7 @@ on your account to work correctly.""")
                     )
                 )
 
-            def log_message(self, form, *args): # pylint: disable=arguments-differ
+            def log_message(self, form, *args):  # pylint: disable=arguments-differ
                 """Don't actually log the request"""
 
         # start a server to catch the response
@@ -443,7 +450,8 @@ on your account to work correctly.""")
 
 If you are not automatically directed there, please copy/paste the link into your browser
 to continue..
-""")
+"""
+        )
 
         webbrowser.open(url)
 
@@ -462,7 +470,7 @@ to continue..
 
         return serv.token
 
-    def configure(self): # pylint: disable=too-many-branches,too-many-statements
+    def configure(self):  # pylint: disable=too-many-branches,too-many-statements
         """
         This assumes we're running interactively, and prompts the user
         for a series of defaults in order to make future CLI calls
@@ -504,7 +512,7 @@ Note that no token will be saved in your configuration file.
                 can_use_browser = False
 
             if can_use_browser and not KNOWN_GOOD_BROWSERS.intersection(
-                    webbrowser._tryorder # pylint: disable=protected-access
+                webbrowser._tryorder  # pylint: disable=protected-access
             ):
                 print()
                 print(
@@ -523,10 +531,14 @@ Note that no token will be saved in your configuration file.
             else:
                 # pylint: disable=line-too-long
                 print()
-                print( "The CLI will use its web-based authentication to log you in.  "
-                    "If you prefer to supply a Personal Access Token, use `linode-cli configure --token`. ")
+                print(
+                    "The CLI will use its web-based authentication to log you in.  "
+                    "If you prefer to supply a Personal Access Token, use `linode-cli configure --token`. "
+                )
                 print()
-                input("Press enter to continue.  This will open a browser and proceed with authentication.")
+                input(
+                    "Press enter to continue.  This will open a browser and proceed with authentication."
+                )
                 username, config["token"] = self._get_token_web()
                 # pylint: enable=line-too-long
 
@@ -545,10 +557,13 @@ Note that no token will be saved in your configuration file.
         auth_users = []
 
         if is_full_access:
-            auth_users = [u["username"] for u in self._do_get_request(
-                "/account/users",
-                exit_on_error=False,
-                token=token)["data"] if "ssh_keys" in u]
+            auth_users = [
+                u["username"]
+                for u in self._do_get_request(
+                    "/account/users", exit_on_error=False, token=token
+                )["data"]
+                if "ssh_keys" in u
+            ]
 
         # get the preferred things
         config["region"] = self._default_thing_input(
@@ -574,11 +589,11 @@ Note that no token will be saved in your configuration file.
 
         if auth_users:
             config["authorized_users"] = self._default_thing_input(
-                    "Select the user that should be given default SSH access to new Linodes.",
-                    auth_users,
-                    "Default Option (Optional): ",
-                    "Please select a valid Option, or press Enter to skip",
-                )
+                "Select the user that should be given default SSH access to new Linodes.",
+                auth_users,
+                "Default Option (Optional): ",
+                "Please select a valid Option, or press Enter to skip",
+            )
 
         # save off the new configuration
         if username != "DEFAULT" and not self.config.has_section(username):
@@ -587,7 +602,9 @@ Note that no token will be saved in your configuration file.
         if not is_default:
             if username != self.default_username():
                 while True:
-                    value = input("Make this user the default when using the CLI? [y/N]: ")
+                    value = input(
+                        "Make this user the default when using the CLI? [y/N]: "
+                    )
 
                     if value.lower() in "yn":
                         is_default = value.lower() == "y"
@@ -596,7 +613,9 @@ Note that no token will be saved in your configuration file.
                         break
 
             if not is_default:  # they didn't change the default user
-                print(f"Active user will remain {self.config.get('DEFAULT', 'default-user')}")
+                print(
+                    f"Active user will remain {self.config.get('DEFAULT', 'default-user')}"
+                )
 
         if is_default:
             # if this is the default user, make it so
@@ -637,7 +656,9 @@ Note that no token will be saved in your configuration file.
 
         return conf
 
-    def _default_thing_input(self, ask, things, prompt, error, optional=True): # pylint: disable=too-many-arguments
+    def _default_thing_input(
+        self, ask, things, prompt, error, optional=True
+    ):  # pylint: disable=too-many-arguments
         """
         Requests the user choose from a list of things with the given prompt and
         error if they choose something invalid.  If optional, the user may hit
@@ -686,7 +707,9 @@ Note that no token will be saved in your configuration file.
         if exit_on_error:
             sys.exit(4)
 
-    def _do_request(self, method, url, token=None, exit_on_error=None, body=None): # pylint: disable=too-many-arguments
+    def _do_request(
+        self, method, url, token=None, exit_on_error=None, body=None
+    ):  # pylint: disable=too-many-arguments
         """
         Does helper requests during configuration
         """
@@ -705,10 +728,12 @@ Note that no token will be saved in your configuration file.
     def _check_full_access(self, token):
         headers = {
             "Authorization": f"Bearer {token}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         }
 
-        result = requests.get(self.base_url + "/profile/grants", headers=headers, timeout=120)
+        result = requests.get(
+            self.base_url + "/profile/grants", headers=headers, timeout=120
+        )
 
         self._handle_response_status(result, exit_on_error=True)
 
@@ -745,11 +770,16 @@ Note that no token will be saved in your configuration file.
                 self.config.set("DEFAULT", "default-user", username)
                 self.config.add_section(username)
                 self.config.set(username, "token", token)
-                self.config.set(username, "region", self.config.get("DEFAULT", "region"))
+                self.config.set(
+                    username, "region", self.config.get("DEFAULT", "region")
+                )
                 self.config.set(username, "type", self.config.get("DEFAULT", "type"))
                 self.config.set(username, "image", self.config.get("DEFAULT", "image"))
-                self.config.set(username, "authorized_keys",
-                                self.config.get("DEFAULT", "authorized_keys"))
+                self.config.set(
+                    username,
+                    "authorized_keys",
+                    self.config.get("DEFAULT", "authorized_keys"),
+                )
 
                 self.write_config(silent=True)
             else:

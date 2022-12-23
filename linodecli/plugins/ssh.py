@@ -14,8 +14,7 @@ import sys
 from sys import platform
 
 
-
-def call(args, context): # pylint: disable=too-many-branches
+def call(args, context):  # pylint: disable=too-many-branches
     """
     Invokes this plugin
     """
@@ -81,7 +80,9 @@ def call(args, context): # pylint: disable=too-many-branches
         sys.exit(1)
 
     if exact_match["status"] != "running":
-        print(f"{label} is not running (status is {exact_match['status']}); operation aborted.")
+        print(
+            f"{label} is not running (status is {exact_match['status']}); operation aborted."
+        )
         sys.exit(2)
 
     # find a public IP Address to use

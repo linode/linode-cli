@@ -55,11 +55,12 @@ def colorize_string(string, color):
     return f"{col}{string}{CLEAR_COLOR}"
 
 
-class ModelAttr: # pylint: disable=too-many-instance-attributes
+class ModelAttr:  # pylint: disable=too-many-instance-attributes
     """
     Collects values from models
     """
-    def __init__( # pylint: disable=too-many-arguments
+
+    def __init__(  # pylint: disable=too-many-arguments
         self, name, filterable, display, datatype, color_map=None, item_type=None
     ):
         self.name = name
@@ -129,20 +130,21 @@ class ModelAttr: # pylint: disable=too-many-instance-attributes
         return value
 
 
-class ResponseModel: # pylint: disable=too-few-public-methods
+class ResponseModel:  # pylint: disable=too-few-public-methods
     """
     Formats data for the response
     """
+
     def __init__(self, attrs, rows=None, nested_list=None):
         self.attrs = attrs
         self.rows = rows
         self.nested_list = nested_list
 
-    def fix_json(self, json): # pylint: disable=too-many-branches
+    def fix_json(self, json):  # pylint: disable=too-many-branches
         """
         Takes JSON from the API and formats it into a list of rows
         """
-        if self.rows: # pylint: disable=no-else-return
+        if self.rows:  # pylint: disable=no-else-return
             # take the columns as specified
             ret = []
             for c in self.rows:

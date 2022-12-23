@@ -21,7 +21,8 @@ from .response import ModelAttr, ResponseModel
 METHODS = ("get", "post", "put", "delete")
 PIP_CMD = "pip3" if version_info.major == 3 else "pip"
 
-class CLI: # pylint: disable=too-many-instance-attributes
+
+class CLI:  # pylint: disable=too-many-instance-attributes
     """
     Responsible for loading or baking a spec and handling incoming commands
     """
@@ -84,7 +85,9 @@ class CLI: # pylint: disable=too-many-instance-attributes
 
         return tmp
 
-    def _parse_args(self, node, prefix=None, args=None): # pylint: disable=too-many-branches
+    def _parse_args(
+        self, node, prefix=None, args=None
+    ):  # pylint: disable=too-many-branches
         """
         Given a node in a requestBody, parses out the properties and returns the
         CLIArg info
@@ -180,7 +183,9 @@ class CLI: # pylint: disable=too-many-instance-attributes
 
         return attrs
 
-    def bake(self, spec): # pylint: disable=too-many-locals,too-many-branches,too-many-statements
+    def bake(
+        self, spec
+    ):  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
         """
         Generates ops and bakes them to a pickle
         """
@@ -188,7 +193,9 @@ class CLI: # pylint: disable=too-many-instance-attributes
         self.ops = {}
         default_servers = [c["url"] for c in spec["servers"]]
 
-        for path, data in self.spec["paths"].items(): # pylint: disable=too-many-nested-blocks
+        for path, data in self.spec[
+            "paths"
+        ].items():  # pylint: disable=too-many-nested-blocks
             command = data.get("x-linode-cli-command") or "default"
             if command not in self.ops:
                 self.ops[command] = {}
@@ -362,7 +369,9 @@ class CLI: # pylint: disable=too-many-instance-attributes
                             # if we found a parameter name that is also and argument name
                             # append an underscore to both the parameter name and the
                             # parameter name in the URL
-                            use_path = use_path.replace("{" + p.name + "}", "{" + p.name + "_}")
+                            use_path = use_path.replace(
+                                "{" + p.name + "}", "{" + p.name + "_}"
+                            )
                             p.name += "_"
 
                     self.ops[command][action] = CLIOperation(
@@ -403,9 +412,10 @@ class CLI: # pylint: disable=too-many-instance-attributes
         Generates and returns fish shell completions based on the baked spec
         """
         completion_template = Template(
-                """# This is a generated file! Do not modify!
+            """# This is a generated file! Do not modify!
 complete -c linode-cli -n "not __fish_seen_subcommand_from $subcommands" -x -a '$subcommands --help'
-$command_items""")
+$command_items"""
+        )
 
         command_template = Template(
             """complete -c linode-cli -n "__fish_seen_subcommand_from $command" -x -a '$actions --help'"""
@@ -424,7 +434,6 @@ $command_items""")
         )
 
         return rendered
-
 
     def get_bash_completions(self):
         """
@@ -480,7 +489,7 @@ complete -F _linode_cli linode-cli"""
         """
         rendered = self.get_bash_completions()
         # save it off
-        with open("linode-cli.sh", "w", encoding='utf-8') as f:
+        with open("linode-cli.sh", "w", encoding="utf-8") as f:
             print("Writing file...")
             f.write(rendered)
 
@@ -529,12 +538,17 @@ complete -F _linode_cli linode-cli"""
         # these come back as ints, convert to HTTP version
         http_version = response.raw.version / 10
 
-        print(f"< HTTP/{http_version:.1f} {response.status_code} {response.reason}", file=stderr)
+        print(
+            f"< HTTP/{http_version:.1f} {response.status_code} {response.reason}",
+            file=stderr,
+        )
         for k, v in response.headers.items():
             print(f"< {k}: {v}", file=stderr)
         print("< ", file=stderr)
 
-    def do_request(self, operation, args, filter_header=None, skip_error_handling=False): # pylint: disable=too-many-locals,too-many-branches,too-many-statements
+    def do_request(
+        self, operation, args, filter_header=None, skip_error_handling=False
+    ):  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
         """
         Makes a request to an operation's URL and returns the resulting JSON, or
         prints and error if a non-200 comes back
@@ -543,8 +557,10 @@ complete -F _linode_cli linode-cli"""
         headers = {
             "Authorization": f"Bearer {self.config.get_token()}",
             "Content-Type": "application/json",
-            "User-Agent": (f"linode-cli:{self.version} "
-                          f"python/{version_info[0]}.{version_info[1]}.{version_info[2]}")
+            "User-Agent": (
+                f"linode-cli:{self.version} "
+                f"python/{version_info[0]}.{version_info[1]}.{version_info[2]}"
+            ),
         }
 
         parsed_args = operation.parse_args(args)
@@ -637,7 +653,8 @@ complete -F _linode_cli linode-cli"""
                     print(
                         f"Parsing failed when comparing local version {self.spec_version} with  "
                         f"server version {spec_version}.  If this problem persists, please open a "
-                        "ticket with `linode-cli support ticket-create`", file=stderr
+                        "ticket with `linode-cli support ticket-create`",
+                        file=stderr,
                     )
 
             if api_version_higher:
@@ -665,7 +682,8 @@ complete -F _linode_cli linode-cli"""
                     print(
                         "Unable to determine if a new linode-cli package is available "
                         "in pypi.  If this message persists, open a ticket or invoke "
-                        "with --suppress-warnings", file=stderr
+                        "with --suppress-warnings",
+                        file=stderr,
                     )
 
                 if new_version_exists:
@@ -673,7 +691,8 @@ complete -F _linode_cli linode-cli"""
                         f"The API responded with version {spec_version}, which is newer than "
                         f"the CLI's version of {self.spec_version}.  Please update the CLI to get "
                         "access to the newest features.  You can update with a "
-                        f"simple `{PIP_CMD} install --upgrade linode-cli`", file=stderr
+                        f"simple `{PIP_CMD} install --upgrade linode-cli`",
+                        file=stderr,
                     )
 
         if not 199 < result.status_code < 399 and not skip_error_handling:
@@ -702,7 +721,7 @@ complete -F _linode_cli linode-cli"""
     @staticmethod
     def _flatten_url_path(tag):
         new_tag = tag.lower()
-        new_tag = re.sub(r"[^a-z ]", "", new_tag).replace(' ', '-')
+        new_tag = re.sub(r"[^a-z ]", "", new_tag).replace(" ", "-")
         return new_tag
 
     def handle_command(self, command, action, args):
@@ -738,8 +757,10 @@ complete -F _linode_cli linode-cli"""
             and "pages" in result.json()
             and result.json()["pages"] > 1
         ):
-            print(f"Page {result.json()['page']} of {result.json()['pages']}. "
-                   "Call with --page [PAGE] to load a different page.")
+            print(
+                f"Page {result.json()['page']} of {result.json()['pages']}. "
+                "Call with --page [PAGE] to load a different page."
+            )
 
     def configure(self):
         """

@@ -20,13 +20,14 @@ NOT_BOLD = "\033[0m"
 orig_term = termios.tcgetattr(sys.stdin.fileno())
 new_term = termios.tcgetattr(sys.stdin.fileno())
 # new terminal becomes unbuffered
-new_term[3] = (new_term[3] & ~termios.ICANON & ~termios.ECHO)
+new_term[3] = new_term[3] & ~termios.ICANON & ~termios.ECHO
 
 
 class InputValidation:
     """
     Validating the input of firewalls
     """
+
     @staticmethod
     def input(input_text: str, validator: Callable[[str], None]):
         """
@@ -67,6 +68,7 @@ class InputValidation:
         """
         Handle optional value
         """
+
         def callback(value):
             if value.strip() == "":
                 return
@@ -80,6 +82,7 @@ class InputValidation:
         """
         Check if value is numeric
         """
+
         def callback(value):
             if not value.isnumeric():
                 raise ValueError(f"Expected an integer, got {value}")
@@ -91,6 +94,7 @@ class InputValidation:
         """
         Validate index
         """
+
         def callback(value):
             if not value.isnumeric():
                 raise ValueError(f"Expected an integer, got {value}")
@@ -107,6 +111,7 @@ class InputValidation:
         """
         Regex callback
         """
+
         def callback(value):
             pattern_compiled = re.compile(pattern)
 
@@ -120,10 +125,13 @@ class InputValidation:
         """
         Validated choice is one of choices
         """
+
         def callback(value):
             if value.lower() not in [choice.lower() for choice in valid_choices]:
-                raise ValueError(f"Invalid choice: {value}; must be one "
-                                 f"of {', '.join(valid_choices)}")
+                raise ValueError(
+                    f"Invalid choice: {value}; must be one "
+                    f"of {', '.join(valid_choices)}"
+                )
 
         return callback
 
@@ -132,15 +140,18 @@ class InputValidation:
         """
         Callback for IP List
         """
+
         def callback(value):
             for ip in value.split(","):
                 ip = ip.strip()
 
                 # IP ranges are required
-                ip_parts = ip.split('/')
+                ip_parts = ip.split("/")
 
                 if len(ip_parts) != 2:
-                    raise ValueError(f"Invalid IP: {ip}; IPs must be in IP/mask format.")
+                    raise ValueError(
+                        f"Invalid IP: {ip}; IPs must be in IP/mask format."
+                    )
 
                 if not ip_parts[1].isnumeric():
                     raise ValueError(f"Invalid IP: {ip}; IP masks must be numeric")
@@ -172,6 +183,7 @@ def revert_terminal():
 # Helper functions
 ##
 
+
 def _get_firewall(firewall_id, client):
     """
     Returns the firewall object with the given ID
@@ -195,6 +207,7 @@ def _get_firewall(firewall_id, client):
 # Drawing functions
 ##
 
+
 def redraw(firewall, rules):
     """
     Clears the screen and redraws the firewall header
@@ -211,8 +224,10 @@ def redraw(firewall, rules):
             status=firewall["status"],
         )
     )
-    print(f"{BOLD}Inbound Policy:{NOT_BOLD} {rules['inbound_policy']}\t"
-          f"{BOLD}Outbound Policy:{NOT_BOLD} {rules['outbound_policy']}")
+    print(
+        f"{BOLD}Inbound Policy:{NOT_BOLD} {rules['inbound_policy']}\t"
+        f"{BOLD}Outbound Policy:{NOT_BOLD} {rules['outbound_policy']}"
+    )
 
 
 def print_rules_table(rules):
@@ -269,6 +284,7 @@ def draw_rules(rules):
 # Custom Exceptions
 ##
 
+
 class StopDontSave(KeyboardInterrupt):
     """
     Excpetion that indicates that we shouldn't save changes; overrides KeyboardInterrupt
@@ -293,6 +309,7 @@ class StopSave(Exception):
 # modified), and the return value if whether or not we need to redraw the whole screen
 ##
 
+
 def save_quit(rules):
     """
     Handle quitting with saving
@@ -300,7 +317,7 @@ def save_quit(rules):
     raise StopSave()
 
 
-def quit(rules): # pylint: disable=redefined-builtin
+def quit(rules):  # pylint: disable=redefined-builtin
     """
     Soft handle quitting without saving
     """
@@ -318,7 +335,9 @@ def add_rule(rules):
         ind_str = InputValidation.input(
             "Index (Optional): ",
             InputValidation.optional(
-                InputValidation.index_of(change, allow_append=True))).strip()
+                InputValidation.index_of(change, allow_append=True)
+            ),
+        ).strip()
 
         if ind_str == "":
             ind = len(change)
@@ -327,18 +346,24 @@ def add_rule(rules):
 
     label = InputValidation.input(
         "Rule Label (Optional): ",
-        InputValidation.optional(InputValidation.regex(
-            "^[a-zA-Z0-9\\-\\_\\.]{3,32}$",
-            "Label must include only ASCII letters, numbers, "+
-            "underscores, periods, and dashes."))).strip()
+        InputValidation.optional(
+            InputValidation.regex(
+                "^[a-zA-Z0-9\\-\\_\\.]{3,32}$",
+                "Label must include only ASCII letters, numbers, "
+                + "underscores, periods, and dashes.",
+            )
+        ),
+    ).strip()
 
     protocol = InputValidation.input(
         "Protocol (TCP/UDP/ICMP/IPENCAP): ",
-        InputValidation.one_of({"TCP", "UDP", "ICMP", "IPENCAP"}))
+        InputValidation.one_of({"TCP", "UDP", "ICMP", "IPENCAP"}),
+    )
     protocol = protocol.upper()
 
     action = InputValidation.input(
-        "Action (ACCEPT/DROP): ", InputValidation.one_of({"ACCEPT", "DROP"}))
+        "Action (ACCEPT/DROP): ", InputValidation.one_of({"ACCEPT", "DROP"})
+    )
     action = action.upper()
 
     # Ports are now allowed for ICMP and IPENCAP protocols
@@ -350,7 +375,9 @@ def add_rule(rules):
             InputValidation.regex(
                 "^[0-9\\,\\- ]*$",
                 "Input may be a single port, a range of ports, or a "
-                "comma-separated list of single ports and port ranges."))
+                "comma-separated list of single ports and port ranges.",
+            ),
+        )
 
     addresses = InputValidation.input(
         "Addresses (comma separated): ",
@@ -360,10 +387,12 @@ def add_rule(rules):
     addresses_ipv4 = []
     addresses_ipv6 = []
 
-    for ip in addresses.split(','):
+    for ip in addresses.split(","):
         ip = ip.strip()
 
-        if type(ip_address(ip.split("/")[0])) is IPv4Address: # pylint: disable=unidiomatic-typecheck
+        if (
+            type(ip_address(ip.split("/")[0])) is IPv4Address
+        ):  # pylint: disable=unidiomatic-typecheck
             addresses_ipv4.append(ip)
         else:
             addresses_ipv6.append(ip)
@@ -407,8 +436,7 @@ def remove_rule(rules):
         return False
 
     ind_str = InputValidation.input(
-        "Index to remove: ", InputValidation.optional(
-            InputValidation.index_of(change))
+        "Index to remove: ", InputValidation.optional(InputValidation.index_of(change))
     ).strip()
 
     # No changes to be made
@@ -429,15 +457,15 @@ def swap_rules(rules):
     change = InputValidation.input_io(rules)
 
     a_str = InputValidation.input(
-        "Swap index: ", InputValidation.optional(
-            InputValidation.index_of(change))).strip()
+        "Swap index: ", InputValidation.optional(InputValidation.index_of(change))
+    ).strip()
 
     if a_str == "":
         return False
 
     b_str = InputValidation.input(
-        "With index: ", InputValidation.optional(
-            InputValidation.index_of(change))).strip()
+        "With index: ", InputValidation.optional(InputValidation.index_of(change))
+    ).strip()
 
     if b_str == "":
         return False
@@ -453,6 +481,7 @@ def toggle_policy(policy_key):
     """
     Callback for toggling policy
     """
+
     def callback(rules):
         rules[policy_key] = "DROP" if rules[policy_key] == "ACCEPT" else "ACCEPT"
 
@@ -468,13 +497,14 @@ ACTION_MAP = {
     "r": remove_rule,
     "s": swap_rules,
     "i": toggle_policy("inbound_policy"),
-    "o": toggle_policy("outbound_policy")
+    "o": toggle_policy("outbound_policy"),
 }
 
 
 ##
 # Logic
 ##
+
 
 def get_action():
     """
@@ -529,7 +559,7 @@ def call(args, context):
     Invokes the Interactive Firewall Plugin
     """
     parser = argparse.ArgumentParser("firewall-editor", add_help=True)
-    parser.add_argument('firewall_id', help="The ID of the firewall to edit.")
+    parser.add_argument("firewall_id", help="The ID of the firewall to edit.")
     parsed = parser.parse_args(args)
 
     # fetch the info and start going
@@ -541,13 +571,21 @@ def call(args, context):
         # then update the rules
         if save:
             print("Saving Firewall configuration..")
-            code, errors = context.client.call_operation("firewalls", "rules-update", args=[
-                parsed.firewall_id,
-                "--inbound", json.dumps(rules["inbound"]),
-                "--outbound", json.dumps(rules["outbound"]),
-                "--inbound_policy", rules["inbound_policy"],
-                "--outbound_policy", rules["outbound_policy"],
-            ])
+            code, errors = context.client.call_operation(
+                "firewalls",
+                "rules-update",
+                args=[
+                    parsed.firewall_id,
+                    "--inbound",
+                    json.dumps(rules["inbound"]),
+                    "--outbound",
+                    json.dumps(rules["outbound"]),
+                    "--inbound_policy",
+                    rules["inbound_policy"],
+                    "--outbound_policy",
+                    rules["outbound_policy"],
+                ],
+            )
             if code == 200:
                 print("Rules updated successfully!")
                 break

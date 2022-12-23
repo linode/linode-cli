@@ -35,6 +35,7 @@ skip_config = any(c in argv for c in ["--skip-config", "--help", "--version"])
 
 cli = CLI(VERSION, BASE_URL, skip_config=skip_config)
 
+
 def warn_python2_eol():
     """
     Prints a warning the first time each day that the CLI is used under python2.
@@ -52,7 +53,7 @@ def warn_python2_eol():
         )
 
 
-def main(): #pylint: disable=too-many-locals,too-many-branches,too-many-statements
+def main():  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
     # TODO: major refactor function is too long
     """
     Handle incoming command arguments
@@ -334,9 +335,13 @@ def main(): #pylint: disable=too-many-locals,too-many-branches,too-many-statemen
             sys.exit(14)
 
         # do the removal
-        current_plugins = cli.config.config.get("DEFAULT", "registered-plugins").split(",")
+        current_plugins = cli.config.config.get("DEFAULT", "registered-plugins").split(
+            ","
+        )
         current_plugins.remove(plugin_name)
-        cli.config.config.set("DEFAULT", "registered-plugins", ",".join(current_plugins))
+        cli.config.config.set(
+            "DEFAULT", "registered-plugins", ",".join(current_plugins)
+        )
 
         if cli.config.config.has_option("DEFAULT", f"plugin-name-{plugin_name}"):
             # if the config if malformed, don't blow up
@@ -523,8 +528,10 @@ def main(): #pylint: disable=too-many-locals,too-many-branches,too-many-statemen
             print()
             print("Available actions: ")
 
-            content = [[', '.join([action, *op.action_aliases]), op.summary]
-                        for action, op in actions.items()]
+            content = [
+                [", ".join([action, *op.action_aliases]), op.summary]
+                for action, op in actions.items()
+            ]
 
             header = ["action", "summary"]
             table = SingleTable([header] + content)
@@ -553,8 +560,11 @@ def main(): #pylint: disable=too-many-locals,too-many-branches,too-many-statemen
             if operation.args:
                 print("Arguments:")
                 for arg in sorted(operation.args, key=lambda s: not s.required):
-                    is_required = "(required) " if operation.method in {"post",
-                                                "put"} and arg.required else ""
+                    is_required = (
+                        "(required) "
+                        if operation.method in {"post", "put"} and arg.required
+                        else ""
+                    )
                     print(f"  --{arg.path}: {is_required}{arg.description}")
             elif operation.method == "get" and parsed.action == "list":
                 filterable_attrs = [
