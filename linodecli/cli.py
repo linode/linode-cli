@@ -398,9 +398,37 @@ class CLI: # pylint: disable=too-many-instance-attributes
         with open(data_file, "wb") as f:
             pickle.dump(self.ops, f)
 
-    def get_completions(self):
+    def get_fish_completions(self):
         """
-        Generates and returns shell completions based on the baked spec
+        Generates and returns fish shell completions based on the baked spec
+        """
+        completion_template = Template(
+                """# This is a generated file! Do not modify!
+complete -c linode-cli -n "not __fish_seen_subcommand_from $subcommands" -x -a '$subcommands --help'
+$command_items""")
+
+        command_template = Template(
+            """complete -c linode-cli -n "__fish_seen_subcommand_from $command" -x -a '$actions --help'"""
+        )
+
+        command_blocks = [
+            command_template.safe_substitute(
+                command=op, actions=" ".join([act for act in actions.keys()])
+            )
+            for op, actions in self.ops.items()
+        ]
+
+        rendered = completion_template.safe_substitute(
+            subcommands=" ".join(self.ops.keys()),
+            command_items="\n".join(command_blocks),
+        )
+
+        return rendered
+
+
+    def get_bash_completions(self):
+        """
+        Generates and returns bash shell completions based on the baked spec
         """
         completion_template = Template(
             """# This is a generated file!  Do not modify!
@@ -450,7 +478,7 @@ complete -F _linode_cli linode-cli"""
         """
         Given a baked CLI, generates and saves a bash completion file
         """
-        rendered = self.get_completions()
+        rendered = self.get_bash_completions()
         # save it off
         with open("linode-cli.sh", "w", encoding='utf-8') as f:
             print("Writing file...")
