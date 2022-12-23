@@ -1,6 +1,6 @@
-from linodecli import main
 """
 Launches the CLI
 """
+from linodecli import main
 
 main()

@@ -1,3 +1,6 @@
+"""
+Initialize plugins for the CLI
+"""
 import sys
 from importlib import import_module
 from os import listdir
@@ -36,27 +39,23 @@ def invoke(name, args, context):
         # this is a third-party plugin
         try:
             plugin_module_name = context.client.config.config.get(
-                "DEFAULT", "plugin-name-{}".format(name)
+                "DEFAULT", f"plugin-name-{name}"
             )
         except KeyError:
-            print("Plugin {} is misconfigured - please re-register it".format(name))
+            print(f"Plugin {name} is misconfigured - please re-register it")
             sys.exit(9)
         try:
             plugin = import_module(plugin_module_name)
         except ImportError:
-            print(
-                "Expected module '{}' not found.  Either {} is misconfigured, "
-                "or the backing module was uninstalled.".format(
-                    plugin_module_name, name
-                )
-            )
+            print(f"Expected module '{plugin_module_name}' not found.  "
+                  "Either {name} is misconfigured, or the backing module was uninstalled.")
             sys.exit(10)
         plugin.call(args, context)
     else:
-        raise ValueError("No plugin named {}".format(name))
+        raise ValueError("No plugin named {name}")
 
 
-class PluginContext:
+class PluginContext: # pylint: disable=too-few-public-methods
     """
     This class contains all context information provided to plugins when invoked.
     This includes access to the underlying CLI object to access the user's account,

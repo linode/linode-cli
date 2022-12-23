@@ -1,9 +1,13 @@
+"""
+Plugin for CLI for editing firewalls
+"""
+
 import argparse
 import json
 import re
 import termios
 import sys
-from typing import Callable, Tuple, Any
+from typing import Callable
 from ipaddress import ip_address, IPv4Address
 
 from terminaltables import PorcelainTable
@@ -20,20 +24,29 @@ new_term[3] = (new_term[3] & ~termios.ICANON & ~termios.ECHO)
 
 
 class InputValidation:
+    """
+    Validating the input of firewalls
+    """
     @staticmethod
     def input(input_text: str, validator: Callable[[str], None]):
+        """
+        Handle input from user
+        """
         while True:
             value = input(input_text)
             try:
                 validator(value)
             except ValueError as err:
-                print("Invalid Input: {}".format("; ".join(err.args)))
+                print(f"Invalid Input: {'; '.join(err.args)}")
                 continue
 
             return value
 
     @staticmethod
     def input_io(rules):
+        """
+        Handle input option between Inbound and Outbound
+        """
         raw_terminal()
 
         print("[I]nbound or [O]utbound?")
@@ -51,6 +64,9 @@ class InputValidation:
 
     @staticmethod
     def optional(validator):
+        """
+        Handle optional value
+        """
         def callback(value):
             if value.strip() == "":
                 return
@@ -61,27 +77,36 @@ class InputValidation:
 
     @staticmethod
     def int():
+        """
+        Check if value is numeric
+        """
         def callback(value):
             if not value.isnumeric():
-                raise ValueError("Expected an integer, got {}".format(value))
+                raise ValueError(f"Expected an integer, got {value}")
 
         return callback
 
     @staticmethod
     def index_of(ref_list, allow_append=False):
+        """
+        Validate index
+        """
         def callback(value):
             if not value.isnumeric():
-                raise ValueError("Expected an integer, got {}".format(value))
+                raise ValueError(f"Expected an integer, got {value}")
 
             value_int = int(value)
 
             if value_int < 0 or value_int >= len(ref_list) + (1 if allow_append else 0):
-                raise ValueError("Invalid index {}".format(value_int))
+                raise ValueError(f"Invalid index {value_int}")
 
         return callback
 
     @staticmethod
     def regex(pattern, error_msg):
+        """
+        Regex callback
+        """
         def callback(value):
             pattern_compiled = re.compile(pattern)
 
@@ -92,15 +117,21 @@ class InputValidation:
 
     @staticmethod
     def one_of(valid_choices):
+        """
+        Validated choice is one of choices
+        """
         def callback(value):
             if value.lower() not in [choice.lower() for choice in valid_choices]:
-                raise ValueError("Invalid choice: {}; must be one of {}"
-                                 .format(value, ', '.join(valid_choices)))
+                raise ValueError(f"Invalid choice: {value}; must be one "
+                                 f"of {', '.join(valid_choices)}")
 
         return callback
 
     @staticmethod
     def ip_list():
+        """
+        Callback for IP List
+        """
         def callback(value):
             for ip in value.split(","):
                 ip = ip.strip()
@@ -109,15 +140,15 @@ class InputValidation:
                 ip_parts = ip.split('/')
 
                 if len(ip_parts) != 2:
-                    raise ValueError("Invalid IP: {}; IPs must be in IP/mask format.".format(ip))
+                    raise ValueError(f"Invalid IP: {ip}; IPs must be in IP/mask format.")
 
                 if not ip_parts[1].isnumeric():
-                    raise ValueError("Invalid IP: {}; IP masks must be numeric".format(ip))
+                    raise ValueError(f"Invalid IP: {ip}; IP masks must be numeric")
 
                 try:
                     ip_address(ip_parts[0])
-                except ValueError:
-                    raise ValueError("Invalid IP: {}".format(ip))
+                except ValueError as e:
+                    raise ValueError(f"Invalid IP: {ip}") from e
 
         return callback
 
@@ -148,13 +179,13 @@ def _get_firewall(firewall_id, client):
     code, firewall = client.call_operation("firewalls", "view", args=[firewall_id])
 
     if code != 200:
-        print("Error retrieving firewall: {}".format(code))
+        print(f"Error retrieving firewall: {code}")
         sys.exit(1)
 
     code, rules = client.call_operation("firewalls", "rules-list", args=[firewall_id])
 
     if code != 200:
-        print("Error retrieving firewall rules: {}".format(code))
+        print(f"Error retrieving firewall rules: {code}")
         sys.exit(2)
 
     return firewall, rules
@@ -180,14 +211,8 @@ def redraw(firewall, rules):
             status=firewall["status"],
         )
     )
-    print(
-        "{bold}Inbound Policy:{nobold} {inbound_policy}\t{bold}Outbound Policy:{nobold} {outbound_policy}".format(
-            bold=BOLD,
-            nobold=NOT_BOLD,
-            inbound_policy=rules["inbound_policy"],
-            outbound_policy=rules["outbound_policy"],
-        )
-    )
+    print(f"{BOLD}Inbound Policy:{NOT_BOLD} {rules['inbound_policy']}\t"
+          f"{BOLD}Outbound Policy:{NOT_BOLD} {rules['outbound_policy']}")
 
 
 def print_rules_table(rules):
@@ -233,10 +258,10 @@ def draw_rules(rules):
     print("\033[3H\033[J", end="")
 
     print()
-    print("{bold}Inbound Rules:{nobold}".format(bold=BOLD, nobold=NOT_BOLD))
+    print(f"{BOLD}Inbound Rules:{NOT_BOLD}")
     print_rules_table(rules["inbound"])
     print()
-    print("{bold}Outbound Rules:{nobold}".format(bold=BOLD, nobold=NOT_BOLD))
+    print(f"{BOLD}Outbound Rules:{NOT_BOLD}")
     print_rules_table(rules["outbound"])
 
 
@@ -262,17 +287,23 @@ class StopSave(Exception):
 ##
 # The signature of these is:
 #
-#    def action_name(rules: dict) -> bool: 
+#    def action_name(rules: dict) -> bool:
 #
 # Where the incoming dict is the current state of the firewall rules (which will be
 # modified), and the return value if whether or not we need to redraw the whole screen
 ##
 
 def save_quit(rules):
+    """
+    Handle quitting with saving
+    """
     raise StopSave()
 
 
-def quit(rules):
+def quit(rules): # pylint: disable=redefined-builtin
+    """
+    Soft handle quitting without saving
+    """
     raise StopDontSave()
 
 
@@ -298,7 +329,8 @@ def add_rule(rules):
         "Rule Label (Optional): ",
         InputValidation.optional(InputValidation.regex(
             "^[a-zA-Z0-9\\-\\_\\.]{3,32}$",
-            "Label must include only ASCII letters, numbers, underscores, periods, and dashes."))).strip()
+            "Label must include only ASCII letters, numbers, "+
+            "underscores, periods, and dashes."))).strip()
 
     protocol = InputValidation.input(
         "Protocol (TCP/UDP/ICMP/IPENCAP): ",
@@ -331,8 +363,10 @@ def add_rule(rules):
     for ip in addresses.split(','):
         ip = ip.strip()
 
-        addresses_ipv4.append(ip) if type(ip_address(ip.split("/")[0])) is IPv4Address \
-            else addresses_ipv6.append(ip)
+        if type(ip_address(ip.split("/")[0])) is IPv4Address: # pylint: disable=unidiomatic-typecheck
+            addresses_ipv4.append(ip)
+        else:
+            addresses_ipv6.append(ip)
 
     # make the new rule
     new_rule = {
@@ -387,6 +421,9 @@ def remove_rule(rules):
 
 
 def swap_rules(rules):
+    """
+    Swap index rules
+    """
     revert_terminal()
 
     change = InputValidation.input_io(rules)
@@ -413,6 +450,9 @@ def swap_rules(rules):
 
 
 def toggle_policy(policy_key):
+    """
+    Callback for toggling policy
+    """
     def callback(rules):
         rules[policy_key] = "DROP" if rules[policy_key] == "ACCEPT" else "ACCEPT"
 
@@ -511,10 +551,9 @@ def call(args, context):
             if code == 200:
                 print("Rules updated successfully!")
                 break
-            else:
-                print("Error editing rules: {}: {}".format(code, errors))
-                # block to see the error, then re-enter the editor
-                sys.stdin.read(1)
+            print(f"Error editing rules: {code}: {errors}")
+            # block to see the error, then re-enter the editor
+            sys.stdin.read(1)
         else:
             print("Aborted.")
             break
