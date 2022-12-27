@@ -360,7 +360,7 @@ def main():  # pylint: disable=too-many-locals,too-many-branches,too-many-statem
                 "Prints shell completions for the requested shell to stdout. "
                 "Currently, only completions for bash and fish are available."
             )
-            exit(0)
+            sys.exit(0)
 
         completions = ""
 
@@ -371,11 +371,12 @@ def main():  # pylint: disable=too-many-locals,too-many-branches,too-many-statem
         else:
             print(
                 "Completions are only available for bash and fish at this time.  To retrieve "
-                "these, please invoke as `linode-cli completion bash` or `linode-cli completion fish`."
+                "these, please invoke as `linode-cli completion bash` "
+                "or `linode-cli completion fish`."
             )
-            exit(1)
+            sys.exit(1)
         print(completions)
-        exit(0)
+        sys.exit(0)
 
     # handle a help for the CLI
     if parsed.command is None or (parsed.command is None and parsed.help):

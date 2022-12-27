@@ -193,7 +193,7 @@ class CLI:  # pylint: disable=too-many-instance-attributes
         self.ops = {}
         default_servers = [c["url"] for c in spec["servers"]]
 
-        for path, data in self.spec[
+        for path, data in self.spec[ # pylint: disable=too-many-nested-blocks
             "paths"
         ].items():  # pylint: disable=too-many-nested-blocks
             command = data.get("x-linode-cli-command") or "default"
@@ -418,12 +418,13 @@ $command_items"""
         )
 
         command_template = Template(
-            """complete -c linode-cli -n "__fish_seen_subcommand_from $command" -x -a '$actions --help'"""
+            """complete -c linode-cli -n "__fish_seen_subcommand_from $command" \
+                    -x -a '$actions --help'"""
         )
 
         command_blocks = [
             command_template.safe_substitute(
-                command=op, actions=" ".join([act for act in actions.keys()])
+                command=op, actions=" ".join(list(actions.keys()))
             )
             for op, actions in self.ops.items()
         ]
