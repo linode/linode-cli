@@ -7,7 +7,7 @@ import json
 import sys
 import re
 import os
-from distutils.version import LooseVersion, StrictVersion
+from distutils.version import LooseVersion, StrictVersion # pylint: disable=deprecated-module
 from string import Template
 from sys import stderr, version_info
 
