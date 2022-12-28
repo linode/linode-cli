@@ -605,6 +605,9 @@ complete -F _linode_cli linode-cli"""
         if self.debug_request:
             self.print_response_debug_info(result)
 
+        if self._check_retry(result):
+            self.do_request(operation, args, filter_header, skip_error_handling)
+
         if not self.suppress_warnings:
             # check the major/minor version API reported against what we were built
             # with to see if an upgrade should be available
@@ -695,6 +698,25 @@ complete -F _linode_cli linode-cli"""
             self._handle_error(result)
 
         return result
+
+    def _check_retry(self, response):
+        """
+        Check for valid retry scenario, returns true if retry is valid
+        """
+        if response.status_code == 408:
+            # request timed out
+            return True
+        if (response.status_code == 503
+        and response.header.get("X-Maintenance-Mode")):
+            # API is in Maintenance Mode
+            return True
+        if (response.status_code == 400
+        and response.header.get("Server") == "nginx"
+        and response.header.get("Content-Type") == "text/html"):
+            # nginx html response
+            return True
+
+        return False
 
     def _handle_error(self, response):
         """
