@@ -711,15 +711,16 @@ complete -F _linode_cli linode-cli"""
         if response.status_code == 408:
             # request timed out
             return True
-        if (response.status_code == 503
-        and response.header.get("X-Maintenance-Mode")):
-            # API is in Maintenance Mode
-            return True
-        if (response.status_code == 400
-        and response.header.get("Server") == "nginx"
-        and response.header.get("Content-Type") == "text/html"):
-            # nginx html response
-            return True
+        if response.headers:
+            if (response.status_code == 503
+            and response.headers.get("X-Maintenance-Mode")):
+                # API is in Maintenance Mode
+                return True
+            if (response.status_code == 400
+            and response.headers.get("Server") == "nginx"
+            and response.headers.get("Content-Type") == "text/html"):
+                # nginx html response
+                return True
 
         return False
 
