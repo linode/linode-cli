@@ -36,6 +36,7 @@ class CLI:
         self.base_url = base_url
         self.spec_version = "None"
         self.suppress_warnings = False
+        self.no_retry = False
 
         self.output_handler = OutputHandler()
         self.config = CLIConfig(self.base_url, skip_config=skip_config)
@@ -605,7 +606,7 @@ complete -F _linode_cli linode-cli"""
         if self.debug_request:
             self.print_response_debug_info(result)
 
-        if self._check_retry(result):
+        if self._check_retry(result) and self.no_retry:
             self.do_request(operation, args, filter_header, skip_error_handling)
 
         if not self.suppress_warnings:

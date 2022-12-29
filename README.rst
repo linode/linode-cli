@@ -197,6 +197,14 @@ in addition to its normal output.  If these warnings can interfere with your
 scripts or you otherwise want them disabled, simply add the ``--suppress-warnings``
 flag to prevent them from being emitted.
 
+Automatic Retry
+"""""""""""""""
+
+Sometimes the API responds with a error that can be ignored. For example a timeout
+or nginx response that can't be parsed correctly, by default the CLI will retry
+calls on these errors we've identified. If you'd like to disable this behavior for
+any reason use the ``--no-retry`` flag.
+
 Shell Completion
 """"""""""""""""
 

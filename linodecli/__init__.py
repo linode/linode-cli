@@ -142,6 +142,11 @@ def main():
         "This is useful for scripting the CLI's behavior.",
     )
     parser.add_argument(
+        "--no-retry",
+        action="store_true",
+        help="Skip retrying on common errors like timeouts.",
+    )
+    parser.add_argument(
         "--version",
         "-v",
         action="store_true",
@@ -175,10 +180,11 @@ def main():
         cli.output_handler.columns = parsed.format
 
     cli.defaults = not parsed.no_defaults
-    cli.suppress_warnings = parsed.suppress_warnings
+    cli.debug_request = parsed.debug
+    cli.no_retry = parsed.no_retry
     cli.page = parsed.page
     cli.page_size = parsed.page_size
-    cli.debug_request = parsed.debug
+    cli.suppress_warnings = parsed.suppress_warnings
 
     if not cli.suppress_warnings:
         warn_python2_eol()
