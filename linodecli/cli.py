@@ -2,20 +2,21 @@
 Responsible for managing spec and routing commands to operations.
 """
 
-import json
 import os
-import pickle
 import re
-from distutils.version import LooseVersion, StrictVersion
+import json
+import time
+import pickle
 from string import Template
 from sys import exit, prefix, stderr, version_info
+from distutils.version import LooseVersion, StrictVersion
 
 import requests
 
 from .configuration import CLIConfig
-from .operation import CLIArg, CLIOperation, URLParam
 from .output import OutputHandler, OutputMode
 from .response import ModelAttr, ResponseModel
+from .operation import CLIArg, CLIOperation, URLParam
 
 METHODS = ("get", "post", "put", "delete")
 PIP_CMD = "pip3" if version_info.major == 3 else "pip"
@@ -610,6 +611,7 @@ complete -F _linode_cli linode-cli"""
         if (self._check_retry(result)
         and self.no_retry
         and self.retry_count < 3):
+            time.sleep(self._get_retry_after(result.headers))
             self.retry_count += 1
             self.do_request(operation, args, filter_header, skip_error_handling)
 
@@ -704,6 +706,14 @@ complete -F _linode_cli linode-cli"""
 
         return result
 
+    def _get_retry_after(self, headers):
+        if headers.get("Retry-After"):
+            retry_str = headers.get("Retry-After")
+            if retry_str == "":
+                return 0
+            return int(retry_str)
+        return 0
+
     def _check_retry(self, response):
         """
         Check for valid retry scenario, returns true if retry is valid
@@ -721,7 +731,6 @@ complete -F _linode_cli linode-cli"""
             and response.headers.get("Content-Type") == "text/html"):
                 # nginx html response
                 return True
-
         return False
 
     def _handle_error(self, response):
