@@ -1,3 +1,7 @@
+# pylint: disable=too-many-lines
+"""
+CLI Plugin for handling OBJ
+"""
 import argparse
 import getpass
 import glob
@@ -64,24 +68,26 @@ UPLOAD_MAX_FILE_SIZE = 1024 * 1024 * 1024 * 5
 # This is how big (in MB) the chunks of the file that we upload will be
 MULTIPART_UPLOAD_CHUNK_SIZE_DEFAULT = 1024
 
-def restricted_int_arg_type(max, min=1):
+
+def restricted_int_arg_type(max, min=1):  # pylint: disable=redefined-builtin
     """
     An ArgumentParser arg type for integers that restricts the value to between `min` and `max`
     (inclusive for both.)
     """
+
     def restricted_int(string):
-        err_msg = "Value must be an integer between {} and {}".format(min, max)
+        err_msg = f"Value must be an integer between {min} and {max}"
         try:
             value = int(string)
-        except ValueError:
+        except ValueError as e:
             # argparse can handle ValueErrors, but shows an unfriendly "invalid restricted_int
             # value: '0.1'" message, so catch and raise with a better message.
-            raise argparse.ArgumentTypeError(err_msg)
+            raise argparse.ArgumentTypeError(err_msg) from e
         if value < min or value > max:
             raise argparse.ArgumentTypeError(err_msg)
         return value
-    return restricted_int
 
+    return restricted_int
 
 
 def list_objects_or_buckets(get_client, args):
@@ -125,6 +131,7 @@ def list_objects_or_buckets(get_client, args):
             else:
                 size = c.size
 
+            # pylint: disable-next=redefined-outer-name
             datetime = _convert_datetime(c.last_modified) if size != "DIR" else " " * 16
 
             data.append([datetime, size, c.name])
@@ -161,7 +168,7 @@ def create_bucket(get_client, args):
 
     client.create_bucket(parsed.name)
 
-    print("Bucket {} created".format(parsed.name))
+    print(f"Bucket {parsed.name} created")
     sys.exit(0)
 
 
@@ -193,17 +200,17 @@ def delete_bucket(get_client, args):
             sys.exit(2)
 
         for c in bucket.list():
-            print("delete: {} {}".format(parsed.name, c.key))
+            print(f"delete: {parsed.name} {c.key}")
             bucket.delete_key(c)
 
     client.delete_bucket(parsed.name)
 
-    print("Bucket {} removed".format(parsed.name))
+    print("Bucket {parsed.name} removed")
 
     sys.exit(0)
 
 
-def upload_object(get_client, args):
+def upload_object(get_client, args):  # pylint: disable=too-many-locals
     """
     Uploads an object to object storage
     """
@@ -224,7 +231,7 @@ def upload_object(get_client, args):
         "--chunk-size",
         type=restricted_int_arg_type(5120),
         default=MULTIPART_UPLOAD_CHUNK_SIZE_DEFAULT,
-        help="The size of file chunks when uploading large files, in MB."
+        help="The size of file chunks when uploading large files, in MB.",
     )
     # parser.add_argument('--recursive', action='store_true',
     #                    help="If set, upload directories recursively.")
@@ -242,16 +249,19 @@ def upload_object(get_client, args):
         if platform.system() == "Windows" and "*" in file_path:
             results = glob.glob(file_path, recursive=True)
             if len(results) < 1:
-                print("No file found matching pattern {}".format(file_path))
-                exit(5)
+                print(f"No file found matching pattern {file_path}")
+                sys.exit(5)
 
             if len(results) > 1:
-                print("warn: Found multiple files matching pattern {}, using {}".format(file_path, results[0]))
+                print(
+                    "warn: Found multiple files matching pattern "
+                    f"{file_path}, using {results[0]}"
+                )
 
             file_path = results[0]
 
         if not os.path.isfile(file_path):
-            print("No file {}".format(file_path))
+            print("No file {file_path}")
             sys.exit(5)
 
         filename = os.path.split(file_path)[-1]
@@ -286,7 +296,9 @@ def upload_object(get_client, args):
     print("Done.")
 
 
-def _do_multipart_upload(bucket, filename, file_path, file_size, policy, chunk_size):
+def _do_multipart_upload(
+    bucket, filename, file_path, file_size, policy, chunk_size
+):  # pylint: disable=too-many-arguments
     """
     Handles the internals of a multipart upload for a large file.
 
@@ -310,7 +322,7 @@ def _do_multipart_upload(bucket, filename, file_path, file_size, policy, chunk_s
     # convert chunk_size to float so that division works like we want
     num_chunks = int(math.ceil(file_size / float(chunk_size)))
 
-    print("{} ({} parts)".format(filename, num_chunks))
+    print(f"{filename} ({num_chunks} parts)")
 
     num_tries = 3
     retry_delay = 2
@@ -318,7 +330,7 @@ def _do_multipart_upload(bucket, filename, file_path, file_size, policy, chunk_s
     try:
         with open(file_path, "rb") as f:
             for i in range(num_chunks):
-                print(" Part {}".format(i + 1))
+                print(f" Part {i + 1}")
                 for attempt in range(num_tries):
                     try:
                         upload.upload_part_from_file(
@@ -326,11 +338,13 @@ def _do_multipart_upload(bucket, filename, file_path, file_size, policy, chunk_s
                         )
                     except S3ResponseError:
                         if attempt < num_tries - 1:
-                            print( "  Part failed ({} of {} attempts). Retrying in {} seconds...".format(attempt + 1, num_tries, retry_delay))
+                            print(
+                                f"  Part failed ({attempt+1} of {num_tries} attempts). "
+                                f"Retrying in {retry_delay} seconds..."
+                            )
                             time.sleep(retry_delay)
                             continue
-                        else:
-                            raise
+                        raise
                     else:
                         break
     except Exception:
@@ -381,7 +395,7 @@ def get_object(get_client, args):
     k = bucket.get_key(parsed.file)
 
     if k is None:
-        print("No {} in {}".format(parsed.file, parsed.bucket))
+        print(f"No {parsed.file} in {parsed.bucket}")
         sys.exit(2)
 
     k.get_contents_to_filename(destination, cb=_progress, num_cb=100)
@@ -415,13 +429,13 @@ def delete_object(get_client, args):
     k = bucket.get_key(parsed.file)
 
     if k is None:
-        print("No {} in {}".format(parsed.file, parsed.bucket))
+        print(f"No {parsed.file} in {parsed.bucket}")
         sys.exit(2)
 
     # delete the key
     k.delete()
 
-    print("{} removed from {}".format(parsed.file, parsed.bucket))
+    print(f"{parsed.file} removed from {parsed.bucket}")
 
 
 def generate_url(get_client, args):
@@ -467,7 +481,7 @@ def generate_url(get_client, args):
     k = bucket.get_key(parsed.file)
 
     if k is None:
-        print("No {} in {}".format(parsed.file, parsed.bucket))
+        print(f"No {parsed.file} in {parsed.bucket}")
         sys.exit(2)
 
     url = k.generate_url(offset)
@@ -526,7 +540,7 @@ def set_acl(get_client, args):
         k = bucket.get_key(parsed.file)
 
         if k is None:
-            print("No {} in {}".format(parsed.file, parsed.bucket))
+            print(f"No {parsed.file} in {parsed.bucket}")
             sys.exit(2)
 
         act_on = k
@@ -574,9 +588,8 @@ def enable_static_site(get_client, args):
     bucket.set_acl("public-read")
     bucket.configure_website(parsed.ws_index, parsed.ws_error)
     print(
-        "Static site now available at https://{}.website-{}.linodeobjects.com".format(
-            parsed.bucket, client.obj_cluster
-        )
+        "Static site now available at "
+        f"https://{parsed.bucket}.website-{client.obj_cluster}.linodeobjects.com"
     )
 
 
@@ -608,14 +621,11 @@ def static_site_info(get_client, args):
     index = info["WebsiteConfiguration"]["IndexDocument"]["Suffix"]
     error = info["WebsiteConfiguration"]["ErrorDocument"]["Key"]
 
-    print("Bucket {}: Website configuration".format(parsed.bucket))
-    print(
-        "Website endpoint: {}.{}".format(
-            parsed.bucket, BASE_WEBSITE_TEMPLATE.format(client.host.split(".")[0])
-        )
-    )
-    print("Index document: {}".format(index))
-    print("Error document: {}".format(error))
+    web_template = BASE_WEBSITE_TEMPLATE.format(client.host.split(".")[0])
+    print(f"Bucket {parsed.bucket}: Website configuration")
+    print(f"Website endpoint: {parsed.bucket}.{web_template}")
+    print(f"Index document: {index}")
+    print(f"Error document: {error}")
 
 
 def show_usage(get_client, args):
@@ -658,16 +668,14 @@ def show_usage(get_client, args):
 
         total = _denominate(total)
 
-        tab = _borderless_table(
-            [[_pad_to(total, length=7), "{} objects".format(num), b.name]]
-        )
+        tab = _borderless_table([[_pad_to(total, length=7), f"{num} objects", b.name]])
         print(tab.table)
 
     if len(buckets) > 1:
         print("--------")
-        print("{} Total".format(_denominate(grand_total)))
+        print(f"{_denominate(grand_total)} Total")
 
-    exit(0)
+    sys.exit(0)
 
 
 def _denominate(total):
@@ -686,12 +694,10 @@ def _denominate(total):
     return total
 
 
-def list_all_objects(get_client, args):
+def list_all_objects(get_client):
     """
     Lists all objects in all buckets
     """
-    parser = argparse.ArgumentParser(PLUGIN_BASE + " la")
-    parsed = parser.parse_args(args)
     client = get_client()
 
     # all buckets
@@ -707,15 +713,12 @@ def list_all_objects(get_client, args):
                 size = obj.size
 
             print(
-                "{} {}   {}/{}".format(
-                    _convert_datetime(obj.last_modified) if size != "DIR" else " " * 16,
-                    _pad_to(size, 9, right_align=True),
-                    b.name,
-                    obj.key,
-                )
+                f"{_convert_datetime(obj.last_modified) if size != 'DIR' else ' ' * 16} "
+                f"{_pad_to(size, 9, right_align=True)}   "
+                f"{b.name}/{obj.key}"
             )
 
-    exit(0)
+    sys.exit(0)
 
 
 def disable_static_site(get_client, args):
@@ -744,7 +747,7 @@ def disable_static_site(get_client, args):
 
     # make the site
     bucket.delete_website_configuration()
-    print("Website configuration deleted for {}".format(parsed.bucket))
+    print(f"Website configuration deleted for {parsed.bucket}")
 
 
 COMMAND_MAP = {
@@ -767,7 +770,7 @@ COMMAND_MAP = {
 }
 
 
-def call(args, context):
+def call(args, context):  # pylint: disable=too-many-branches,too-many-statements
     """
     This is called when the plugin is invoked
     """
@@ -777,7 +780,7 @@ def call(args, context):
 
         print(
             "This plugin requires the 'boto' module.  Please install it by running "
-            "'{} install boto'".format(pip_version)
+            f"'{pip_version} install boto'"
         )
 
         sys.exit(2)  # requirements not met - we can't go on
@@ -829,7 +832,7 @@ def call(args, context):
         print()
         print("See --help for individual commands for more information")
 
-        exit(0)
+        sys.exit(0)
 
     # make a client, but only if we weren't printing help
 
@@ -841,11 +844,9 @@ def call(args, context):
     if not "--help" in args:
         if access_key and not secret_key or secret_key and not access_key:
             print(
-                "You must set both {} and {}, or neither".format(
-                    ENV_ACCESS_KEY_NAME, ENV_SECRET_KEY_NAME
-                )
+                f"You must set both {ENV_ACCESS_KEY_NAME} and {ENV_SECRET_KEY_NAME}, or neither"
             )
-            exit(1)
+            sys.exit(1)
 
         # not given on command line, so look them up
         if not access_key:
@@ -857,14 +858,16 @@ def call(args, context):
 
     def get_client():
         """
-        Get the boto client based on the cluster, or ask to configure a default cluster if one is not specified.
-        This is in a method so command methods can do this work AFTER displaying help, that way help can be shown
-        without specifying a cluster or having a valid OBJ key.
+        Get the boto client based on the cluster, or ask to configure a
+        default cluster if one is not specified. This is in a method so
+        command methods can do this work AFTER displaying help,
+        that way help can be shown without specifying a cluster
+        or having a valid OBJ key.
         """
         current_cluster = cluster
         if current_cluster is None and not context.client.defaults:
             print("Error: cluster is required.")
-            exit(1)
+            sys.exit(1)
 
         if current_cluster is None:
             print(
@@ -881,12 +884,12 @@ def call(args, context):
             COMMAND_MAP[parsed.command](get_client, args)
         except S3ResponseError as e:
             if e.error_code:
-                print("Error: {}".format(e.error_code))
+                print(f"Error: {e.error_code}")
             else:
                 print(e)
             sys.exit(4)
         except S3CreateError as e:
-            print("Error: {}".format(e))
+            print(f"Error: {e}")
             sys.exit(5)
         except BotoClientError as e:
             message_parts = e.message.split(":")
@@ -894,7 +897,7 @@ def call(args, context):
                 message = ":".join(message_parts[0:])
             else:
                 message = e.message
-            print("Error: {}".format(message))
+            print(f"Error: {message}")
             sys.exit(6)
     elif parsed.command == "regenerate-keys":
         print("Regenerating Object Storage keys..")
@@ -908,7 +911,7 @@ def call(args, context):
     elif parsed.command == "configure":
         _configure_plugin(context.client)
     else:
-        print("No command {}".format(parsed.command))
+        print(f"No command {parsed.command}")
         sys.exit(1)
 
 
@@ -957,14 +960,13 @@ def _get_s3_creds(client, force=False):
         if client.config.get_value("token") is None:
             print(
                 "You are running the Linode CLI without a configuration file, but "
-                "object storage keys were not configured.  Please set the following "
-                "variables in your environment: '{}' and '{}'.  If you'd rather ".format(
-                    ENV_ACCESS_KEY_NAME, ENV_SECRET_KEY_NAME
-                )
-                + "configure the CLI, unset the 'LINODE_CLI_TOKEN' environment "
+                "object storage keys were not configured.  "
+                "Please set the following variables in your environment: "
+                f"'{ENV_ACCESS_KEY_NAME}' and '{ENV_SECRET_KEY_NAME}'.  If you'd rather "
+                "configure the CLI, unset the 'LINODE_CLI_TOKEN' environment "
                 "variable and then run `linode-cli configure`."
             )
-            exit(1)
+            sys.exit(1)
 
         # before we do anything, can they do object storage?
         status, resp = client.call_operation("account", "view")
@@ -986,12 +988,12 @@ def _get_s3_creds(client, force=False):
         # static characters in label account for 13 total
         # timestamp is 10 more
         # allow 13 characters both for username and hostname
-        timestamp_part = str(time.time()).split(".")[0]
+        timestamp_part = str(time.time()).split(".", maxsplit=1)[0]
         truncated_user = getpass.getuser()[:13]
         truncated_hostname = socket.gethostname()[:13]
 
-        creds_label = "linode-cli-{}@{}-{}".format(
-            truncated_user, truncated_hostname, timestamp_part
+        creds_label = (
+            f"linode-cli-{truncated_user}@{truncated_hostname}-{timestamp_part}"
         )
 
         if len(creds_label) > 50:
@@ -999,7 +1001,7 @@ def _get_s3_creds(client, force=False):
             creds_label = creds_label[50 - len(creds_label) :]
 
         status, resp = client.call_operation(
-            "object-storage", "keys-create", ["--label", "{}".format(creds_label)]
+            "object-storage", "keys-create", ["--label", f"{creds_label}"]
         )
 
         if status != 200:
@@ -1031,12 +1033,12 @@ def _configure_plugin(client):
     """
     clusters = [
         c["id"]
-        for c in client.config._do_get_request(
+        for c in client.config._do_get_request(  # pylint: disable=protected-access
             "/object-storage/clusters", token=client.config.get_value("token")
         )["data"]
     ]
 
-    cluster = client.config._default_thing_input(
+    cluster = client.config._default_thing_input(  # pylint: disable=protected-access
         "Configure a default Cluster for operations.",
         clusters,
         "Default Cluster: ",
@@ -1056,10 +1058,10 @@ def _progress(cur, total):
     if total == 0.0:
         return
 
-    percent = ("{:.1f}").format(100 * (cur / float(total)))
+    percent = f"{100 * (cur / float(total)):.1f}"
     progress = int(100 * cur // total)
-    bar = ("#" * progress) + ("-" * (100 - progress))
-    print("\r |{}| {}%".format(bar, percent), end="\r")
+    progress_bar = ("#" * progress) + ("-" * (100 - progress))
+    print(f"\r |{progress_bar}| {percent}%", end="\r")
 
     if cur == total:
         print()
@@ -1087,7 +1089,7 @@ def _convert_datetime(datetime_str):
     return datetime.strptime(datetime_str, INCOMING_DATE_FORMAT).strftime(DATE_FORMAT)
 
 
-def _pad_to(val, length=10, right_align=False):
+def _pad_to(val, length=10, right_align=False):  # pylint: disable=unused-argument
     """
     Pads val to be at minimum length characters long
     """

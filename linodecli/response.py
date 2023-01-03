@@ -52,15 +52,15 @@ def colorize_string(string, color):
 
     col = COLOR_CODE_MAP.get(color, CLEAR_COLOR)
 
-    return "{}{}{}".format(
-        col,
-        string,
-        CLEAR_COLOR,
-    )
+    return f"{col}{string}{CLEAR_COLOR}"
 
 
-class ModelAttr:
-    def __init__(
+class ModelAttr:  # pylint: disable=too-many-instance-attributes
+    """
+    Collects values from models
+    """
+
+    def __init__(  # pylint: disable=too-many-arguments
         self, name, filterable, display, datatype, color_map=None, item_type=None
     ):
         self.name = name
@@ -130,17 +130,21 @@ class ModelAttr:
         return value
 
 
-class ResponseModel:
+class ResponseModel:  # pylint: disable=too-few-public-methods
+    """
+    Formats data for the response
+    """
+
     def __init__(self, attrs, rows=None, nested_list=None):
         self.attrs = attrs
         self.rows = rows
         self.nested_list = nested_list
 
-    def fix_json(self, json):
+    def fix_json(self, json):  # pylint: disable=too-many-branches
         """
         Takes JSON from the API and formats it into a list of rows
         """
-        if self.rows:
+        if self.rows:  # pylint: disable=no-else-return
             # take the columns as specified
             ret = []
             for c in self.rows:
@@ -177,7 +181,7 @@ class ResponseModel:
 
                     nlist_path = cur
                     for p in path_parts:
-                      nlist_path = nlist_path.get(p)
+                        nlist_path = nlist_path.get(p)
                     nlist = nlist_path
 
                     for item in nlist:

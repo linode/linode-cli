@@ -4,7 +4,6 @@ used elsewhere.
 """
 
 import re
-import json
 import socket
 import argparse
 import webbrowser
@@ -26,9 +25,7 @@ ENV_TOKEN_NAME = "LINODE_CLI_TOKEN"
 
 LEGACY_CONFIG_DIR = os.path.expanduser("~")
 LEGACY_CONFIG_NAME = ".linode-cli"
-CONFIG_DIR = os.environ.get(
-    "XDG_CONFIG_HOME", "{}/{}".format(os.path.expanduser("~"), ".config")
-)
+CONFIG_DIR = os.environ.get("XDG_CONFIG_HOME", f"{os.path.expanduser('~')}/.config")
 
 CONFIG_NAME = "linode-cli"
 TOKEN_GENERATION_URL = "https://cloud.linode.com/profile/tokens"
@@ -40,15 +37,15 @@ OAUTH_CLIENT_ID = "5823b4627e45411d18e9"
 # intended to exclude lynx and other terminal browsers which could be opened, but
 # won't work.
 KNOWN_GOOD_BROWSERS = {
-        "chrome",
-        "firefox",
-        "mozilla",
-        "netscape",
-        "opera",
-        "safari",
-        "chromium",
-        "chromium-browser",
-        "epiphany",
+    "chrome",
+    "firefox",
+    "mozilla",
+    "netscape",
+    "opera",
+    "safari",
+    "chromium",
+    "chromium-browser",
+    "epiphany",
 }
 
 # in the event that we can't load the styled landing page from file, this will
@@ -65,6 +62,10 @@ r.send();
 
 
 class CLIConfig:
+    """
+    Generates the necessary config for the Linode CLI
+    """
+
     def __init__(self, base_url, username=None, skip_config=False):
         self.base_url = base_url
         self.username = username
@@ -100,12 +101,15 @@ class CLIConfig:
         an error.  This overrides the default username
         """
         if not self.config.has_section(username):
-            print("User {} is not configured!".format(username))
+            print(f"User {username} is not configured!")
             sys.exit(1)
 
         self.username = username
 
     def default_username(self):
+        """
+        Returns the default-user Username
+        """
         if self.config.has_option("DEFAULT", "default-user"):
             return self.config.get("DEFAULT", "default-user")
         return ""
@@ -127,8 +131,10 @@ class CLIConfig:
             if k in ns_dict and ns_dict[k] is None:
                 warn_dict[k] = new_dict[k]
                 ns_dict[k] = new_dict[k]
-        if not any(x in ['--suppress-warnings', '--no-headers'] for x in sys.argv):
-            print("using default values: {}, use --no-defaults flag to disable defaults".format(warn_dict))
+        if not any(x in ["--suppress-warnings", "--no-headers"] for x in sys.argv):
+            print(
+                f"using default values: {warn_dict}, use --no-defaults flag to disable defaults"
+            )
         return argparse.Namespace(**ns_dict)
 
     def update(self, namespace, allowed_defaults):
@@ -140,14 +146,14 @@ class CLIConfig:
             # the CLI is using a token defined in the environment; as such, we may
             # not have actually loaded a config file.  That's fine, there are just
             # no defaults
-            return
+            return None
 
         username = self.username or self.default_username()
 
         if not self.config.has_option(username, "token") and not os.environ.get(
             ENV_TOKEN_NAME, None
         ):
-            print("User {} is not configured.".format(username))
+            print(f"User {username} is not configured.")
             sys.exit(1)
 
         if self.config.has_section(username) and allowed_defaults:
@@ -161,7 +167,7 @@ class CLIConfig:
                 if not self.config.has_option(username, default_key):
                     continue
                 value = self.config.get(username, default_key)
-                if default_key == 'authorized_users':
+                if default_key == "authorized_users":
                     update_dicts[default_key] = [value]
                 else:
                     update_dicts[default_key] = value
@@ -186,8 +192,8 @@ class CLIConfig:
         """
         if self.default_username() == username:
             print(
-                "Cannot remote {} as they are the default user!  You can change "
-                "the default user with: `linode-cli set-user USERNAME`".format(username)
+                f"Cannot remote {username} as they are the default user! You can "
+                "change the default user with: `linode-cli set-user USERNAME`"
             )
             sys.exit(1)
 
@@ -204,7 +210,7 @@ class CLIConfig:
 
         for sec in self.config.sections():
             if sec != "DEFAULT":
-                print("{}  {}".format("*" if sec == default_user else " ", sec))
+                print(f'{"*" if sec == default_user else " "}  {sec}')
 
         sys.exit(0)
 
@@ -213,7 +219,7 @@ class CLIConfig:
         Sets the default user.  If that user isn't in the config, exits with error
         """
         if not self.config.has_section(username):
-            print("User {} is not configured!".format(username))
+            print(f"User {username} is not configured!")
             sys.exit(1)
 
         self.config.set("DEFAULT", "default-user", username)
@@ -264,9 +270,7 @@ class CLIConfig:
             raise RuntimeError("No running plugin to retrieve configuration for!")
 
         username = self.username or self.default_username()
-        self.config.set(
-            username, "plugin-{}-{}".format(self.running_plugin, key), value
-        )
+        self.config.set(username, f"plugin-{self.running_plugin}-{key}", value)
 
     def plugin_get_value(self, key):
         """
@@ -286,7 +290,7 @@ class CLIConfig:
             raise RuntimeError("No running plugin to retrieve configuration for!")
 
         username = self.username or self.default_username()
-        full_key = "plugin-{}-{}".format(self.running_plugin, key)
+        full_key = f"plugin-{self.running_plugin}-{key}"
 
         if not self.config.has_option(username, full_key):
             return None
@@ -306,14 +310,14 @@ class CLIConfig:
         """
 
         # Create the ~/.config directory if it does not exist
-        if not os.path.exists("{}/{}".format(os.path.expanduser("~"), ".config")):
-            os.makedirs("{}/{}".format(os.path.expanduser("~"), ".config"))
+        if not os.path.exists(f"{os.path.expanduser('~')}/.config"):
+            os.makedirs(f"{os.path.expanduser('~')}/.config")
 
-        with open(self._get_config_path(), "w") as f:
+        with open(self._get_config_path(), "w", encoding="utf-8") as f:
             self.config.write(f)
 
         if not silent:
-            print("\nConfig written to {}".format(self._get_config_path()))
+            print(f"\nConfig written to {self._get_config_path()}")
 
     def _username_for_token(self, token):
         """
@@ -322,11 +326,8 @@ class CLIConfig:
         """
         u = self._do_get_request("/profile", token=token, exit_on_error=False)
         if "errors" in u:
-            print(
-                "That token didn't work: {}".format(
-                    ",".join([c["reason"] for c in u["errors"]])
-                )
-            )
+            reasons = ",".join([c["reason"] for c in u["errors"]])
+            print(f"That token didn't work: {reasons}")
             return None
 
         return u["username"]
@@ -337,13 +338,11 @@ class CLIConfig:
         to ensure it works.
         """
         print(
-            """
+            f"""
 First, we need a Personal Access Token.  To get one, please visit
-{} and click
+{TOKEN_GENERATION_URL} and click
 "Create a Personal Access Token".  The CLI needs access to everything
-on your account to work correctly.""".format(
-                TOKEN_GENERATION_URL
-            )
+on your account to work correctly."""
         )
 
         while True:
@@ -380,7 +379,7 @@ on your account to work correctly.""".format(
             #  Linode CLI @ linode
             # The creation date is already recoreded with the token, so
             # this should be all the relevant info.
-            body={"label": "Linode CLI @ {}".format(socket.gethostname())},
+            body={"label": f"Linode CLI @ {socket.gethostname()}"},
         )
 
         return username, result["token"]
@@ -396,7 +395,7 @@ on your account to work correctly.""".format(
         )
 
         try:
-            with open(landing_page_path) as f:
+            with open(landing_page_path, encoding="utf-8") as f:
                 landing_page = f.read()
         except:
             landing_page = DEFAULT_LANDING_PAGE
@@ -410,6 +409,9 @@ on your account to work correctly.""".format(
             """
 
             def do_GET(self):
+                """
+                get the access token
+                """
                 if "token" in self.path:
                     # we got a token!  Parse it out of the request
                     token_part = self.path.split("/", 2)[2]
@@ -431,7 +433,7 @@ on your account to work correctly.""".format(
                     )
                 )
 
-            def log_message(self, form, *args):
+            def log_message(self, form, *args):  # pylint: disable=arguments-differ
                 """Don't actually log the request"""
 
         # start a server to catch the response
@@ -439,19 +441,16 @@ on your account to work correctly.""".format(
         serv.token = None
 
         # figure out the URL to direct the user to and print out the prompt
-        url = "https://login.linode.com/oauth/authorize?client_id={}&response_type=token&scopes=*&redirect_uri=http://localhost:{}".format(
-            OAUTH_CLIENT_ID, serv.server_address[1]
-        )
+        # pylint: disable-next=line-too-long
+        url = f"https://login.linode.com/oauth/authorize?client_id={OAUTH_CLIENT_ID}&response_type=token&scopes=*&redirect_uri=http://localhost:{serv.server_address[1]}"
         print(
-            """A browser should open directing you to this URL to authenticate:
+            f"""A browser should open directing you to this URL to authenticate:
 
-{}
+{url}
 
 If you are not automatically directed there, please copy/paste the link into your browser
 to continue..
-""".format(
-                url
-            )
+"""
         )
 
         webbrowser.open(url)
@@ -471,7 +470,7 @@ to continue..
 
         return serv.token
 
-    def configure(self):
+    def configure(self):  # pylint: disable=too-many-branches,too-many-statements
         """
         This assumes we're running interactively, and prompts the user
         for a series of defaults in order to make future CLI calls
@@ -513,7 +512,7 @@ Note that no token will be saved in your configuration file.
                 can_use_browser = False
 
             if can_use_browser and not KNOWN_GOOD_BROWSERS.intersection(
-                webbrowser._tryorder
+                webbrowser._tryorder  # pylint: disable=protected-access
             ):
                 print()
                 print(
@@ -530,6 +529,7 @@ Note that no token will be saved in your configuration file.
             if self.configure_with_pat or not can_use_browser:
                 username, config["token"] = self._get_token_terminal()
             else:
+                # pylint: disable=line-too-long
                 print()
                 print(
                     "The CLI will use its web-based authentication to log you in.  "
@@ -540,11 +540,12 @@ Note that no token will be saved in your configuration file.
                     "Press enter to continue.  This will open a browser and proceed with authentication."
                 )
                 username, config["token"] = self._get_token_web()
+                # pylint: enable=line-too-long
 
             token = config["token"]
 
         print()
-        print("Configuring {}".format(username))
+        print(f"Configuring {username}")
         print()
 
         regions = [r["id"] for r in self._do_get_request("/regions")["data"]]
@@ -556,10 +557,13 @@ Note that no token will be saved in your configuration file.
         auth_users = []
 
         if is_full_access:
-            auth_users = [u["username"] for u in self._do_get_request(
-                "/account/users",
-                exit_on_error=False,
-                token=token)["data"] if "ssh_keys" in u]
+            auth_users = [
+                u["username"]
+                for u in self._do_get_request(
+                    "/account/users", exit_on_error=False, token=token
+                )["data"]
+                if "ssh_keys" in u
+            ]
 
         # get the preferred things
         config["region"] = self._default_thing_input(
@@ -585,11 +589,11 @@ Note that no token will be saved in your configuration file.
 
         if auth_users:
             config["authorized_users"] = self._default_thing_input(
-                    "Select the user that should be given default SSH access to new Linodes.",
-                    auth_users,
-                    "Default Option (Optional): ",
-                    "Please select a valid Option, or press Enter to skip",
-                )
+                "Select the user that should be given default SSH access to new Linodes.",
+                auth_users,
+                "Default Option (Optional): ",
+                "Please select a valid Option, or press Enter to skip",
+            )
 
         # save off the new configuration
         if username != "DEFAULT" and not self.config.has_section(username):
@@ -598,25 +602,25 @@ Note that no token will be saved in your configuration file.
         if not is_default:
             if username != self.default_username():
                 while True:
-                    value = input("Make this user the default when using the CLI? [y/N]: ")
+                    value = input(
+                        "Make this user the default when using the CLI? [y/N]: "
+                    )
 
                     if value.lower() in "yn":
                         is_default = value.lower() == "y"
                         break
-                    elif not value.strip():
+                    if not value.strip():
                         break
 
             if not is_default:  # they didn't change the default user
                 print(
-                    "Active user will remain {}".format(
-                        self.config.get("DEFAULT", "default-user")
-                    )
+                    f"Active user will remain {self.config.get('DEFAULT', 'default-user')}"
                 )
 
         if is_default:
             # if this is the default user, make it so
             self.config.set("DEFAULT", "default-user", username)
-            print("Active user is now {}".format(username))
+            print(f"Active user is now {username}")
 
         for k, v in config.items():
             if v:
@@ -630,10 +634,11 @@ Note that no token will be saved in your configuration file.
         """
         Returns the path to the config file.
         """
-        if os.path.exists("{}/{}".format(LEGACY_CONFIG_DIR, LEGACY_CONFIG_NAME)):
-            return "{}/{}".format(LEGACY_CONFIG_DIR, LEGACY_CONFIG_NAME)
+        path = f"{LEGACY_CONFIG_DIR}/{LEGACY_CONFIG_NAME}"
+        if os.path.exists(path):
+            return path
 
-        return "{}/{}".format(CONFIG_DIR, CONFIG_NAME)
+        return f"{CONFIG_DIR}/{CONFIG_NAME}"
 
     def _get_config(self, load=True):
         """
@@ -651,15 +656,17 @@ Note that no token will be saved in your configuration file.
 
         return conf
 
-    def _default_thing_input(self, ask, things, prompt, error, optional=True):
+    def _default_thing_input(
+        self, ask, things, prompt, error, optional=True
+    ):  # pylint: disable=too-many-arguments
         """
         Requests the user choose from a list of things with the given prompt and
         error if they choose something invalid.  If optional, the user may hit
         enter to not configure this option.
         """
-        print("\n{}  Choices are:".format(ask))
+        print(f"\n{ask}  Choices are:")
         for ind, thing in enumerate(things):
-            print(" {} - {}".format(ind + 1, thing))
+            print(f" {ind + 1} - {thing}")
         print()
 
         ret = ""
@@ -673,15 +680,14 @@ Note that no token will be saved in your configuration file.
                 except:
                     pass
 
-                if choice in [thing for thing in things]:
+                if choice in list(things):
                     ret = choice
                     break
                 print(error)
             else:
                 if optional:
                     break
-                else:
-                    print(error)
+                print(error)
         return ret
 
     def _do_get_request(self, url, token=None, exit_on_error=True):
@@ -697,22 +703,20 @@ Note that no token will be saved in your configuration file.
         if 199 < response.status_code < 300:
             return
 
-        print(
-            "Could not contact {} - Error: {}".format(
-                response.url, response.status_code
-            )
-        )
+        print(f"Could not contact {response.url} - Error: {response.status_code}")
         if exit_on_error:
             sys.exit(4)
 
-    def _do_request(self, method, url, token=None, exit_on_error=None, body=None):
+    def _do_request(
+        self, method, url, token=None, exit_on_error=None, body=None
+    ):  # pylint: disable=too-many-arguments
         """
         Does helper requests during configuration
         """
         headers = {}
 
         if token is not None:
-            headers["Authorization"] = "Bearer {}".format(token)
+            headers["Authorization"] = f"Bearer {token}"
             headers["Content-type"] = "application/json"
 
         result = method(self.base_url + url, headers=headers, json=body)
@@ -723,11 +727,13 @@ Note that no token will be saved in your configuration file.
 
     def _check_full_access(self, token):
         headers = {
-            "Authorization": "Bearer {}".format(token),
-            "Content-Type": "application/json"
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
         }
 
-        result = requests.get(self.base_url + "/profile/grants", headers=headers)
+        result = requests.get(
+            self.base_url + "/profile/grants", headers=headers, timeout=120
+        )
 
         self._handle_response_status(result, exit_on_error=True)
 
@@ -764,10 +770,16 @@ Note that no token will be saved in your configuration file.
                 self.config.set("DEFAULT", "default-user", username)
                 self.config.add_section(username)
                 self.config.set(username, "token", token)
-                self.config.set(username, "region", self.config.get("DEFAULT", "region"))
+                self.config.set(
+                    username, "region", self.config.get("DEFAULT", "region")
+                )
                 self.config.set(username, "type", self.config.get("DEFAULT", "type"))
                 self.config.set(username, "image", self.config.get("DEFAULT", "image"))
-                self.config.set(username, "authorized_keys", self.config.get("DEFAULT", "authorized_keys"))
+                self.config.set(
+                    username,
+                    "authorized_keys",
+                    self.config.get("DEFAULT", "authorized_keys"),
+                )
 
                 self.write_config(silent=True)
             else:
@@ -780,7 +792,7 @@ Note that no token will be saved in your configuration file.
         # more than one user - prompt for the default
         print("Please choose the active user.  Configured users are:")
         for u in users:
-            print(" {}".format(u))
+            print(f" {u}")
         print()
 
         while True:
@@ -790,4 +802,4 @@ Note that no token will be saved in your configuration file.
                 self.config.set("DEFAULT", "default-user", username)
                 self.write_config()
                 return
-            print("No user {}".format(username))
+            print(f"No user {username}")

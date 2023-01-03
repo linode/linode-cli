@@ -1,3 +1,6 @@
+"""
+Handles formatting the output of commands used in Linode CLI
+"""
 import json
 from enum import Enum
 from sys import stdout
@@ -6,14 +9,22 @@ from terminaltables import SingleTable
 
 
 class OutputMode(Enum):
+    """
+    Enum for output modes
+    """
+
     table = 1
     delimited = 2
     json = 3
     markdown = 4
 
 
-class OutputHandler:
-    def __init__(
+class OutputHandler:  # pylint: disable=too-few-public-methods
+    """
+    Handles formatting the output of commands used in Linode CLI
+    """
+
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         mode=OutputMode.table,
         delimiter="\t",
@@ -27,7 +38,9 @@ class OutputHandler:
         self.headers = headers
         self.columns = columns
 
-    def print(self, response_model, data, title=None, to=stdout, columns=None):
+    def print(
+        self, response_model, data, title=None, to=stdout, columns=None
+    ):  # pylint: disable=too-many-arguments
         """
         :param response_model: The Model corresponding to this response
         :type response_model: ResponseModel
@@ -53,7 +66,7 @@ class OutputHandler:
         elif self.mode == OutputMode.json:
             self._json_output(header, data, to)
         elif self.mode == OutputMode.markdown:
-            self._markdown_output(header, data, columns, to)
+            self._markdown_output(header, data, columns)
 
     def _get_columns(self, response_model):
         """
@@ -66,7 +79,7 @@ class OutputHandler:
                 if attr.display
             ]
         elif self.columns == "*":
-            columns = [attr for attr in response_model.attrs]
+            columns = list(response_model.attrs)
         else:
             columns = []
             for col in self.columns.split(","):
@@ -83,7 +96,9 @@ class OutputHandler:
 
         return columns
 
-    def _table_output(self, header, data, columns, title, to):
+    def _table_output(
+        self, header, data, columns, title, to
+    ):  # pylint: disable=too-many-arguments
         """
         Pretty-prints data in a table
         """
@@ -137,7 +152,7 @@ class OutputHandler:
                 content.append(self._select_json_elements(header, row))
         else:  # this is a list
             for row in data:
-                content.append({h: v for h, v in zip(header, row)})
+                content.append(dict(zip(header, row)))
 
         print(
             json.dumps(
@@ -148,13 +163,13 @@ class OutputHandler:
             file=to,
         )
 
-    def _select_json_elements(self, keys, json):
+    def _select_json_elements(self, keys, json_res):
         """
         Returns a dict filtered down to include only the selected keys.  Walks
         paths to handle nested dicts
         """
         ret = {}
-        for k, v in json.items():
+        for k, v in json_res.items():
             if k in keys:
                 ret[k] = v
             elif isinstance(v, dict):
@@ -163,7 +178,7 @@ class OutputHandler:
                     ret[k] = v
         return ret
 
-    def _markdown_output(self, header, data, columns, to):
+    def _markdown_output(self, header, data, columns):
         """
         Pretty-prints data in a Markdown-formatted table.  This uses github's
         flavor of Markdown

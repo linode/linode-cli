@@ -133,6 +133,6 @@ This directory contains two example plugins, `echo.py.example` and
 `regionstats.py.example`.  To run these, simply remove the `.example` at the end
 of the file and build the CLI as described above.
 
-[This directory](https://github.com/linode/linode-cli/tree/master/examples/third-party-plugin)
+[This directory](https://github.com/linode/linode-cli/tree/main/examples/third-party-plugin)
 contains an example Third Party Plugin module.  This module is installable and
 can be registered to the CLI.
