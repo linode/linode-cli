@@ -1,9 +1,13 @@
 #!/usr/local/bin/python3
+"""
+Argument parser for the linode CLI
+"""
 
 import argparse
+import sys
 import os
 from importlib import import_module
-from sys import argv, exit, stderr, version_info
+from sys import argv, stderr, version_info
 
 import pkg_resources
 import requests
@@ -27,9 +31,10 @@ BASE_URL = "https://api.linode.com/v4"
 
 
 # if any of these arguments are given, we don't need to prompt for configuration
-skip_config = any([c in argv for c in ("--skip-config", "--help", "--version")])
+skip_config = any(c in argv for c in ["--skip-config", "--help", "--version"])
 
 cli = CLI(VERSION, BASE_URL, skip_config=skip_config)
+
 
 def warn_python2_eol():
     """
@@ -42,14 +47,17 @@ def warn_python2_eol():
             "You are running the Linode CLI using Python 2, which reached its end of life on "
             "Jan 1st, 2020.  The Linode CLI will be dropping support for Python 2, and "
             "upgrading your installation is strongly encouraged so that you can continue "
-            "to receive updates.\n\nFor information about upgrading your installation, see "
-            "our official guide:\n\nhttps://www.linode.com/docs/guides/upgrade-to-linode-cli-python-3/",
+            "to receive updates.\n\nFor information about upgrading your installation, see our "
+            "official guide:\n\nhttps://www.linode.com/docs/guides/upgrade-to-linode-cli-python-3/",
             file=stderr,
         )
 
 
-def main():
-    ## Command Handling
+def main():  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
+    # TODO: major refactor function is too long
+    """
+    Handle incoming command arguments
+    """
     parser = argparse.ArgumentParser("linode-cli", add_help=False)
     parser.add_argument(
         "command",
@@ -190,9 +198,9 @@ def main():
     if parsed.version:
         if not parsed.command:
             # print version info and exit - but only if no command was given
-            print("linode-cli {}".format(VERSION))
-            print("Built off spec version {}".format(cli.spec_version))
-            exit(0)
+            print(f"linode-cli {VERSION}")
+            print(f"Built off spec version {cli.spec_version}")
+            sys.exit(0)
         else:
             # something else might want to parse version
             # find where it was originally, as it was removed from args
@@ -203,22 +211,22 @@ def main():
     if parsed.command == "bake":
         if parsed.action is None:
             print("No spec provided, cannot bake")
-            exit(9)
+            sys.exit(9)
         print("Baking...")
         spec_loc = parsed.action
         try:
             if os.path.exists(os.path.expanduser(spec_loc)):
-                with open(os.path.expanduser(spec_loc)) as f:
+                with open(os.path.expanduser(spec_loc), encoding="utf-8") as f:
                     spec = yaml.safe_load(f.read())
             else:  # try to GET it
-                resp = requests.get(spec_loc)
+                resp = requests.get(spec_loc, timeout=120)
                 if resp.status_code == 200:
                     spec = yaml.safe_load(resp.content)
                 else:
-                    raise RuntimeError("Request failed to {}".format(spec_loc))
+                    raise RuntimeError(f"Request failed to {spec_loc}")
         except Exception as e:
-            print("Could not load spec: {}".format(e))
-            exit(2)
+            print(f"Could not load spec: {e}")
+            sys.exit(2)
 
         cli.bake(spec)
         print("Baking bash completions...")
@@ -230,66 +238,61 @@ def main():
         # do the baking
         cli.bake_completions()
         print("Done.")
-        exit(0)
+        sys.exit(0)
     elif cli.ops is None:
         # if not spec was found and we weren't baking, we're doomed
-        exit(3)
+        sys.exit(3)
 
     if parsed.command == "register-plugin":
         # this is how the CLI discovers third-party plugins - the user registers
         # them!  Registering a plugin gets it set up for all CLI users.
         if parsed.action is None:
             print("register-plugin requires a module name!")
-            exit(9)
+            sys.exit(9)
         module = parsed.action
 
         # attempt to import the module to prove it is installed and exists
         try:
             plugin = import_module(module)
         except ImportError:
-            print("Module {} not installed".format(module))
-            exit(10)
+            print(f"Module {module} not installed")
+            sys.exit(10)
 
         # get the plugin name
         try:
             plugin_name = plugin.PLUGIN_NAME
         except AttributeError:
-            print(
-                "{} is not a valid Linode CLI plugin - missing PLUGIN_NAME".format(
-                    module
-                )
-            )
-            exit(11)
+            print(f"{module} is not a valid Linode CLI plugin - missing PLUGIN_NAME")
+            sys.exit(11)
 
         # prove it's callable
         try:
             call_func = plugin.call
+            del call_func
         except AttributeError:
-            print("{} is not a valid Linode CLI plugin - missing call".format(module))
-            exit(11)
+            print(f"{module} is not a valid Linode CLI plugin - missing call")
+            sys.exit(11)
 
         reregistering = False
         # check for naming conflicts
         if plugin_name in cli.ops:
             print("Plugin name conflicts with CLI operation - registration failed.")
-            exit(12)
+            sys.exit(12)
         elif plugin_name in plugins.available_local:
             # conflicts with an internal plugin - can't do that
             print(
                 "Plugin name conflicts with internal CLI plugin - registration failed."
             )
-            exit(13)
+            sys.exit(13)
         elif plugin_name in plugins.available(cli.config):
             # this isn't an internal plugin, so warn that we're re-registering it
-            print("WARNING: Plugin {} is already registered.".format(plugin_name))
+            print(f"WARNING: Plugin {plugin_name} is already registered.")
             print("")
-            answer = input(
-                "Allow re-registration of {}? [y/N] ".format(plugin_name)
-            )
+            answer = input(f"Allow re-registration of {plugin_name}? [y/N] ")
 
             if not answer or answer not in "yY":
                 print("Registration aborted.")
-                exit(0)
+                sys.exit(0)
 
             reregistering = True
 
@@ -302,38 +305,34 @@ def main():
 
         if reregistering:
             already_registered.remove(plugin_name)
-            cli.config.config.remove_option(
-                "DEFAULT", "plugin-name-{}".format(plugin_name)
-            )
+            cli.config.config.remove_option("DEFAULT", f"plugin-name-{plugin_name}")
 
         already_registered.append(plugin_name)
         cli.config.config.set(
             "DEFAULT", "registered-plugins", ",".join(already_registered)
         )
-        cli.config.config.set("DEFAULT", "plugin-name-{}".format(plugin_name), module)
+        cli.config.config.set("DEFAULT", f"plugin-name-{plugin_name}", module)
         cli.config.write_config()
 
         print("Plugin registered successfully!")
         print("Invoke this plugin by running the following:")
-        print("  linode-cli {}".format(plugin_name))
-        exit(0)
+        print(f"  linode-cli {plugin_name}")
+        sys.exit(0)
 
     if parsed.command == "remove-plugin":
         if parsed.action is None:
             print("remove-plugin requires a plugin name to remove!")
-            exit(9)
+            sys.exit(9)
 
         # is this plugin registered?
         plugin_name = parsed.action
         if plugin_name in plugins.available_local:
             # can't remove first-party plugins
-            print(
-                "{} is bundled with the CLI and cannot be removed".format(plugin_name)
-            )
-            exit(13)
+            print(f"{plugin_name} is bundled with the CLI and cannot be removed")
+            sys.exit(13)
         elif plugin_name not in plugins.available(cli.config):
-            print("{} is not a registered plugin".format(plugin_name))
-            exit(14)
+            print(f"{plugin_name} is not a registered plugin")
+            sys.exit(14)
 
         # do the removal
         current_plugins = cli.config.config.get("DEFAULT", "registered-plugins").split(
@@ -344,18 +343,14 @@ def main():
             "DEFAULT", "registered-plugins", ",".join(current_plugins)
         )
 
-        if cli.config.config.has_option(
-            "DEFAULT", "plugin-name-{}".format(plugin_name)
-        ):
+        if cli.config.config.has_option("DEFAULT", f"plugin-name-{plugin_name}"):
             # if the config if malformed, don't blow up
-            cli.config.config.remove_option(
-                "DEFAULT", "plugin-name-{}".format(plugin_name)
-            )
+            cli.config.config.remove_option("DEFAULT", f"plugin-name-{plugin_name}")
 
         cli.config.write_config()
 
-        print("Plugin {} removed".format(plugin_name))
-        exit(0)
+        print(f"Plugin {plugin_name} removed")
+        sys.exit(0)
 
     if parsed.command == "completion":
         if parsed.help or not parsed.action:
@@ -365,7 +360,7 @@ def main():
                 "Prints shell completions for the requested shell to stdout. "
                 "Currently, only completions for bash and fish are available."
             )
-            exit(0)
+            sys.exit(0)
 
         completions = ""
 
@@ -376,11 +371,12 @@ def main():
         else:
             print(
                 "Completions are only available for bash and fish at this time.  To retrieve "
-                "these, please invoke as `linode-cli completion bash` or `linode-cli completion fish`."
+                "these, please invoke as `linode-cli completion bash` "
+                "or `linode-cli completion fish`."
             )
-            exit(1)
+            sys.exit(1)
         print(completions)
-        exit(0)
+        sys.exit(0)
 
     # handle a help for the CLI
     if parsed.command is None or (parsed.command is None and parsed.help):
@@ -414,7 +410,7 @@ def main():
         print()
         print("Available commands:")
 
-        content = [c for c in sorted(cli.ops.keys())]
+        content = list(sorted(cli.ops.keys()))
         proc = []
         for i in range(0, len(content), 3):
             proc.append(content[i : i + 3])
@@ -430,7 +426,7 @@ def main():
             # only show this if there are any available plugins
             print("Available plugins:")
 
-            plugin_content = [p for p in plugins.available(cli.config)]
+            plugin_content = list(plugins.available(cli.config))
             plugin_proc = []
 
             for i in range(0, len(plugin_content), 3):
@@ -446,7 +442,7 @@ def main():
         print()
         print("To reconfigure, call `linode-cli configure`")
         print("For comprehensive documentation, visit https://www.linode.com/docs/api/")
-        exit(0)
+        sys.exit(0)
 
     # configure
     if parsed.command == "configure":
@@ -456,10 +452,10 @@ def main():
             print("Configured the Linode CLI.  This command can be used to change")
             print("defaults selected for the current user, or to configure additional")
             print("users.")
-            exit(0)
+            sys.exit(0)
         else:
             cli.configure()
-            exit(0)
+            sys.exit(0)
 
     # block of commands for user-focused operations
     if parsed.command == "set-user":
@@ -468,10 +464,10 @@ def main():
             print()
             print("Sets the active user for the CLI out of users you have configured.")
             print("To configure a new user, see `linode-cli configure`")
-            exit(0)
+            sys.exit(0)
         else:
             cli.config.set_default_user(parsed.action)
-            exit(0)
+            sys.exit(0)
 
     if parsed.command == "show-users":
         if parsed.help:
@@ -484,10 +480,10 @@ def main():
                 "`--as-user` flag.  New users can be added with `linode-cli configure`."
             )
             print("The user that is currently active is indicated with a `*`")
-            exit(0)
+            sys.exit(0)
         else:
             cli.config.print_users()
-            exit(0)
+            sys.exit(0)
 
     if parsed.command == "remove-user":
         if parsed.help or not parsed.action:
@@ -497,10 +493,10 @@ def main():
             print("your Linode account, only this CLI installation.  Once removed,")
             print("the user may not be set as active or used for commands unless")
             print("configured again.")
-            exit(0)
+            sys.exit(0)
         else:
             cli.config.remove_user(parsed.action)
-            exit(0)
+            sys.exit(0)
 
     # special command to bake shell completion script
     if parsed.command == "bake-bash":
@@ -517,34 +513,37 @@ def main():
         plugin_args.remove(parsed.command)  # don't include the plugin name tho
 
         plugins.invoke(parsed.command, plugin_args, context)
-        exit(0)
+        sys.exit(0)
 
     if parsed.command not in cli.ops and parsed.command not in plugins.available(
         cli.config
     ):
         # unknown commands
-        print("Unrecognized command {}".format(parsed.command))
+        print(f"Unrecognized command {parsed.command}")
 
     # handle a help for a command - either --help or no action triggers this
     if parsed.command is not None and parsed.action is None:
         if parsed.command in cli.ops:
             actions = cli.ops[parsed.command]
-            print("linode-cli {} [ACTION]".format(parsed.command))
+            print(f"linode-cli {parsed.command} [ACTION]")
             print()
             print("Available actions: ")
 
-            content = [[', '.join([action, *op.action_aliases]), op.summary] for action, op in actions.items()]
+            content = [
+                [", ".join([action, *op.action_aliases]), op.summary]
+                for action, op in actions.items()
+            ]
 
             header = ["action", "summary"]
             table = SingleTable([header] + content)
             print(table.table)
-            exit(0)
+            sys.exit(0)
 
     # handle a help for an action
     if parsed.command is not None and parsed.action is not None and parsed.help:
         if parsed.command in cli.ops and parsed.action in cli.ops[parsed.command]:
             operation = cli.ops[parsed.command][parsed.action]
-            print("linode-cli {} {}".format(parsed.command, parsed.action), end="")
+            print(f"linode-cli {parsed.command} {parsed.action}", end="")
             for param in operation.params:
                 # clean up parameter names - we add an '_' at the end of them
                 # during baking if it conflicts with the name of an argument.
@@ -553,7 +552,7 @@ def main():
                 pname = param.name.upper()
                 if pname[-1] == "_":
                     pname = pname[:-1]
-                print(" [{}]".format(pname), end="")
+                print(f" [{pname}]", end="")
             print()
             print(operation.summary)
             if operation.docs_url:
@@ -562,15 +561,12 @@ def main():
             if operation.args:
                 print("Arguments:")
                 for arg in sorted(operation.args, key=lambda s: not s.required):
-                    print(
-                        "  --{}: {}{}".format(
-                            arg.path,
-                            "(required) "
-                            if operation.method in {"post", "put"} and arg.required
-                            else "",
-                            arg.description,
-                        )
+                    is_required = (
+                        "(required) "
+                        if operation.method in {"post", "put"} and arg.required
+                        else ""
                     )
+                    print(f"  --{arg.path}: {is_required}{arg.description}")
             elif operation.method == "get" and parsed.action == "list":
                 filterable_attrs = [
                     attr for attr in operation.response_model.attrs if attr.filterable
@@ -579,8 +575,8 @@ def main():
                 if filterable_attrs:
                     print("You may filter results with:")
                     for attr in filterable_attrs:
-                        print("  --{}".format(attr.name))
-        exit(0)
+                        print(f"  --{attr.name}")
+        sys.exit(0)
 
     if parsed.command is not None and parsed.action is not None:
         cli.handle_command(parsed.command, parsed.action, args)

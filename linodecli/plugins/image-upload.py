@@ -10,7 +10,7 @@ import argparse
 import glob
 import os
 import platform
-from sys import exit
+import sys
 
 import requests
 
@@ -22,10 +22,10 @@ def _progress(cur, total):
     """
     Draws the upload progress bar.
     """
-    percent = "{:.1f}".format(100 * (cur / float(total)))
+    percent = f"{100 * (cur / float(total)):.1f}"
     progress = int(100 * cur // total)
-    bar = ("#" * progress) + ("-" * (100 - progress))
-    print("\r |{}| {}%".format(bar, percent), end="", flush=True)
+    progress_bar = ("#" * progress) + ("-" * (100 - progress))
+    print(f"\r |{progress_bar}| {percent}%", end="", flush=True)
 
 
 class UploadProgressHelper:
@@ -110,30 +110,28 @@ def call(args, context):
         results = glob.glob(filepath, recursive=True)
 
         if len(results) < 1:
-            print("No file found matching pattern {}".format(filepath))
-            exit(2)
+            print(f"No file found matching pattern {filepath}")
+            sys.exit(2)
 
         if len(results) > 1:
-            print("warn: Found multiple files matching pattern {}, using {}".format(filepath, results[0]))
+            print(
+                f"warn: Found multiple files matching pattern {filepath}, using {results[0]}"
+            )
 
         filepath = results[0]
 
     if not os.path.isfile(filepath):
-        print("No file at {}; must be a path to a valid file.".format(filepath))
-        exit(2)
+        print(f"No file at {filepath}; must be a path to a valid file.")
+        sys.exit(2)
 
     # make sure it's not larger than the max upload size
     if os.path.getsize(filepath) > MAX_UPLOAD_SIZE:
-        print(
-            "File {} is too large; compressed size must be less than 5GB".format(
-                filepath
-            )
-        )
-        exit(2)
+        print(f"File {filepath} is too large; compressed size must be less than 5GB")
+        sys.exit(2)
 
     if not parsed.region:
         print("No region provided.  Please set a default region or use --region")
-        exit(1)
+        sys.exit(1)
 
     label = parsed.label or os.path.basename(filepath)
 
@@ -151,16 +149,16 @@ def call(args, context):
                 "reconfigure the CLI with `linode-cli configure` to ensure you "
                 "can make this request."
             )
-            exit(3)
+            sys.exit(3)
         if status == 404:
             print(
                 "It looks like you are not in the Machine Images Beta, and therefore "
                 "cannot upload images yet.  Please stay tuned, or open a support ticket "
                 "to request access."
             )
-            exit(4)
-        print("Upload failed with status {}; response was {}".format(status, resp))
-        exit(3)
+            sys.exit(4)
+        print(f"Upload failed with status {status}; response was {resp}")
+        sys.exit(3)
 
     # grab the upload URL and image data
     image = resp["image"]
@@ -174,6 +172,7 @@ def call(args, context):
             "Content-type": "application/octet-stream",
         },
         data=UploadProgressHelper(filepath),
+        timeout=120,
     )
     print()
 

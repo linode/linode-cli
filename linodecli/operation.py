@@ -31,8 +31,8 @@ def parse_dict(value):
         raise argparse.ArgumentTypeError("Expected a JSON string")
     try:
         return json.loads(value)
-    except:
-        raise argparse.ArgumentTypeError("Expected a JSON string")
+    except Exception as e:
+        raise argparse.ArgumentTypeError("Expected a JSON string") from e
 
 
 class PasswordPromptAction(argparse.Action):
@@ -47,7 +47,7 @@ class PasswordPromptAction(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         # if not provided on the command line, pull from the environment if it
         # exists at this key
-        environ_key = "LINODE_CLI_{}".format(self.dest.upper())
+        environ_key = f"LINODE_CLI_{self.dest.upper()}"
 
         if values:
             if isinstance(values, str):
@@ -59,7 +59,7 @@ class PasswordPromptAction(argparse.Action):
         elif environ_key in environ:
             password = environ.get(environ_key)
         else:
-            prompt = "Value for {}: ".format(self.dest)
+            prompt = f"Value for {self.dest}: "
             password = getpass(prompt)
         setattr(namespace, self.dest, password)
 
@@ -80,12 +80,14 @@ class OptionalFromFileAction(argparse.Action):
                 results = glob.glob(input_path, recursive=True)
 
                 if len(results) < 1:
-                    raise argparse.ArgumentError("File matching pattern {} not found".format(input_path))
+                    raise argparse.ArgumentError(
+                        self, f"File matching pattern {input_path} not found"
+                    )
 
                 input_path = results[0]
 
             if path.exists(input_path) and path.isfile(input_path):
-                with open(input_path) as f:
+                with open(input_path, encoding="utf-8") as f:
                     data = f.read()
                 setattr(namespace, self.dest, data)
             else:
@@ -104,13 +106,15 @@ TYPES = {
 }
 
 
-class CLIArg:
+class CLIArg:  # pylint: disable=too-many-instance-attributes,too-few-public-methods
     """
     An argument passed to the CLI with a flag, such as `--example value`.  These
     are defined in a requestBody in the api spec.
     """
 
-    def __init__(self, name, arg_type, description, path, arg_format, list_item=None):
+    def __init__(
+        self, name, arg_type, description, path, arg_format, list_item=None
+    ):  # pylint: disable=too-many-arguments,redefined-outer-name
         self.name = name
         self.arg_type = arg_type
         self.arg_format = arg_format
@@ -121,7 +125,7 @@ class CLIArg:
         self.list_item = list_item
 
 
-class URLParam:
+class URLParam:  # pylint: disable=too-few-public-methods
     """
     An argument passed to the CLI positionally. These are defined in a path in
     the OpenAPI spec, in a "parameters" block
@@ -138,7 +142,7 @@ class URLParam:
         return URLParam(self.name, self.param_type)
 
 
-class CLIOperation:
+class CLIOperation:  # pylint: disable=too-many-instance-attributes
     """
     A single operation described by the OpenAPI spec.  An operation is a method
     on a path, and should have a unique operationId to identify it.  Operations
@@ -146,7 +150,7 @@ class CLIOperation:
     responses with the help of their ResponseModel
     """
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         command,
         action,
@@ -182,7 +186,9 @@ class CLIOperation:
         base_url = self.servers[0]
         return base_url + "/" + self._url
 
-    def parse_args(self, args):
+    def parse_args(
+        self, args
+    ):  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
         """
         Given sys.argv after the operation name, parse args based on the params
         and args of this operation
@@ -191,7 +197,7 @@ class CLIOperation:
 
         #  build an argparse
         parser = argparse.ArgumentParser(
-            prog="linode-cli {} {}".format(self.command, self.action),
+            prog=f"linode-cli {self.command} {self.action}",
             description=self.summary,
         )
         for param in self.params:
@@ -319,7 +325,12 @@ class CLIOperation:
 
         return parsed
 
-    def process_response_json(self, json, handler):
+    def process_response_json(
+        self, json, handler
+    ):  # pylint: disable=redefined-outer-name
+        """
+        Processes the response as JSON and prints
+        """
         if self.response_model is None:
             return
 

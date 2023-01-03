@@ -10,11 +10,11 @@ Invoke as follows::
 """
 import argparse
 import subprocess
-from sys import exit, platform, version_info
+import sys
+from sys import platform
 
 
-
-def call(args, context):
+def call(args, context):  # pylint: disable=too-many-branches
     """
     Invokes this plugin
     """
@@ -24,7 +24,7 @@ def call(args, context):
             "information or to suggest a fix, please visit "
             "https://github.com/linode/linode-cli"
         )
-        exit(1)
+        sys.exit(1)
 
     parser = argparse.ArgumentParser("linode-cli ssh", add_help=True)
     parser.add_argument(
@@ -46,7 +46,7 @@ def call(args, context):
 
     if not parsed.label:
         parser.print_help()
-        exit(0)
+        sys.exit(0)
 
     label = parsed.label
     username = None
@@ -58,8 +58,8 @@ def call(args, context):
     )
 
     if result != 200:
-        print("Could not retrieve Linode: {} error".format(result))
-        exit(2)
+        print(f"Could not retrieve Linode: {result} error")
+        sys.exit(2)
 
     potential_matches = potential_matches["data"]
     exact_match = None
@@ -72,20 +72,18 @@ def call(args, context):
 
     if exact_match is None:
         # no match - stop
-        print("No Linode found for label {}".format(label))
+        print(f"No Linode found for label {label}")
 
         if potential_matches:
             print("Did you mean: ")
-            print("\n".join([" {}".format(p["label"]) for p in potential_matches]))
-        exit(1)
+            print("\n".join([f" {p['label']}" for p in potential_matches]))
+        sys.exit(1)
 
     if exact_match["status"] != "running":
         print(
-            "{} is not running (status is {}); operation aborted.".format(
-                label, exact_match["status"]
-            )
+            f"{label} is not running (status is {exact_match['status']}); operation aborted."
         )
-        exit(2)
+        sys.exit(2)
 
     # find a public IP Address to use
     public_ip = None
@@ -114,4 +112,4 @@ def call(args, context):
         code = e.returncode
 
     # exit with the same code as ssh
-    exit(code)
+    sys.exit(code)

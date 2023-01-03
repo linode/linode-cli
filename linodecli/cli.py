@@ -2,13 +2,14 @@
 Responsible for managing spec and routing commands to operations.
 """
 
-import json
-import os
 import pickle
+import json
+import sys
 import re
-from distutils.version import LooseVersion, StrictVersion
+import os
+from distutils.version import LooseVersion, StrictVersion # pylint: disable=deprecated-module
 from string import Template
-from sys import exit, prefix, stderr, version_info
+from sys import stderr, version_info
 
 import requests
 
@@ -20,12 +21,13 @@ from .response import ModelAttr, ResponseModel
 METHODS = ("get", "post", "put", "delete")
 PIP_CMD = "pip3" if version_info.major == 3 else "pip"
 
-class CLI:
+
+class CLI:  # pylint: disable=too-many-instance-attributes
     """
     Responsible for loading or baking a spec and handling incoming commands
     """
 
-    def __init__(self, version, base_url, skip_config=False, as_user=None):
+    def __init__(self, version, base_url, skip_config=False):
         self.ops = {}
         self.spec = {}
         self.defaults = True  # whether to use default values for arguments
@@ -62,7 +64,7 @@ class CLI:
                 # if we referenced a property, we got a property
                 props = data
             else:
-                print("Warning: Resolved empty node for {} in {}".format(cur, node))
+                print(f"Warning: Resolved empty node for {cur} in {node}")
             ret.update(props)
         return ret
 
@@ -83,13 +85,17 @@ class CLI:
 
         return tmp
 
-    def _parse_args(self, node, prefix=[], args=None):
+    def _parse_args(
+        self, node, prefix=None, args=None
+    ):  # pylint: disable=too-many-branches
         """
         Given a node in a requestBody, parses out the properties and returns the
         CLIArg info
         """
         if args is None:
             args = {}
+        if prefix is None:
+            prefix = []
 
         for arg, info in node.items():
             if "allOf" in info:
@@ -148,11 +154,13 @@ class CLI:
 
         return args
 
-    def _parse_properties(self, node, prefix=[]):
+    def _parse_properties(self, node, prefix=None):
         """
         Given the value of a "properties" node, parses out the attributes and
         returns them as a list
         """
+        if prefix is None:
+            prefix = []
         attrs = []
         for name, info in node.items():
             if "properties" in info:
@@ -175,7 +183,9 @@ class CLI:
 
         return attrs
 
-    def bake(self, spec):
+    def bake(
+        self, spec
+    ):  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
         """
         Generates ops and bakes them to a pickle
         """
@@ -183,7 +193,9 @@ class CLI:
         self.ops = {}
         default_servers = [c["url"] for c in spec["servers"]]
 
-        for path, data in self.spec["paths"].items():
+        for path, data in self.spec[ # pylint: disable=too-many-nested-blocks
+            "paths"
+        ].items():  # pylint: disable=too-many-nested-blocks
             command = data.get("x-linode-cli-command") or "default"
             if command not in self.ops:
                 self.ops[command] = {}
@@ -205,14 +217,14 @@ class CLI:
                     )
 
                     if action is None:
-                        print("warn: no operationId for {} {}".format(m.upper(), path))
+                        print(f"warn: no operationId for {m.upper()} {path}")
                         continue
 
                     action_aliases = None
 
                     if isinstance(action, list):
                         if len(action) < 1:
-                            print("warn: empty list for action {}".format(m.upper()))
+                            print(f"warn: empty list for action {m.upper()}")
                             continue
 
                         action_aliases = action[1:]
@@ -352,9 +364,8 @@ class CLI:
                     use_params = [c.clone() for c in params]
                     use_path = path
                     for p in use_params:
-                        if (
-                            p.name in args.keys()
-                        ):  # or (m == 'get' and p.name in model_attrs):
+                        if p.name in args:
+                            # or (m == 'get' and p.name in model_attrs):
                             # if we found a parameter name that is also and argument name
                             # append an underscore to both the parameter name and the
                             # parameter name in the URL
@@ -401,17 +412,19 @@ class CLI:
         Generates and returns fish shell completions based on the baked spec
         """
         completion_template = Template(
-                """# This is a generated file! Do not modify!
+            """# This is a generated file! Do not modify!
 complete -c linode-cli -n "not __fish_seen_subcommand_from $subcommands" -x -a '$subcommands --help'
-$command_items""")
+$command_items"""
+        )
 
         command_template = Template(
-            """complete -c linode-cli -n "__fish_seen_subcommand_from $command" -x -a '$actions --help'"""
+            """complete -c linode-cli -n "__fish_seen_subcommand_from $command" \
+                    -x -a '$actions --help'"""
         )
 
         command_blocks = [
             command_template.safe_substitute(
-                command=op, actions=" ".join([act for act in actions.keys()])
+                command=op, actions=" ".join(list(actions.keys()))
             )
             for op, actions in self.ops.items()
         ]
@@ -422,7 +435,6 @@ $command_items""")
         )
 
         return rendered
-
 
     def get_bash_completions(self):
         """
@@ -460,7 +472,7 @@ complete -F _linode_cli linode-cli"""
 
         command_blocks = [
             command_template.safe_substitute(
-                command=op, actions=" ".join([act for act in actions.keys()])
+                command=op, actions=" ".join(list(actions.keys()))
             )
             for op, actions in self.ops.items()
         ]
@@ -478,7 +490,7 @@ complete -F _linode_cli linode-cli"""
         """
         rendered = self.get_bash_completions()
         # save it off
-        with open("linode-cli.sh", "w") as f:
+        with open("linode-cli.sh", "w", encoding="utf-8") as f:
             print("Writing file...")
             f.write(rendered)
 
@@ -507,15 +519,15 @@ complete -F _linode_cli linode-cli"""
         Returns the name of the baked data file this program wants.  This is in
         part based on python version.
         """
-        return "data-{}".format(version_info[0])
+        return f"data-{version_info[0]}"
 
     def print_request_debug_info(self, method, url, headers, body):
         """
         Prints debug info for an HTTP request
         """
-        print("> {} {}".format(method.__name__.upper(), url), file=stderr)
+        print(f"> {method.__name__.upper()} {url}", file=stderr)
         for k, v in headers.items():
-            print("> {}: {}".format(k, v), file=stderr)
+            print(f"> {k}: {v}", file=stderr)
         print("> Body:", file=stderr)
         print(">  ", body or "", file=stderr)
         print("> ", file=stderr)
@@ -528,28 +540,27 @@ complete -F _linode_cli linode-cli"""
         http_version = response.raw.version / 10
 
         print(
-            "< HTTP/{:.1f} {} {}".format(
-                http_version, response.status_code, response.reason
-            ),
+            f"< HTTP/{http_version:.1f} {response.status_code} {response.reason}",
             file=stderr,
         )
         for k, v in response.headers.items():
-            print("< {}: {}".format(k, v), file=stderr)
+            print(f"< {k}: {v}", file=stderr)
         print("< ", file=stderr)
 
     def do_request(
         self, operation, args, filter_header=None, skip_error_handling=False
-    ):
+    ):  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
         """
         Makes a request to an operation's URL and returns the resulting JSON, or
         prints and error if a non-200 comes back
         """
         method = getattr(requests, operation.method)
         headers = {
-            "Authorization": "Bearer {}".format(self.config.get_token()),
+            "Authorization": f"Bearer {self.config.get_token()}",
             "Content-Type": "application/json",
-            "User-Agent": "linode-cli:{} python/{}.{}.{}".format(
-                self.version, version_info[0], version_info[1], version_info[2]
+            "User-Agent": (
+                f"linode-cli:{self.version} "
+                f"python/{version_info[0]}.{version_info[1]}.{version_info[2]}"
             ),
         }
 
@@ -558,7 +569,7 @@ complete -F _linode_cli linode-cli"""
         url = operation.url.format(**vars(parsed_args))
 
         if operation.method == "get":
-            url += "?page={}&page_size={}".format(self.page, self.page_size)
+            url += f"?page={self.page}&page_size={self.page_size}"
 
         body = None
         if operation.method == "get":
@@ -618,7 +629,8 @@ complete -F _linode_cli linode-cli"""
                     StrictVersion(spec_version)
                     StrictVersion(self.spec_version)
 
-                    # Get only the Major/Minor version of the API Spec and CLI Spec, ignore patch version differences
+                    # Get only the Major/Minor version of the API Spec and CLI Spec,
+                    # ignore patch version differences
                     spec_major_minor_version = (
                         spec_version.split(".")[0] + "." + spec_version.split(".")[1]
                     )
@@ -640,11 +652,9 @@ complete -F _linode_cli linode-cli"""
                 except:
                     # if this comparison or parsing failed, still process output
                     print(
-                        "Parsing failed when comparing local version {} with server "
-                        "version {}.  If this problem persists, please open a ticket "
-                        "with `linode-cli support ticket-create`".format(
-                            self.spec_version, spec_version
-                        ),
+                        f"Parsing failed when comparing local version {self.spec_version} with  "
+                        f"server version {spec_version}.  If this problem persists, please open a "
+                        "ticket with `linode-cli support ticket-create`",
                         file=stderr,
                     )
 
@@ -676,18 +686,13 @@ complete -F _linode_cli linode-cli"""
                         "with --suppress-warnings",
                         file=stderr,
                     )
-                    pass
 
                 if new_version_exists:
                     print(
-                        "The API responded with version {}, which is newer than "
-                        "the CLI's version of {}.  Please update the CLI to get "
+                        f"The API responded with version {spec_version}, which is newer than "
+                        f"the CLI's version of {self.spec_version}.  Please update the CLI to get "
                         "access to the newest features.  You can update with a "
-                        "simple `{} install --upgrade linode-cli`".format(
-                            spec_version,
-                            self.spec_version,
-                            PIP_CMD,
-                        ),
+                        f"simple `{PIP_CMD} install --upgrade linode-cli`",
                         file=stderr,
                     )
 
@@ -700,7 +705,7 @@ complete -F _linode_cli linode-cli"""
         """
         Given an error message, properly displays the error to the user and exits.
         """
-        print("Request failed: {}".format(response.status_code), file=stderr)
+        print(f"Request failed: {response.status_code}", file=stderr)
 
         resp_json = response.json()
 
@@ -712,12 +717,12 @@ complete -F _linode_cli linode-cli"""
             self.output_handler.print(
                 None, data, title="errors", to=stderr, columns=["field", "reason"]
             )
-        exit(1)
+        sys.exit(1)
 
     @staticmethod
     def _flatten_url_path(tag):
         new_tag = tag.lower()
-        new_tag = re.sub(r"[^a-z ]", "", new_tag).replace(' ', '-')
+        new_tag = re.sub(r"[^a-z ]", "", new_tag).replace(" ", "-")
         return new_tag
 
     def handle_command(self, command, action, args):
@@ -727,8 +732,8 @@ complete -F _linode_cli linode-cli"""
         """
 
         if command not in self.ops:
-            print("Command not found: {}".format(command))
-            exit(1)
+            print(f"Command not found: {command}")
+            sys.exit(1)
 
         operation = self.ops[command][action] if action in self.ops[command] else None
 
@@ -741,8 +746,8 @@ complete -F _linode_cli linode-cli"""
 
             # Fail if no matching alias was found
             if operation is None:
-                print("No action {} for command {}".format(action, command))
-                exit(1)
+                print(f"No action {action} for command {command}")
+                sys.exit(1)
 
         result = self.do_request(operation, args)
 
@@ -754,9 +759,8 @@ complete -F _linode_cli linode-cli"""
             and result.json()["pages"] > 1
         ):
             print(
-                "Page {} of {}.  Call with --page [PAGE] to load a different page.".format(
-                    result.json()["page"], result.json()["pages"]
-                )
+                f"Page {result.json()['page']} of {result.json()['pages']}. "
+                "Call with --page [PAGE] to load a different page."
             )
 
     def configure(self):
@@ -765,7 +769,7 @@ complete -F _linode_cli linode-cli"""
         """
         self.config.configure()
 
-    def call_operation(self, command, action, args=[], filters=None):
+    def call_operation(self, command, action, args=None, filters=None):
         """
         This function is used in plugins to retrieve the result of CLI operations
         in JSON format.  This uses the configured user of the CLI.
@@ -774,8 +778,10 @@ complete -F _linode_cli linode-cli"""
                         whatever is passed into to command as filters.
         :type filters: dict
         """
+        if args is None:
+            args = []
         if command not in self.ops or action not in self.ops[command]:
-            raise ValueError("Unknown command/action {}/{}".format(command, action))
+            raise ValueError(f"Unknown command/action {command}/{action}")
 
         operation = self.ops[command][action]
 
