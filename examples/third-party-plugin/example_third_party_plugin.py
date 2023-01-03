@@ -2,7 +2,7 @@
 This file is an example third-party plugin.  See `the plugin docs`_ for more
 information.
 
-.. _the plugin docs: https://github.com/linode/linode-cli/blob/master/linodecli/plugins/README.md
+.. _the plugin docs: https://github.com/linode/linode-cli/blob/main/linodecli/plugins/README.md
 """
 
 #: This is the name the plugin will be invoked with once it's registered.  Note

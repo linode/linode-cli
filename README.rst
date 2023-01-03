@@ -3,7 +3,7 @@ linode-cli
 
 The Linode Command Line Interface
 
-.. image:: https://raw.githubusercontent.com/linode/linode-cli/master/demo.gif
+.. image:: https://raw.githubusercontent.com/linode/linode-cli/main/demo.gif
 
 Installation
 ------------
@@ -353,7 +353,7 @@ Developing Plugins
 
 For information on how To write your own Third Party Plugin, see the `Plugins documentation`_.
 
-.. _Plugins documentation: https://github.com/linode/linode-cli/blob/master/linodecli/plugins/README.md
+.. _Plugins documentation: https://github.com/linode/linode-cli/blob/main/linodecli/plugins/README.md
 
 Building from Source
 --------------------
@@ -435,7 +435,7 @@ such, many changes are made directly to the spec.
 
 Please follow the `Contributing Guidelines`_ when making a contribution.
 
-.. _Contributing Guidelines: https://github.com/linode/linode-cli/blob/master/CONTRIBUTING.md
+.. _Contributing Guidelines: https://github.com/linode/linode-cli/blob/main/CONTRIBUTING.md
 
 Specification Extensions
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -476,4 +476,4 @@ added to Linode's OpenAPI spec:
 |                             |             | object instead of the original object.                                                    |
 +-----------------------------+-------------+-------------------------------------------------------------------------------------------+
 
-.. _Specification Extensions: https://github.com/OAI/OpenAPI-Specification/blob/master/versions/3.0.1.md#specificationExtensions
+.. _Specification Extensions: https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.1.md#specificationExtensions
