@@ -23,6 +23,9 @@ def get_baked_files():
     if path.isfile("linode-cli.sh"):
         data_files.append(("/etc/bash_completion.d", ["linode-cli.sh"]))
 
+    data_files.append(("version", ["./version"]))
+    data_files.append(("resolve_spec_url", ["./resolve_spec_url"]))
+
     return data_files
 
 
