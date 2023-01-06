@@ -8,7 +8,7 @@ override SPEC = $(shell ./resolve_spec_url ${SPEC_VERSION})
 endif
 
 install: check-prerequisites requirements build
-	ls dist/ | xargs -I{} pip3 install --force dist/{}
+	pip3 install --force dist/*.whl
 
 .PHONY: build
 build: clean
