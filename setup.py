@@ -23,9 +23,6 @@ def get_baked_files():
     if path.isfile("linode-cli.sh"):
         data_files.append(("/etc/bash_completion.d", ["linode-cli.sh"]))
 
-    data_files.append(("version", ["./version"]))
-    data_files.append(("resolve_spec_url", ["./resolve_spec_url"]))
-
     return data_files
 
 
@@ -36,9 +33,37 @@ def get_version():
     return subprocess.check_output(["./version"]).decode("utf-8").rstrip()
 
 
+def get_baked_version():
+    """
+    Attempts to read the version from the baked_version file
+    """
+    with open("./baked_version", "r", encoding="utf-8") as f:
+        result = f.read()
+
+    return result
+
+
+def bake_version(v):
+    """
+    Writes the given version to the baked_version file
+    """
+    with open("./baked_version", "w", encoding="utf-8") as f:
+        f.write(v)
+
+
+# If there's already a baked version, use it.
+# This is useful for installing from an SDist.
+# NOTE: baked_version is deleted when running `make clean`.
+if path.isfile("baked_version"):
+    version = get_baked_version()
+else:
+    # Otherwise, retrieve and bake the version as normal
+    version = get_version()
+    bake_version(version)
+
 setup(
     name="linode-cli",
-    version=get_version(),
+    version=version,
     description="CLI for the Linode API",
     long_description=long_description,
     author="Linode",
