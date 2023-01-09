@@ -51,9 +51,13 @@ def bake_version(v):
         f.write(v)
 
 
-# If there's already a baked version, use it.
-# This is useful for installing from an SDist.
-# NOTE: baked_version is deleted when running `make clean`.
+# If there's already a baked version, use it rather than attempting
+# to resolve the version from env.
+# This is useful for installing from an SDist where the version
+# cannot be dynamically resolved.
+#
+# NOTE: baked_version is deleted when running `make build` and `make install`,
+# so it should always be recreated during the build process.
 if path.isfile("baked_version"):
     version = get_baked_version()
 else:
