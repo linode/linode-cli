@@ -33,6 +33,6 @@ check-prerequisites:
 .PHONY: clean
 clean:
 	rm -f linodecli/data-*
-	rm -f linode-cli.sh
+	rm -f linode-cli.sh baked_version
 	rm -f data-*
 	rm -rf dist
