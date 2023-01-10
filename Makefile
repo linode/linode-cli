@@ -36,3 +36,7 @@ clean:
 	rm -f linode-cli.sh baked_version
 	rm -f data-*
 	rm -rf dist
+
+.PHONY: test
+test:
+	python -m unittest tests/*.py

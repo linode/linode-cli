@@ -16,11 +16,11 @@ def bake_completions(cli):
     if "_spec_version" in cli.ops:
         del cli.ops["_spec_version"]
     rendered = get_bash_completions(cli)
-    with open("linode-cli.sh", "w", encoding="utf-8") as f:
+    with open("linode-cli.sh", "w", encoding="utf-8") as bash_f:
         print("Writing file...")
-        f.write(rendered)
+        bash_f.write(rendered)
 
-def get_completions(cli, help_flag, action):
+def get_completions(ops, help_flag, action):
     """
     Handle shell completions based on `linode-cli completion ____`
     """
@@ -36,9 +36,9 @@ def get_completions(cli, help_flag, action):
     completions = ""
 
     if action == "bash":
-        completions = get_bash_completions(cli)
+        completions = get_bash_completions(ops)
     elif action == "fish":
-        completions = get_fish_completions(cli)
+        completions = get_fish_completions(ops)
     else:
         print(
             "Completions are only available for bash and fish at this time. "
@@ -50,7 +50,7 @@ def get_completions(cli, help_flag, action):
     print(completions)
     sys.exit(0)
 
-def get_fish_completions(cli):
+def get_fish_completions(ops):
     """
     Generates and returns fish shell completions based on the baked spec
     """
@@ -69,17 +69,17 @@ $command_items"""
         command_template.safe_substitute(
             command=op, actions=" ".join(list(actions.keys()))
         )
-        for op, actions in cli.ops.items()
+        for op, actions in ops.items()
     ]
 
     rendered = completion_template.safe_substitute(
-        subcommands=" ".join(cli.ops.keys()),
+        subcommands=" ".join(ops.keys()),
         command_items="\n".join(command_blocks),
     )
 
     return rendered
 
-def get_bash_completions(cli):
+def get_bash_completions(ops):
     """
     Generates and returns bash shell completions based on the baked spec
     """
@@ -117,11 +117,11 @@ complete -F _linode_cli linode-cli"""
         command_template.safe_substitute(
             command=op, actions=" ".join(list(actions.keys()))
         )
-        for op, actions in cli.ops.items()
+        for op, actions in ops.items()
     ]
 
     rendered = completion_template.safe_substitute(
-        actions=" ".join(cli.ops.keys()),
+        actions=" ".join(ops.keys()),
         command_items="\n        ".join(command_blocks),
     )
 
