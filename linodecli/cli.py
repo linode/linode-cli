@@ -8,7 +8,6 @@ import sys
 import re
 import os
 from distutils.version import LooseVersion, StrictVersion # pylint: disable=deprecated-module
-from string import Template
 from sys import stderr, version_info
 
 import requests
@@ -406,93 +405,6 @@ class CLI:  # pylint: disable=too-many-instance-attributes
         data_file = self._get_data_file()
         with open(data_file, "wb") as f:
             pickle.dump(self.ops, f)
-
-    def get_fish_completions(self):
-        """
-        Generates and returns fish shell completions based on the baked spec
-        """
-        completion_template = Template(
-            """# This is a generated file! Do not modify!
-complete -c linode-cli -n "not __fish_seen_subcommand_from $subcommands" -x -a '$subcommands --help'
-$command_items"""
-        )
-
-        command_template = Template(
-            """complete -c linode-cli -n "__fish_seen_subcommand_from $command" \
-                    -x -a '$actions --help'"""
-        )
-
-        command_blocks = [
-            command_template.safe_substitute(
-                command=op, actions=" ".join(list(actions.keys()))
-            )
-            for op, actions in self.ops.items()
-        ]
-
-        rendered = completion_template.safe_substitute(
-            subcommands=" ".join(self.ops.keys()),
-            command_items="\n".join(command_blocks),
-        )
-
-        return rendered
-
-    def get_bash_completions(self):
-        """
-        Generates and returns bash shell completions based on the baked spec
-        """
-        completion_template = Template(
-            """# This is a generated file!  Do not modify!
-_linode_cli()
-{
-    local cur prev opts
-    COMPREPLY=()
-    cur="${COMP_WORDS[COMP_CWORD]}"
-    prev="${COMP_WORDS[COMP_CWORD-1]}"
-
-    case "${prev}" in
-        linode-cli)
-            COMPREPLY=( $(compgen -W "$actions --help" -- ${cur}) )
-            return 0
-            ;;
-        $command_items
-        *)
-            ;;
-    esac
-}
-
-complete -F _linode_cli linode-cli"""
-        )
-
-        command_template = Template(
-            """$command)
-            COMPREPLY=( $(compgen -W "$actions --help" -- ${cur}) )
-            return 0
-            ;;"""
-        )
-
-        command_blocks = [
-            command_template.safe_substitute(
-                command=op, actions=" ".join(list(actions.keys()))
-            )
-            for op, actions in self.ops.items()
-        ]
-
-        rendered = completion_template.safe_substitute(
-            actions=" ".join(self.ops.keys()),
-            command_items="\n        ".join(command_blocks),
-        )
-
-        return rendered
-
-    def bake_completions(self):
-        """
-        Given a baked CLI, generates and saves a bash completion file
-        """
-        rendered = self.get_bash_completions()
-        # save it off
-        with open("linode-cli.sh", "w", encoding="utf-8") as f:
-            print("Writing file...")
-            f.write(rendered)
 
     def load_baked(self):
         """
