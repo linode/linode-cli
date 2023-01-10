@@ -8,14 +8,13 @@ override SPEC = $(shell ./resolve_spec_url ${SPEC_VERSION})
 endif
 
 install: check-prerequisites requirements build
-	pip3 install --force dist/*.whl
+	ls dist/ | xargs -I{} pip3 install --force dist/{}
 
 .PHONY: build
 build: clean
 	python3 -m linodecli bake ${SPEC} --skip-config
 	cp data-3 linodecli/
-	python3 setup.py bdist_wheel
-	python3 setup.py sdist
+	python3 setup.py bdist_wheel --universal
 
 .PHONY: requirements
 requirements:
@@ -33,6 +32,6 @@ check-prerequisites:
 .PHONY: clean
 clean:
 	rm -f linodecli/data-*
-	rm -f linode-cli.sh baked_version
+	rm -f linode-cli.sh
 	rm -f data-*
 	rm -rf dist
