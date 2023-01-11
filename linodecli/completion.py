@@ -3,7 +3,6 @@
 Contains any code relevant to generating/updating shell completions for linode-cli
 """
 
-import sys
 from string import Template
 
 def bake_completions(cli):
@@ -15,7 +14,7 @@ def bake_completions(cli):
         del cli.ops["_base_url"]
     if "_spec_version" in cli.ops:
         del cli.ops["_spec_version"]
-    rendered = get_bash_completions(cli)
+    rendered = get_bash_completions(cli.ops)
     with open("linode-cli.sh", "w", encoding="utf-8") as bash_f:
         print("Writing file...")
         bash_f.write(rendered)
@@ -25,30 +24,17 @@ def get_completions(ops, help_flag, action):
     Handle shell completions based on `linode-cli completion ____`
     """
     if help_flag or not action:
-        print("linode-cli completion [SHELL]")
-        print()
-        print(
-            "Prints shell completions for the requested shell to stdout. "
-            "Currently, only completions for bash and fish are available."
-        )
-        sys.exit(0)
+        return """linode-cli completion [SHELL]
 
-    completions = ""
-
+        Prints shell completions for the requested shell to stdout.
+        Currently, only completions for bash and fish are available."""
     if action == "bash":
-        completions = get_bash_completions(ops)
-    elif action == "fish":
-        completions = get_fish_completions(ops)
-    else:
-        print(
-            "Completions are only available for bash and fish at this time. "
-            "To retrieve these, please invoke as "
-            "`linode-cli completion bash` or `linode-cli completion fish`."
-        )
-        sys.exit(1)
-
-    print(completions)
-    sys.exit(0)
+        return get_bash_completions(ops)
+    if action == "fish":
+        return get_fish_completions(ops)
+    return """Completions are only available for bash and fish at this time.
+        To retrieve these, please invoke as
+        `linode-cli completion bash` or `linode-cli completion fish`."""
 
 def get_fish_completions(ops):
     """
@@ -62,7 +48,7 @@ $command_items"""
 
     command_template = Template(
         """complete -c linode-cli -n "__fish_seen_subcommand_from $command" \
-                -x -a '$actions --help'"""
+-x -a '$actions --help'"""
     )
 
     command_blocks = [

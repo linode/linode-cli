@@ -347,7 +347,8 @@ def main():  # pylint: disable=too-many-locals,too-many-branches,too-many-statem
         sys.exit(0)
 
     if parsed.command == "completion":
-        get_completions(cli.ops, parsed.help, parsed.action)
+        print(get_completions(cli.ops, parsed.help, parsed.action))
+        sys.exit(0)
 
     # handle a help for the CLI
     if parsed.command is None or (parsed.command is None and parsed.help):
