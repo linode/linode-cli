@@ -230,7 +230,7 @@ def main():  # pylint: disable=too-many-locals,too-many-branches,too-many-statem
             sys.exit(2)
 
         cli.bake(spec)
-        bake_completions(cli)
+        bake_completions(cli.ops)
         print("Done.")
         sys.exit(0)
     elif cli.ops is None:
@@ -472,7 +472,7 @@ def main():  # pylint: disable=too-many-locals,too-many-branches,too-many-statem
 
     # special command to bake shell completion script
     if parsed.command == "bake-bash":
-        bake_completions(cli)
+        bake_completions(cli.ops)
 
     # check for plugin invocation
     if parsed.command not in cli.ops and parsed.command in plugins.available(
