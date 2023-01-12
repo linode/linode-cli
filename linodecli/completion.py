@@ -24,17 +24,20 @@ def get_completions(ops, help_flag, action):
     Handle shell completions based on `linode-cli completion ____`
     """
     if help_flag or not action:
-        return """linode-cli completion [SHELL]
-
-        Prints shell completions for the requested shell to stdout.
-        Currently, only completions for bash and fish are available."""
+        return (
+            "linode-cli completion [SHELL]\n\n"
+            "Prints shell completions for the requested shell to stdout.\n"
+            "Currently, only completions for bash and fish are available."
+        )
     if action == "bash":
         return get_bash_completions(ops)
     if action == "fish":
         return get_fish_completions(ops)
-    return """Completions are only available for bash and fish at this time.
-        To retrieve these, please invoke as
-        `linode-cli completion bash` or `linode-cli completion fish`."""
+    return (
+        "Completions are only available for bash and fish at this time.\n\n"
+        "To retrieve these, please invoke as\n"
+        "`linode-cli completion bash` or `linode-cli completion fish`"
+    )
 
 def get_fish_completions(ops):
     """
