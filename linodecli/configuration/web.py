@@ -1,4 +1,65 @@
-def _handle_oauth_callback(self):
+"""
+Helper functions for configuration related to web
+"""
+
+import os
+import re
+import sys
+import socket
+import webbrowser
+from http import server
+
+import requests
+
+from .helpers import _do_request, _username_for_token
+
+# This is used for web-based configuration
+OAUTH_CLIENT_ID = "5823b4627e45411d18e9"
+
+# in the event that we can't load the styled landing page from file, this will
+# do as a landing page
+DEFAULT_LANDING_PAGE = """
+<h2>Success</h2><br/><p>You may return to your terminal to continue..</p>
+<script>
+// this is gross, sorry
+let r = new XMLHttpRequest('http://localhost:{port}');
+r.open('GET', '/token/'+window.location.hash.substr(1));
+r.send();
+</script>
+"""
+
+def _get_token_web():
+    """
+    Handles OAuth authentication for the CLI.  This requires us to get a temporary
+    token over OAuth and then use it to create a permanent token for the CLI.
+    This function returns the token the CLI should use, or exits if anything
+    goes wrong.
+    """
+    temp_token = _handle_oauth_callback()
+    username = _username_for_token(temp_token)
+
+    if username is None:
+        print("OAuth failed.  Please try again of use a token for auth.")
+        sys.exit(1)
+
+    # the token returned via public oauth will expire in 2 hours, which
+    # isn't great.  Instead, we're gonna make a token that expires never
+    # and store that.
+    result = _do_request(
+        requests.post,
+        "/profile/tokens",
+        token=temp_token,
+        # generate the actual token with a label like:
+        #  Linode CLI @ linode
+        # The creation date is already recoreded with the token, so
+        # this should be all the relevant info.
+        body={"label": f"Linode CLI @ {socket.gethostname()}"},
+    )
+
+    return username, result["token"]
+
+
+def _handle_oauth_callback():
     """
     Sends the user to a URL to perform an OAuth login for the CLI, then redirets
     them to a locally-hosted page that captures teh token
