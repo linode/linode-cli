@@ -148,6 +148,7 @@ class CLIConfig:
                     update_dicts[default_key] = [value]
                 else:
                     update_dicts[default_key] = value
+
             return self.update_namespace(namespace, update_dicts)
         return namespace
 

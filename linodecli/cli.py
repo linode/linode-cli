@@ -10,12 +10,11 @@ import os
 from distutils.version import LooseVersion, StrictVersion # pylint: disable=deprecated-module
 from sys import stderr, version_info
 
-import requests
-
 from .configuration import CLIConfig
 from .operation import CLIArg, CLIOperation, URLParam
 from .output import OutputHandler, OutputMode
 from .response import ModelAttr, ResponseModel
+from .api_request import do_request
 
 METHODS = ("get", "post", "put", "delete")
 PIP_CMD = "pip3" if version_info.major == 3 else "pip"
@@ -433,204 +432,6 @@ class CLI:  # pylint: disable=too-many-instance-attributes
         """
         return f"data-{version_info[0]}"
 
-    def print_request_debug_info(self, method, url, headers, body):
-        """
-        Prints debug info for an HTTP request
-        """
-        print(f"> {method.__name__.upper()} {url}", file=stderr)
-        for k, v in headers.items():
-            print(f"> {k}: {v}", file=stderr)
-        print("> Body:", file=stderr)
-        print(">  ", body or "", file=stderr)
-        print("> ", file=stderr)
-
-    def print_response_debug_info(self, response):
-        """
-        Prints debug info for a response from requests
-        """
-        # these come back as ints, convert to HTTP version
-        http_version = response.raw.version / 10
-
-        print(
-            f"< HTTP/{http_version:.1f} {response.status_code} {response.reason}",
-            file=stderr,
-        )
-        for k, v in response.headers.items():
-            print(f"< {k}: {v}", file=stderr)
-        print("< ", file=stderr)
-
-    def do_request(
-        self, operation, args, filter_header=None, skip_error_handling=False
-    ):  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
-        """
-        Makes a request to an operation's URL and returns the resulting JSON, or
-        prints and error if a non-200 comes back
-        """
-        method = getattr(requests, operation.method)
-        headers = {
-            "Authorization": f"Bearer {self.config.get_token()}",
-            "Content-Type": "application/json",
-            "User-Agent": (
-                f"linode-cli:{self.version} "
-                f"python/{version_info[0]}.{version_info[1]}.{version_info[2]}"
-            ),
-        }
-
-        parsed_args = operation.parse_args(args)
-
-        url = operation.url.format(**vars(parsed_args))
-
-        if operation.method == "get":
-            url += f"?page={self.page}&page_size={self.page_size}"
-
-        body = None
-        if operation.method == "get":
-            if filter_header is not None:
-                # plugins can specify their own filters - use those by default
-                headers["X-Filter"] = json.dumps(filter_header)
-            else:
-                # otherwise, get filters from the CLI call
-                filters = vars(parsed_args)
-                # remove URL parameters
-                for p in operation.params:
-                    if p.name in filters:
-                        del filters[p.name]
-                # remove empty filters
-                filters = {k: v for k, v in filters.items() if v is not None}
-                # apply filter, if any
-                if filters:
-                    headers["X-Filter"] = json.dumps(filters)
-        else:
-            if self.defaults:
-                parsed_args = self.config.update(
-                    parsed_args, operation.allowed_defaults
-                )
-
-            to_json = {k: v for k, v in vars(parsed_args).items() if v is not None}
-
-            expanded_json = {}
-            # expand paths
-            for k, v in to_json.items():
-                cur = expanded_json
-                for part in k.split(".")[:-1]:
-                    if part not in cur:
-                        cur[part] = {}
-                    cur = cur[part]
-                cur[k.split(".")[-1]] = v
-
-            body = json.dumps(expanded_json)
-
-        if self.debug_request:
-            self.print_request_debug_info(method, url, headers, body)
-
-        result = method(url, headers=headers, data=body)
-
-        if self.debug_request:
-            self.print_response_debug_info(result)
-
-        if not self.suppress_warnings:
-            # check the major/minor version API reported against what we were built
-            # with to see if an upgrade should be available
-            api_version_higher = False
-
-            if "X-Spec-Version" in result.headers:
-                spec_version = result.headers.get("X-Spec-Version")
-
-                try:
-                    # Parse the spec versions from the API and local CLI.
-                    StrictVersion(spec_version)
-                    StrictVersion(self.spec_version)
-
-                    # Get only the Major/Minor version of the API Spec and CLI Spec,
-                    # ignore patch version differences
-                    spec_major_minor_version = (
-                        spec_version.split(".")[0] + "." + spec_version.split(".")[1]
-                    )
-                    current_major_minor_version = (
-                        self.spec_version.split(".")[0]
-                        + "."
-                        + self.spec_version.split(".")[1]
-                    )
-                except ValueError:
-                    # If versions are non-standard like, "DEVELOPMENT" use them and don't complain.
-                    spec_major_minor_version = spec_version
-                    current_major_minor_version = self.spec_version
-
-                try:
-                    if LooseVersion(spec_major_minor_version) > LooseVersion(
-                        current_major_minor_version
-                    ):
-                        api_version_higher = True
-                except:
-                    # if this comparison or parsing failed, still process output
-                    print(
-                        f"Parsing failed when comparing local version {self.spec_version} with  "
-                        f"server version {spec_version}.  If this problem persists, please open a "
-                        "ticket with `linode-cli support ticket-create`",
-                        file=stderr,
-                    )
-
-            if api_version_higher:
-                # check to see if there is, in fact, a version to upgrade to.  If not, don't
-                # suggest an upgrade (since there's no package anyway)
-                new_version_exists = False
-
-                try:
-                    # do this all in a try block since it must _never_ prevent the CLI
-                    # from showing command output
-                    pypi_response = requests.get(
-                        "https://pypi.org/pypi/linode-cli/json", timeout=1  # seconds
-                    )
-
-                    if pypi_response.status_code == 200:
-                        # we got data back
-                        pypi_version = pypi_response.json()["info"]["version"]
-
-                        # no need to be fancy; these should always be valid versions
-                        if LooseVersion(pypi_version) > LooseVersion(self.version):
-                            new_version_exists = True
-                except:
-                    # I know, but if anything happens here the end user should still
-                    # be able to see the command output
-                    print(
-                        "Unable to determine if a new linode-cli package is available "
-                        "in pypi.  If this message persists, open a ticket or invoke "
-                        "with --suppress-warnings",
-                        file=stderr,
-                    )
-
-                if new_version_exists:
-                    print(
-                        f"The API responded with version {spec_version}, which is newer than "
-                        f"the CLI's version of {self.spec_version}.  Please update the CLI to get "
-                        "access to the newest features.  You can update with a "
-                        f"simple `{PIP_CMD} install --upgrade linode-cli`",
-                        file=stderr,
-                    )
-
-        if not 199 < result.status_code < 399 and not skip_error_handling:
-            self._handle_error(result)
-
-        return result
-
-    def _handle_error(self, response):
-        """
-        Given an error message, properly displays the error to the user and exits.
-        """
-        print(f"Request failed: {response.status_code}", file=stderr)
-
-        resp_json = response.json()
-
-        if "errors" in resp_json:
-            data = [
-                [error.get("field") or "", error.get("reason")]
-                for error in resp_json["errors"]
-            ]
-            self.output_handler.print(
-                None, data, title="errors", to=stderr, columns=["field", "reason"]
-            )
-        sys.exit(1)
-
     @staticmethod
     def _flatten_url_path(tag):
         new_tag = tag.lower()
@@ -661,7 +462,7 @@ class CLI:  # pylint: disable=too-many-instance-attributes
                 print(f"No action {action} for command {command}")
                 sys.exit(1)
 
-        result = self.do_request(operation, args)
+        result = do_request(self, operation, args)
 
         operation.process_response_json(result.json(), self.output_handler)
 
@@ -697,8 +498,8 @@ class CLI:  # pylint: disable=too-many-instance-attributes
 
         operation = self.ops[command][action]
 
-        result = self.do_request(
-            operation, args, filter_header=filters, skip_error_handling=True
+        result = do_request(
+            self, operation, args, filter_header=filters, skip_error_handling=True
         )
 
         return result.status_code, result.json()
