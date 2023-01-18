@@ -3,12 +3,10 @@ Responsible for managing spec and routing commands to operations.
 """
 
 import pickle
-import json
 import sys
 import re
 import os
-from distutils.version import LooseVersion, StrictVersion # pylint: disable=deprecated-module
-from sys import stderr, version_info
+from sys import version_info
 
 from .configuration import CLIConfig
 from .operation import CLIArg, CLIOperation, URLParam

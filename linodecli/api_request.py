@@ -1,11 +1,16 @@
+"""
+This module is responsible for handling HTTP requests to the Linode API.
+"""
+
 import json
 import sys
-from distutils.version import StrictVersion, LooseVersion
+from distutils.version import \
+    StrictVersion, LooseVersion  # pylint: disable=deprecated-module
 from typing import Optional
 
-import requests
-
 from sys import version_info
+
+import requests
 
 from .operation import CLIOperation
 
