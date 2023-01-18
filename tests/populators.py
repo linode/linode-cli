@@ -10,7 +10,7 @@ default-user = testuser
 [testuser]
 region = us-southeast
 image = linode/ubuntu21.10
-authorized_users = lgarber-dev
+token = notafaketoken
 type = g6-nanode-1
 """
 
