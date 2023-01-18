@@ -21,6 +21,7 @@ from .configuration import ENV_TOKEN_NAME
 from .operation import CLIArg, CLIOperation, URLParam
 from .output import OutputMode
 from .response import ModelAttr, ResponseModel
+from .completion import bake_completions, get_completions
 
 # this might not be installed at the time of building
 try:
@@ -229,14 +230,7 @@ def main():  # pylint: disable=too-many-locals,too-many-branches,too-many-statem
             sys.exit(2)
 
         cli.bake(spec)
-        print("Baking bash completions...")
-        # this step would normally happen on laod
-        if "_base_url" in cli.ops:
-            del cli.ops["_base_url"]
-        if "_spec_version" in cli.ops:
-            del cli.ops["_spec_version"]
-        # do the baking
-        cli.bake_completions()
+        bake_completions(cli.ops)
         print("Done.")
         sys.exit(0)
     elif cli.ops is None:
@@ -353,29 +347,7 @@ def main():  # pylint: disable=too-many-locals,too-many-branches,too-many-statem
         sys.exit(0)
 
     if parsed.command == "completion":
-        if parsed.help or not parsed.action:
-            print("linode-cli completion [SHELL]")
-            print()
-            print(
-                "Prints shell completions for the requested shell to stdout. "
-                "Currently, only completions for bash and fish are available."
-            )
-            sys.exit(0)
-
-        completions = ""
-
-        if parsed.action == "bash":
-            completions = cli.get_bash_completions()
-        elif parsed.action == "fish":
-            completions = cli.get_fish_completions()
-        else:
-            print(
-                "Completions are only available for bash and fish at this time.  To retrieve "
-                "these, please invoke as `linode-cli completion bash` "
-                "or `linode-cli completion fish`."
-            )
-            sys.exit(1)
-        print(completions)
+        print(get_completions(cli.ops, parsed.help, parsed.action))
         sys.exit(0)
 
     # handle a help for the CLI
@@ -500,7 +472,7 @@ def main():  # pylint: disable=too-many-locals,too-many-branches,too-many-statem
 
     # special command to bake shell completion script
     if parsed.command == "bake-bash":
-        cli.bake_completions()
+        bake_completions(cli.ops)
 
     # check for plugin invocation
     if parsed.command not in cli.ops and parsed.command in plugins.available(
