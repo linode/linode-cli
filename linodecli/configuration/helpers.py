@@ -3,9 +3,8 @@ General helper functions for configuraiton
 """
 
 import os
-import sys
 
-import requests
+from .auth import _do_get_request
 
 try:
     # python3
@@ -14,42 +13,21 @@ except ImportError:
     # python2
     import ConfigParser as configparser
 
-LEGACY_CONFIG_DIR = os.path.expanduser("~")
 LEGACY_CONFIG_NAME = ".linode-cli"
+LEGACY_CONFIG_DIR = os.path.expanduser("~")
 
-CONFIG_DIR = os.environ.get("XDG_CONFIG_HOME", f"{os.path.expanduser('~')}/.config")
 CONFIG_NAME = "linode-cli"
+CONFIG_DIR = os.environ.get("XDG_CONFIG_HOME", f"{os.path.expanduser('~')}/.config")
 
-TOKEN_GENERATION_URL = "https://cloud.linode.com/profile/tokens"
-
-def _do_request(method, url, token=None, exit_on_error=None, body=None):  # pylint: disable=too-many-arguments
+def _get_config_path():
     """
-    Does helper requests during configuration
+    Returns the path to the config file.
     """
-    headers = {}
+    path = f"{LEGACY_CONFIG_DIR}/{LEGACY_CONFIG_NAME}"
+    if os.path.exists(path):
+        return path
 
-    if token is not None:
-        headers["Authorization"] = f"Bearer {token}"
-        headers["Content-type"] = "application/json"
-
-    result = method(self.base_url + url, headers=headers, json=body)
-
-    _handle_response_status(result, exit_on_error=exit_on_error)
-
-    return result.json()
-
-def _username_for_token(token):
-    """
-    A helper function that returns the username assocaited with a token by
-    requesting it from the API
-    """
-    u = _do_get_request("/profile", token=token, exit_on_error=False)
-    if "errors" in u:
-        reasons = ",".join([c["reason"] for c in u["errors"]])
-        print(f"That token didn't work: {reasons}")
-        return None
-
-    return u["username"]
+    return f"{CONFIG_DIR}/{CONFIG_NAME}"
 
 def _get_config(load=True):
     """
@@ -66,38 +44,6 @@ def _get_config(load=True):
         conf.read(_get_config_path())
 
     return conf
-
-def _get_config_path():
-    """
-    Returns the path to the config file.
-    """
-    path = f"{LEGACY_CONFIG_DIR}/{LEGACY_CONFIG_NAME}"
-    if os.path.exists(path):
-        return path
-
-    return f"{CONFIG_DIR}/{CONFIG_NAME}"
-
-def _get_token_terminal():
-    """
-    Handles prompting the user for a Personal Access Token and checking it
-    to ensure it works.
-    """
-    print(
-        f"""
-First, we need a Personal Access Token.  To get one, please visit
-{TOKEN_GENERATION_URL} and click
-"Create a Personal Access Token".  The CLI needs access to everything
-on your account to work correctly."""
-    )
-
-    while True:
-        token = input("Personal Access Token: ")
-
-        username = _username_for_token(token)
-        if username is not None:
-            break
-
-    return username, token
 
 def _default_thing_input(
     ask, things, prompt, error, optional=True
@@ -133,38 +79,7 @@ def _default_thing_input(
             print(error)
     return ret
 
-def _do_get_request(url, token=None, exit_on_error=True):
-    """
-    Does helper get requests during configuration
-    """
-    return _do_request(
-        method=requests.get, url=url, token=token, exit_on_error=exit_on_error
-    )
-
-@staticmethod
-def _handle_response_status(response, exit_on_error=None):
-    if 199 < response.status_code < 300:
-        return
-
-    print(f"Could not contact {response.url} - Error: {response.status_code}")
-    if exit_on_error:
-        sys.exit(4)
-
-def _check_full_access(token):
-    headers = {
-        "Authorization": f"Bearer {token}",
-        "Content-Type": "application/json",
-    }
-
-    result = requests.get(
-        base_url + "/profile/grants", headers=headers, timeout=120
-    )
-
-    _handle_response_status(result, exit_on_error=True)
-
-    return result.status_code == 204
-
-def _handle_no_default_user():
+def _handle_no_default_user(self):
     """
     Handle the case that there is no default user in the config
     """
@@ -182,7 +97,7 @@ def _handle_no_default_user():
 
         if token is not None:
             # there's a token in the config - configure that user
-            u = _do_get_request("/profile", token=token, exit_on_error=False)
+            u = _do_get_request(self.base_url, "/profile", token=token, exit_on_error=False)
 
             if "errors" in u:
                 # this token was bad - reconfigure

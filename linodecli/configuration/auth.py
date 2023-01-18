@@ -1,5 +1,5 @@
 """
-Helper functions for configuration related to web
+Helper functions for configuration related to auth
 """
 
 import os
@@ -11,11 +11,9 @@ from http import server
 
 import requests
 
-from .helpers import _do_request, _username_for_token
-
+TOKEN_GENERATION_URL = "https://cloud.linode.com/profile/tokens"
 # This is used for web-based configuration
 OAUTH_CLIENT_ID = "5823b4627e45411d18e9"
-
 # in the event that we can't load the styled landing page from file, this will
 # do as a landing page
 DEFAULT_LANDING_PAGE = """
@@ -28,7 +26,86 @@ r.send();
 </script>
 """
 
-def _get_token_web():
+@staticmethod
+def _handle_response_status(response, exit_on_error=None):
+    if 199 < response.status_code < 300:
+        return
+
+    print(f"Could not contact {response.url} - Error: {response.status_code}")
+    if exit_on_error:
+        sys.exit(4)
+
+# TODO: merge config do_request and cli do_request
+def _do_get_request(base_url, url, token=None, exit_on_error=True):
+    """
+    Does helper get requests during configuration
+    """
+    return _do_request(base_url, requests.get, url, token=token, exit_on_error=exit_on_error)
+
+def _do_request(base_url, method, url, token=None, exit_on_error=None, body=None):  # pylint: disable=too-many-arguments
+    """
+    Does helper requests during configuration
+    """
+    headers = {}
+
+    if token is not None:
+        headers["Authorization"] = f"Bearer {token}"
+        headers["Content-type"] = "application/json"
+
+    result = method(base_url + url, headers=headers, json=body)
+
+    _handle_response_status(result, exit_on_error=exit_on_error)
+
+    return result.json()
+
+def _check_full_access(base_url, token):
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json",
+    }
+
+    result = requests.get(base_url + "/profile/grants", headers=headers, timeout=120)
+
+    _handle_response_status(result, exit_on_error=True)
+
+    return result.status_code == 204
+
+def _username_for_token(base_url, token):
+    """
+    A helper function that returns the username assocaited with a token by
+    requesting it from the API
+    """
+    u = _do_get_request(base_url, "/profile", token=token, exit_on_error=False)
+    if "errors" in u:
+        reasons = ",".join([c["reason"] for c in u["errors"]])
+        print(f"That token didn't work: {reasons}")
+        return None
+
+    return u["username"]
+
+def _get_token_terminal(base_url):
+    """
+    Handles prompting the user for a Personal Access Token and checking it
+    to ensure it works.
+    """
+    print(
+        f"""
+First, we need a Personal Access Token.  To get one, please visit
+{TOKEN_GENERATION_URL} and click
+"Create a Personal Access Token".  The CLI needs access to everything
+on your account to work correctly."""
+    )
+
+    while True:
+        token = input("Personal Access Token: ")
+
+        username = _username_for_token(base_url, token)
+        if username is not None:
+            break
+
+    return username, token
+
+def _get_token_web(base_url):
     """
     Handles OAuth authentication for the CLI.  This requires us to get a temporary
     token over OAuth and then use it to create a permanent token for the CLI.
@@ -36,7 +113,7 @@ def _get_token_web():
     goes wrong.
     """
     temp_token = _handle_oauth_callback()
-    username = _username_for_token(temp_token)
+    username = _username_for_token(base_url, temp_token)
 
     if username is None:
         print("OAuth failed.  Please try again of use a token for auth.")
@@ -46,6 +123,7 @@ def _get_token_web():
     # isn't great.  Instead, we're gonna make a token that expires never
     # and store that.
     result = _do_request(
+        base_url,
         requests.post,
         "/profile/tokens",
         token=temp_token,

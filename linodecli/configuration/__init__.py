@@ -8,14 +8,16 @@ import sys
 import argparse
 import webbrowser
 
-from .web import _get_token_web
-from .helpers import (
+from .auth import (
+    _get_token_web,
     _check_full_access,
     _do_get_request,
+    _get_token_terminal,
+)
+from .helpers import (
     _default_thing_input,
     _get_config,
     _get_config_path,
-    _get_token_terminal,
     _handle_no_default_user
 )
 
@@ -57,7 +59,7 @@ class CLIConfig:
             and not self.config.has_option("DEFAULT", "default-user")
             and self.config.has_option("DEFAULT", "token")
         ):
-            _handle_no_default_user()
+            _handle_no_default_user(self)
 
         environ_token = os.getenv(ENV_TOKEN_NAME, None)
 
@@ -352,7 +354,7 @@ Note that no token will be saved in your configuration file.
                         break
 
             if self.configure_with_pat or not can_use_browser:
-                username, config["token"] = _get_token_terminal()
+                username, config["token"] = _get_token_terminal(self.base_url)
             else:
                 # pylint: disable=line-too-long
                 print()
@@ -364,7 +366,7 @@ Note that no token will be saved in your configuration file.
                 input(
                     "Press enter to continue.  This will open a browser and proceed with authentication."
                 )
-                username, config["token"] = _get_token_web()
+                username, config["token"] = _get_token_web(self.base_url)
                 # pylint: enable=line-too-long
 
             token = config["token"]
@@ -373,11 +375,11 @@ Note that no token will be saved in your configuration file.
         print(f"Configuring {username}")
         print()
 
-        regions = [r["id"] for r in _do_get_request("/regions")["data"]]
-        types = [t["id"] for t in _do_get_request("/linode/types")["data"]]
-        images = [i["id"] for i in _do_get_request("/images")["data"]]
+        regions = [r["id"] for r in _do_get_request(self.base_url, "/regions")["data"]]
+        types = [t["id"] for t in _do_get_request(self.base_url, "/linode/types")["data"]]
+        images = [i["id"] for i in _do_get_request(self.base_url, "/images")["data"]]
 
-        is_full_access = _check_full_access(token)
+        is_full_access = _check_full_access(self.base_url, token)
 
         auth_users = []
 
@@ -385,7 +387,7 @@ Note that no token will be saved in your configuration file.
             auth_users = [
                 u["username"]
                 for u in _do_get_request(
-                    "/account/users", exit_on_error=False, token=token
+                    self.base_url, "/account/users", exit_on_error=False, token=token
                 )["data"]
                 if "ssh_keys" in u
             ]
