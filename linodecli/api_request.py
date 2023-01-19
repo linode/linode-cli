@@ -12,8 +12,6 @@ from sys import version_info
 
 import requests
 
-from .operation import CLIOperation
-
 PIP_CMD = "pip3"
 
 
@@ -86,7 +84,7 @@ def _build_filter_header(operation, parsed_args, filter_header=None) -> Optional
     return None
 
 
-def _build_request_url(ctx, operation: CLIOperation, parsed_args) -> str:
+def _build_request_url(ctx, operation, parsed_args) -> str:
     result = operation.url.format(**vars(parsed_args))
 
     if operation.method == "get":

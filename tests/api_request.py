@@ -14,7 +14,8 @@ from unittest.mock import patch, Mock
 import requests
 
 from linodecli import api_request
-from tests.populators import make_test_cli, make_test_operation, make_test_create_operation, make_test_list_operation
+from tests.populators import make_test_cli, make_test_operation, make_test_create_operation, make_test_list_operation, \
+    with_test_cli
 
 
 class APIRequestTests(unittest.TestCase):
@@ -41,7 +42,6 @@ class APIRequestTests(unittest.TestCase):
         self.assertIn("< HTTP/1.1 200 OK", output)
         self.assertIn("< cool: test", output)
 
-
     def test_request_debug_info(self):
         stderr_buf = io.StringIO()
 
@@ -62,13 +62,13 @@ class APIRequestTests(unittest.TestCase):
         self.assertIn(">   cool body", output)
         self.assertIn("> ", output)
 
-
-    def test_build_request_body(self):
+    @with_test_cli()
+    def test_build_request_body(self, cli):
         operation = make_test_create_operation()
         operation.allowed_defaults = ["region"]
 
         result = api_request._build_request_body(
-            make_test_cli(),
+            cli,
             operation,
             SimpleNamespace(generic_arg="foo", region=None)
         )
@@ -78,10 +78,10 @@ class APIRequestTests(unittest.TestCase):
             result
         )
 
-
-    def test_build_request_url_get(self):
+    @with_test_cli()
+    def test_build_request_url_get(self, cli):
         result = api_request._build_request_url(
-            make_test_cli(),
+            cli,
             make_test_list_operation(),
             SimpleNamespace()
         )
@@ -91,9 +91,10 @@ class APIRequestTests(unittest.TestCase):
             result
         )
 
-    def test_build_request_url_post(self):
+    @with_test_cli()
+    def test_build_request_url_post(self, cli):
         result = api_request._build_request_url(
-            make_test_cli(),
+            cli,
             make_test_create_operation(),
             SimpleNamespace()
         )
@@ -114,10 +115,9 @@ class APIRequestTests(unittest.TestCase):
             result
         )
 
+    @with_test_cli()
     @patch('linodecli.api_request.requests.get')
-    def test_do_request_get(self, mock_get):
-        cli = make_test_cli()
-
+    def test_do_request_get(self, cli, mock_get):
         mock_response = Mock(status_code=200, reason="OK")
 
         def validate_http_request(url, headers=None, data=None):
@@ -140,10 +140,9 @@ class APIRequestTests(unittest.TestCase):
 
         self.assertEqual(result, mock_response)
 
+    @with_test_cli()
     @patch('linodecli.api_request.requests.post')
-    def test_do_request_post(self, mock_get):
-        cli = make_test_cli()
-
+    def test_do_request_post(self, cli, mock_get):
         mock_response = Mock(status_code=200, reason="OK")
 
         def validate_http_request(url, headers=None, data=None):
@@ -172,3 +171,149 @@ class APIRequestTests(unittest.TestCase):
         )
 
         self.assertEqual(result, mock_response)
+
+    @with_test_cli()
+    @patch('linodecli.api_request.requests.get')
+    def test_outdated_cli(self, cli, mock_get):
+        # "outdated" version
+        cli.suppress_warnings = False
+        cli.version = "1.0.0"
+        cli.spec_version = "1.0.0"
+
+        # Return a mock response from PyPI
+        def mock_http_request(url, headers=None, data=None, timeout=1):
+            self.assertIn("pypi.org", url)
+
+            r = requests.Response()
+            r.status_code = 200
+
+            def json_func():
+                return {
+                    "info": {
+                        # Add a fake new version
+                        "version": "1.1.0"
+                    }
+                }
+
+            r.json = json_func
+            return r
+
+        mock_get.side_effect = mock_http_request
+
+        stderr_buf = io.StringIO()
+
+        # Provide a mock Linode API response
+        mock_response = SimpleNamespace(
+            status_code=200,
+            reason="OK",
+            headers={
+                "X-Spec-Version": "1.1.0"
+            }
+        )
+
+        with contextlib.redirect_stderr(stderr_buf):
+            api_request._attempt_warn_old_version(cli, mock_response)
+
+        output = stderr_buf.getvalue()
+        self.assertIn(
+            "The API responded with version 1.1.0, which is newer than "
+            "the CLI's version of 1.0.0.  Please update the CLI to get "
+            "access to the newest features.  You can update with a "
+            "simple `pip3 install --upgrade linode-cli`",
+            output
+        )
+
+    @with_test_cli()
+    @patch('linodecli.api_request.requests.get')
+    def test_outdated_cli_no_new_version(self, cli, mock_get):
+        # "outdated" version
+        cli.suppress_warnings = False
+        cli.version = "1.0.0"
+        cli.spec_version = "1.0.0"
+
+        # Return a mock response from PyPI
+        def mock_http_request(url, headers=None, data=None, timeout=1):
+            self.assertIn("pypi.org", url)
+
+            r = requests.Response()
+            r.status_code = 200
+
+            def json_func():
+                return {
+                    "info": {
+                        # No new CLI release :(
+                        "version": "1.0.0"
+                    }
+                }
+
+            r.json = json_func
+            return r
+
+        mock_get.side_effect = mock_http_request
+
+        stderr_buf = io.StringIO()
+
+        # Provide a mock Linode API response
+        mock_response = SimpleNamespace(
+            status_code=200,
+            reason="OK",
+            headers={
+                "X-Spec-Version": "1.1.0"
+            }
+        )
+
+        with contextlib.redirect_stderr(stderr_buf):
+            api_request._attempt_warn_old_version(cli, mock_response)
+
+        output = stderr_buf.getvalue()
+        self.assertEqual(
+            "",
+            output
+        )
+
+    @with_test_cli()
+    @patch('linodecli.api_request.requests.get')
+    def test_up_to_date_cli(self, cli, mock_get):
+        # "up to date" version
+        cli.suppress_warnings = False
+        cli.version = "1.0.0"
+        cli.spec_version = "1.0.0"
+
+        # Return a mock response from PyPI
+        def mock_http_request(url, headers=None, data=None, timeout=1):
+            self.assertIn("pypi.org", url)
+
+            r = requests.Response()
+            r.status_code = 200
+
+            def json_func():
+                return {
+                    "info": {
+                        "version": "1.0.0"
+                    }
+                }
+
+            r.json = json_func
+            return r
+
+        mock_get.side_effect = mock_http_request
+
+        stderr_buf = io.StringIO()
+
+        # Provide a mock Linode API response
+        mock_response = SimpleNamespace(
+            status_code=200,
+            reason="OK",
+            headers={
+                "X-Spec-Version": "1.0.0"
+            }
+        )
+
+        with contextlib.redirect_stderr(stderr_buf):
+            api_request._attempt_warn_old_version(cli, mock_response)
+
+        output = stderr_buf.getvalue()
+        self.assertEqual(
+            "",
+            output
+        )

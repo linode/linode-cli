@@ -1,4 +1,7 @@
 import configparser
+import inspect
+import sys
+from functools import wraps
 
 from linodecli import ResponseModel, CLIOperation, URLParam, ModelAttr, CLIArg
 from linodecli.cli import CLI
@@ -30,7 +33,38 @@ def make_test_cli(
     result.config.config = conf
     result.config._configured = True
 
+    # very evil pattern :)
+    # We need this to suppress warnings for operations that don't
+    # have access to the cli.suppress_warnings attribute.
+    # e.g. operation defaults
+    sys.argv.append("--suppress-warnings")
+
     return result
+
+
+def with_test_cli(
+        version="DEVELOPMENT",
+        url="http://localhost",
+        defaults=True
+):
+    def inner(f):
+        @wraps(f)
+        def callback(*args, **kwargs):
+            cli = make_test_cli(
+                version=version,
+                url=url,
+                defaults=defaults
+            )
+
+            new_args = list(args)
+            new_args.append(cli)
+
+            result = f(*tuple(new_args), **kwargs)
+            return result
+
+        return callback
+    return inner
+
 
 def make_test_operation(
         command,
