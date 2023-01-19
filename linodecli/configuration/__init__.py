@@ -3,35 +3,25 @@ Handles configuring the cli, as well as loading configs so that they can be
 used elsewhere.
 """
 
-import re
-import socket
-import argparse
-import webbrowser
-from http import server
-
-try:
-    # python3
-    import configparser
-except ImportError:
-    # python2
-    import ConfigParser as configparser
-
 import os
 import sys
+import argparse
+import webbrowser
 
-import requests
+from .auth import (
+    _get_token_web,
+    _check_full_access,
+    _do_get_request,
+    _get_token_terminal,
+)
+from .helpers import (
+    _default_thing_input,
+    _get_config,
+    _get_config_path,
+    _handle_no_default_user
+)
 
 ENV_TOKEN_NAME = "LINODE_CLI_TOKEN"
-
-LEGACY_CONFIG_DIR = os.path.expanduser("~")
-LEGACY_CONFIG_NAME = ".linode-cli"
-CONFIG_DIR = os.environ.get("XDG_CONFIG_HOME", f"{os.path.expanduser('~')}/.config")
-
-CONFIG_NAME = "linode-cli"
-TOKEN_GENERATION_URL = "https://cloud.linode.com/profile/tokens"
-
-# This is used for web-based configuration
-OAUTH_CLIENT_ID = "5823b4627e45411d18e9"
 
 # this is a list of browser that _should_ work for web-based auth.  This is mostly
 # intended to exclude lynx and other terminal browsers which could be opened, but
@@ -48,19 +38,6 @@ KNOWN_GOOD_BROWSERS = {
     "epiphany",
 }
 
-# in the event that we can't load the styled landing page from file, this will
-# do as a landing page
-DEFAULT_LANDING_PAGE = """
-<h2>Success</h2><br/><p>You may return to your terminal to continue..</p>
-<script>
-// this is gross, sorry
-let r = new XMLHttpRequest('http://localhost:{port}');
-r.open('GET', '/token/'+window.location.hash.substr(1));
-r.send();
-</script>
-"""
-
-
 class CLIConfig:
     """
     Generates the necessary config for the Linode CLI
@@ -69,7 +46,7 @@ class CLIConfig:
     def __init__(self, base_url, username=None, skip_config=False):
         self.base_url = base_url
         self.username = username
-        self.config = self._get_config(load=not skip_config)
+        self.config = _get_config(load=not skip_config)
         self.running_plugin = None
         self.used_env_token = False
 
@@ -82,7 +59,7 @@ class CLIConfig:
             and not self.config.has_option("DEFAULT", "default-user")
             and self.config.has_option("DEFAULT", "token")
         ):
-            self._handle_no_default_user()
+            _handle_no_default_user(self)
 
         environ_token = os.getenv(ENV_TOKEN_NAME, None)
 
@@ -313,162 +290,12 @@ class CLIConfig:
         if not os.path.exists(f"{os.path.expanduser('~')}/.config"):
             os.makedirs(f"{os.path.expanduser('~')}/.config")
 
-        with open(self._get_config_path(), "w", encoding="utf-8") as f:
+        with open(_get_config_path(), "w", encoding="utf-8") as f:
             self.config.write(f)
 
         if not silent:
-            print(f"\nConfig written to {self._get_config_path()}")
+            print(f"\nConfig written to {_get_config_path()}")
 
-    def _username_for_token(self, token):
-        """
-        A helper function that returns the username assocaited with a token by
-        requesting it from the API
-        """
-        u = self._do_get_request("/profile", token=token, exit_on_error=False)
-        if "errors" in u:
-            reasons = ",".join([c["reason"] for c in u["errors"]])
-            print(f"That token didn't work: {reasons}")
-            return None
-
-        return u["username"]
-
-    def _get_token_terminal(self):
-        """
-        Handles prompting the user for a Personal Access Token and checking it
-        to ensure it works.
-        """
-        print(
-            f"""
-First, we need a Personal Access Token.  To get one, please visit
-{TOKEN_GENERATION_URL} and click
-"Create a Personal Access Token".  The CLI needs access to everything
-on your account to work correctly."""
-        )
-
-        while True:
-            token = input("Personal Access Token: ")
-
-            username = self._username_for_token(token)
-            if username is not None:
-                break
-
-        return username, token
-
-    def _get_token_web(self):
-        """
-        Handles OAuth authentication for the CLI.  This requires us to get a temporary
-        token over OAuth and then use it to create a permanent token for the CLI.
-        This function returns the token the CLI should use, or exits if anything
-        goes wrong.
-        """
-        temp_token = self._handle_oauth_callback()
-        username = self._username_for_token(temp_token)
-
-        if username is None:
-            print("OAuth failed.  Please try again of use a token for auth.")
-            sys.exit(1)
-
-        # the token returned via public oauth will expire in 2 hours, which
-        # isn't great.  Instead, we're gonna make a token that expires never
-        # and store that.
-        result = self._do_request(
-            requests.post,
-            "/profile/tokens",
-            token=temp_token,
-            # generate the actual token with a label like:
-            #  Linode CLI @ linode
-            # The creation date is already recoreded with the token, so
-            # this should be all the relevant info.
-            body={"label": f"Linode CLI @ {socket.gethostname()}"},
-        )
-
-        return username, result["token"]
-
-    def _handle_oauth_callback(self):
-        """
-        Sends the user to a URL to perform an OAuth login for the CLI, then redirets
-        them to a locally-hosted page that captures teh token
-        """
-        # load up landing page HTML
-        landing_page_path = os.path.join(
-            os.path.dirname(os.path.realpath(__file__)), "oauth-landing-page.html"
-        )
-
-        try:
-            with open(landing_page_path, encoding="utf-8") as f:
-                landing_page = f.read()
-        except:
-            landing_page = DEFAULT_LANDING_PAGE
-
-        class Handler(server.BaseHTTPRequestHandler):
-            """
-            The issue here is that Login sends the token in the URL hash, meaning
-            that we cannot see it on the server side.  An attempt was made to
-            get the client (browser) to send an ajax request to pass it along,
-            but that's pretty gross and also isn't working.  Needs more thought.
-            """
-
-            def do_GET(self):
-                """
-                get the access token
-                """
-                if "token" in self.path:
-                    # we got a token!  Parse it out of the request
-                    token_part = self.path.split("/", 2)[2]
-
-                    m = re.search(r"access_token=([a-z0-9]+)", token_part)
-                    if m and len(m.groups()):
-                        self.server.token = m.groups()[0]
-
-                self.send_response(200)
-                self.send_header("Content-type", "text/html")
-                self.end_headers()
-
-                # TODO: Clean up this page and make it look nice
-                self.wfile.write(
-                    bytes(
-                        landing_page.format(port=self.server.server_address[1]).encode(
-                            "utf-8"
-                        )
-                    )
-                )
-
-            def log_message(self, form, *args):  # pylint: disable=arguments-differ
-                """Don't actually log the request"""
-
-        # start a server to catch the response
-        serv = server.HTTPServer(("localhost", 0), Handler)
-        serv.token = None
-
-        # figure out the URL to direct the user to and print out the prompt
-        # pylint: disable-next=line-too-long
-        url = f"https://login.linode.com/oauth/authorize?client_id={OAUTH_CLIENT_ID}&response_type=token&scopes=*&redirect_uri=http://localhost:{serv.server_address[1]}"
-        print(
-            f"""A browser should open directing you to this URL to authenticate:
-
-{url}
-
-If you are not automatically directed there, please copy/paste the link into your browser
-to continue..
-"""
-        )
-
-        webbrowser.open(url)
-
-        try:
-            while serv.token is None:
-                # serve requests one at a time until we get a token or are interrupted
-                serv.handle_request()
-        except KeyboardInterrupt:
-            print()
-            print(
-                "Giving up.  If you couldn't get web authentication to work, please "
-                "try token using a token by invoking with `linode-cli configure --token`, "
-                "and open an issue at https://github.com/linode/linode-cli"
-            )
-            sys.exit(1)
-
-        return serv.token
 
     def configure(self):  # pylint: disable=too-many-branches,too-many-statements
         """
@@ -527,7 +354,7 @@ Note that no token will be saved in your configuration file.
                         break
 
             if self.configure_with_pat or not can_use_browser:
-                username, config["token"] = self._get_token_terminal()
+                username, config["token"] = _get_token_terminal(self.base_url)
             else:
                 # pylint: disable=line-too-long
                 print()
@@ -539,7 +366,7 @@ Note that no token will be saved in your configuration file.
                 input(
                     "Press enter to continue.  This will open a browser and proceed with authentication."
                 )
-                username, config["token"] = self._get_token_web()
+                username, config["token"] = _get_token_web(self.base_url)
                 # pylint: enable=line-too-long
 
             token = config["token"]
@@ -548,39 +375,39 @@ Note that no token will be saved in your configuration file.
         print(f"Configuring {username}")
         print()
 
-        regions = [r["id"] for r in self._do_get_request("/regions")["data"]]
-        types = [t["id"] for t in self._do_get_request("/linode/types")["data"]]
-        images = [i["id"] for i in self._do_get_request("/images")["data"]]
+        regions = [r["id"] for r in _do_get_request(self.base_url, "/regions")["data"]]
+        types = [t["id"] for t in _do_get_request(self.base_url, "/linode/types")["data"]]
+        images = [i["id"] for i in _do_get_request(self.base_url, "/images")["data"]]
 
-        is_full_access = self._check_full_access(token)
+        is_full_access = _check_full_access(self.base_url, token)
 
         auth_users = []
 
         if is_full_access:
             auth_users = [
                 u["username"]
-                for u in self._do_get_request(
-                    "/account/users", exit_on_error=False, token=token
+                for u in _do_get_request(
+                    self.base_url, "/account/users", exit_on_error=False, token=token
                 )["data"]
                 if "ssh_keys" in u
             ]
 
         # get the preferred things
-        config["region"] = self._default_thing_input(
+        config["region"] = _default_thing_input(
             "Default Region for operations.",
             regions,
             "Default Region (Optional): ",
             "Please select a valid Region, or press Enter to skip",
         )
 
-        config["type"] = self._default_thing_input(
+        config["type"] = _default_thing_input(
             "Default Type of Linode to deploy.",
             types,
             "Default Type of Linode (Optional): ",
             "Please select a valid Type, or press Enter to skip",
         )
 
-        config["image"] = self._default_thing_input(
+        config["image"] = _default_thing_input(
             "Default Image to deploy to new Linodes.",
             images,
             "Default Image (Optional): ",
@@ -588,7 +415,7 @@ Note that no token will be saved in your configuration file.
         )
 
         if auth_users:
-            config["authorized_users"] = self._default_thing_input(
+            config["authorized_users"] = _default_thing_input(
                 "Select the user that should be given default SSH access to new Linodes.",
                 auth_users,
                 "Default Option (Optional): ",
@@ -627,179 +454,5 @@ Note that no token will be saved in your configuration file.
                 self.config.set(username, k, v)
 
         self.write_config()
-        os.chmod(self._get_config_path(), 0o600)
+        os.chmod(_get_config_path(), 0o600)
         self._configured = True
-
-    def _get_config_path(self):
-        """
-        Returns the path to the config file.
-        """
-        path = f"{LEGACY_CONFIG_DIR}/{LEGACY_CONFIG_NAME}"
-        if os.path.exists(path):
-            return path
-
-        return f"{CONFIG_DIR}/{CONFIG_NAME}"
-
-    def _get_config(self, load=True):
-        """
-        Returns a new ConfigParser object that represents the CLI's configuration.
-        If load is false, we won't load the config from disk.
-
-        :param load: If True, load the config from the default path.  Otherwise,
-                     don't (and just return an empty ConfigParser)
-        :type load: bool
-        """
-        conf = configparser.ConfigParser()
-
-        if load:
-            conf.read(self._get_config_path())
-
-        return conf
-
-    def _default_thing_input(
-        self, ask, things, prompt, error, optional=True
-    ):  # pylint: disable=too-many-arguments
-        """
-        Requests the user choose from a list of things with the given prompt and
-        error if they choose something invalid.  If optional, the user may hit
-        enter to not configure this option.
-        """
-        print(f"\n{ask}  Choices are:")
-        for ind, thing in enumerate(things):
-            print(f" {ind + 1} - {thing}")
-        print()
-
-        ret = ""
-        while True:
-            choice = input(prompt)
-
-            if choice:
-                try:
-                    choice = int(choice)
-                    choice = things[choice - 1]
-                except:
-                    pass
-
-                if choice in list(things):
-                    ret = choice
-                    break
-                print(error)
-            else:
-                if optional:
-                    break
-                print(error)
-        return ret
-
-    def _do_get_request(self, url, token=None, exit_on_error=True):
-        """
-        Does helper get requests during configuration
-        """
-        return self._do_request(
-            requests.get, url, token=token, exit_on_error=exit_on_error
-        )
-
-    @staticmethod
-    def _handle_response_status(response, exit_on_error=None):
-        if 199 < response.status_code < 300:
-            return
-
-        print(f"Could not contact {response.url} - Error: {response.status_code}")
-        if exit_on_error:
-            sys.exit(4)
-
-    def _do_request(
-        self, method, url, token=None, exit_on_error=None, body=None
-    ):  # pylint: disable=too-many-arguments
-        """
-        Does helper requests during configuration
-        """
-        headers = {}
-
-        if token is not None:
-            headers["Authorization"] = f"Bearer {token}"
-            headers["Content-type"] = "application/json"
-
-        result = method(self.base_url + url, headers=headers, json=body)
-
-        self._handle_response_status(result, exit_on_error=exit_on_error)
-
-        return result.json()
-
-    def _check_full_access(self, token):
-        headers = {
-            "Authorization": f"Bearer {token}",
-            "Content-Type": "application/json",
-        }
-
-        result = requests.get(
-            self.base_url + "/profile/grants", headers=headers, timeout=120
-        )
-
-        self._handle_response_status(result, exit_on_error=True)
-
-        return result.status_code == 204
-
-    def _handle_no_default_user(self):
-        """
-        Handle the case that there is no default user in the config
-        """
-        users = [c for c in self.config.sections() if c != "DEFAULT"]
-
-        if len(users) == 1:
-            # only one user configured - they're the default
-            self.config.set("DEFAULT", "default-user", users[0])
-            self.write_config(silent=True)
-            return
-
-        if len(users) == 0:
-            # config is new or _really_ old
-            token = self.config.get("DEFAULT", "token")
-
-            if token is not None:
-                # there's a token in the config - configure that user
-                u = self._do_get_request("/profile", token=token, exit_on_error=False)
-
-                if "errors" in u:
-                    # this token was bad - reconfigure
-                    self.configure()
-                    return
-
-                # setup config for this user
-                username = u["username"]
-
-                self.config.set("DEFAULT", "default-user", username)
-                self.config.add_section(username)
-                self.config.set(username, "token", token)
-                self.config.set(
-                    username, "region", self.config.get("DEFAULT", "region")
-                )
-                self.config.set(username, "type", self.config.get("DEFAULT", "type"))
-                self.config.set(username, "image", self.config.get("DEFAULT", "image"))
-                self.config.set(
-                    username,
-                    "authorized_keys",
-                    self.config.get("DEFAULT", "authorized_keys"),
-                )
-
-                self.write_config(silent=True)
-            else:
-                # got nothin', reconfigure
-                self.configure()
-
-            # this should be handled
-            return
-
-        # more than one user - prompt for the default
-        print("Please choose the active user.  Configured users are:")
-        for u in users:
-            print(f" {u}")
-        print()
-
-        while True:
-            username = input("Active user: ")
-
-            if username in users:
-                self.config.set("DEFAULT", "default-user", username)
-                self.write_config()
-                return
-            print(f"No user {username}")
