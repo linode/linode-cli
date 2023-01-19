@@ -26,7 +26,6 @@ r.send();
 </script>
 """
 
-@staticmethod
 def _handle_response_status(response, exit_on_error=None):
     if 199 < response.status_code < 300:
         return
