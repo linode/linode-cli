@@ -39,7 +39,7 @@ teardown() {
 
 	assert_failure
 	assert_output --partial "Request failed: 400"
-	assert_output --partial "soa_email	SOA_Email required when type=master"
+	assert_output --partial "soa_email	soa_email required when type=master"
 }
 
 @test "it should create a master domain" {
