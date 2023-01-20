@@ -39,4 +39,5 @@ clean:
 
 .PHONY: test
 test:
+	pytest tests
 	python -m unittest tests/*.py

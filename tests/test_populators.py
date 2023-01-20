@@ -3,6 +3,8 @@ import inspect
 import sys
 from functools import wraps
 
+import pytest
+
 from linodecli import ResponseModel, CLIOperation, URLParam, ModelAttr, CLIArg
 from linodecli.cli import CLI
 
@@ -17,7 +19,9 @@ token = notafaketoken
 type = g6-nanode-1
 """
 
-def make_test_cli(
+
+@pytest.fixture
+def mock_cli(
         version="DEVELOPMENT",
         url="http://localhost",
         defaults=True,
@@ -40,30 +44,6 @@ def make_test_cli(
     sys.argv.append("--suppress-warnings")
 
     return result
-
-
-def with_test_cli(
-        version="DEVELOPMENT",
-        url="http://localhost",
-        defaults=True
-):
-    def inner(f):
-        @wraps(f)
-        def callback(*args, **kwargs):
-            cli = make_test_cli(
-                version=version,
-                url=url,
-                defaults=defaults
-            )
-
-            new_args = list(args)
-            new_args.append(cli)
-
-            result = f(*tuple(new_args), **kwargs)
-            return result
-
-        return callback
-    return inner
 
 
 def make_test_operation(
@@ -119,7 +99,8 @@ def make_test_operation(
     )
 
 
-def make_test_list_operation():
+@pytest.fixture
+def list_operation():
     """
     Creates the following CLI operation:
 
@@ -150,7 +131,8 @@ def make_test_list_operation():
     )
 
 
-def make_test_create_operation():
+@pytest.fixture
+def create_operation():
     """
     Creates the following CLI operation:
 
