@@ -234,7 +234,6 @@ class TestAPIRequest:
         output = stderr_buf.getvalue()
         assert "" == output
 
-    @patch('linodecli.api_request.requests.get')
     def test_up_to_date_cli(self, mock_cli):
         # "up to date" version
         mock_cli.suppress_warnings = False
