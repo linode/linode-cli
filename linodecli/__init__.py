@@ -151,6 +151,12 @@ def main():  # pylint: disable=too-many-locals,too-many-branches,too-many-statem
         "This is useful for scripting the CLI's behavior.",
     )
     parser.add_argument(
+        "--no-truncation",
+        action="store_true",
+        default=False,
+        help="Prevent the truncation of long values in command outputs.",
+    )
+    parser.add_argument(
         "--version",
         "-v",
         action="store_true",
@@ -185,9 +191,13 @@ def main():  # pylint: disable=too-many-locals,too-many-branches,too-many-statem
 
     cli.defaults = not parsed.no_defaults
     cli.suppress_warnings = parsed.suppress_warnings
+
     cli.page = parsed.page
     cli.page_size = parsed.page_size
     cli.debug_request = parsed.debug
+
+    cli.output_handler.suppress_warnings = parsed.suppress_warnings
+    cli.output_handler.disable_truncation = parsed.no_truncation
 
     if not cli.suppress_warnings:
         warn_python2_eol()
