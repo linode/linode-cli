@@ -6,7 +6,6 @@ used elsewhere.
 import os
 import sys
 import argparse
-import webbrowser
 
 from .auth import (
     _get_token_web,
@@ -15,6 +14,7 @@ from .auth import (
     _get_token_terminal,
 )
 from .helpers import (
+    _check_browsers,
     _default_thing_input,
     _get_config,
     _get_config_path,
@@ -22,21 +22,6 @@ from .helpers import (
 )
 
 ENV_TOKEN_NAME = "LINODE_CLI_TOKEN"
-
-# this is a list of browser that _should_ work for web-based auth.  This is mostly
-# intended to exclude lynx and other terminal browsers which could be opened, but
-# won't work.
-KNOWN_GOOD_BROWSERS = {
-    "chrome",
-    "firefox",
-    "mozilla",
-    "netscape",
-    "opera",
-    "safari",
-    "chromium",
-    "chromium-browser",
-    "epiphany",
-}
 
 class CLIConfig:
     """
@@ -72,6 +57,14 @@ class CLIConfig:
         elif environ_token is not None:
             self.used_env_token = True
 
+    def default_username(self):
+        """
+        Returns the default-user Username
+        """
+        if self.config.has_option("DEFAULT", "default-user"):
+            return self.config.get("DEFAULT", "default-user")
+        return ""
+
     def set_user(self, username):
         """
         Sets the acting username.  If this username is not in the config, this is
@@ -82,85 +75,6 @@ class CLIConfig:
             sys.exit(1)
 
         self.username = username
-
-    def default_username(self):
-        """
-        Returns the default-user Username
-        """
-        if self.config.has_option("DEFAULT", "default-user"):
-            return self.config.get("DEFAULT", "default-user")
-        return ""
-
-    def update_namespace(self, namespace, new_dict):
-        """
-        In order to update the namespace, we need to turn it into a dict, modify it there,
-        then reconstruct it with the exploded dict.
-        """
-        ns_dict = vars(namespace)
-        warn_dict = {}
-        for k in new_dict:
-            if k.startswith("plugin-"):
-                # plugins set config options that start with 'plugin-' - these don't
-                # get included in the updated namespace
-                continue
-            if k in ns_dict and isinstance(k, list):
-                ns_dict[k].append(new_dict[k])
-            if k in ns_dict and ns_dict[k] is None:
-                warn_dict[k] = new_dict[k]
-                ns_dict[k] = new_dict[k]
-        if not any(x in ["--suppress-warnings", "--no-headers"] for x in sys.argv):
-            print(
-                f"using default values: {warn_dict}, use --no-defaults flag to disable defaults"
-            )
-        return argparse.Namespace(**ns_dict)
-
-    def update(self, namespace, allowed_defaults):
-        """
-        This updates a Namespace (as returned by ArgumentParser) with config values
-        if they aren't present in the Namespace already.
-        """
-        if self.used_env_token and self.config is None:
-            # the CLI is using a token defined in the environment; as such, we may
-            # not have actually loaded a config file.  That's fine, there are just
-            # no defaults
-            return None
-
-        username = self.username or self.default_username()
-
-        if not self.config.has_option(username, "token") and not os.environ.get(
-            ENV_TOKEN_NAME, None
-        ):
-            print(f"User {username} is not configured.")
-            sys.exit(1)
-
-        if self.config.has_section(username) and allowed_defaults:
-            # update_dicts = {
-            #     default_key: self.config.get(username, default_key)
-            #     for default_key in allowed_defaults
-            #     if self.config.has_option(username, default_key)
-            #     }
-            update_dicts = {}
-            for default_key in allowed_defaults:
-                if not self.config.has_option(username, default_key):
-                    continue
-                value = self.config.get(username, default_key)
-                if default_key == "authorized_users":
-                    update_dicts[default_key] = [value]
-                else:
-                    update_dicts[default_key] = value
-            return self.update_namespace(namespace, update_dicts)
-        return namespace
-
-    def get_token(self):
-        """
-        Returns the token for a configured user
-        """
-        if self.used_env_token:
-            return os.environ.get(ENV_TOKEN_NAME, None)
-
-        if self.config.has_option(self.username or self.default_username(), "token"):
-            return self.config.get(self.username or self.default_username(), "token")
-        return ""
 
     def remove_user(self, username):
         """
@@ -202,8 +116,17 @@ class CLIConfig:
         self.config.set("DEFAULT", "default-user", username)
         self.write_config()
 
-    # plugin methods - these are intended for plugins to utilize to store their
-    # own persistent config information
+    def get_token(self):
+        """
+        Returns the token for a configured user
+        """
+        if self.used_env_token:
+            return os.environ.get(ENV_TOKEN_NAME, None)
+
+        if self.config.has_option(self.username or self.default_username(), "token"):
+            return self.config.get(self.username or self.default_username(), "token")
+        return ""
+
     def get_value(self, key):
         """
         Retrieves and returns an existing config value for the current user.  This
@@ -228,6 +151,8 @@ class CLIConfig:
 
         return self.config.get(username, key)
 
+    # plugin methods - these are intended for plugins to utilize to store their
+    # own persistent config information
     def plugin_set_value(self, key, value):
         """
         Sets a new config value for a plugin for the current user.  Plugin config
@@ -274,7 +199,63 @@ class CLIConfig:
 
         return self.config.get(username, full_key)
 
-    def write_config(self, silent=False):
+    def update_namespace(self, namespace, new_dict):
+        """
+        In order to update the namespace, we need to turn it into a dict, modify it there,
+        then reconstruct it with the exploded dict.
+        """
+        ns_dict = vars(namespace)
+        warn_dict = {}
+        for k in new_dict:
+            if k.startswith("plugin-"):
+                # plugins set config options that start with 'plugin-' - these don't
+                # get included in the updated namespace
+                continue
+            if k in ns_dict and isinstance(k, list):
+                ns_dict[k].append(new_dict[k])
+            if k in ns_dict and ns_dict[k] is None:
+                warn_dict[k] = new_dict[k]
+                ns_dict[k] = new_dict[k]
+        if not any(x in ["--suppress-warnings", "--no-headers"] for x in sys.argv):
+            print(
+                f"using default values: {warn_dict}, use --no-defaults flag to disable defaults"
+            )
+        return argparse.Namespace(**ns_dict)
+
+    def update(self, namespace, allowed_defaults):
+        """
+        This updates a Namespace (as returned by ArgumentParser) with config values
+        if they aren't present in the Namespace already.
+        """
+        if self.used_env_token and self.config is None:
+            # the CLI is using a token defined in the environment; as such, we may
+            # not have actually loaded a config file.  That's fine, there are just
+            # no defaults
+            return None
+
+        username = self.username or self.default_username()
+
+        if (
+            not self.config.has_option(username, "token")
+            and not os.environ.get(ENV_TOKEN_NAME, None)
+        ):
+            print(f"User {username} is not configured.")
+            sys.exit(1)
+
+        if self.config.has_section(username) and allowed_defaults:
+            update_dicts = {}
+            for default_key in allowed_defaults:
+                if not self.config.has_option(username, default_key):
+                    continue
+                value = self.config.get(username, default_key)
+                if default_key == "authorized_users":
+                    update_dicts[default_key] = [value]
+                else:
+                    update_dicts[default_key] = value
+            return self.update_namespace(namespace, update_dicts)
+        return namespace
+
+    def write_config(self):
         """
         Saves the config file as it is right now.  This can be used by plugins
         to save values they've set, and is used internally to update the config
@@ -283,19 +264,11 @@ class CLIConfig:
         :param silent: If True, does not print a message noting the config file
                        has been updated.  This is primarily intended for silently
                        updated the config file from one version to another.
-        :type silent: bool
         """
-
-        # Create the ~/.config directory if it does not exist
         if not os.path.exists(f"{os.path.expanduser('~')}/.config"):
             os.makedirs(f"{os.path.expanduser('~')}/.config")
-
         with open(_get_config_path(), "w", encoding="utf-8") as f:
             self.config.write(f)
-
-        if not silent:
-            print(f"\nConfig written to {_get_config_path()}")
-
 
     def configure(self):  # pylint: disable=too-many-branches,too-many-statements
         """
@@ -313,67 +286,36 @@ class CLIConfig:
         username = None
         token = None
 
-        print(
-            """Welcome to the Linode CLI.  This will walk you through some initial setup."""
-        )
+        print("Welcome to the Linode CLI.  This will walk you through some initial setup.")
 
         if ENV_TOKEN_NAME in os.environ:
             print(
-                """Using token from {env_token_name}.
+                f"""Using token from {ENV_TOKEN_NAME}.
 Note that no token will be saved in your configuration file.
-    * If you lose or remove {env_token_name}.
-    * All profiles will use {env_token_name}.""".format(
-                    env_token_name=ENV_TOKEN_NAME
-                )
+    * If you lose or remove {ENV_TOKEN_NAME}.
+    * All profiles will use {ENV_TOKEN_NAME}."""
             )
             username = "DEFAULT"
             token = os.getenv(ENV_TOKEN_NAME)
 
         else:
-            # let's see if we _can_ use web
-            can_use_browser = True
-            try:
-                webbrowser.get()
-            except webbrowser.Error:
-                # there are no browsers installed
-                can_use_browser = False
-
-            if can_use_browser and not KNOWN_GOOD_BROWSERS.intersection(
-                webbrowser._tryorder  # pylint: disable=protected-access
-            ):
-                print()
-                print(
-                    "This tool defaults to web-based authentication, however "
-                    "no known-working browsers were found."
-                )
-
-                while True:
-                    r = input("Try it anyway? [y/N]: ")
-                    if r.lower() in "yn ":
-                        can_use_browser = r.lower() == "y"
-                        break
-
-            if self.configure_with_pat or not can_use_browser:
-                username, config["token"] = _get_token_terminal(self.base_url)
-            else:
-                # pylint: disable=line-too-long
-                print()
-                print(
-                    "The CLI will use its web-based authentication to log you in.  "
-                    "If you prefer to supply a Personal Access Token, use `linode-cli configure --token`. "
-                )
-                print()
+            if _check_browsers():
+                print("""
+The CLI will use its web-based authentication to log you in.
+If you prefer to supply a Personal Access Token, use `linode-cli configure --token`.
+                    """)
                 input(
-                    "Press enter to continue.  This will open a browser and proceed with authentication."
+                    "Press enter to continue. "
+                    "This will open a browser and proceed with authentication."
                 )
                 username, config["token"] = _get_token_web(self.base_url)
-                # pylint: enable=line-too-long
-
+            else:
+                username, config["token"] = _get_token_terminal(self.base_url)
             token = config["token"]
 
-        print()
-        print(f"Configuring {username}")
-        print()
+        print(f"\nConfiguring {username}\n")
+
+        # Configuring Defaults
 
         regions = [r["id"] for r in _do_get_request(self.base_url, "/regions")["data"]]
         types = [t["id"] for t in _do_get_request(self.base_url, "/linode/types")["data"]]
@@ -429,20 +371,14 @@ Note that no token will be saved in your configuration file.
         if not is_default:
             if username != self.default_username():
                 while True:
-                    value = input(
-                        "Make this user the default when using the CLI? [y/N]: "
-                    )
-
+                    value = input("Make this user the default when using the CLI? [y/N]: ")
                     if value.lower() in "yn":
                         is_default = value.lower() == "y"
                         break
                     if not value.strip():
                         break
-
             if not is_default:  # they didn't change the default user
-                print(
-                    f"Active user will remain {self.config.get('DEFAULT', 'default-user')}"
-                )
+                print(f"Active user will remain {self.config.get('DEFAULT', 'default-user')}")
 
         if is_default:
             # if this is the default user, make it so
