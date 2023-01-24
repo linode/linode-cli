@@ -83,7 +83,7 @@ class CLIConfig:
         """
         if self.default_username() == username:
             print(
-                f"Cannot remote {username} as they are the default user! You can "
+                f"Cannot remove {username} as they are the default user! You can "
                 "change the default user with: `linode-cli set-user USERNAME`"
             )
             sys.exit(1)
