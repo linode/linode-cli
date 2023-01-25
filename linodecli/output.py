@@ -105,16 +105,10 @@ class OutputHandler:  # pylint: disable=too-few-public-methods
         """
         Pretty-prints data in a table
         """
-        content = []
-
-        if isinstance(columns[0], str):
-            content = data
-        else:
-            for model in data:
-                content.append([attr.render_value(model) for attr in columns])
-
-        if self.headers:
-            content = [header] + content
+        content = self._build_output_content(
+            data, columns,
+            header=header,
+            value_transform=lambda attr, v: attr.render_value(v))
 
         tab = SingleTable(content)
 
@@ -130,16 +124,10 @@ class OutputHandler:  # pylint: disable=too-few-public-methods
         """
         Prints data in delimited format with the given delimiter
         """
-        content = []
-
-        if isinstance(columns[0], str):
-            content = data
-        else:
-            for model in data:
-                content.append([attr.get_string(model) for attr in columns])
-
-        if self.headers:
-            content = [header] + content
+        content = self._build_output_content(
+            data, columns,
+            header=header,
+            value_transform=lambda attr, v: attr.get_string(v))
 
         for row in content:
             print(self.delimiter.join(row), file=to)
@@ -187,15 +175,9 @@ class OutputHandler:  # pylint: disable=too-few-public-methods
         Pretty-prints data in a Markdown-formatted table.  This uses github's
         flavor of Markdown
         """
-        content = []
-
-        if isinstance(columns[0], str):
-            content = data
-        else:
-            for model in data:
-                content.append(
-                    [attr.render_value(model, colorize=False) for attr in columns]
-                )
+        content = self._build_output_content(
+            data, columns,
+            value_transform=lambda attr, v: attr.render_value(v, colorize=False))
 
         if header:
             print("| " + " | ".join([str(c) for c in header]) + " |")
@@ -203,3 +185,19 @@ class OutputHandler:  # pylint: disable=too-few-public-methods
 
         for row in content:
             print("| " + " | ".join([str(c) for c in row]) + " |")
+
+    def _build_output_content(
+            self,
+            data,
+            columns,
+            header=None,
+            value_transform=lambda attr, model: model):
+        content = [header] if self.headers and header is not None else []
+
+        if isinstance(columns[0], str):
+            return content + data
+
+        for model in data:
+            content.append([value_transform(attr, model) for attr in columns])
+
+        return content
