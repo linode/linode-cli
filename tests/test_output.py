@@ -10,7 +10,7 @@ from tests.test_populators import mock_cli, create_operation, list_operation
 
 class TestOutputHandler:
     """
-    Unit tests for linodecli.api_request
+    Unit tests for linodecli.output
     """
 
     def test_markdown_output_columns(self, mock_cli):
