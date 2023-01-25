@@ -192,7 +192,10 @@ class OutputHandler:  # pylint: disable=too-few-public-methods
             columns,
             header=None,
             value_transform=lambda attr, model: model):
-        content = [header] if self.headers and header is not None else []
+        content = []
+
+        if self.headers and header is not None:
+            content = [header]
 
         if isinstance(columns[0], str):
             return content + data
