@@ -59,14 +59,17 @@ class OutputHandler:  # pylint: disable=too-few-public-methods
         else:
             header = columns
 
-        if self.mode == OutputMode.table:
-            self._table_output(header, data, columns, title, to)
-        elif self.mode == OutputMode.delimited:
-            self._delimited_output(header, data, columns, to)
-        elif self.mode == OutputMode.json:
-            self._json_output(header, data, to)
-        elif self.mode == OutputMode.markdown:
-            self._markdown_output(header, data, columns)
+        output_mappings = {
+            OutputMode.table: lambda: self._table_output(header, data, columns, title, to),
+            OutputMode.delimited: lambda: self._delimited_output(header, data, columns, to),
+            OutputMode.json: lambda: self._json_output(header, data, to),
+            OutputMode.markdown: lambda: self._markdown_output(header, data, columns)
+        }
+
+        if self.mode not in output_mappings:
+            raise RuntimeError(f"Unknown output mode: {self.mode}")
+
+        output_mappings[self.mode]()
 
     def _get_columns(self, response_model):
         """
@@ -163,7 +166,8 @@ class OutputHandler:  # pylint: disable=too-few-public-methods
             file=to,
         )
 
-    def _select_json_elements(self, keys, json_res):
+    @staticmethod
+    def _select_json_elements(keys, json_res):
         """
         Returns a dict filtered down to include only the selected keys.  Walks
         paths to handle nested dicts
@@ -173,7 +177,7 @@ class OutputHandler:  # pylint: disable=too-few-public-methods
             if k in keys:
                 ret[k] = v
             elif isinstance(v, dict):
-                v = self._select_json_elements(keys, v)
+                v = OutputHandler._select_json_elements(keys, v)
                 if v:
                     ret[k] = v
         return ret
