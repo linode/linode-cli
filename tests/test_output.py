@@ -1,9 +1,10 @@
 import contextlib
+import copy
 import io
 
 from terminaltables import SingleTable
 
-from linodecli import api_request, ModelAttr
+from linodecli import api_request, ModelAttr, ResponseModel, OutputMode
 from tests.test_populators import mock_cli, create_operation, list_operation
 
 
@@ -211,3 +212,83 @@ class TestOutputHandler:
         print(tab.table, file=mock_table)
 
         assert output.getvalue() == mock_table.getvalue()
+
+    def test_get_columns_from_model(self, mock_cli):
+        output_handler = mock_cli.output_handler
+
+        response_model = ResponseModel(
+            [
+                ModelAttr("foo", True, True, "string"),
+                ModelAttr("bar", True, False, "string")
+            ]
+        )
+
+        result = output_handler._get_columns(response_model)
+
+        assert len(result) == 1
+        assert result[0].name == "foo"
+
+    def test_get_columns_from_model_all(self, mock_cli):
+        output_handler = mock_cli.output_handler
+        response_model = ResponseModel(
+            [
+                ModelAttr("foo", True, True, "string"),
+                ModelAttr("bar", True, False, "string")
+            ]
+        )
+
+        output_handler.columns = "*"
+
+        result = output_handler._get_columns(response_model)
+
+        assert len(result) == 2
+        assert result[0].name == "foo"
+        assert result[1].name == "bar"
+
+    def test_get_columns_from_model_select(self, mock_cli):
+        output_handler = mock_cli.output_handler
+
+        response_model = ResponseModel(
+            [
+                ModelAttr("foo", True, True, "string"),
+                ModelAttr("bar", True, False, "string"),
+                ModelAttr("test", True, False, "string")
+            ]
+        )
+
+        output_handler.columns = "foo,bar"
+
+        result = output_handler._get_columns(response_model)
+
+        assert len(result) == 2
+        assert result[0].name == "foo"
+        assert result[1].name == "bar"
+
+    # Let's test a single print case
+    def test_print(self, mock_cli):
+        output = io.StringIO()
+
+        response_model = ResponseModel(
+            [
+                ModelAttr("foo", True, True, "string"),
+                ModelAttr("bar", True, True, "string"),
+                ModelAttr("test", True, False, "string")
+            ]
+        )
+
+        mock_cli.output_handler.mode = OutputMode.json
+
+        mock_cli.output_handler.print(
+            response_model,
+            [
+                {
+                    "foo": "blah",
+                    "bar": "blah2",
+                    "test": "blah3"
+                }
+            ],
+            title="cool table",
+            to=output
+        )
+
+        assert '[{"foo": "blah", "bar": "blah2"}]' in output.getvalue()
