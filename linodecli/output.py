@@ -197,6 +197,7 @@ class OutputHandler:  # pylint: disable=too-few-public-methods
         if self.headers and header is not None:
             content = [header]
 
+        # We're not using model attrs here
         if isinstance(columns[0], str):
             return content + data
 
