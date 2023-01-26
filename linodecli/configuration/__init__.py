@@ -218,7 +218,8 @@ class CLIConfig:
                 ns_dict[k] = new_dict[k]
         if not any(x in ["--suppress-warnings", "--no-headers"] for x in sys.argv):
             print(
-                f"using default values: {warn_dict}, use --no-defaults flag to disable defaults"
+                f"using default values: {warn_dict}, "
+                "use --no-defaults flag to disable defaults"
             )
         return argparse.Namespace(**ns_dict)
 

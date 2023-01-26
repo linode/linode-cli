@@ -3,7 +3,9 @@
 Unit tests for linodecli.configuration
 """
 import io
+import argparse
 import contextlib
+
 import unittest
 from unittest.mock import patch, mock_open
 
@@ -39,8 +41,8 @@ authorized_users = cli-dev2"""
         Helper to generate config with mock data
         """
         conf = None
-        m = mock_open(read_data=config)
-        with patch('linodecli.configuration.helpers.configparser.open', m):
+        with patch('linodecli.configuration.helpers.configparser.open',
+                   mock_open(read_data=config)):
             conf = configuration.CLIConfig(base_url)
         return conf
 
@@ -82,7 +84,8 @@ authorized_users = cli-dev2"""
         self.assertEqual(cm.exception.code, 1)
         self.assertTrue("default user!" in f.getvalue())
 
-        conf.remove_user("cli-dev2")
+        with patch('linodecli.configuration.open', mock_open()):
+            conf.remove_user("cli-dev2")
         self.assertFalse(conf.config.has_section("cli-dev2"))
 
     def test_print_users(self):
@@ -109,7 +112,8 @@ authorized_users = cli-dev2"""
         self.assertEqual(cm.exception.code, 1)
         self.assertTrue("not configured!" in f.getvalue())
 
-        conf.set_default_user("cli-dev2")
+        with patch('linodecli.configuration.open', mock_open()):
+            conf.set_default_user("cli-dev2")
         self.assertEqual(conf.config.get("DEFAULT", "default-user"), "cli-dev2")
 
     def test_get_token(self):
@@ -163,8 +167,15 @@ authorized_users = cli-dev2"""
         Test CLIConfig.update_namespace({namespace}, {new_dict})
         """
         conf = self._build_test_config()
-        test_dict = {
-                "testkey": "testvalue",
-        }
-        result = conf.update_namespace("cli-dev", test_dict)
+
+        parser = argparse.ArgumentParser()
+        parser.add_argument('--testkey')
+        parser.add_argument('--newkey')
+        ns = parser.parse_args(['--testkey', 'testvalue'])
+        update_dict = {'newkey': 'newvalue'}
+
+        f = io.StringIO()
+        with contextlib.redirect_stdout(f):
+            result = vars(conf.update_namespace(ns, update_dict))
         self.assertEqual(result.get("testkey"), "testvalue")
+        self.assertEqual(result.get("newkey"), "newvalue")
