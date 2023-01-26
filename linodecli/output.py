@@ -53,23 +53,25 @@ class OutputHandler:  # pylint: disable=too-few-public-methods
         :param columns: The columns to display
         :type columns: list[str]
         """
+
+        # We need to use lambdas here since we don't want unused function params
+        output_mode_to_func = {
+            OutputMode.table: lambda: self._table_output(header, data, columns, title, to),
+            OutputMode.delimited: lambda: self._delimited_output(header, data, columns, to),
+            OutputMode.json: lambda: self._json_output(header, data, to),
+            OutputMode.markdown: lambda: self._markdown_output(header, data, columns, to)
+        }
+
         if columns is None:
             columns = self._get_columns(response_model)
             header = [c.column_name for c in columns]
         else:
             header = columns
 
-        output_mappings = {
-            OutputMode.table: lambda: self._table_output(header, data, columns, title, to),
-            OutputMode.delimited: lambda: self._delimited_output(header, data, columns, to),
-            OutputMode.json: lambda: self._json_output(header, data, to),
-            OutputMode.markdown: lambda: self._markdown_output(header, data, columns)
-        }
-
-        if self.mode not in output_mappings:
+        if self.mode not in output_mode_to_func:
             raise RuntimeError(f"Unknown output mode: {self.mode}")
 
-        output_mappings[self.mode]()
+        output_mode_to_func[self.mode]()
 
     def _get_columns(self, response_model):
         """
@@ -170,7 +172,7 @@ class OutputHandler:  # pylint: disable=too-few-public-methods
                     ret[k] = v
         return ret
 
-    def _markdown_output(self, header, data, columns):
+    def _markdown_output(self, header, data, columns, to):
         """
         Pretty-prints data in a Markdown-formatted table.  This uses github's
         flavor of Markdown
@@ -180,11 +182,11 @@ class OutputHandler:  # pylint: disable=too-few-public-methods
             value_transform=lambda attr, v: attr.render_value(v, colorize=False))
 
         if header:
-            print("| " + " | ".join([str(c) for c in header]) + " |")
-            print("|---" * len(header) + "|")
+            print("| " + " | ".join([str(c) for c in header]) + " |", file=to)
+            print("|---" * len(header) + "|", file=to)
 
         for row in content:
-            print("| " + " | ".join([str(c) for c in row]) + " |")
+            print("| " + " | ".join([str(c) for c in row]) + " |", file=to)
 
     def _build_output_content(
             self,
@@ -192,12 +194,17 @@ class OutputHandler:  # pylint: disable=too-few-public-methods
             columns,
             header=None,
             value_transform=lambda attr, model: model):
+        """
+        Returns the `content` to be displayed by the corresponding output function.
+        `value_transform` allows functions to specify how each value should be formatted.
+        """
+
         content = []
 
         if self.headers and header is not None:
             content = [header]
 
-        # We're not using model attrs here
+        # We're not using models here
         if isinstance(columns[0], str):
             return content + data
 
