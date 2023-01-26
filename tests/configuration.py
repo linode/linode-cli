@@ -3,6 +3,7 @@
 Unit tests for linodecli.configuration
 """
 import io
+import sys
 import argparse
 import contextlib
 
@@ -169,13 +170,32 @@ authorized_users = cli-dev2"""
         conf = self._build_test_config()
 
         parser = argparse.ArgumentParser()
-        parser.add_argument('--testkey')
         parser.add_argument('--newkey')
+        parser.add_argument('--testkey')
+        parser.add_argument('--listkey')
+        parser.add_argument('--plugin-testplugin-testkey')
         ns = parser.parse_args(['--testkey', 'testvalue'])
-        update_dict = {'newkey': 'newvalue'}
+
+        update_dict = {
+            'newkey': 'newvalue',
+            'listkey': ['listvalue'],
+            'plugin-testplugin-testkey': 'plugin-value',
+        }
 
         f = io.StringIO()
         with contextlib.redirect_stdout(f):
             result = vars(conf.update_namespace(ns, update_dict))
-        self.assertEqual(result.get("testkey"), "testvalue")
+
+        self.assertTrue("--no-defaults" in f.getvalue())
         self.assertEqual(result.get("newkey"), "newvalue")
+        self.assertEqual(result.get("testkey"), "testvalue")
+        self.assertTrue(isinstance(result.get("listkey"), list))
+        self.assertFalse(result.get("plugin-testplugin-testkey"))
+
+        f = io.StringIO()
+        sys.argv.append("--suppress-warnings")
+        with contextlib.redirect_stdout(f):
+            result = vars(conf.update_namespace(ns, update_dict))
+        sys.argv.remove("--suppress-warnings")
+
+        self.assertFalse("--no-defaults" in f.getvalue())
