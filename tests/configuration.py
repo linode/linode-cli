@@ -20,7 +20,7 @@ class ConfigurationTests(unittest.TestCase):
     Unit tests for linodecli.configuration
     """
 
-    base_url = ""
+    base_url = "https://linode-test.com"
     test_token = "cli-dev-token"
     mock_config_file = f"""[DEFAULT]
 default-user = cli-dev
@@ -189,7 +189,6 @@ authorized_users = cli-dev2"""
         with contextlib.redirect_stdout(f):
             result = vars(conf.update(ns, update_dict))
 
-        print(f.getvalue())
         self.assertTrue("--no-defaults" in f.getvalue())
         self.assertEqual(result.get("newkey"), "newvalue")
         self.assertEqual(result.get("testkey"), "testvalue")
@@ -214,23 +213,27 @@ authorized_users = cli-dev2"""
         conf.config.set("cli-dev", "type", expected)
         with patch('linodecli.configuration.open', mock_open()):
             conf.write_config()
+        # TODO: fix this to retrieve from the mocked file
         actual = _get_config().get("cli-dev", "type")
         self.assertEqual(actual, expected)
 
-    def test_configure_no_default_terminal(self):
+    @patch('builtins.input')
+    def test_configure_no_default_terminal(self, m_input):
         """
         Test CLIConfig.configure() with
         no default user, no environment variables, and no browser
         """
-        with patch('linodecli.configuration.helpers.configparser.open', mock_open()):
-            conf = configuration.CLIConfig(self.base_url, skip_config=True)
+        conf = configuration.CLIConfig(self.base_url, skip_config=True)
 
-        answers = [
-            os.getenv(configuration.ENV_TOKEN_NAME),
-            "1", "1", "1", "1", "",
-        ]
-        with (patch('linodecli.configuration.input', side_effects=answers),
-        patch.dict(os.environ, {}),
-        requests_mock.Mocker() as m):
-            m.get(f'{self.base_url}', json= {})
+        token = os.getenv(configuration.ENV_TOKEN_NAME)
+        m_input.side_effects = [token, "1", "1", "1", "1"]
+        with (patch('linodecli.configuration.open', mock_open()),
+                patch.dict(os.environ, {}), requests_mock.Mocker() as m):
+            m.get(f'{self.base_url}/profile', json= {"username": "cli-dev"})
+            m.get(f'{self.base_url}/profile/grants', status_code=204)
+            m.get(f'{self.base_url}/regions', json= {"data":[{"id": "test-region"}]})
+            m.get(f'{self.base_url}/linode/types', json= {"data":[{"id": "test-type"}]})
+            m.get(f'{self.base_url}/images', json= {"data":[{"id": "test-image"}]})
+            m.get(f'{self.base_url}/account/users',
+                  json= {"data":[{"username": "cli-dev", "ssh_keys": "testkey"}]})
             conf.configure()
