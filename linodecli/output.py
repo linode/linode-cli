@@ -53,20 +53,25 @@ class OutputHandler:  # pylint: disable=too-few-public-methods
         :param columns: The columns to display
         :type columns: list[str]
         """
+
+        # We need to use lambdas here since we don't want unused function params
+        output_mode_to_func = {
+            OutputMode.table: lambda: self._table_output(header, data, columns, title, to),
+            OutputMode.delimited: lambda: self._delimited_output(header, data, columns, to),
+            OutputMode.json: lambda: self._json_output(header, data, to),
+            OutputMode.markdown: lambda: self._markdown_output(header, data, columns, to)
+        }
+
         if columns is None:
             columns = self._get_columns(response_model)
             header = [c.column_name for c in columns]
         else:
             header = columns
 
-        if self.mode == OutputMode.table:
-            self._table_output(header, data, columns, title, to)
-        elif self.mode == OutputMode.delimited:
-            self._delimited_output(header, data, columns, to)
-        elif self.mode == OutputMode.json:
-            self._json_output(header, data, to)
-        elif self.mode == OutputMode.markdown:
-            self._markdown_output(header, data, columns)
+        if self.mode not in output_mode_to_func:
+            raise RuntimeError(f"Unknown output mode: {self.mode}")
+
+        output_mode_to_func[self.mode]()
 
     def _get_columns(self, response_model):
         """
@@ -102,16 +107,10 @@ class OutputHandler:  # pylint: disable=too-few-public-methods
         """
         Pretty-prints data in a table
         """
-        content = []
-
-        if isinstance(columns[0], str):
-            content = data
-        else:
-            for model in data:
-                content.append([attr.render_value(model) for attr in columns])
-
-        if self.headers:
-            content = [header] + content
+        content = self._build_output_content(
+            data, columns,
+            header=header,
+            value_transform=lambda attr, v: attr.render_value(v))
 
         tab = SingleTable(content)
 
@@ -127,16 +126,10 @@ class OutputHandler:  # pylint: disable=too-few-public-methods
         """
         Prints data in delimited format with the given delimiter
         """
-        content = []
-
-        if isinstance(columns[0], str):
-            content = data
-        else:
-            for model in data:
-                content.append([attr.get_string(model) for attr in columns])
-
-        if self.headers:
-            content = [header] + content
+        content = self._build_output_content(
+            data, columns,
+            header=header,
+            value_transform=lambda attr, v: attr.get_string(v))
 
         for row in content:
             print(self.delimiter.join(row), file=to)
@@ -163,7 +156,8 @@ class OutputHandler:  # pylint: disable=too-few-public-methods
             file=to,
         )
 
-    def _select_json_elements(self, keys, json_res):
+    @staticmethod
+    def _select_json_elements(keys, json_res):
         """
         Returns a dict filtered down to include only the selected keys.  Walks
         paths to handle nested dicts
@@ -173,29 +167,48 @@ class OutputHandler:  # pylint: disable=too-few-public-methods
             if k in keys:
                 ret[k] = v
             elif isinstance(v, dict):
-                v = self._select_json_elements(keys, v)
+                v = OutputHandler._select_json_elements(keys, v)
                 if v:
                     ret[k] = v
         return ret
 
-    def _markdown_output(self, header, data, columns):
+    def _markdown_output(self, header, data, columns, to):
         """
         Pretty-prints data in a Markdown-formatted table.  This uses github's
         flavor of Markdown
         """
-        content = []
-
-        if isinstance(columns[0], str):
-            content = data
-        else:
-            for model in data:
-                content.append(
-                    [attr.render_value(model, colorize=False) for attr in columns]
-                )
+        content = self._build_output_content(
+            data, columns,
+            value_transform=lambda attr, v: attr.render_value(v, colorize=False))
 
         if header:
-            print("| " + " | ".join([str(c) for c in header]) + " |")
-            print("|---" * len(header) + "|")
+            print("| " + " | ".join([str(c) for c in header]) + " |", file=to)
+            print("|---" * len(header) + "|", file=to)
 
         for row in content:
-            print("| " + " | ".join([str(c) for c in row]) + " |")
+            print("| " + " | ".join([str(c) for c in row]) + " |", file=to)
+
+    def _build_output_content(
+            self,
+            data,
+            columns,
+            header=None,
+            value_transform=lambda attr, model: model):
+        """
+        Returns the `content` to be displayed by the corresponding output function.
+        `value_transform` allows functions to specify how each value should be formatted.
+        """
+
+        content = []
+
+        if self.headers and header is not None:
+            content = [header]
+
+        # We're not using models here
+        if isinstance(columns[0], str):
+            return content + data
+
+        for model in data:
+            content.append([value_transform(attr, model) for attr in columns])
+
+        return content
