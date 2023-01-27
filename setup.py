@@ -76,6 +76,7 @@ setup(
     packages=[
         "linodecli",
         "linodecli.plugins",
+        "linodecli.configuration",
     ],
     license="BSD 3-Clause License",
     install_requires=[

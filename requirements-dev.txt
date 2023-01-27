@@ -1,1 +1,2 @@
 pylint
+requests-mock=1.10.0

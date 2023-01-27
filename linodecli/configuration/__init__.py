@@ -199,62 +199,51 @@ class CLIConfig:
 
         return self.config.get(username, full_key)
 
-    def update_namespace(self, namespace, new_dict):
-        """
-        In order to update the namespace, we need to turn it into a dict, modify it there,
-        then reconstruct it with the exploded dict.
-        """
-        ns_dict = vars(namespace)
-        warn_dict = {}
-        for k in new_dict:
-            if k.startswith("plugin-"):
-                # plugins set config options that start with 'plugin-' - these don't
-                # get included in the updated namespace
-                continue
-            if k in ns_dict and isinstance(k, list):
-                ns_dict[k].append(new_dict[k])
-            if k in ns_dict and ns_dict[k] is None:
-                warn_dict[k] = new_dict[k]
-                ns_dict[k] = new_dict[k]
-        if not any(x in ["--suppress-warnings", "--no-headers"] for x in sys.argv):
-            print(
-                f"using default values: {warn_dict}, "
-                "use --no-defaults flag to disable defaults"
-            )
-        return argparse.Namespace(**ns_dict)
-
+    # TODO: this is more of an argparsing function than it is a config function
+    # might be better to move this to argparsing during refactor and just have
+    # configuration return defaults or keys or something
     def update(self, namespace, allowed_defaults):
         """
         This updates a Namespace (as returned by ArgumentParser) with config values
         if they aren't present in the Namespace already.
         """
         if self.used_env_token and self.config is None:
-            # the CLI is using a token defined in the environment; as such, we may
-            # not have actually loaded a config file.  That's fine, there are just
-            # no defaults
             return None
-
         username = self.username or self.default_username()
-
-        if (
-            not self.config.has_option(username, "token")
-            and not os.environ.get(ENV_TOKEN_NAME, None)
-        ):
+        if (not self.config.has_option(username, "token")
+            and not os.environ.get(ENV_TOKEN_NAME, None)):
             print(f"User {username} is not configured.")
             sys.exit(1)
+        if (not self.config.has_section(username)
+            or allowed_defaults is None):
+            return namespace
 
-        if self.config.has_section(username) and allowed_defaults:
-            update_dicts = {}
-            for default_key in allowed_defaults:
-                if not self.config.has_option(username, default_key):
-                    continue
-                value = self.config.get(username, default_key)
-                if default_key == "authorized_users":
-                    update_dicts[default_key] = [value]
-                else:
-                    update_dicts[default_key] = value
-            return self.update_namespace(namespace, update_dicts)
-        return namespace
+        warn_dict = {}
+        ns_dict = vars(namespace)
+        for key in allowed_defaults:
+            if key not in ns_dict:
+                continue
+            if ns_dict[key] is not None:
+                continue
+            # plugins set config options that start with 'plugin-'
+            # these don't get included in the updated namespace
+            if key.startswith("plugin-"):
+                continue
+            if self.config.has_option(username, key):
+                value = self.config.get(username, key)
+            else:
+                value = allowed_defaults[key]
+            if key == "authorized_users":
+                ns_dict[key] = [value]
+                warn_dict[key] = [value]
+            else:
+                ns_dict[key] = value
+                warn_dict[key] = value
+
+        if not any(x in ["--suppress-warnings", "--no-headers"] for x in sys.argv):
+            print(f"using default values: {warn_dict}, "
+                "use --no-defaults flag to disable defaults")
+        return argparse.Namespace(**ns_dict)
 
     def write_config(self):
         """

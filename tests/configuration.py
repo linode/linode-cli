@@ -3,14 +3,17 @@
 Unit tests for linodecli.configuration
 """
 import io
+import os
 import sys
 import argparse
 import contextlib
 
 import unittest
 from unittest.mock import patch, mock_open
+import requests_mock
 
 from linodecli import configuration
+from linodecli.configuration.helpers import _get_config
 
 class ConfigurationTests(unittest.TestCase):
     """
@@ -163,39 +166,71 @@ authorized_users = cli-dev2"""
         actual = conf.plugin_get_value("testkey")
         self.assertEqual(actual, "plugin-test-value")
 
-    def test_update_namespace(self):
+    def test_update(self):
         """
-        Test CLIConfig.update_namespace({namespace}, {new_dict})
+        Test CLIConfig.update({namespace}, {allowed_defaults})
         """
         conf = self._build_test_config()
 
         parser = argparse.ArgumentParser()
         parser.add_argument('--newkey')
         parser.add_argument('--testkey')
-        parser.add_argument('--listkey')
+        parser.add_argument('--authorized_users')
         parser.add_argument('--plugin-testplugin-testkey')
         ns = parser.parse_args(['--testkey', 'testvalue'])
 
         update_dict = {
             'newkey': 'newvalue',
-            'listkey': ['listvalue'],
+            'authorized_users': ['user1'],
             'plugin-testplugin-testkey': 'plugin-value',
         }
 
         f = io.StringIO()
         with contextlib.redirect_stdout(f):
-            result = vars(conf.update_namespace(ns, update_dict))
+            result = vars(conf.update(ns, update_dict))
 
+        print(f.getvalue())
         self.assertTrue("--no-defaults" in f.getvalue())
         self.assertEqual(result.get("newkey"), "newvalue")
         self.assertEqual(result.get("testkey"), "testvalue")
-        self.assertTrue(isinstance(result.get("listkey"), list))
+        self.assertTrue(isinstance(result.get("authorized_users"), list))
         self.assertFalse(result.get("plugin-testplugin-testkey"))
 
         f = io.StringIO()
         sys.argv.append("--suppress-warnings")
         with contextlib.redirect_stdout(f):
-            result = vars(conf.update_namespace(ns, update_dict))
+            result = vars(conf.update(ns, None))
         sys.argv.remove("--suppress-warnings")
 
         self.assertFalse("--no-defaults" in f.getvalue())
+
+    def test_write_config(self):
+        """
+        Test CLIConfig.write_config()
+        """
+        conf = self._build_test_config()
+
+        expected = "newvalue"
+        conf.config.set("cli-dev", "type", expected)
+        with patch('linodecli.configuration.open', mock_open()):
+            conf.write_config()
+        actual = _get_config().get("cli-dev", "type")
+        self.assertEqual(actual, expected)
+
+    def test_configure_no_default_terminal(self):
+        """
+        Test CLIConfig.configure() with
+        no default user, no environment variables, and no browser
+        """
+        with patch('linodecli.configuration.helpers.configparser.open', mock_open()):
+            conf = configuration.CLIConfig(self.base_url, skip_config=True)
+
+        answers = [
+            os.getenv(configuration.ENV_TOKEN_NAME),
+            "1", "1", "1", "1", "",
+        ]
+        with (patch('linodecli.configuration.input', side_effects=answers),
+        patch.dict(os.environ, {}),
+        requests_mock.Mocker() as m):
+            m.get(f'{self.base_url}', json= {})
+            conf.configure()
