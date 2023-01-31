@@ -9,11 +9,10 @@ import argparse
 import contextlib
 
 import unittest
-from unittest.mock import patch, mock_open
+from unittest.mock import call, patch, mock_open
 import requests_mock
 
 from linodecli import configuration
-from linodecli.configuration.helpers import _get_config
 
 class ConfigurationTests(unittest.TestCase):
     """
@@ -209,25 +208,28 @@ authorized_users = cli-dev2"""
         """
         conf = self._build_test_config()
 
-        expected = "newvalue"
-        conf.config.set("cli-dev", "type", expected)
-        with patch('linodecli.configuration.open', mock_open()):
+        conf.config.set("cli-dev", "type", "newvalue")
+        m = mock_open()
+        with patch('builtins.open', m):
             conf.write_config()
-        # TODO: fix this to retrieve from the mocked file
-        actual = _get_config().get("cli-dev", "type")
-        self.assertEqual(actual, expected)
+        self.assertIn(call("type = newvalue\n"), m().write.call_args_list)
 
-    @patch('builtins.input')
-    def test_configure_no_default_terminal(self, m_input):
+    def test_configure_no_default_terminal(self):
         """
         Test CLIConfig.configure() with
         no default user, no environment variables, and no browser
         """
         conf = configuration.CLIConfig(self.base_url, skip_config=True)
 
-        token = os.getenv(configuration.ENV_TOKEN_NAME)
-        m_input.side_effects = [token, "1", "1", "1", "1"]
+        def mock_input(prompt):
+            answers = (a for a in ["1", "1", "1", "1"])
+            if 'token' in prompt.lower():
+                return "test-token"
+            return next(answers)
+
         with (patch('linodecli.configuration.open', mock_open()),
+                patch('builtins.input', mock_input),
+                contextlib.redirect_stdout(io.StringIO()),
                 patch.dict(os.environ, {}), requests_mock.Mocker() as m):
             m.get(f'{self.base_url}/profile', json= {"username": "cli-dev"})
             m.get(f'{self.base_url}/profile/grants', status_code=204)
@@ -237,3 +239,42 @@ authorized_users = cli-dev2"""
             m.get(f'{self.base_url}/account/users',
                   json= {"data":[{"username": "cli-dev", "ssh_keys": "testkey"}]})
             conf.configure()
+
+        self.assertEqual(conf.get_value('type'), 'test-type')
+        self.assertEqual(conf.get_value('token'), 'test-token')
+        self.assertEqual(conf.get_value('image'), 'test-image')
+        self.assertEqual(conf.get_value('region'), 'test-region')
+        self.assertEqual(conf.get_value('authorized_users'), 'cli-dev')
+
+    def test_configure_default_terminal(self):
+        """
+        Test CLIConfig.configure() with
+        a default user, token in environment, and no browser
+        """
+        conf = configuration.CLIConfig(self.base_url, skip_config=True)
+
+        def mock_input(prompt):
+            if not prompt:
+                return None
+            answers = (a for a in ["1", "1", "1", "1"])
+            return next(answers)
+
+        with (patch('linodecli.configuration.open', mock_open()),
+                patch('builtins.input', mock_input),
+                contextlib.redirect_stdout(io.StringIO()),
+                patch.dict(os.environ, {"LINODE_CLI_TOKEN": "test-token"}),
+                requests_mock.Mocker() as m):
+            m.get(f'{self.base_url}/profile', json= {"username": "cli-dev"})
+            m.get(f'{self.base_url}/profile/grants', status_code=204)
+            m.get(f'{self.base_url}/regions', json= {"data":[{"id": "test-region"}]})
+            m.get(f'{self.base_url}/linode/types', json= {"data":[{"id": "test-type"}]})
+            m.get(f'{self.base_url}/images', json= {"data":[{"id": "test-image"}]})
+            m.get(f'{self.base_url}/account/users',
+                  json= {"data":[{"username": "cli-dev", "ssh_keys": "testkey"}]})
+            conf.configure()
+
+        self.assertEqual(conf.get_value('type'), 'test-type')
+        self.assertEqual(conf.get_value('image'), 'test-image')
+        self.assertEqual(conf.get_value('region'), 'test-region')
+        self.assertEqual(conf.get_value('authorized_users'), 'cli-dev')
+        self.assertEqual(conf.config.get('DEFAULT', 'default-user'), 'DEFAULT')

@@ -377,8 +377,6 @@ If you prefer to supply a Personal Access Token, use `linode-cli configure --tok
 
         for k, v in config.items():
             if v:
-                print(k)
-                print(v)
                 self.config.set(username, k, v)
 
         self.write_config()
