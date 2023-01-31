@@ -20,7 +20,7 @@ class OutputMode(Enum):
     markdown = 4
 
 
-class OutputHandler:  # pylint: disable=too-few-public-methods
+class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance-attributes
     """
     Handles formatting the output of commands used in Linode CLI
     """
@@ -189,7 +189,10 @@ class OutputHandler:  # pylint: disable=too-few-public-methods
         """
         content = self._build_output_content(
             data, columns,
-            value_transform=lambda attr, v: self._attempt_truncate_value(attr.render_value(v, colorize=False)))
+            value_transform=lambda attr, v: self._attempt_truncate_value(
+                attr.render_value(v, colorize=False)
+            )
+        )
 
         if header:
             print("| " + " | ".join([str(c) for c in header]) + " |", file=to)
