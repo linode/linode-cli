@@ -442,23 +442,11 @@ class CLI:  # pylint: disable=too-many-instance-attributes
         action
         """
 
-        if command not in self.ops:
-            print(f"Command not found: {command}")
+        try:
+            operation = self._find_operation(command, action)
+        except ValueError as e:
+            print(e, file=sys.stderr)
             sys.exit(1)
-
-        operation = self.ops[command][action] if action in self.ops[command] else None
-
-        if operation is None:
-            # Find the matching alias
-            for op in self.ops[command].values():
-                if action in op.action_aliases:
-                    operation = op
-                    break
-
-            # Fail if no matching alias was found
-            if operation is None:
-                print(f"No action {action} for command {command}")
-                sys.exit(1)
 
         result = do_request(self, operation, args)
 
@@ -501,3 +489,23 @@ class CLI:  # pylint: disable=too-many-instance-attributes
         )
 
         return result.status_code, result.json()
+
+    def _find_operation(self, command, action):
+        """
+        Finds the corresponding operation for the given command and action.
+        """
+        if command not in self.ops:
+            raise ValueError(f"Command not found: {command}")
+
+        command_dict = self.ops[command]
+
+        if action in command_dict:
+            return command_dict[action]
+
+        # Find the matching alias
+        for op in self.ops[command].values():
+            if action in op.action_aliases:
+                return op
+
+        # Fail if no matching alias was found
+        raise ValueError(f"No action {action} for command {command}")
