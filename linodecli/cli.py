@@ -443,7 +443,7 @@ class CLI:  # pylint: disable=too-many-instance-attributes
         """
 
         try:
-            operation = self._find_operation(command, action)
+            operation = self.find_operation(command, action)
         except ValueError as e:
             print(e, file=sys.stderr)
             sys.exit(1)
@@ -490,7 +490,7 @@ class CLI:  # pylint: disable=too-many-instance-attributes
 
         return result.status_code, result.json()
 
-    def _find_operation(self, command, action):
+    def find_operation(self, command, action):
         """
         Finds the corresponding operation for the given command and action.
         """

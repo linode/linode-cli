@@ -34,14 +34,14 @@ class TestCLI:
             },
         }
 
-        assert mock_cli._find_operation("foo", "list") == target_operation
-        assert mock_cli._find_operation("foo", "ls") == target_operation
-        assert mock_cli._find_operation("cool", "list") == other_operation
-        assert mock_cli._find_operation("cool", "ls") == other_operation
+        assert mock_cli.find_operation("foo", "list") == target_operation
+        assert mock_cli.find_operation("foo", "ls") == target_operation
+        assert mock_cli.find_operation("cool", "list") == other_operation
+        assert mock_cli.find_operation("cool", "ls") == other_operation
 
         with pytest.raises(ValueError, match=r"Command not found: *"):
-            mock_cli._find_operation("bad", "list")
+            mock_cli.find_operation("bad", "list")
 
         with pytest.raises(ValueError, match=r"No action *"):
-            mock_cli._find_operation("foo", "cool")
-            mock_cli._find_operation("cool", "cool")
+            mock_cli.find_operation("foo", "cool")
+            mock_cli.find_operation("cool", "cool")

@@ -513,7 +513,7 @@ def main():  # pylint: disable=too-many-locals,too-many-branches,too-many-statem
 
     # handle a help for an action
     try:
-        parsed_operation = cli._find_operation(parsed.command, parsed.action)
+        parsed_operation = cli.find_operation(parsed.command, parsed.action)
     except ValueError:
         # No operation was found
         parsed_operation = None
