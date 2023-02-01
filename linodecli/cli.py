@@ -503,7 +503,7 @@ class CLI:  # pylint: disable=too-many-instance-attributes
             return command_dict[action]
 
         # Find the matching alias
-        for op in self.ops[command].values():
+        for op in command_dict.values():
             if action in op.action_aliases:
                 return op
 
