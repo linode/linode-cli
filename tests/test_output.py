@@ -1,6 +1,7 @@
 import contextlib
 import copy
 import io
+import sys
 
 from terminaltables import SingleTable
 
@@ -292,3 +293,96 @@ class TestOutputHandler:
         )
 
         assert '[{"foo": "blah", "bar": "blah2"}]' in output.getvalue()
+
+    def test_truncation(self, mock_cli):
+        stderr_buf = io.StringIO()
+        test_str = "x" * 80
+        test_str_truncated = f"{'x' * 64}..."
+
+        with contextlib.redirect_stderr(stderr_buf):
+            result = mock_cli.output_handler._attempt_truncate_value(test_str)
+
+        assert "truncation" in stderr_buf.getvalue()
+        assert result == test_str_truncated
+
+        # --suppress-warnings
+        # Faster than flushing apparently
+        stderr_buf = io.StringIO()
+        mock_cli.output_handler.suppress_warnings = True
+
+        with contextlib.redirect_stderr(stderr_buf):
+            result = mock_cli.output_handler._attempt_truncate_value(test_str)
+
+        assert "truncation" not in stderr_buf
+        assert result == test_str_truncated
+
+        # --no-truncation
+        mock_cli.output_handler.disable_truncation = True
+
+        result = mock_cli.output_handler._attempt_truncate_value(test_str)
+
+        assert result == test_str
+
+    def test_truncated_table(self, mock_cli):
+        output = io.StringIO()
+
+        test_str = "x" * 80
+        test_str_truncated = f"{'x' * 64}..."
+
+        header = ["h1"]
+        data = [
+            {
+                "cool": test_str,
+            },
+        ]
+        columns = [
+            ModelAttr(
+                "cool",
+                True,
+                True,
+                "string"
+            )
+        ]
+
+        mock_cli.output_handler._table_output(
+            header, data, columns, "cool table", output
+        )
+
+        data[0]["cool"] = test_str_truncated
+
+        mock_table = io.StringIO()
+        tab = SingleTable([["h1"], [test_str_truncated]])
+        tab.title = "cool table"
+        print(tab.table, file=mock_table)
+
+        assert output.getvalue() == mock_table.getvalue()
+
+    def test_truncated_markdown(self, mock_cli):
+        test_str = "x" * 80
+        test_str_truncated = f"{'x' * 64}..."
+
+        output = io.StringIO()
+
+        header = ["very cool header"]
+        data = [
+            {
+                "cool": test_str,
+            },
+        ]
+        columns = [
+            ModelAttr(
+                "cool",
+                True,
+                True,
+                "string"
+            )
+        ]
+
+        output_handler = mock_cli.output_handler
+
+        output_handler._markdown_output(header, data, columns, output)
+
+        assert output.getvalue() == \
+               "| very cool header |\n" \
+               "|---|\n" \
+               f"| {test_str_truncated} |\n"
