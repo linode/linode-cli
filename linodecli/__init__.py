@@ -28,7 +28,7 @@ try:
     VERSION = pkg_resources.require("linode-cli")[0].version
 except:
     VERSION = "building"
-BASE_URL = "https://api.linode.com/v4"
+BASE_URL = os.getenv("LINODE_CLI_API_URL", "https://api.linode.com/v4")
 
 
 # if any of these arguments are given, we don't need to prompt for configuration

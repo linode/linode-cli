@@ -5,9 +5,13 @@ Classes related to OpenAPI-defined operations and their arguments and parameters
 import argparse
 import glob
 import json
+import os
 import platform
 from getpass import getpass
 from os import environ, path
+
+
+ENV_API_URL_OVERRIDE = "LINODE_CLI_API_URL"
 
 
 def parse_boolean(value):
@@ -183,7 +187,7 @@ class CLIOperation:  # pylint: disable=too-many-instance-attributes
         """
         Returns the full URL for this resource based on servers and endpoint
         """
-        base_url = self.servers[0]
+        base_url = os.getenv(ENV_API_URL_OVERRIDE, self.servers[0])
         return base_url + "/" + self._url
 
     def parse_args(
