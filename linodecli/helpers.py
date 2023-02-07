@@ -1,3 +1,7 @@
+"""
+Various helper functions shared across multiple CLI components.
+"""
+
 import os
 from urllib.parse import urlparse
 
