@@ -151,6 +151,12 @@ def main():  # pylint: disable=too-many-locals,too-many-branches,too-many-statem
         "This is useful for scripting the CLI's behavior.",
     )
     parser.add_argument(
+        "--no-truncation",
+        action="store_true",
+        default=False,
+        help="Prevent the truncation of long values in command outputs.",
+    )
+    parser.add_argument(
         "--version",
         "-v",
         action="store_true",
@@ -185,9 +191,13 @@ def main():  # pylint: disable=too-many-locals,too-many-branches,too-many-statem
 
     cli.defaults = not parsed.no_defaults
     cli.suppress_warnings = parsed.suppress_warnings
+
     cli.page = parsed.page
     cli.page_size = parsed.page_size
     cli.debug_request = parsed.debug
+
+    cli.output_handler.suppress_warnings = parsed.suppress_warnings
+    cli.output_handler.disable_truncation = parsed.no_truncation
 
     if not cli.suppress_warnings:
         warn_python2_eol()
@@ -512,42 +522,46 @@ def main():  # pylint: disable=too-many-locals,too-many-branches,too-many-statem
             sys.exit(0)
 
     # handle a help for an action
-    if parsed.command is not None and parsed.action is not None and parsed.help:
-        if parsed.command in cli.ops and parsed.action in cli.ops[parsed.command]:
-            operation = cli.ops[parsed.command][parsed.action]
-            print(f"linode-cli {parsed.command} {parsed.action}", end="")
-            for param in operation.params:
-                # clean up parameter names - we add an '_' at the end of them
-                # during baking if it conflicts with the name of an argument.
-                # Remove the trailing underscores on output (they're not
-                # important to the end user).
-                pname = param.name.upper()
-                if pname[-1] == "_":
-                    pname = pname[:-1]
-                print(f" [{pname}]", end="")
-            print()
-            print(operation.summary)
-            if operation.docs_url:
-                print(f"API Documentation: {operation.docs_url}")
-            print()
-            if operation.args:
-                print("Arguments:")
-                for arg in sorted(operation.args, key=lambda s: not s.required):
-                    is_required = (
-                        "(required) "
-                        if operation.method in {"post", "put"} and arg.required
-                        else ""
-                    )
-                    print(f"  --{arg.path}: {is_required}{arg.description}")
-            elif operation.method == "get" and parsed.action == "list":
-                filterable_attrs = [
-                    attr for attr in operation.response_model.attrs if attr.filterable
-                ]
+    try:
+        parsed_operation = cli.find_operation(parsed.command, parsed.action)
+    except ValueError:
+        # No operation was found
+        parsed_operation = None
 
-                if filterable_attrs:
-                    print("You may filter results with:")
-                    for attr in filterable_attrs:
-                        print(f"  --{attr.name}")
+    if parsed_operation is not None and parsed.help:
+        print(f"linode-cli {parsed.command} {parsed.action}", end="")
+        for param in parsed_operation.params:
+            # clean up parameter names - we add an '_' at the end of them
+            # during baking if it conflicts with the name of an argument.
+            # Remove the trailing underscores on output (they're not
+            # important to the end user).
+            pname = param.name.upper()
+            if pname[-1] == "_":
+                pname = pname[:-1]
+            print(f" [{pname}]", end="")
+        print()
+        print(parsed_operation.summary)
+        if parsed_operation.docs_url:
+            print(f"API Documentation: {parsed_operation.docs_url}")
+        print()
+        if parsed_operation.args:
+            print("Arguments:")
+            for arg in sorted(parsed_operation.args, key=lambda s: not s.required):
+                is_required = (
+                    "(required) "
+                    if parsed_operation.method in {"post", "put"} and arg.required
+                    else ""
+                )
+                print(f"  --{arg.path}: {is_required}{arg.description}")
+        elif parsed_operation.method == "get" and parsed_operation.action == "list":
+            filterable_attrs = [
+                attr for attr in parsed_operation.response_model.attrs if attr.filterable
+            ]
+
+            if filterable_attrs:
+                print("You may filter results with:")
+                for attr in filterable_attrs:
+                    print(f"  --{attr.name}")
         sys.exit(0)
 
     if parsed.command is not None and parsed.action is not None:

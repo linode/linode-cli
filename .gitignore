@@ -12,3 +12,4 @@ Pipfile*
 test/.env
 .tmp*
 MANIFEST
+venv

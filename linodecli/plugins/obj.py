@@ -345,8 +345,7 @@ def _do_multipart_upload(
                             time.sleep(retry_delay)
                             continue
                         raise
-                    else:
-                        break
+                    break
     except Exception:
         print("Upload failed!  Cleaning up!")
         upload.cancel_upload()
