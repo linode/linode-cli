@@ -37,5 +37,5 @@ setup() {
     run linode-cli linodes ls
 
     assert_failure
-    assert_output --partial "ssh"
+    assert_output --partial "ssh://"
 }
