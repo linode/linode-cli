@@ -35,3 +35,4 @@ setup() {
     assert_output --partial "You may filter results with:"
     assert_output --partial "--tags"
 }
+
