@@ -775,6 +775,9 @@ COMMAND_MAP = {
 
 
 def print_help(parser: ArgumentParser):
+    """
+    Print out the help info to the standard output.
+    """
     parser.print_help()
 
     # additional help
@@ -799,6 +802,9 @@ def print_help(parser: ArgumentParser):
 
 
 def get_obj_args_parser():
+    """
+    Initialize and return the argument parser for the obj plug-in.
+    """
     parser = ArgumentParser(PLUGIN_BASE, add_help=False)
     parser.add_argument(
         "command",
