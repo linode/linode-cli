@@ -773,6 +773,7 @@ COMMAND_MAP = {
     #'info': get_info,
 }
 
+
 def print_help(parser: ArgumentParser):
     parser.print_help()
 
@@ -814,7 +815,10 @@ def get_obj_args_parser():
     )
     return parser
 
-def call(args: List[str], context: PluginContext):  # pylint: disable=too-many-branches,too-many-statements
+
+def call(
+    args: List[str], context: PluginContext
+):  # pylint: disable=too-many-branches,too-many-statements
     """
     This is called when the plugin is invoked
     """
@@ -829,7 +833,6 @@ def call(args: List[str], context: PluginContext):  # pylint: disable=too-many-b
 
         sys.exit(2)  # requirements not met - we can't go on
 
-    
     parser = get_obj_args_parser()
     parsed, args = parser.parse_known_args(args)
 
