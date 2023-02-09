@@ -6,7 +6,6 @@ import pytest
 from terminaltables import SingleTable
 
 from linodecli import api_request, ModelAttr, ResponseModel, OutputMode
-from tests.test_populators import mock_cli, create_operation, list_operation, make_test_operation
 
 
 class TestCLI:

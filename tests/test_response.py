@@ -6,7 +6,6 @@ from terminaltables import SingleTable
 
 from linodecli import api_request, ModelAttr, ResponseModel, OutputMode
 from linodecli.response import colorize_string
-from tests.test_populators import mock_cli, create_operation, list_operation
 
 
 class TestOutputHandler:
