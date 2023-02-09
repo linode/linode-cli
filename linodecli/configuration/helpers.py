@@ -63,27 +63,22 @@ def _get_config(load=True):
 
 def _check_browsers():
     # let's see if we _can_ use web
-    result = True
     try:
         webbrowser.get()
     except webbrowser.Error:
         # there are no browsers installed
-        result = False
+        return False
 
-    if (
-        result
-        # pylint: disable-next=protected-access
-        and not KNOWN_GOOD_BROWSERS.intersection(webbrowser._tryorder)
-    ):
+    # pylint: disable-next=protected-access
+    if not KNOWN_GOOD_BROWSERS.intersection(webbrowser._tryorder):
         print("""
 This tool defaults to web-based authentication,
 however no known-working browsers were found.""")
         while True:
             r = input("Try it anyway? [y/N]: ")
             if r.lower() in "yn ":
-                result = r.lower() == "y"
-                break
-    return result
+                return r.lower() == "y"
+    return True
 
 def _default_thing_input(
     ask, things, prompt, error, optional=True
