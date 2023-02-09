@@ -22,19 +22,21 @@ from .operation import CLIArg, CLIOperation, URLParam
 from .output import OutputMode
 from .response import ModelAttr, ResponseModel
 from .completion import bake_completions, get_completions
+from .helpers import handle_url_overrides
 
 # this might not be installed at the time of building
 try:
     VERSION = pkg_resources.require("linode-cli")[0].version
 except:
     VERSION = "building"
+
 BASE_URL = "https://api.linode.com/v4"
 
 
 # if any of these arguments are given, we don't need to prompt for configuration
 skip_config = any(c in argv for c in ["--skip-config", "--help", "--version"])
 
-cli = CLI(VERSION, BASE_URL, skip_config=skip_config)
+cli = CLI(VERSION, handle_url_overrides(BASE_URL), skip_config=skip_config)
 
 
 def warn_python2_eol():

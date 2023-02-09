@@ -9,6 +9,8 @@ import platform
 from getpass import getpass
 from os import environ, path
 
+from linodecli.helpers import handle_url_overrides
+
 
 def parse_boolean(value):
     """
@@ -183,7 +185,8 @@ class CLIOperation:  # pylint: disable=too-many-instance-attributes
         """
         Returns the full URL for this resource based on servers and endpoint
         """
-        base_url = self.servers[0]
+        base_url = handle_url_overrides(self.servers[0])
+
         return base_url + "/" + self._url
 
     def parse_args(
