@@ -41,3 +41,15 @@ clean:
 test:
 	pytest tests
 	python -m unittest tests/*.py
+
+
+black:
+	black linodecli tests
+
+isort:
+	isort linodecli tests
+
+autoflake:
+	autoflake linodecli tests
+
+format: black isort autoflake
