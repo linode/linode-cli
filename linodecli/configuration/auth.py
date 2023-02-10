@@ -2,7 +2,6 @@
 Helper functions for configuration related to auth
 """
 
-import os
 import re
 import socket
 import sys
