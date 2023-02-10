@@ -830,11 +830,9 @@ def call(
     """
     if not HAS_BOTO:
         # we can't do anything - ask for an install
-        pip_version = "pip3" if sys.version[0] == 3 else "pip"
-
         print(
             "This plugin requires the 'boto' module.  Please install it by running "
-            f"'{pip_version} install boto'"
+            "'pip3 install boto' or 'pip install boto'"
         )
 
         sys.exit(2)  # requirements not met - we can't go on
