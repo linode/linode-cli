@@ -1,7 +1,5 @@
 import configparser
-import inspect
 import sys
-from functools import wraps
 
 import pytest
 

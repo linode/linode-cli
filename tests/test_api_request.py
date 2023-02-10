@@ -12,7 +12,6 @@ from unittest.mock import patch, Mock
 import requests
 
 from linodecli import api_request
-from tests.test_populators import mock_cli, create_operation, list_operation
 
 
 class TestAPIRequest:
