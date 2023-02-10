@@ -5,10 +5,10 @@ Plugin for CLI for editing firewalls
 import argparse
 import json
 import re
-import termios
 import sys
+import termios
+from ipaddress import IPv4Address, ip_address
 from typing import Callable
-from ipaddress import ip_address, IPv4Address
 
 from terminaltables import PorcelainTable
 
@@ -101,7 +101,9 @@ class InputValidation:
 
             value_int = int(value)
 
-            if value_int < 0 or value_int >= len(ref_list) + (1 if allow_append else 0):
+            if value_int < 0 or value_int >= len(ref_list) + (
+                1 if allow_append else 0
+            ):
                 raise ValueError(f"Invalid index {value_int}")
 
         return callback
@@ -127,7 +129,9 @@ class InputValidation:
         """
 
         def callback(value):
-            if value.lower() not in [choice.lower() for choice in valid_choices]:
+            if value.lower() not in [
+                choice.lower() for choice in valid_choices
+            ]:
                 raise ValueError(
                     f"Invalid choice: {value}; must be one "
                     f"of {', '.join(valid_choices)}"
@@ -154,7 +158,9 @@ class InputValidation:
                     )
 
                 if not ip_parts[1].isnumeric():
-                    raise ValueError(f"Invalid IP: {ip}; IP masks must be numeric")
+                    raise ValueError(
+                        f"Invalid IP: {ip}; IP masks must be numeric"
+                    )
 
                 try:
                     ip_address(ip_parts[0])
@@ -188,13 +194,17 @@ def _get_firewall(firewall_id, client):
     """
     Returns the firewall object with the given ID
     """
-    code, firewall = client.call_operation("firewalls", "view", args=[firewall_id])
+    code, firewall = client.call_operation(
+        "firewalls", "view", args=[firewall_id]
+    )
 
     if code != 200:
         print(f"Error retrieving firewall: {code}")
         sys.exit(1)
 
-    code, rules = client.call_operation("firewalls", "rules-list", args=[firewall_id])
+    code, rules = client.call_operation(
+        "firewalls", "rules-list", args=[firewall_id]
+    )
 
     if code != 200:
         print(f"Error retrieving firewall rules: {code}")
@@ -436,7 +446,8 @@ def remove_rule(rules):
         return False
 
     ind_str = InputValidation.input(
-        "Index to remove: ", InputValidation.optional(InputValidation.index_of(change))
+        "Index to remove: ",
+        InputValidation.optional(InputValidation.index_of(change)),
     ).strip()
 
     # No changes to be made
@@ -457,14 +468,16 @@ def swap_rules(rules):
     change = InputValidation.input_io(rules)
 
     a_str = InputValidation.input(
-        "Swap index: ", InputValidation.optional(InputValidation.index_of(change))
+        "Swap index: ",
+        InputValidation.optional(InputValidation.index_of(change)),
     ).strip()
 
     if a_str == "":
         return False
 
     b_str = InputValidation.input(
-        "With index: ", InputValidation.optional(InputValidation.index_of(change))
+        "With index: ",
+        InputValidation.optional(InputValidation.index_of(change)),
     ).strip()
 
     if b_str == "":
@@ -483,7 +496,9 @@ def toggle_policy(policy_key):
     """
 
     def callback(rules):
-        rules[policy_key] = "DROP" if rules[policy_key] == "ACCEPT" else "ACCEPT"
+        rules[policy_key] = (
+            "DROP" if rules[policy_key] == "ACCEPT" else "ACCEPT"
+        )
 
         return True
 

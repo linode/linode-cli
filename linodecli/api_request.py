@@ -4,11 +4,12 @@ This module is responsible for handling HTTP requests to the Linode API.
 
 import json
 import sys
-from distutils.version import \
-    StrictVersion, LooseVersion  # pylint: disable=deprecated-module
-from typing import Optional
-
+from distutils.version import (  # pylint: disable=deprecated-module
+    LooseVersion,
+    StrictVersion,
+)
 from sys import version_info
+from typing import Optional
 
 import requests
 
@@ -16,7 +17,7 @@ PIP_CMD = "pip3"
 
 
 def do_request(
-        ctx, operation, args, filter_header=None, skip_error_handling=False
+    ctx, operation, args, filter_header=None, skip_error_handling=False
 ):  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
     """
     Makes a request to an operation's URL and returns the resulting JSON, or
@@ -38,7 +39,9 @@ def do_request(
 
     body = _build_request_body(ctx, operation, parsed_args)
 
-    filter_header = _build_filter_header(operation, parsed_args, filter_header=filter_header)
+    filter_header = _build_filter_header(
+        operation, parsed_args, filter_header=filter_header
+    )
     if filter_header is not None:
         headers["X-Filter"] = filter_header
 
@@ -60,7 +63,9 @@ def do_request(
     return result
 
 
-def _build_filter_header(operation, parsed_args, filter_header=None) -> Optional[str]:
+def _build_filter_header(
+    operation, parsed_args, filter_header=None
+) -> Optional[str]:
     if operation.method != "get":
         # Non-GET operations don't support filters
         return None
@@ -100,9 +105,7 @@ def _build_request_body(ctx, operation, parsed_args) -> Optional[str]:
 
     # Merge defaults into body if applicable
     if ctx.defaults:
-        parsed_args = ctx.config.update(
-            parsed_args, operation.allowed_defaults
-        )
+        parsed_args = ctx.config.update(parsed_args, operation.allowed_defaults)
 
     to_json = {k: v for k, v in vars(parsed_args).items() if v is not None}
 
@@ -165,12 +168,12 @@ def _attempt_warn_old_version(ctx, result):
             # Get only the Major/Minor version of the API Spec and CLI Spec,
             # ignore patch version differences
             spec_major_minor_version = (
-                    spec_version.split(".")[0] + "." + spec_version.split(".")[1]
+                spec_version.split(".")[0] + "." + spec_version.split(".")[1]
             )
             current_major_minor_version = (
-                    ctx.spec_version.split(".")[0]
-                    + "."
-                    + ctx.spec_version.split(".")[1]
+                ctx.spec_version.split(".")[0]
+                + "."
+                + ctx.spec_version.split(".")[1]
             )
         except ValueError:
             # If versions are non-standard like, "DEVELOPMENT" use them and don't complain.
@@ -179,7 +182,7 @@ def _attempt_warn_old_version(ctx, result):
 
         try:
             if LooseVersion(spec_major_minor_version) > LooseVersion(
-                    current_major_minor_version
+                current_major_minor_version
             ):
                 api_version_higher = True
         except:
@@ -244,6 +247,10 @@ def _handle_error(ctx, response):
             for error in resp_json["errors"]
         ]
         ctx.output_handler.print(
-            None, data, title="errors", to=sys.stderr, columns=["field", "reason"]
+            None,
+            data,
+            title="errors",
+            to=sys.stderr,
+            columns=["field", "reason"],
         )
     sys.exit(1)

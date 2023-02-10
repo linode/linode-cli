@@ -3,22 +3,22 @@ Handles configuring the cli, as well as loading configs so that they can be
 used elsewhere.
 """
 
+import argparse
 import os
 import sys
-import argparse
 import webbrowser
 
 from .auth import (
-    _get_token_web,
     _check_full_access,
     _do_get_request,
     _get_token_terminal,
+    _get_token_web,
 )
 from .helpers import (
     _default_thing_input,
     _get_config,
     _get_config_path,
-    _handle_no_default_user
+    _handle_no_default_user,
 )
 
 ENV_TOKEN_NAME = "LINODE_CLI_TOKEN"
@@ -37,6 +37,7 @@ KNOWN_GOOD_BROWSERS = {
     "chromium-browser",
     "epiphany",
 }
+
 
 class CLIConfig:
     """
@@ -108,7 +109,9 @@ class CLIConfig:
             if k in ns_dict and ns_dict[k] is None:
                 warn_dict[k] = new_dict[k]
                 ns_dict[k] = new_dict[k]
-        if not any(x in ["--suppress-warnings", "--no-headers"] for x in sys.argv):
+        if not any(
+            x in ["--suppress-warnings", "--no-headers"] for x in sys.argv
+        ):
             print(
                 f"using default values: {warn_dict}, use --no-defaults flag to disable defaults"
             )
@@ -159,8 +162,12 @@ class CLIConfig:
         if self.used_env_token:
             return os.environ.get(ENV_TOKEN_NAME, None)
 
-        if self.config.has_option(self.username or self.default_username(), "token"):
-            return self.config.get(self.username or self.default_username(), "token")
+        if self.config.has_option(
+            self.username or self.default_username(), "token"
+        ):
+            return self.config.get(
+                self.username or self.default_username(), "token"
+            )
         return ""
 
     def remove_user(self, username):
@@ -245,7 +252,9 @@ class CLIConfig:
         :type value: any
         """
         if self.running_plugin is None:
-            raise RuntimeError("No running plugin to retrieve configuration for!")
+            raise RuntimeError(
+                "No running plugin to retrieve configuration for!"
+            )
 
         username = self.username or self.default_username()
         self.config.set(username, f"plugin-{self.running_plugin}-{key}", value)
@@ -265,7 +274,9 @@ class CLIConfig:
         :rtype: any
         """
         if self.running_plugin is None:
-            raise RuntimeError("No running plugin to retrieve configuration for!")
+            raise RuntimeError(
+                "No running plugin to retrieve configuration for!"
+            )
 
         username = self.username or self.default_username()
         full_key = f"plugin-{self.running_plugin}-{key}"
@@ -297,8 +308,9 @@ class CLIConfig:
         if not silent:
             print(f"\nConfig written to {_get_config_path()}")
 
-
-    def configure(self):  # pylint: disable=too-many-branches,too-many-statements
+    def configure(
+        self,
+    ):  # pylint: disable=too-many-branches,too-many-statements
         """
         This assumes we're running interactively, and prompts the user
         for a series of defaults in order to make future CLI calls
@@ -376,9 +388,16 @@ Note that no token will be saved in your configuration file.
         print(f"Configuring {username}")
         print()
 
-        regions = [r["id"] for r in _do_get_request(self.base_url, "/regions")["data"]]
-        types = [t["id"] for t in _do_get_request(self.base_url, "/linode/types")["data"]]
-        images = [i["id"] for i in _do_get_request(self.base_url, "/images")["data"]]
+        regions = [
+            r["id"] for r in _do_get_request(self.base_url, "/regions")["data"]
+        ]
+        types = [
+            t["id"]
+            for t in _do_get_request(self.base_url, "/linode/types")["data"]
+        ]
+        images = [
+            i["id"] for i in _do_get_request(self.base_url, "/images")["data"]
+        ]
 
         is_full_access = _check_full_access(self.base_url, token)
 
@@ -388,7 +407,10 @@ Note that no token will be saved in your configuration file.
             auth_users = [
                 u["username"]
                 for u in _do_get_request(
-                    self.base_url, "/account/users", exit_on_error=False, token=token
+                    self.base_url,
+                    "/account/users",
+                    exit_on_error=False,
+                    token=token,
                 )["data"]
                 if "ssh_keys" in u
             ]

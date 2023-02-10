@@ -4,8 +4,8 @@ Helper functions for configuration related to auth
 
 import os
 import re
-import sys
 import socket
+import sys
 import webbrowser
 from http import server
 
@@ -26,6 +26,7 @@ r.send();
 </script>
 """
 
+
 def _handle_response_status(response, exit_on_error=None):
     if 199 < response.status_code < 300:
         return
@@ -34,14 +35,20 @@ def _handle_response_status(response, exit_on_error=None):
     if exit_on_error:
         sys.exit(4)
 
+
 # TODO: merge config do_request and cli do_request
 def _do_get_request(base_url, url, token=None, exit_on_error=True):
     """
     Does helper get requests during configuration
     """
-    return _do_request(base_url, requests.get, url, token=token, exit_on_error=exit_on_error)
+    return _do_request(
+        base_url, requests.get, url, token=token, exit_on_error=exit_on_error
+    )
 
-def _do_request(base_url, method, url, token=None, exit_on_error=None, body=None):  # pylint: disable=too-many-arguments
+
+def _do_request(
+    base_url, method, url, token=None, exit_on_error=None, body=None
+):  # pylint: disable=too-many-arguments
     """
     Does helper requests during configuration
     """
@@ -57,17 +64,21 @@ def _do_request(base_url, method, url, token=None, exit_on_error=None, body=None
 
     return result.json()
 
+
 def _check_full_access(base_url, token):
     headers = {
         "Authorization": f"Bearer {token}",
         "Content-Type": "application/json",
     }
 
-    result = requests.get(base_url + "/profile/grants", headers=headers, timeout=120)
+    result = requests.get(
+        base_url + "/profile/grants", headers=headers, timeout=120
+    )
 
     _handle_response_status(result, exit_on_error=True)
 
     return result.status_code == 204
+
 
 def _username_for_token(base_url, token):
     """
@@ -81,6 +92,7 @@ def _username_for_token(base_url, token):
         return None
 
     return u["username"]
+
 
 def _get_token_terminal(base_url):
     """
@@ -103,6 +115,7 @@ on your account to work correctly."""
             break
 
     return username, token
+
 
 def _get_token_web(base_url):
     """
@@ -179,9 +192,9 @@ def _handle_oauth_callback():
             # TODO: Clean up this page and make it look nice
             self.wfile.write(
                 bytes(
-                    landing_page.format(port=self.server.server_address[1]).encode(
-                        "utf-8"
-                    )
+                    landing_page.format(
+                        port=self.server.server_address[1]
+                    ).encode("utf-8")
                 )
             )
 

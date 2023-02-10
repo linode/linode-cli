@@ -17,7 +17,10 @@ LEGACY_CONFIG_NAME = ".linode-cli"
 LEGACY_CONFIG_DIR = os.path.expanduser("~")
 
 CONFIG_NAME = "linode-cli"
-CONFIG_DIR = os.environ.get("XDG_CONFIG_HOME", f"{os.path.expanduser('~')}/.config")
+CONFIG_DIR = os.environ.get(
+    "XDG_CONFIG_HOME", f"{os.path.expanduser('~')}/.config"
+)
+
 
 def _get_config_path():
     """
@@ -28,6 +31,7 @@ def _get_config_path():
         return path
 
     return f"{CONFIG_DIR}/{CONFIG_NAME}"
+
 
 def _get_config(load=True):
     """
@@ -44,6 +48,7 @@ def _get_config(load=True):
         conf.read(_get_config_path())
 
     return conf
+
 
 def _default_thing_input(
     ask, things, prompt, error, optional=True
@@ -79,6 +84,7 @@ def _default_thing_input(
             print(error)
     return ret
 
+
 def _handle_no_default_user(self):
     """
     Handle the case that there is no default user in the config
@@ -97,7 +103,9 @@ def _handle_no_default_user(self):
 
         if token is not None:
             # there's a token in the config - configure that user
-            u = _do_get_request(self.base_url, "/profile", token=token, exit_on_error=False)
+            u = _do_get_request(
+                self.base_url, "/profile", token=token, exit_on_error=False
+            )
 
             if "errors" in u:
                 # this token was bad - reconfigure
@@ -113,8 +121,12 @@ def _handle_no_default_user(self):
             self.config.set(
                 username, "region", self.config.get("DEFAULT", "region")
             )
-            self.config.set(username, "type", self.config.get("DEFAULT", "type"))
-            self.config.set(username, "image", self.config.get("DEFAULT", "image"))
+            self.config.set(
+                username, "type", self.config.get("DEFAULT", "type")
+            )
+            self.config.set(
+                username, "image", self.config.get("DEFAULT", "image")
+            )
             self.config.set(
                 username,
                 "authorized_keys",

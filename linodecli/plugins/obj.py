@@ -132,7 +132,11 @@ def list_objects_or_buckets(get_client, args):
                 size = c.size
 
             # pylint: disable-next=redefined-outer-name
-            datetime = _convert_datetime(c.last_modified) if size != "DIR" else " " * 16
+            datetime = (
+                _convert_datetime(c.last_modified)
+                if size != "DIR"
+                else " " * 16
+            )
 
             data.append([datetime, size, c.name])
 
@@ -160,7 +164,10 @@ def create_bucket(get_client, args):
     parser = argparse.ArgumentParser(PLUGIN_BASE + " mb")
 
     parser.add_argument(
-        "name", metavar="NAME", type=str, help="The name of the bucket to create."
+        "name",
+        metavar="NAME",
+        type=str,
+        help="The name of the bucket to create.",
     )
 
     parsed = parser.parse_args(args)
@@ -179,7 +186,10 @@ def delete_bucket(get_client, args):
     parser = argparse.ArgumentParser(PLUGIN_BASE + " rb")
 
     parser.add_argument(
-        "name", metavar="NAME", type=str, help="The name of the bucket to remove."
+        "name",
+        metavar="NAME",
+        type=str,
+        help="The name of the bucket to remove.",
     )
     parser.add_argument(
         "--recursive",
@@ -220,12 +230,16 @@ def upload_object(get_client, args):  # pylint: disable=too-many-locals
         "file", metavar="FILE", type=str, nargs="+", help="The files to upload."
     )
     parser.add_argument(
-        "bucket", metavar="BUCKET", type=str, help="The bucket to put a file in."
+        "bucket",
+        metavar="BUCKET",
+        type=str,
+        help="The bucket to put a file in.",
     )
     parser.add_argument(
         "--acl-public",
         action="store_true",
-        help="If set, the new object can be downloaded without " "authentication.",
+        help="If set, the new object can be downloaded without "
+        "authentication.",
     )
     parser.add_argument(
         "--chunk-size",
@@ -288,10 +302,14 @@ def upload_object(get_client, args):  # pylint: disable=too-many-locals
         k.key = filename
 
         print(filename)
-        k.set_contents_from_filename(file_path, cb=_progress, num_cb=100, policy=policy)
+        k.set_contents_from_filename(
+            file_path, cb=_progress, num_cb=100, policy=policy
+        )
 
     for filename, file_path, file_size in to_multipart_upload:
-        _do_multipart_upload(bucket, filename, file_path, file_size, policy, chunk_size)
+        _do_multipart_upload(
+            bucket, filename, file_path, file_size, policy, chunk_size
+        )
 
     print("Done.")
 
@@ -444,7 +462,10 @@ def generate_url(get_client, args):
     parser = argparse.ArgumentParser(PLUGIN_BASE + " signurl")
 
     parser.add_argument(
-        "bucket", metavar="BUCKET", type=str, help="The bucket containing the object."
+        "bucket",
+        metavar="BUCKET",
+        type=str,
+        help="The bucket containing the object.",
     )
     parser.add_argument(
         "file", metavar="OBJECT", type=str, help="The object to sign a URL to."
@@ -511,7 +532,9 @@ def set_acl(get_client, args):
         help="If given, makes the target publicly readable.",
     )
     parser.add_argument(
-        "--acl-private", action="store_true", help="If given, makes the target private."
+        "--acl-private",
+        action="store_true",
+        help="If given, makes the target private.",
     )
 
     parsed = parser.parse_args(args)
@@ -667,7 +690,9 @@ def show_usage(get_client, args):
 
         total = _denominate(total)
 
-        tab = _borderless_table([[_pad_to(total, length=7), f"{num} objects", b.name]])
+        tab = _borderless_table(
+            [[_pad_to(total, length=7), f"{num} objects", b.name]]
+        )
         print(tab.table)
 
     if len(buckets) > 1:
@@ -769,7 +794,9 @@ COMMAND_MAP = {
 }
 
 
-def call(args, context):  # pylint: disable=too-many-branches,too-many-statements
+def call(
+    args, context
+):  # pylint: disable=too-many-branches,too-many-statements
     """
     This is called when the plugin is invoked
     """
@@ -816,7 +843,8 @@ def call(args, context):  # pylint: disable=too-many-branches,too-many-statement
         print("Available commands: ")
 
         command_help_map = [
-            [name, func.__doc__.strip()] for name, func in sorted(COMMAND_MAP.items())
+            [name, func.__doc__.strip()]
+            for name, func in sorted(COMMAND_MAP.items())
         ]
 
         tab = SingleTable(command_help_map)
@@ -1034,15 +1062,19 @@ def _configure_plugin(client):
         c["id"]
         for c in client.config._do_get_request(  # pylint: disable=protected-access
             "/object-storage/clusters", token=client.config.get_value("token")
-        )["data"]
+        )[
+            "data"
+        ]
     ]
 
-    cluster = client.config._default_thing_input(  # pylint: disable=protected-access
-        "Configure a default Cluster for operations.",
-        clusters,
-        "Default Cluster: ",
-        "Please select a valid Cluster",
-        optional=False,  # this is the only configuration right now
+    cluster = (
+        client.config._default_thing_input(  # pylint: disable=protected-access
+            "Configure a default Cluster for operations.",
+            clusters,
+            "Default Cluster: ",
+            "Please select a valid Cluster",
+            optional=False,  # this is the only configuration right now
+        )
     )
 
     client.config.plugin_set_value("cluster", cluster)
@@ -1085,10 +1117,14 @@ def _convert_datetime(datetime_str):
     """
     Given a string in INCOMING_DATE_FORMAT, returns a string in DATE_FORMAT
     """
-    return datetime.strptime(datetime_str, INCOMING_DATE_FORMAT).strftime(DATE_FORMAT)
+    return datetime.strptime(datetime_str, INCOMING_DATE_FORMAT).strftime(
+        DATE_FORMAT
+    )
 
 
-def _pad_to(val, length=10, right_align=False):  # pylint: disable=unused-argument
+def _pad_to(
+    val, length=10, right_align=False
+):  # pylint: disable=unused-argument
     """
     Pads val to be at minimum length characters long
     """

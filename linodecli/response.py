@@ -61,7 +61,13 @@ class ModelAttr:  # pylint: disable=too-many-instance-attributes
     """
 
     def __init__(  # pylint: disable=too-many-arguments
-        self, name, filterable, display, datatype, color_map=None, item_type=None
+        self,
+        name,
+        filterable,
+        display,
+        datatype,
+        color_map=None,
+        item_type=None,
     ):
         self.name = name
         self.value = None
@@ -191,7 +197,6 @@ class ResponseModel:  # pylint: disable=too-few-public-methods
                 json = [json]
 
             for cur in json:
-
                 nlist_path = cur
                 for p in path_parts:
                     nlist_path = nlist_path.get(p)
