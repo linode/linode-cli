@@ -2,7 +2,6 @@
 """
 CLI Plugin for handling OBJ
 """
-import argparse
 import getpass
 import glob
 import math
@@ -11,10 +10,16 @@ import platform
 import socket
 import sys
 import time
+from argparse import ArgumentParser, ArgumentTypeError
+from contextlib import suppress
 from datetime import datetime
 from math import ceil
+from typing import List
 
 from terminaltables import SingleTable
+
+from linodecli.cli import CLI
+from linodecli.plugins import PluginContext
 
 ENV_ACCESS_KEY_NAME = "LINODE_CLI_OBJ_ACCESS_KEY"
 ENV_SECRET_KEY_NAME = "LINODE_CLI_OBJ_SECRET_KEY"
@@ -82,9 +87,9 @@ def restricted_int_arg_type(max, min=1):  # pylint: disable=redefined-builtin
         except ValueError as e:
             # argparse can handle ValueErrors, but shows an unfriendly "invalid restricted_int
             # value: '0.1'" message, so catch and raise with a better message.
-            raise argparse.ArgumentTypeError(err_msg) from e
+            raise ArgumentTypeError(err_msg) from e
         if value < min or value > max:
-            raise argparse.ArgumentTypeError(err_msg)
+            raise ArgumentTypeError(err_msg)
         return value
 
     return restricted_int
@@ -94,7 +99,7 @@ def list_objects_or_buckets(get_client, args):
     """
     Lists buckets or objects
     """
-    parser = argparse.ArgumentParser(PLUGIN_BASE + " ls")
+    parser = ArgumentParser(PLUGIN_BASE + " ls")
 
     parser.add_argument(
         "bucket",
@@ -161,7 +166,7 @@ def create_bucket(get_client, args):
     """
     Creates a new bucket
     """
-    parser = argparse.ArgumentParser(PLUGIN_BASE + " mb")
+    parser = ArgumentParser(PLUGIN_BASE + " mb")
 
     parser.add_argument(
         "name",
@@ -183,7 +188,7 @@ def delete_bucket(get_client, args):
     """
     Deletes a bucket
     """
-    parser = argparse.ArgumentParser(PLUGIN_BASE + " rb")
+    parser = ArgumentParser(PLUGIN_BASE + " rb")
 
     parser.add_argument(
         "name",
@@ -224,7 +229,7 @@ def upload_object(get_client, args):  # pylint: disable=too-many-locals
     """
     Uploads an object to object storage
     """
-    parser = argparse.ArgumentParser(PLUGIN_BASE + " put")
+    parser = ArgumentParser(PLUGIN_BASE + " put")
 
     parser.add_argument(
         "file", metavar="FILE", type=str, nargs="+", help="The files to upload."
@@ -376,7 +381,7 @@ def get_object(get_client, args):
     """
     Retrieves an uploaded object and writes it to a file
     """
-    parser = argparse.ArgumentParser(PLUGIN_BASE + " get")
+    parser = ArgumentParser(PLUGIN_BASE + " get")
 
     parser.add_argument(
         "bucket", metavar="BUCKET", type=str, help="The bucket the file is in."
@@ -424,7 +429,7 @@ def delete_object(get_client, args):
     """
     Removes a file from a bucket
     """
-    parser = argparse.ArgumentParser(PLUGIN_BASE + " del")
+    parser = ArgumentParser(PLUGIN_BASE + " del")
 
     parser.add_argument(
         "bucket", metavar="BUCKET", type=str, help="The bucket to delete from."
@@ -459,7 +464,7 @@ def generate_url(get_client, args):
     """
     Generates a URL to an object
     """
-    parser = argparse.ArgumentParser(PLUGIN_BASE + " signurl")
+    parser = ArgumentParser(PLUGIN_BASE + " signurl")
 
     parser.add_argument(
         "bucket",
@@ -513,7 +518,7 @@ def set_acl(get_client, args):
     """
     Modify Access Control List for a Bucket or Objects
     """
-    parser = argparse.ArgumentParser(PLUGIN_BASE + " setacl")
+    parser = ArgumentParser(PLUGIN_BASE + " setacl")
 
     parser.add_argument(
         "bucket", metavar="BUCKET", type=str, help="The bucket to modify."
@@ -575,7 +580,7 @@ def enable_static_site(get_client, args):
     """
     Turns a bucket into a static website
     """
-    parser = argparse.ArgumentParser(PLUGIN_BASE + " ws-create")
+    parser = ArgumentParser(PLUGIN_BASE + " ws-create")
 
     parser.add_argument(
         "bucket",
@@ -619,7 +624,7 @@ def static_site_info(get_client, args):
     """
     Returns info about a configured static site
     """
-    parser = argparse.ArgumentParser(PLUGIN_BASE + " ws-info")
+    parser = ArgumentParser(PLUGIN_BASE + " ws-info")
 
     parser.add_argument(
         "bucket",
@@ -654,7 +659,7 @@ def show_usage(get_client, args):
     """
     Shows space used by all buckets in this cluster, and total space
     """
-    parser = argparse.ArgumentParser(PLUGIN_BASE + " du")
+    parser = ArgumentParser(PLUGIN_BASE + " du")
 
     parser.add_argument(
         "bucket",
@@ -749,7 +754,7 @@ def disable_static_site(get_client, args):
     """
     Disables static site for a bucket
     """
-    parser = argparse.ArgumentParser(PLUGIN_BASE + " du")
+    parser = ArgumentParser(PLUGIN_BASE + " du")
 
     parser.add_argument(
         "bucket",
@@ -794,24 +799,39 @@ COMMAND_MAP = {
 }
 
 
-def call(
-    args, context
-):  # pylint: disable=too-many-branches,too-many-statements
+
+def print_help(parser: ArgumentParser):
     """
-    This is called when the plugin is invoked
+    Print out the help info to the standard output.
     """
-    if not HAS_BOTO:
-        # we can't do anything - ask for an install
-        pip_version = "pip3" if sys.version[0] == 3 else "pip"
+    parser.print_help()
 
-        print(
-            "This plugin requires the 'boto' module.  Please install it by running "
-            f"'{pip_version} install boto'"
-        )
+    # additional help
+    print()
+    print("Available commands: ")
 
-        sys.exit(2)  # requirements not met - we can't go on
+    command_help_map = [
+        [name, func.__doc__.strip()] for name, func in sorted(COMMAND_MAP.items())
+    ]
 
-    parser = argparse.ArgumentParser(PLUGIN_BASE, add_help=False)
+    tab = SingleTable(command_help_map)
+    tab.inner_heading_row_border = False
+    print(tab.table)
+    print()
+    print(
+        "Additionally, you can regenerate your Object Storage keys using the "
+        "'regenerate-keys' command or configure defaults for the plugin using "
+        "the 'configure' command."
+    )
+    print()
+    print("See --help for individual commands for more information")
+
+
+def get_obj_args_parser():
+    """
+    Initialize and return the argument parser for the obj plug-in.
+    """
+    parser = ArgumentParser(PLUGIN_BASE, add_help=False)
     parser.add_argument(
         "command",
         metavar="COMMAND",
@@ -825,51 +845,44 @@ def call(
         type=str,
         help="The cluster to use for the operation",
     )
+    return parser
 
+
+def call(
+    args: List[str], context: PluginContext
+):  # pylint: disable=too-many-branches,too-many-statements
+    """
+    This is called when the plugin is invoked
+    """
+    if not HAS_BOTO:
+        # we can't do anything - ask for an install
+        print(
+            "This plugin requires the 'boto' module.  Please install it by running "
+            "'pip3 install boto' or 'pip install boto'"
+        )
+
+        sys.exit(2)  # requirements not met - we can't go on
+
+    parser = get_obj_args_parser()
     parsed, args = parser.parse_known_args(args)
 
     # don't mind --no-defaults if it's there; the top-level parser already took care of it
-    try:
+    with suppress(ValueError):
         args.remove("--no-defaults")
-    except ValueError:
-        pass
 
     if not parsed.command:
-        # show help if invoked with no command
-        parser.print_help()
-
-        # additional help
-        print()
-        print("Available commands: ")
-
-        command_help_map = [
-            [name, func.__doc__.strip()]
-            for name, func in sorted(COMMAND_MAP.items())
-        ]
-
-        tab = SingleTable(command_help_map)
-        tab.inner_heading_row_border = False
-        print(tab.table)
-        print()
-        print(
-            "Additionally, you can regenerate your Object Storage keys using the "
-            "'regenerate-keys' command or configure defaults for the plugin using "
-            "the 'configure' command."
-        )
-        print()
-        print("See --help for individual commands for more information")
-
+        print_help(parser)
         sys.exit(0)
 
     # make a client, but only if we weren't printing help
 
     access_key, secret_key = (
-        os.environ.get(ENV_ACCESS_KEY_NAME, None),
-        os.environ.get(ENV_SECRET_KEY_NAME, None),
+        os.getenv(ENV_ACCESS_KEY_NAME, None),
+        os.getenv(ENV_SECRET_KEY_NAME, None),
     )
 
     if not "--help" in args:
-        if access_key and not secret_key or secret_key and not access_key:
+        if bool(access_key) != bool(secret_key):
             print(
                 f"You must set both {ENV_ACCESS_KEY_NAME} and {ENV_SECRET_KEY_NAME}, or neither"
             )
@@ -1054,7 +1067,7 @@ def _get_s3_creds(client, force=False):
     return access_key, secret_key
 
 
-def _configure_plugin(client):
+def _configure_plugin(client: CLI):
     """
     Configures a default cluster value.
     """
