@@ -2,12 +2,12 @@
 Helper functions for configuration related to auth
 """
 
-import os
 import re
-import sys
 import socket
+import sys
 import webbrowser
 from http import server
+from pathlib import Path
 
 import requests
 
@@ -71,7 +71,7 @@ def _check_full_access(base_url, token):
 
 def _username_for_token(base_url, token):
     """
-    A helper function that returns the username assocaited with a token by
+    A helper function that returns the username associated with a token by
     requesting it from the API
     """
     u = _do_get_request(base_url, "/profile", token=token, exit_on_error=False)
@@ -142,10 +142,7 @@ def _handle_oauth_callback():
     them to a locally-hosted page that captures teh token
     """
     # load up landing page HTML
-    landing_page_path = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)), "oauth-landing-page.html"
-    )
-
+    landing_page_path = Path(__file__).parent.parent / "oauth-landing-page.html"
     try:
         with open(landing_page_path, encoding="utf-8") as f:
             landing_page = f.read()
