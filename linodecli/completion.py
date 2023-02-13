@@ -5,6 +5,7 @@ Contains any code relevant to generating/updating shell completions for linode-c
 
 from string import Template
 
+
 def bake_completions(ops):
     """
     Given a baked CLI, generates and saves a bash completion file
@@ -18,6 +19,7 @@ def bake_completions(ops):
     with open("linode-cli.sh", "w", encoding="utf-8") as bash_f:
         print("Writing file...")
         bash_f.write(rendered)
+
 
 def get_completions(ops, help_flag, action):
     """
@@ -38,6 +40,7 @@ def get_completions(ops, help_flag, action):
         "To retrieve these, please invoke as\n"
         "`linode-cli completion bash` or `linode-cli completion fish`"
     )
+
 
 def get_fish_completions(ops):
     """
@@ -67,6 +70,7 @@ $command_items"""
     )
 
     return rendered
+
 
 def get_bash_completions(ops):
     """

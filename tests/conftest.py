@@ -3,7 +3,7 @@ import sys
 
 import pytest
 
-from linodecli import ResponseModel, CLIOperation, URLParam, ModelAttr, CLIArg
+from linodecli import CLIArg, CLIOperation, ModelAttr, ResponseModel, URLParam
 from linodecli.cli import CLI
 
 MOCK_CONFIG = """
@@ -20,9 +20,9 @@ type = g6-nanode-1
 
 @pytest.fixture
 def mock_cli(
-        version="DEVELOPMENT",
-        url="http://localhost",
-        defaults=True,
+    version="DEVELOPMENT",
+    url="http://localhost",
+    defaults=True,
 ):
     result = CLI(version, url, skip_config=True)
     result.defaults = defaults
@@ -45,18 +45,18 @@ def mock_cli(
 
 
 def make_test_operation(
-        command,
-        action,
-        method,
-        url,
-        summary,
-        args,
-        response_model,
-        use_params,
-        use_servers=None,
-        docs_url="https://localhost/docs",
-        allowed_defaults=None,
-        action_aliases=None
+    command,
+    action,
+    method,
+    url,
+    summary,
+    args,
+    response_model,
+    use_params,
+    use_servers=None,
+    docs_url="https://localhost/docs",
+    allowed_defaults=None,
+    action_aliases=None,
 ):
     if args is None:
         args = [
@@ -65,7 +65,7 @@ def make_test_operation(
                 "string",
                 "Does something maybe.",
                 "generic_arg",
-                None
+                None,
             )
         ]
 
@@ -93,7 +93,7 @@ def make_test_operation(
         use_servers,
         docs_url=docs_url,
         allowed_defaults=allowed_defaults,
-        action_aliases=action_aliases
+        action_aliases=action_aliases,
     )
 
 
@@ -117,15 +117,8 @@ def list_operation():
         "foo/bar",
         "get info",
         [],
-        ResponseModel([
-            ModelAttr(
-                "filterable_result",
-                True,
-                True,
-                "string"
-            )
-        ]),
-        []
+        ResponseModel([ModelAttr("filterable_result", True, True, "string")]),
+        [],
     )
 
 
@@ -155,23 +148,10 @@ def create_operation():
                 "string",
                 "Does something maybe.",
                 "generic_arg",
-                None
+                None,
             ),
-            CLIArg(
-                "region",
-                "string",
-                "a region",
-                "region",
-                None
-            )
+            CLIArg("region", "string", "a region", "region", None),
         ],
-        ResponseModel([
-            ModelAttr(
-                "result",
-                False,
-                True,
-                "string"
-            )
-        ]),
-        [URLParam("test_param", "integer")]
+        ResponseModel([ModelAttr("result", False, True, "string")]),
+        [URLParam("test_param", "integer")],
     )

@@ -81,7 +81,8 @@ def call(args, context):
         "--label",
         metavar="LABEL",
         nargs="?",
-        help="Label for the new Image.  If omitted, the filename " "will be used.",
+        help="Label for the new Image.  If omitted, the filename "
+        "will be used.",
     )
     parser.add_argument(
         "--description",
@@ -126,11 +127,15 @@ def call(args, context):
 
     # make sure it's not larger than the max upload size
     if os.path.getsize(filepath) > MAX_UPLOAD_SIZE:
-        print(f"File {filepath} is too large; compressed size must be less than 5GB")
+        print(
+            f"File {filepath} is too large; compressed size must be less than 5GB"
+        )
         sys.exit(2)
 
     if not parsed.region:
-        print("No region provided.  Please set a default region or use --region")
+        print(
+            "No region provided.  Please set a default region or use --region"
+        )
         sys.exit(1)
 
     label = parsed.label or os.path.basename(filepath)
