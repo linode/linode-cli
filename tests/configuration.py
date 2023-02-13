@@ -230,6 +230,7 @@ authorized_users = cli-dev2"""
         with (patch('linodecli.configuration.open', mock_open()),
                 patch('builtins.input', mock_input),
                 contextlib.redirect_stdout(io.StringIO()),
+                patch('linodecli.configuration.helpers._check_browsers', False),
                 patch.dict(os.environ, {}), requests_mock.Mocker() as m):
             m.get(f'{self.base_url}/profile', json= {"username": "cli-dev"})
             m.get(f'{self.base_url}/profile/grants', status_code=204)
@@ -262,6 +263,7 @@ authorized_users = cli-dev2"""
         with (patch('linodecli.configuration.open', mock_open()),
                 patch('builtins.input', mock_input),
                 contextlib.redirect_stdout(io.StringIO()),
+                patch('linodecli.configuration.helpers._check_browsers', False),
                 patch.dict(os.environ, {"LINODE_CLI_TOKEN": "test-token"}),
                 requests_mock.Mocker() as m):
             m.get(f'{self.base_url}/profile', json= {"username": "cli-dev"})
