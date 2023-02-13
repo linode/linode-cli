@@ -799,7 +799,6 @@ COMMAND_MAP = {
 }
 
 
-
 def print_help(parser: ArgumentParser):
     """
     Print out the help info to the standard output.
@@ -811,7 +810,8 @@ def print_help(parser: ArgumentParser):
     print("Available commands: ")
 
     command_help_map = [
-        [name, func.__doc__.strip()] for name, func in sorted(COMMAND_MAP.items())
+        [name, func.__doc__.strip()]
+        for name, func in sorted(COMMAND_MAP.items())
     ]
 
     tab = SingleTable(command_help_map)
