@@ -4,9 +4,10 @@ Unit tests for linodecli.completion
 """
 
 import unittest
-from unittest.mock import patch, mock_open
+from unittest.mock import mock_open, patch
 
 from linodecli import completion
+
 
 class CompletionTests(unittest.TestCase):
     """

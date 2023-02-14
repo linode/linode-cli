@@ -1,12 +1,9 @@
 import contextlib
-import copy
 import io
-import sys
 
 from terminaltables import SingleTable
 
-from linodecli import api_request, ModelAttr, ResponseModel, OutputMode
-from tests.test_populators import mock_cli, create_operation, list_operation
+from linodecli import ModelAttr, OutputMode, ResponseModel
 
 
 class TestOutputHandler:
@@ -21,19 +18,17 @@ class TestOutputHandler:
 
         output_handler._markdown_output(
             ["very cool header", "wow"],
-            [
-                ["foo", "bar"],
-                ["oof", "rab"]
-            ],
+            [["foo", "bar"], ["oof", "rab"]],
             ["1", "2"],
-            output
+            output,
         )
 
-        assert output.getvalue() == \
-            "| very cool header | wow |\n" \
-            "|---|---|\n" \
-            "| foo | bar |\n" \
+        assert (
+            output.getvalue() == "| very cool header | wow |\n"
+            "|---|---|\n"
+            "| foo | bar |\n"
             "| oof | rab |\n"
+        )
 
     def test_markdown_output_models(self, mock_cli):
         output = io.StringIO()
@@ -42,38 +37,22 @@ class TestOutputHandler:
 
         output_handler._markdown_output(
             ["very cool header"],
-            [
-                {
-                    "cool": "foo"
-                },
-                {
-                    "cool": "bar"
-                }
-            ],
-            [ModelAttr(
-                "cool",
-                True,
-                True,
-                "string"
-            )],
-            output
+            [{"cool": "foo"}, {"cool": "bar"}],
+            [ModelAttr("cool", True, True, "string")],
+            output,
         )
 
-        assert output.getvalue() == \
-            "| very cool header |\n" \
-            "|---|\n" \
-            "| foo |\n" \
+        assert (
+            output.getvalue() == "| very cool header |\n"
+            "|---|\n"
+            "| foo |\n"
             "| bar |\n"
+        )
 
     def test_json_output_delimited(self, mock_cli):
         output = io.StringIO()
         headers = ["foo", "bar"]
-        data = [
-            {
-                "foo": "cool",
-                "bar": "not cool"
-            }
-        ]
+        data = [{"foo": "cool", "bar": "not cool"}]
 
         mock_cli.output_handler._json_output(headers, data, output)
 
@@ -82,9 +61,7 @@ class TestOutputHandler:
     def test_json_output_list(self, mock_cli):
         output = io.StringIO()
         headers = ["foo", "bar"]
-        data = [
-            ["cool", "not cool"]
-        ]
+        data = [["cool", "not cool"]]
 
         mock_cli.output_handler._json_output(headers, data, output)
 
@@ -99,40 +76,29 @@ class TestOutputHandler:
                 "foo": 12345,
                 "bad": 5,
                 "bar": 5,
-                "good": {
-                    "lol": "cool",
-                    "test": "reallycoolvalue"
-                },
-                "test": 54321
-            }
+                "good": {"lol": "cool", "test": "reallycoolvalue"},
+                "test": 54321,
+            },
         )
 
         assert result == {
             "foo": 12345,
             "bar": 5,
-            "good": {
-                "test": "reallycoolvalue"
-            },
-            "test": 54321
+            "good": {"test": "reallycoolvalue"},
+            "test": 54321,
         }
 
     def test_delimited_output_columns(self, mock_cli):
         output = io.StringIO()
         header = ["h1", "h2"]
-        data = [
-            ["foo", "bar"],
-            ["oof", "rab"]
-        ]
+        data = [["foo", "bar"], ["oof", "rab"]]
         columns = ["1", "2"]
 
         mock_cli.output_handler.delimiter = ","
 
-        mock_cli.output_handler._delimited_output(
-            header, data, columns, output
-        )
+        mock_cli.output_handler._delimited_output(header, data, columns, output)
 
-        assert output.getvalue() == \
-            "h1,h2\nfoo,bar\noof,rab\n"
+        assert output.getvalue() == "h1,h2\nfoo,bar\noof,rab\n"
 
     def test_delimited_output_models(self, mock_cli):
         output = io.StringIO()
@@ -141,35 +107,20 @@ class TestOutputHandler:
             {
                 "cool": "foo",
             },
-            {
-                "cool": "bar"
-            }
+            {"cool": "bar"},
         ]
-        columns = [
-            ModelAttr(
-                "cool",
-                True,
-                True,
-                "string"
-            )
-        ]
+        columns = [ModelAttr("cool", True, True, "string")]
 
         mock_cli.output_handler.delimiter = ","
 
-        mock_cli.output_handler._delimited_output(
-            header, data, columns, output
-        )
+        mock_cli.output_handler._delimited_output(header, data, columns, output)
 
-        assert output.getvalue() == \
-            "h1\nfoo\nbar\n"
+        assert output.getvalue() == "h1\nfoo\nbar\n"
 
     def test_table_output_columns(self, mock_cli):
         output = io.StringIO()
         header = ["h1", "h2"]
-        data = [
-            ["foo", "bar"],
-            ["oof", "rab"]
-        ]
+        data = [["foo", "bar"], ["oof", "rab"]]
         columns = ["1", "2"]
 
         mock_cli.output_handler._table_output(
@@ -190,18 +141,9 @@ class TestOutputHandler:
             {
                 "cool": "foo",
             },
-            {
-                "cool": "bar"
-            }
+            {"cool": "bar"},
         ]
-        columns = [
-            ModelAttr(
-                "cool",
-                True,
-                True,
-                "string"
-            )
-        ]
+        columns = [ModelAttr("cool", True, True, "string")]
 
         mock_cli.output_handler._table_output(
             header, data, columns, "cool table", output
@@ -220,7 +162,7 @@ class TestOutputHandler:
         response_model = ResponseModel(
             [
                 ModelAttr("foo", True, True, "string"),
-                ModelAttr("bar", True, False, "string")
+                ModelAttr("bar", True, False, "string"),
             ]
         )
 
@@ -234,7 +176,7 @@ class TestOutputHandler:
         response_model = ResponseModel(
             [
                 ModelAttr("foo", True, True, "string"),
-                ModelAttr("bar", True, False, "string")
+                ModelAttr("bar", True, False, "string"),
             ]
         )
 
@@ -253,7 +195,7 @@ class TestOutputHandler:
             [
                 ModelAttr("foo", True, True, "string"),
                 ModelAttr("bar", True, False, "string"),
-                ModelAttr("test", True, False, "string")
+                ModelAttr("test", True, False, "string"),
             ]
         )
 
@@ -273,7 +215,7 @@ class TestOutputHandler:
             [
                 ModelAttr("foo", True, True, "string"),
                 ModelAttr("bar", True, True, "string"),
-                ModelAttr("test", True, False, "string")
+                ModelAttr("test", True, False, "string"),
             ]
         )
 
@@ -281,15 +223,9 @@ class TestOutputHandler:
 
         mock_cli.output_handler.print(
             response_model,
-            [
-                {
-                    "foo": "blah",
-                    "bar": "blah2",
-                    "test": "blah3"
-                }
-            ],
+            [{"foo": "blah", "bar": "blah2", "test": "blah3"}],
             title="cool table",
-            to=output
+            to=output,
         )
 
         assert '[{"foo": "blah", "bar": "blah2"}]' in output.getvalue()
@@ -335,14 +271,7 @@ class TestOutputHandler:
                 "cool": test_str,
             },
         ]
-        columns = [
-            ModelAttr(
-                "cool",
-                True,
-                True,
-                "string"
-            )
-        ]
+        columns = [ModelAttr("cool", True, True, "string")]
 
         mock_cli.output_handler._table_output(
             header, data, columns, "cool table", output
@@ -369,20 +298,14 @@ class TestOutputHandler:
                 "cool": test_str,
             },
         ]
-        columns = [
-            ModelAttr(
-                "cool",
-                True,
-                True,
-                "string"
-            )
-        ]
+        columns = [ModelAttr("cool", True, True, "string")]
 
         output_handler = mock_cli.output_handler
 
         output_handler._markdown_output(header, data, columns, output)
 
-        assert output.getvalue() == \
-               "| very cool header |\n" \
-               "|---|\n" \
-               f"| {test_str_truncated} |\n"
+        assert (
+            output.getvalue() == "| very cool header |\n"
+            "|---|\n"
+            f"| {test_str_truncated} |\n"
+        )

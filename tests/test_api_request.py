@@ -2,17 +2,15 @@
 """
 Unit tests for linodecli.api_request
 """
-import argparse
 import contextlib
 import io
 import json
 from types import SimpleNamespace
-from unittest.mock import patch, Mock
+from unittest.mock import Mock, patch
 
 import requests
 
 from linodecli import api_request
-from tests.test_populators import mock_cli, create_operation, list_operation
 
 
 class TestAPIRequest:
@@ -27,9 +25,7 @@ class TestAPIRequest:
             raw=SimpleNamespace(version=11.1),
             status_code=200,
             reason="OK",
-            headers={
-                "cool": "test"
-            }
+            headers={"cool": "test"},
         )
 
         with contextlib.redirect_stderr(stderr_buf):
@@ -46,10 +42,8 @@ class TestAPIRequest:
             api_request._print_request_debug_info(
                 SimpleNamespace(__name__="get"),
                 "https://definitely.linode.com/",
-                {
-                    "cool": "test"
-                },
-                "cool body"
+                {"cool": "test"},
+                "cool body",
             )
 
         output = stderr_buf.getvalue()
@@ -65,59 +59,51 @@ class TestAPIRequest:
         result = api_request._build_request_body(
             mock_cli,
             create_operation,
-            SimpleNamespace(generic_arg="foo", region=None)
+            SimpleNamespace(generic_arg="foo", region=None),
         )
 
-        assert json.dumps({"generic_arg": "foo", "region": "us-southeast"}) == \
-            result
+        assert (
+            json.dumps({"generic_arg": "foo", "region": "us-southeast"})
+            == result
+        )
 
     def test_build_request_url_get(self, mock_cli, list_operation):
         result = api_request._build_request_url(
-            mock_cli,
-            list_operation,
-            SimpleNamespace()
+            mock_cli, list_operation, SimpleNamespace()
         )
 
-        assert "http://localhost/foo/bar?page=1&page_size=100" == \
-            result
+        assert "http://localhost/foo/bar?page=1&page_size=100" == result
 
     def test_build_request_url_post(self, mock_cli, create_operation):
         result = api_request._build_request_url(
-            mock_cli,
-            create_operation,
-            SimpleNamespace()
+            mock_cli, create_operation, SimpleNamespace()
         )
 
-        assert "http://localhost/foo/bar" == \
-            result
+        assert "http://localhost/foo/bar" == result
 
     def test_build_filter_header(self, list_operation):
         result = api_request._build_filter_header(
-            list_operation,
-            SimpleNamespace(filterable_result="bar")
+            list_operation, SimpleNamespace(filterable_result="bar")
         )
 
-        assert json.dumps({"filterable_result": "bar"}) == \
-            result
+        assert json.dumps({"filterable_result": "bar"}) == result
 
     def test_do_request_get(self, mock_cli, list_operation):
         mock_response = Mock(status_code=200, reason="OK")
 
         def validate_http_request(url, headers=None, data=None):
             assert url == "http://localhost/foo/bar?page=1&page_size=100"
-            assert headers["X-Filter"] == json.dumps({
-                "filterable_result": "cool"
-            })
+            assert headers["X-Filter"] == json.dumps(
+                {"filterable_result": "cool"}
+            )
             assert "Authorization" in headers
             assert data is None
 
             return mock_response
 
-        with patch('linodecli.api_request.requests.get', validate_http_request):
+        with patch("linodecli.api_request.requests.get", validate_http_request):
             result = api_request.do_request(
-                mock_cli,
-                list_operation,
-                ["--filterable_result", "cool"]
+                mock_cli, list_operation, ["--filterable_result", "cool"]
             )
 
         assert result == mock_response
@@ -127,23 +113,24 @@ class TestAPIRequest:
 
         def validate_http_request(url, headers=None, data=None):
             assert url == "http://localhost/foo/bar"
-            assert data == \
-                json.dumps({
+            assert data == json.dumps(
+                {
                     "test_param": 12345,
                     "generic_arg": "foobar",
-                    "region": "us-southeast"  # default
-                })
+                    "region": "us-southeast",  # default
+                }
+            )
             assert "Authorization" in headers
 
             return mock_response
 
         create_operation.allowed_defaults = ["region"]
 
-        with patch('linodecli.api_request.requests.post', validate_http_request):
+        with patch(
+            "linodecli.api_request.requests.post", validate_http_request
+        ):
             result = api_request.do_request(
-                mock_cli,
-                create_operation,
-                ["--generic_arg", "foobar", "12345"]
+                mock_cli, create_operation, ["--generic_arg", "foobar", "12345"]
             )
 
         assert result == mock_response
@@ -176,22 +163,21 @@ class TestAPIRequest:
 
         # Provide a mock Linode API response
         mock_response = SimpleNamespace(
-            status_code=200,
-            reason="OK",
-            headers={
-                "X-Spec-Version": "1.1.0"
-            }
+            status_code=200, reason="OK", headers={"X-Spec-Version": "1.1.0"}
         )
 
-        with contextlib.redirect_stderr(stderr_buf), patch('linodecli.api_request.requests.get', mock_http_response):
+        with contextlib.redirect_stderr(stderr_buf), patch(
+            "linodecli.api_request.requests.get", mock_http_response
+        ):
             api_request._attempt_warn_old_version(mock_cli, mock_response)
 
         output = stderr_buf.getvalue()
-        assert "The API responded with version 1.1.0, which is newer than " \
-            "the CLI's version of 1.0.0.  Please update the CLI to get " \
-            "access to the newest features.  You can update with a " \
-            "simple `pip3 install --upgrade linode-cli`" in \
-            output
+        assert (
+            "The API responded with version 1.1.0, which is newer than "
+            "the CLI's version of 1.0.0.  Please update the CLI to get "
+            "access to the newest features.  You can update with a "
+            "simple `pip3 install --upgrade linode-cli`" in output
+        )
 
     def test_outdated_cli_no_new_version(self, mock_cli):
         # "outdated" version
@@ -221,14 +207,12 @@ class TestAPIRequest:
 
         # Provide a mock Linode API response
         mock_response = SimpleNamespace(
-            status_code=200,
-            reason="OK",
-            headers={
-                "X-Spec-Version": "1.1.0"
-            }
+            status_code=200, reason="OK", headers={"X-Spec-Version": "1.1.0"}
         )
 
-        with contextlib.redirect_stderr(stderr_buf), patch('linodecli.api_request.requests.get', mock_http_response):
+        with contextlib.redirect_stderr(stderr_buf), patch(
+            "linodecli.api_request.requests.get", mock_http_response
+        ):
             api_request._attempt_warn_old_version(mock_cli, mock_response)
 
         output = stderr_buf.getvalue()
@@ -248,11 +232,7 @@ class TestAPIRequest:
             r.status_code = 200
 
             def json_func():
-                return {
-                    "info": {
-                        "version": "1.0.0"
-                    }
-                }
+                return {"info": {"version": "1.0.0"}}
 
             r.json = json_func
             return r
@@ -261,14 +241,12 @@ class TestAPIRequest:
 
         # Provide a mock Linode API response
         mock_response = SimpleNamespace(
-            status_code=200,
-            reason="OK",
-            headers={
-                "X-Spec-Version": "1.0.0"
-            }
+            status_code=200, reason="OK", headers={"X-Spec-Version": "1.0.0"}
         )
 
-        with contextlib.redirect_stderr(stderr_buf), patch('linodecli.api_request.requests.get', mock_http_response):
+        with contextlib.redirect_stderr(stderr_buf), patch(
+            "linodecli.api_request.requests.get", mock_http_response
+        ):
             api_request._attempt_warn_old_version(mock_cli, mock_response)
 
         output = stderr_buf.getvalue()

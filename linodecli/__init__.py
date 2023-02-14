@@ -4,8 +4,8 @@ Argument parser for the linode CLI
 """
 
 import argparse
-import sys
 import os
+import sys
 from importlib import import_module
 from sys import argv, stderr, version_info
 
@@ -17,24 +17,26 @@ from terminaltables import SingleTable
 from linodecli import plugins
 
 from .cli import CLI
+from .completion import bake_completions, get_completions
 from .configuration import ENV_TOKEN_NAME
+from .helpers import handle_url_overrides
 from .operation import CLIArg, CLIOperation, URLParam
 from .output import OutputMode
 from .response import ModelAttr, ResponseModel
-from .completion import bake_completions, get_completions
 
 # this might not be installed at the time of building
 try:
     VERSION = pkg_resources.require("linode-cli")[0].version
 except:
     VERSION = "building"
+
 BASE_URL = "https://api.linode.com/v4"
 
 
 # if any of these arguments are given, we don't need to prompt for configuration
 skip_config = any(c in argv for c in ["--skip-config", "--help", "--version"])
 
-cli = CLI(VERSION, BASE_URL, skip_config=skip_config)
+cli = CLI(VERSION, handle_url_overrides(BASE_URL), skip_config=skip_config)
 
 
 def warn_python2_eol():
@@ -77,7 +79,8 @@ def main():  # pylint: disable=too-many-locals,too-many-branches,too-many-statem
     parser.add_argument(
         "--help",
         action="store_true",
-        help="Display information about a command, action, or " "the CLI overall.",
+        help="Display information about a command, action, or "
+        "the CLI overall.",
     )
     parser.add_argument(
         "--text",
@@ -90,9 +93,13 @@ def main():  # pylint: disable=too-many-locals,too-many-branches,too-many-statem
         type=str,
         help="The delimiter when displaying raw output.",
     )
-    parser.add_argument("--json", action="store_true", help="Display output as JSON")
     parser.add_argument(
-        "--markdown", action="store_true", help="Display output in Markdown format."
+        "--json", action="store_true", help="Display output as JSON"
+    )
+    parser.add_argument(
+        "--markdown",
+        action="store_true",
+        help="Display output in Markdown format.",
     )
     parser.add_argument(
         "--pretty", action="store_true", help="If set, pretty-print JSON output"
@@ -266,7 +273,9 @@ def main():  # pylint: disable=too-many-locals,too-many-branches,too-many-statem
         try:
             plugin_name = plugin.PLUGIN_NAME
         except AttributeError:
-            print(f"{module} is not a valid Linode CLI plugin - missing PLUGIN_NAME")
+            print(
+                f"{module} is not a valid Linode CLI plugin - missing PLUGIN_NAME"
+            )
             sys.exit(11)
 
         # prove it's callable
@@ -280,7 +289,9 @@ def main():  # pylint: disable=too-many-locals,too-many-branches,too-many-statem
         reregistering = False
         # check for naming conflicts
         if plugin_name in cli.ops:
-            print("Plugin name conflicts with CLI operation - registration failed.")
+            print(
+                "Plugin name conflicts with CLI operation - registration failed."
+            )
             sys.exit(12)
         elif plugin_name in plugins.available_local:
             # conflicts with an internal plugin - can't do that
@@ -309,7 +320,9 @@ def main():  # pylint: disable=too-many-locals,too-many-branches,too-many-statem
 
         if reregistering:
             already_registered.remove(plugin_name)
-            cli.config.config.remove_option("DEFAULT", f"plugin-name-{plugin_name}")
+            cli.config.config.remove_option(
+                "DEFAULT", f"plugin-name-{plugin_name}"
+            )
 
         already_registered.append(plugin_name)
         cli.config.config.set(
@@ -332,24 +345,30 @@ def main():  # pylint: disable=too-many-locals,too-many-branches,too-many-statem
         plugin_name = parsed.action
         if plugin_name in plugins.available_local:
             # can't remove first-party plugins
-            print(f"{plugin_name} is bundled with the CLI and cannot be removed")
+            print(
+                f"{plugin_name} is bundled with the CLI and cannot be removed"
+            )
             sys.exit(13)
         elif plugin_name not in plugins.available(cli.config):
             print(f"{plugin_name} is not a registered plugin")
             sys.exit(14)
 
         # do the removal
-        current_plugins = cli.config.config.get("DEFAULT", "registered-plugins").split(
-            ","
-        )
+        current_plugins = cli.config.config.get(
+            "DEFAULT", "registered-plugins"
+        ).split(",")
         current_plugins.remove(plugin_name)
         cli.config.config.set(
             "DEFAULT", "registered-plugins", ",".join(current_plugins)
         )
 
-        if cli.config.config.has_option("DEFAULT", f"plugin-name-{plugin_name}"):
+        if cli.config.config.has_option(
+            "DEFAULT", f"plugin-name-{plugin_name}"
+        ):
             # if the config if malformed, don't blow up
-            cli.config.config.remove_option("DEFAULT", f"plugin-name-{plugin_name}")
+            cli.config.config.remove_option(
+                "DEFAULT", f"plugin-name-{plugin_name}"
+            )
 
         cli.config.write_config()
 
@@ -423,7 +442,9 @@ def main():  # pylint: disable=too-many-locals,too-many-branches,too-many-statem
 
         print()
         print("To reconfigure, call `linode-cli configure`")
-        print("For comprehensive documentation, visit https://www.linode.com/docs/api/")
+        print(
+            "For comprehensive documentation, visit https://www.linode.com/docs/api/"
+        )
         sys.exit(0)
 
     # configure
@@ -431,8 +452,12 @@ def main():  # pylint: disable=too-many-locals,too-many-branches,too-many-statem
         if parsed.help:
             print("linode-cli configure")
             print()
-            print("Configured the Linode CLI.  This command can be used to change")
-            print("defaults selected for the current user, or to configure additional")
+            print(
+                "Configured the Linode CLI.  This command can be used to change"
+            )
+            print(
+                "defaults selected for the current user, or to configure additional"
+            )
             print("users.")
             sys.exit(0)
         else:
@@ -444,7 +469,9 @@ def main():  # pylint: disable=too-many-locals,too-many-branches,too-many-statem
         if parsed.help or not parsed.action:
             print("linode-cli set-user [USER]")
             print()
-            print("Sets the active user for the CLI out of users you have configured.")
+            print(
+                "Sets the active user for the CLI out of users you have configured."
+            )
             print("To configure a new user, see `linode-cli configure`")
             sys.exit(0)
         else:
@@ -471,9 +498,15 @@ def main():  # pylint: disable=too-many-locals,too-many-branches,too-many-statem
         if parsed.help or not parsed.action:
             print("linode-cli remove-user [USER]")
             print()
-            print("Removes a user the CLI was configured with.  This does not change")
-            print("your Linode account, only this CLI installation.  Once removed,")
-            print("the user may not be set as active or used for commands unless")
+            print(
+                "Removes a user the CLI was configured with.  This does not change"
+            )
+            print(
+                "your Linode account, only this CLI installation.  Once removed,"
+            )
+            print(
+                "the user may not be set as active or used for commands unless"
+            )
             print("configured again.")
             sys.exit(0)
         else:
@@ -497,8 +530,9 @@ def main():  # pylint: disable=too-many-locals,too-many-branches,too-many-statem
         plugins.invoke(parsed.command, plugin_args, context)
         sys.exit(0)
 
-    if parsed.command not in cli.ops and parsed.command not in plugins.available(
-        cli.config
+    if (
+        parsed.command not in cli.ops
+        and parsed.command not in plugins.available(cli.config)
     ):
         # unknown commands
         print(f"Unrecognized command {parsed.command}")
@@ -546,16 +580,24 @@ def main():  # pylint: disable=too-many-locals,too-many-branches,too-many-statem
         print()
         if parsed_operation.args:
             print("Arguments:")
-            for arg in sorted(parsed_operation.args, key=lambda s: not s.required):
+            for arg in sorted(
+                parsed_operation.args, key=lambda s: not s.required
+            ):
                 is_required = (
                     "(required) "
-                    if parsed_operation.method in {"post", "put"} and arg.required
+                    if parsed_operation.method in {"post", "put"}
+                    and arg.required
                     else ""
                 )
                 print(f"  --{arg.path}: {is_required}{arg.description}")
-        elif parsed_operation.method == "get" and parsed_operation.action == "list":
+        elif (
+            parsed_operation.method == "get"
+            and parsed_operation.action == "list"
+        ):
             filterable_attrs = [
-                attr for attr in parsed_operation.response_model.attrs if attr.filterable
+                attr
+                for attr in parsed_operation.response_model.attrs
+                if attr.filterable
             ]
 
             if filterable_attrs:

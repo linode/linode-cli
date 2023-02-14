@@ -66,10 +66,16 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
 
         # We need to use lambdas here since we don't want unused function params
         output_mode_to_func = {
-            OutputMode.table: lambda: self._table_output(header, data, columns, title, to),
-            OutputMode.delimited: lambda: self._delimited_output(header, data, columns, to),
+            OutputMode.table: lambda: self._table_output(
+                header, data, columns, title, to
+            ),
+            OutputMode.delimited: lambda: self._delimited_output(
+                header, data, columns, to
+            ),
             OutputMode.json: lambda: self._json_output(header, data, to),
-            OutputMode.markdown: lambda: self._markdown_output(header, data, columns, to)
+            OutputMode.markdown: lambda: self._markdown_output(
+                header, data, columns, to
+            ),
         }
 
         if columns is None:
@@ -90,7 +96,9 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
         if self.columns is None:
             columns = [
                 attr
-                for attr in sorted(response_model.attrs, key=lambda c: c.display)
+                for attr in sorted(
+                    response_model.attrs, key=lambda c: c.display
+                )
                 if attr.display
             ]
         elif self.columns == "*":
@@ -118,9 +126,13 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
         Pretty-prints data in a table
         """
         content = self._build_output_content(
-            data, columns,
+            data,
+            columns,
             header=header,
-            value_transform=lambda attr, v: self._attempt_truncate_value(attr.render_value(v)))
+            value_transform=lambda attr, v: self._attempt_truncate_value(
+                attr.render_value(v)
+            ),
+        )
 
         tab = SingleTable(content)
 
@@ -137,9 +149,11 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
         Prints data in delimited format with the given delimiter
         """
         content = self._build_output_content(
-            data, columns,
+            data,
+            columns,
             header=header,
-            value_transform=lambda attr, v: attr.get_string(v))
+            value_transform=lambda attr, v: attr.get_string(v),
+        )
 
         for row in content:
             print(self.delimiter.join(row), file=to)
@@ -188,10 +202,11 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
         flavor of Markdown
         """
         content = self._build_output_content(
-            data, columns,
+            data,
+            columns,
             value_transform=lambda attr, v: self._attempt_truncate_value(
                 attr.render_value(v, colorize=False)
-            )
+            ),
         )
 
         if header:
@@ -202,11 +217,12 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
             print("| " + " | ".join([str(c) for c in row]) + " |", file=to)
 
     def _build_output_content(
-            self,
-            data,
-            columns,
-            header=None,
-            value_transform=lambda attr, model: model):
+        self,
+        data,
+        columns,
+        header=None,
+        value_transform=lambda attr, model: model,
+    ):
         """
         Returns the `content` to be displayed by the corresponding output function.
         `value_transform` allows functions to specify how each value should be formatted.
@@ -243,7 +259,7 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
                 "To disable output truncation, use --no-truncation. "
                 "Alternatively, use the --json or --text output modes, "
                 "or disable warnings using --suppress-warnings.",
-                file=sys.stderr
+                file=sys.stderr,
             )
             self.has_warned = True
 

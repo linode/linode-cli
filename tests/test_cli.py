@@ -1,12 +1,6 @@
-import contextlib
 import copy
-import io
 
 import pytest
-from terminaltables import SingleTable
-
-from linodecli import api_request, ModelAttr, ResponseModel, OutputMode
-from tests.test_populators import mock_cli, create_operation, list_operation, make_test_operation
 
 
 class TestCLI:
@@ -26,12 +20,8 @@ class TestCLI:
         other_operation.action_aliases = ["ls"]
 
         mock_cli.ops = {
-            "foo": {
-                "list": target_operation
-            },
-            "cool": {
-                "list": other_operation
-            },
+            "foo": {"list": target_operation},
+            "cool": {"list": other_operation},
         }
 
         assert mock_cli.find_operation("foo", "list") == target_operation

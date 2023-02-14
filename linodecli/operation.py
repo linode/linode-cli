@@ -9,6 +9,8 @@ import platform
 from getpass import getpass
 from os import environ, path
 
+from linodecli.helpers import handle_url_overrides
+
 
 def parse_boolean(value):
     """
@@ -183,7 +185,8 @@ class CLIOperation:  # pylint: disable=too-many-instance-attributes
         """
         Returns the full URL for this resource based on servers and endpoint
         """
-        base_url = self.servers[0]
+        base_url = handle_url_overrides(self.servers[0])
+
         return base_url + "/" + self._url
 
     def parse_args(
@@ -219,7 +222,9 @@ class CLIOperation:  # pylint: disable=too-many-instance-attributes
                         )
                     else:
                         parser.add_argument(
-                            "--" + attr.name, type=expected_type, metavar=attr.name
+                            "--" + attr.name,
+                            type=expected_type,
+                            metavar=attr.name,
                         )
 
         elif self.method in ("post", "put"):
@@ -242,10 +247,15 @@ class CLIOperation:  # pylint: disable=too-many-instance-attributes
                     )
                     list_items.append((arg.path, arg.list_item))
                 else:
-                    if arg.arg_type == "string" and arg.arg_format == "password":
+                    if (
+                        arg.arg_type == "string"
+                        and arg.arg_format == "password"
+                    ):
                         # special case - password input
                         parser.add_argument(
-                            "--" + arg.path, nargs="?", action=PasswordPromptAction
+                            "--" + arg.path,
+                            nargs="?",
+                            action=PasswordPromptAction,
                         )
                     elif arg.arg_type == "string" and arg.arg_format in (
                         "file",
@@ -260,7 +270,9 @@ class CLIOperation:  # pylint: disable=too-many-instance-attributes
                         )
                     else:
                         parser.add_argument(
-                            "--" + arg.path, metavar=arg.name, type=TYPES[arg.arg_type]
+                            "--" + arg.path,
+                            metavar=arg.name,
+                            type=TYPES[arg.arg_type],
                         )
 
         parsed = parser.parse_args(args)

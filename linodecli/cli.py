@@ -2,17 +2,17 @@
 Responsible for managing spec and routing commands to operations.
 """
 
-import pickle
-import sys
-import re
 import os
+import pickle
+import re
+import sys
 from sys import version_info
 
+from .api_request import do_request
 from .configuration import CLIConfig
 from .operation import CLIArg, CLIOperation, URLParam
 from .output import OutputHandler, OutputMode
 from .response import ModelAttr, ResponseModel
-from .api_request import do_request
 
 METHODS = ("get", "post", "put", "delete")
 PIP_CMD = "pip3" if version_info.major == 3 else "pip"
@@ -99,7 +99,9 @@ class CLI:  # pylint: disable=too-many-instance-attributes
             while "$ref" in info:
                 info = self._resolve_ref(info["$ref"])
             if "properties" in info:
-                self._parse_args(info["properties"], prefix=prefix + [arg], args=args)
+                self._parse_args(
+                    info["properties"], prefix=prefix + [arg], args=args
+                )
                 continue  # we can't edit this level of the tree
             if info.get("readOnly"):
                 continue
@@ -110,7 +112,9 @@ class CLI:  # pylint: disable=too-many-instance-attributes
                 "type": info.get("type") or "string",
                 "desc": info.get("description") or "",
                 "name": arg,
-                "format": info.get("x-linode-cli-format", info.get("format", None)),
+                "format": info.get(
+                    "x-linode-cli-format", info.get("format", None)
+                ),
             }
 
             # if this is coming in as json, stop here
@@ -160,7 +164,9 @@ class CLI:  # pylint: disable=too-many-instance-attributes
         attrs = []
         for name, info in node.items():
             if "properties" in info:
-                attrs += self._parse_properties(info["properties"], prefix + [name])
+                attrs += self._parse_properties(
+                    info["properties"], prefix + [name]
+                )
             else:
                 item_type = None
                 item_container = info.get("items")
@@ -189,7 +195,7 @@ class CLI:  # pylint: disable=too-many-instance-attributes
         self.ops = {}
         default_servers = [c["url"] for c in spec["servers"]]
 
-        for path, data in self.spec[ # pylint: disable=too-many-nested-blocks
+        for path, data in self.spec[  # pylint: disable=too-many-nested-blocks
             "paths"
         ].items():  # pylint: disable=too-many-nested-blocks
             command = data.get("x-linode-cli-command") or "default"
@@ -201,7 +207,9 @@ class CLI:  # pylint: disable=too-many-instance-attributes
                 for info in data["parameters"]:
                     if "$ref" in info:
                         info = self._resolve_ref(info["$ref"])
-                    params.append(URLParam(info["name"], info["schema"]["type"]))
+                    params.append(
+                        URLParam(info["name"], info["schema"]["type"])
+                    )
             for m in METHODS:
                 if m in data:
                     if data[m].get("x-linode-cli-skip"):
@@ -250,7 +258,10 @@ class CLI:  # pylint: disable=too-many-instance-attributes
                             "x-linode-cli-allowed-defaults", None
                         )
 
-                        if "application/json" in data[m]["requestBody"]["content"]:
+                        if (
+                            "application/json"
+                            in data[m]["requestBody"]["content"]
+                        ):
                             body_schema = data[m]["requestBody"]["content"][
                                 "application/json"
                             ]["schema"]
@@ -259,11 +270,15 @@ class CLI:  # pylint: disable=too-many-instance-attributes
                                 required_fields = body_schema["required"]
 
                             if "allOf" in body_schema:
-                                body_schema = self._resolve_allOf(body_schema["allOf"])
+                                body_schema = self._resolve_allOf(
+                                    body_schema["allOf"]
+                                )
                             if "required" in body_schema:
                                 required_fields += body_schema["required"]
                             if "$ref" in body_schema:
-                                body_schema = self._resolve_ref(body_schema["$ref"])
+                                body_schema = self._resolve_ref(
+                                    body_schema["$ref"]
+                                )
                             if "required" in body_schema:
                                 required_fields += body_schema["required"]
                             if "properties" in body_schema:
@@ -276,7 +291,8 @@ class CLI:  # pylint: disable=too-many-instance-attributes
                     response_model = None
                     if (
                         "200" in data[m]["responses"]
-                        and "application/json" in data[m]["responses"]["200"]["content"]
+                        and "application/json"
+                        in data[m]["responses"]["200"]["content"]
                     ):
                         resp_con = data[m]["responses"]["200"]["content"][
                             "application/json"
@@ -299,7 +315,9 @@ class CLI:  # pylint: disable=too-many-instance-attributes
                         if "$ref" in resp_con:
                             resp_con = self._resolve_ref(resp_con["$ref"])
                         if "allOf" in resp_con:
-                            resp_con.update(self._resolve_allOf(resp_con["allOf"]))
+                            resp_con.update(
+                                self._resolve_allOf(resp_con["allOf"])
+                            )
                         # handle pagination envelope
                         if (
                             "properties" in resp_con
@@ -316,7 +334,9 @@ class CLI:  # pylint: disable=too-many-instance-attributes
 
                         attrs = []
                         if "properties" in resp_con:
-                            attrs = self._parse_properties(resp_con["properties"])
+                            attrs = self._parse_properties(
+                                resp_con["properties"]
+                            )
                             # maybe we have special columns?
                             rows = (
                                 data[m]["responses"]["200"]["content"][
@@ -408,7 +428,9 @@ class CLI:  # pylint: disable=too-many-instance-attributes
         Loads a baked spec representation from a baked pickle
         """
         data_file = self._get_data_file()
-        data_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), data_file)
+        data_path = os.path.join(
+            os.path.dirname(os.path.realpath(__file__)), data_file
+        )
         if os.path.exists(data_path):
             with open(data_path, "rb") as f:
                 self.ops = pickle.load(f)
@@ -419,7 +441,9 @@ class CLI:  # pylint: disable=too-many-instance-attributes
                     self.spec_version = self.ops["_spec_version"]
                     del self.ops["_spec_version"]
         else:
-            print("No spec baked.  Please bake by calling this script as follows:")
+            print(
+                "No spec baked.  Please bake by calling this script as follows:"
+            )
             print("  python3 gen_cli.py bake /path/to/spec")
             self.ops = None  # this signals __init__.py to give up
 
@@ -485,7 +509,11 @@ class CLI:  # pylint: disable=too-many-instance-attributes
         operation = self.ops[command][action]
 
         result = do_request(
-            self, operation, args, filter_header=filters, skip_error_handling=True
+            self,
+            operation,
+            args,
+            filter_header=filters,
+            skip_error_handling=True,
         )
 
         return result.status_code, result.json()

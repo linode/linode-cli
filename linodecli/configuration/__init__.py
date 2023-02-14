@@ -18,7 +18,7 @@ from .helpers import (
     _default_thing_input,
     _get_config,
     _get_config_path,
-    _handle_no_default_user
+    _handle_no_default_user,
 )
 
 ENV_TOKEN_NAME = "LINODE_CLI_TOKEN"
@@ -169,7 +169,9 @@ class CLIConfig:
         :type value: any
         """
         if self.running_plugin is None:
-            raise RuntimeError("No running plugin to retrieve configuration for!")
+            raise RuntimeError(
+                "No running plugin to retrieve configuration for!"
+            )
 
         username = self.username or self.default_username()
         self.config.set(username, f"plugin-{self.running_plugin}-{key}", value)
@@ -189,7 +191,9 @@ class CLIConfig:
         :rtype: any
         """
         if self.running_plugin is None:
-            raise RuntimeError("No running plugin to retrieve configuration for!")
+            raise RuntimeError(
+                "No running plugin to retrieve configuration for!"
+            )
 
         username = self.username or self.default_username()
         full_key = f"plugin-{self.running_plugin}-{key}"
@@ -250,15 +254,12 @@ class CLIConfig:
         Saves the config file as it is right now.  This can be used by plugins
         to save values they've set, and is used internally to update the config
         on disk when a new user if configured.
-
-        :param silent: If True, does not print a message noting the config file
-                       has been updated.  This is primarily intended for silently
-                       updated the config file from one version to another.
         """
         if not os.path.exists(f"{os.path.expanduser('~')}/.config"):
             os.makedirs(f"{os.path.expanduser('~')}/.config")
         with open(_get_config_path(), "w", encoding="utf-8") as f:
             self.config.write(f)
+
 
     def configure(self):  # pylint: disable=too-many-branches,too-many-statements
         """
@@ -307,9 +308,16 @@ If you prefer to supply a Personal Access Token, use `linode-cli configure --tok
 
         # Configuring Defaults
 
-        regions = [r["id"] for r in _do_get_request(self.base_url, "/regions")["data"]]
-        types = [t["id"] for t in _do_get_request(self.base_url, "/linode/types")["data"]]
-        images = [i["id"] for i in _do_get_request(self.base_url, "/images")["data"]]
+        regions = [
+            r["id"] for r in _do_get_request(self.base_url, "/regions")["data"]
+        ]
+        types = [
+            t["id"]
+            for t in _do_get_request(self.base_url, "/linode/types")["data"]
+        ]
+        images = [
+            i["id"] for i in _do_get_request(self.base_url, "/images")["data"]
+        ]
 
         is_full_access = _check_full_access(self.base_url, token)
 
@@ -319,7 +327,10 @@ If you prefer to supply a Personal Access Token, use `linode-cli configure --tok
             auth_users = [
                 u["username"]
                 for u in _do_get_request(
-                    self.base_url, "/account/users", exit_on_error=False, token=token
+                    self.base_url,
+                    "/account/users",
+                    exit_on_error=False,
+                    token=token,
                 )["data"]
                 if "ssh_keys" in u
             ]

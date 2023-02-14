@@ -228,6 +228,18 @@ the ``obj`` plugin that ships with the CLI.  To do so, simply set
 appropriate values.  This allows using Linode Object Storage through the CLI
 without having a configuration file, which is desirable in some situations.
 
+Configurable API URL
+""""""""""""""""""""
+
+In some cases you may want to run linode-cli against a non-default Linode API URL.
+This can be done using the following environment variables to override certain segments of the target API URL.
+
+* ``LINODE_CLI_API_HOST`` - The host of the Linode API instance (e.g. ``api.linode.com``)
+
+* ``LINODE_CLI_API_VERSION`` - The Linode API version to use (e.g. ``v4beta``)
+
+* ``LINODE_CLI_API_SCHEME`` - The request scheme to use (e.g. ``https``)
+
 Multiple Users
 ^^^^^^^^^^^^^^
 

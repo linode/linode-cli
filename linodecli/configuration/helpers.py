@@ -18,7 +18,10 @@ LEGACY_CONFIG_NAME = ".linode-cli"
 LEGACY_CONFIG_DIR = os.path.expanduser("~")
 
 CONFIG_NAME = "linode-cli"
-CONFIG_DIR = os.environ.get("XDG_CONFIG_HOME", f"{os.path.expanduser('~')}/.config")
+CONFIG_DIR = os.environ.get(
+    "XDG_CONFIG_HOME", f"{os.path.expanduser('~')}/.config"
+)
+
 
 # this is a list of browser that _should_ work for web-based auth.  This is mostly
 # intended to exclude lynx and other terminal browsers which could be opened, but
@@ -44,6 +47,7 @@ def _get_config_path():
         return path
 
     return f"{CONFIG_DIR}/{CONFIG_NAME}"
+
 
 def _get_config(load=True):
     """
@@ -132,7 +136,9 @@ def _handle_no_default_user(self):
 
         if token is not None:
             # there's a token in the config - configure that user
-            u = _do_get_request(self.base_url, "/profile", token=token, exit_on_error=False)
+            u = _do_get_request(
+                self.base_url, "/profile", token=token, exit_on_error=False
+            )
 
             if "errors" in u:
                 # this token was bad - reconfigure
@@ -148,8 +154,12 @@ def _handle_no_default_user(self):
             self.config.set(
                 username, "region", self.config.get("DEFAULT", "region")
             )
-            self.config.set(username, "type", self.config.get("DEFAULT", "type"))
-            self.config.set(username, "image", self.config.get("DEFAULT", "image"))
+            self.config.set(
+                username, "type", self.config.get("DEFAULT", "type")
+            )
+            self.config.set(
+                username, "image", self.config.get("DEFAULT", "image")
+            )
             self.config.set(
                 username,
                 "authorized_keys",
