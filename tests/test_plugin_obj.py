@@ -10,5 +10,5 @@ def test_print_help(capsys: CaptureFixture):
     assert parser.format_help() in captured_text.out
     assert (
         "See --help for individual commands for more information"
-        in captured_text
+        in captured_text.out
     )
