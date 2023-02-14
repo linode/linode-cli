@@ -20,6 +20,8 @@ from terminaltables import SingleTable
 
 from linodecli.cli import CLI
 from linodecli.plugins import PluginContext
+from linodecli.configuration import _do_get_request
+from linodecli.configuration.helpers import _default_thing_input
 
 ENV_ACCESS_KEY_NAME = "LINODE_CLI_OBJ_ACCESS_KEY"
 ENV_SECRET_KEY_NAME = "LINODE_CLI_OBJ_SECRET_KEY"
@@ -723,7 +725,7 @@ def _denominate(total):
     return total
 
 
-def list_all_objects(get_client):
+def list_all_objects(get_client, args):
     """
     Lists all objects in all buckets
     """
@@ -973,7 +975,7 @@ def _get_boto_client(cluster, access_key, secret_key):
     return client
 
 
-def _get_s3_creds(client, force=False):
+def _get_s3_creds(client: CLI, force: bool=False):
     """
     Retrieves stored s3 creds for the acting user from the config, or generates new
     creds using the client and stores them if none exist
@@ -1073,15 +1075,17 @@ def _configure_plugin(client: CLI):
     """
     clusters = [
         c["id"]
-        for c in client.config._do_get_request(  # pylint: disable=protected-access
-            "/object-storage/clusters", token=client.config.get_value("token")
+        for c in _do_get_request(  # pylint: disable=protected-access
+            client.config.base_url, 
+            "/object-storage/clusters",
+            token=client.config.get_value("token"),
         )[
             "data"
         ]
     ]
 
     cluster = (
-        client.config._default_thing_input(  # pylint: disable=protected-access
+        _default_thing_input(  # pylint: disable=protected-access
             "Configure a default Cluster for operations.",
             clusters,
             "Default Cluster: ",
