@@ -729,6 +729,10 @@ def list_all_objects(get_client, args):
     """
     Lists all objects in all buckets
     """
+    # this is for printing help when --help is in the args
+    parser = ArgumentParser(PLUGIN_BASE + " la")
+    parser.parse_args(args)
+
     client = get_client()
 
     # all buckets
