@@ -877,6 +877,9 @@ def get_credentials(cli: CLI):
 
 
 def regenerate_s3_credentials(cli: CLI):
+    """
+    Force regenerate object storage access key and secret key.
+    """
     print("Regenerating Object Storage keys..")
     _get_s3_creds(cli, force=True)
     print("Done.")
