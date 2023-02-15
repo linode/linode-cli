@@ -6,7 +6,6 @@ Argument parser for the linode CLI
 import argparse
 import os
 import sys
-from importlib import import_module
 from sys import argv, stderr, version_info
 
 import pkg_resources
@@ -17,6 +16,7 @@ from terminaltables import SingleTable
 from linodecli import plugins
 
 from .cli import CLI
+from .args import register_args, register_plugin
 from .completion import bake_completions, get_completions
 from .configuration import ENV_TOKEN_NAME
 from .helpers import handle_url_overrides
@@ -62,120 +62,9 @@ def main():  # pylint: disable=too-many-locals,too-many-branches,too-many-statem
     Handle incoming command arguments
     """
     parser = argparse.ArgumentParser("linode-cli", add_help=False)
-    parser.add_argument(
-        "command",
-        metavar="COMMAND",
-        nargs="?",
-        type=str,
-        help="The command to invoke in the CLI.",
-    )
-    parser.add_argument(
-        "action",
-        metavar="ACTION",
-        nargs="?",
-        type=str,
-        help="The action to perform in this command.",
-    )
-    parser.add_argument(
-        "--help",
-        action="store_true",
-        help="Display information about a command, action, or "
-        "the CLI overall.",
-    )
-    parser.add_argument(
-        "--text",
-        action="store_true",
-        help="Display text output with a delimiter (defaults to tabs).",
-    )
-    parser.add_argument(
-        "--delimiter",
-        metavar="DELIMITER",
-        type=str,
-        help="The delimiter when displaying raw output.",
-    )
-    parser.add_argument(
-        "--json", action="store_true", help="Display output as JSON"
-    )
-    parser.add_argument(
-        "--markdown",
-        action="store_true",
-        help="Display output in Markdown format.",
-    )
-    parser.add_argument(
-        "--pretty", action="store_true", help="If set, pretty-print JSON output"
-    )
-    parser.add_argument(
-        "--no-headers",
-        action="store_true",
-        help="If set, does not display headers in output.",
-    )
-    parser.add_argument(
-        "--page",
-        metavar="PAGE",
-        type=int,
-        default=1,
-        help="For listing actions, specifies the page to request",
-    )
-    parser.add_argument(
-        "--page-size",
-        metavar="PAGESIZE",
-        type=int,
-        default=100,
-        help="For listing actions, specifies the number of items per page, "
-        "accepts any value between 25 and 500",
-    )
-    parser.add_argument(
-        "--all",
-        action="store_true",
-        help="If set, displays all possible columns instead of "
-        "the default columns.  This may not work well on "
-        "some terminals.",
-    )
-    parser.add_argument(
-        "--format",
-        metavar="FORMAT",
-        type=str,
-        help="The columns to display in output.  Provide a comma-"
-        "separated list of column names.",
-    )
-    parser.add_argument(
-        "--no-defaults",
-        action="store_true",
-        help="Suppress default values for arguments.  Default values "
-        "are configured on initial setup or with linode-cli configure",
-    )
-    parser.add_argument(
-        "--as-user",
-        metavar="USERNAME",
-        type=str,
-        help="The username to execute this command as.  This user must "
-        "be configured.",
-    )
-    parser.add_argument(
-        "--suppress-warnings",
-        action="store_true",
-        help="Suppress warnings that are intended for human users. "
-        "This is useful for scripting the CLI's behavior.",
-    )
-    parser.add_argument(
-        "--no-truncation",
-        action="store_true",
-        default=False,
-        help="Prevent the truncation of long values in command outputs.",
-    )
-    parser.add_argument(
-        "--version",
-        "-v",
-        action="store_true",
-        help="Prints version information and exits.",
-    )
-    parser.add_argument(
-        "--debug", action="store_true", help="Enable verbose HTTP debug output"
-    )
+    parsed, args = register_args(parser).parse_known_args()
 
-    parsed, args = parser.parse_known_args()
-
-    # setup cli class
+    #output/formatting settings
     if parsed.text:
         cli.output_handler.mode = OutputMode.delimited
     elif parsed.json:
@@ -183,6 +72,7 @@ def main():  # pylint: disable=too-many-locals,too-many-branches,too-many-statem
         cli.output_handler.columns = "*"
     elif parsed.markdown:
         cli.output_handler.mode = OutputMode.markdown
+
     if parsed.delimiter:
         cli.output_handler.delimiter = parsed.delimiter
     if parsed.pretty:
@@ -209,8 +99,8 @@ def main():  # pylint: disable=too-many-locals,too-many-branches,too-many-statem
     if not cli.suppress_warnings:
         warn_python2_eol()
 
+    # if they are acting as a non-default user, set it up early
     if parsed.as_user and not skip_config:
-        # if they are acting as a non-default user, set it up early
         cli.config.set_user(parsed.as_user)
 
     if parsed.version:
@@ -255,86 +145,12 @@ def main():  # pylint: disable=too-many-locals,too-many-branches,too-many-statem
         sys.exit(3)
 
     if parsed.command == "register-plugin":
-        # this is how the CLI discovers third-party plugins - the user registers
-        # them!  Registering a plugin gets it set up for all CLI users.
         if parsed.action is None:
             print("register-plugin requires a module name!")
             sys.exit(9)
-        module = parsed.action
-
-        # attempt to import the module to prove it is installed and exists
-        try:
-            plugin = import_module(module)
-        except ImportError:
-            print(f"Module {module} not installed")
-            sys.exit(10)
-
-        # get the plugin name
-        try:
-            plugin_name = plugin.PLUGIN_NAME
-        except AttributeError:
-            print(
-                f"{module} is not a valid Linode CLI plugin - missing PLUGIN_NAME"
-            )
-            sys.exit(11)
-
-        # prove it's callable
-        try:
-            call_func = plugin.call
-            del call_func
-        except AttributeError:
-            print(f"{module} is not a valid Linode CLI plugin - missing call")
-            sys.exit(11)
-
-        reregistering = False
-        # check for naming conflicts
-        if plugin_name in cli.ops:
-            print(
-                "Plugin name conflicts with CLI operation - registration failed."
-            )
-            sys.exit(12)
-        elif plugin_name in plugins.available_local:
-            # conflicts with an internal plugin - can't do that
-            print(
-                "Plugin name conflicts with internal CLI plugin - registration failed."
-            )
-            sys.exit(13)
-        elif plugin_name in plugins.available(cli.config):
-            # this isn't an internal plugin, so warn that we're re-registering it
-            print(f"WARNING: Plugin {plugin_name} is already registered.")
-            print("")
-            answer = input(f"Allow re-registration of {plugin_name}? [y/N] ")
-
-            if not answer or answer not in "yY":
-                print("Registration aborted.")
-                sys.exit(0)
-
-            reregistering = True
-
-        # looks good - register it
-        already_registered = []
-        if cli.config.config.has_option("DEFAULT", "registered-plugins"):
-            already_registered = cli.config.config.get(
-                "DEFAULT", "registered-plugins"
-            ).split(",")
-
-        if reregistering:
-            already_registered.remove(plugin_name)
-            cli.config.config.remove_option(
-                "DEFAULT", f"plugin-name-{plugin_name}"
-            )
-
-        already_registered.append(plugin_name)
-        cli.config.config.set(
-            "DEFAULT", "registered-plugins", ",".join(already_registered)
-        )
-        cli.config.config.set("DEFAULT", f"plugin-name-{plugin_name}", module)
-        cli.config.write_config()
-
-        print("Plugin registered successfully!")
-        print("Invoke this plugin by running the following:")
-        print(f"  linode-cli {plugin_name}")
-        sys.exit(0)
+        msg, code = register_plugin(parsed.action, cli.config, cli.ops)
+        print(msg)
+        sys.exit(code)
 
     if parsed.command == "remove-plugin":
         if parsed.action is None:
