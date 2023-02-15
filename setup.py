@@ -83,11 +83,7 @@ setup(
         "terminaltables",
         "requests",
         "PyYAML",
-        "future; python_version <= '3.0.0'",
     ],
-    extras_require={
-        ":python_version<'3.4'": ["enum34"],
-    },
     entry_points={
         "console_scripts": [
             "linode-cli = linodecli:main",
