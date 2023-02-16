@@ -10,6 +10,7 @@ from sys import version_info
 
 from .api_request import do_request
 from .configuration import CLIConfig
+from .helpers import filter_markdown_links
 from .operation import CLIArg, CLIOperation, URLParam
 from .output import OutputHandler, OutputMode
 from .response import ModelAttr, ResponseModel
@@ -234,7 +235,7 @@ class CLI:  # pylint: disable=too-many-instance-attributes
                         action_aliases = action[1:]
                         action = action[0]
 
-                    summary = data[m].get("summary") or ""
+                    summary = filter_markdown_links(data[m].get("summary")) or ""
 
                     # Resolve the documentation URL
                     docs_url = None
@@ -360,7 +361,7 @@ class CLI:  # pylint: disable=too-many-instance-attributes
                         new_arg = CLIArg(
                             info["name"],
                             info["type"],
-                            info["desc"].split(".")[0] + ".",
+                            filter_markdown_links(info["desc"].split(".")[0] + "."),
                             arg,
                             info["format"],
                             list_item=info.get("list_item"),
