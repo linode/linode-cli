@@ -135,3 +135,28 @@ def register_plugin(module, config, ops):
            "Invoke this plugin by running the following:\n\n"
            "  linode-cli {plugin_name}")
     return msg, 0
+
+# TODO: also maybe move to plugins
+def remove_plugin(plugin_name, config):
+    """
+    Remove a plugin
+    """
+    if plugin_name in plugins.available_local:
+        msg = f"{plugin_name} is bundled with the CLI and cannot be removed"
+        return msg, 13
+
+    if plugin_name not in plugins.available(config):
+        msg = f"{plugin_name} is not a registered plugin"
+        return msg, 14
+
+    # do the removal
+    current_plugins = config.config.get("DEFAULT", "registered-plugins").split(",")
+    current_plugins.remove(plugin_name)
+    config.config.set("DEFAULT", "registered-plugins", ",".join(current_plugins))
+
+    # if the config if malformed, don't blow up
+    if config.config.has_option("DEFAULT", f"plugin-name-{plugin_name}"):
+        config.config.remove_option("DEFAULT", f"plugin-name-{plugin_name}")
+
+    config.write_config()
+    return f"Plugin {plugin_name} removed", 0

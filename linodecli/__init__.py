@@ -16,7 +16,7 @@ from terminaltables import SingleTable
 from linodecli import plugins
 
 from .cli import CLI
-from .args import register_args, register_plugin
+from .args import register_args, register_plugin, remove_plugin
 from .completion import bake_completions, get_completions
 from .configuration import ENV_TOKEN_NAME
 from .helpers import handle_url_overrides
@@ -156,40 +156,9 @@ def main():  # pylint: disable=too-many-locals,too-many-branches,too-many-statem
         if parsed.action is None:
             print("remove-plugin requires a plugin name to remove!")
             sys.exit(9)
-
-        # is this plugin registered?
-        plugin_name = parsed.action
-        if plugin_name in plugins.available_local:
-            # can't remove first-party plugins
-            print(
-                f"{plugin_name} is bundled with the CLI and cannot be removed"
-            )
-            sys.exit(13)
-        elif plugin_name not in plugins.available(cli.config):
-            print(f"{plugin_name} is not a registered plugin")
-            sys.exit(14)
-
-        # do the removal
-        current_plugins = cli.config.config.get(
-            "DEFAULT", "registered-plugins"
-        ).split(",")
-        current_plugins.remove(plugin_name)
-        cli.config.config.set(
-            "DEFAULT", "registered-plugins", ",".join(current_plugins)
-        )
-
-        if cli.config.config.has_option(
-            "DEFAULT", f"plugin-name-{plugin_name}"
-        ):
-            # if the config if malformed, don't blow up
-            cli.config.config.remove_option(
-                "DEFAULT", f"plugin-name-{plugin_name}"
-            )
-
-        cli.config.write_config()
-
-        print(f"Plugin {plugin_name} removed")
-        sys.exit(0)
+        msg, code = remove_plugin(parsed.action, cli.config)
+        print(msg)
+        sys.exit(code)
 
     if parsed.command == "completion":
         print(get_completions(cli.ops, parsed.help, parsed.action))
