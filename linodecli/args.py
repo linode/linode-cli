@@ -4,6 +4,7 @@ Argument parser for the linode CLI
 """
 
 from importlib import import_module
+from terminaltables import SingleTable
 
 from linodecli import plugins
 
@@ -160,3 +161,114 @@ def remove_plugin(plugin_name, config):
 
     config.write_config()
     return f"Plugin {plugin_name} removed", 0
+
+def help_with_ops(ops, config):
+    """
+    Prints help output with options from the API spec
+    """
+    # commands to manage CLI users (don't call out to API)
+    print("\nCLI user management commands:")
+    um_commands = [["configure", "set-user", "show-users"], ["remove-user"]]
+    table = SingleTable(um_commands)
+    table.inner_heading_row_border = False
+    print(table.table)
+
+    # commands to manage plugins (don't call out to API)
+    print("\nCLI Plugin management commands:")
+    pm_commands = [["register-plugin", "remove-plugin"]]
+    table = SingleTable(pm_commands)
+    table.inner_heading_row_border = False
+    print(table.table)
+
+    # other CLI commands
+    print("\nOther CLI commands:")
+    other_commands = [["completion"]]
+    table = SingleTable(other_commands)
+    table.inner_heading_row_border = False
+    print(table.table)
+
+    # commands generated from the spec (call the API directly)
+    print("\nAvailable commands:")
+
+    content = list(sorted(ops.keys()))
+    proc = []
+    for i in range(0, len(content), 3):
+        proc.append(content[i : i + 3])
+    if content[i + 3 :]:
+        proc.append(content[i + 3 :])
+
+    table = SingleTable(proc)
+    table.inner_heading_row_border = False
+    print(table.table)
+
+    # plugins registered to the CLI (do arbitrary things)
+    if plugins.available(config):
+        # only show this if there are any available plugins
+        print("Available plugins:")
+
+        plugin_content = list(plugins.available(config))
+        plugin_proc = []
+
+        for i in range(0, len(plugin_content), 3):
+            plugin_proc.append(plugin_content[i : i + 3])
+        if plugin_content[i + 3 :]:
+            plugin_proc.append(plugin_content[i + 3 :])
+
+        plugin_table = SingleTable(plugin_proc)
+        plugin_table.inner_heading_row_border = False
+
+        print(plugin_table.table)
+
+    print("\nTo reconfigure, call `linode-cli configure`")
+    print("For comprehensive documentation,"
+          "visit https://www.linode.com/docs/api/")
+
+def action_help(cli, command, action):
+    """
+    Prints help relevant to the command and action
+    """
+    try:
+        op = cli.find_operation(command, action)
+    except ValueError:
+        return
+    print(f"linode-cli {command} {action}", end="")
+    for param in op.params:
+        # clean up parameter names - we add an '_' at the end of them
+        # during baking if it conflicts with the name of an argument.
+        # Remove the trailing underscores on output (they're not
+        # important to the end user).
+        pname = param.name.upper()
+        if pname[-1] == "_":
+            pname = pname[:-1]
+        print(f" [{pname}]", end="")
+    print()
+    print(op.summary)
+    if op.docs_url:
+        print(f"API Documentation: {op.docs_url}")
+    print()
+    if op.args:
+        print("Arguments:")
+        for arg in sorted(
+            op.args, key=lambda s: not s.required
+        ):
+            is_required = (
+                "(required) "
+                if op.method in {"post", "put"}
+                and arg.required
+                else ""
+            )
+            print(f"  --{arg.path}: {is_required}{arg.description}")
+    elif (
+        op.method == "get"
+        and op.action == "list"
+    ):
+        filterable_attrs = [
+            attr
+            for attr in op.response_model.attrs
+            if attr.filterable
+        ]
+
+        if filterable_attrs:
+            print("You may filter results with:")
+            for attr in filterable_attrs:
+                print(f"  --{attr.name}")

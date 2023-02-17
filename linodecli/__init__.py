@@ -16,7 +16,7 @@ from terminaltables import SingleTable
 from linodecli import plugins
 
 from .cli import CLI
-from .args import register_args, register_plugin, remove_plugin
+from .args import register_args, register_plugin, remove_plugin, help_with_ops, action_help
 from .completion import bake_completions, get_completions
 from .configuration import ENV_TOKEN_NAME
 from .helpers import handle_url_overrides
@@ -56,8 +56,7 @@ def warn_python2_eol():
         )
 
 
-def main():  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
-    # TODO: major refactor function is too long
+def main(): #pylint: disable=too-many-branches,too-many-statements
     """
     Handle incoming command arguments
     """
@@ -167,229 +166,92 @@ def main():  # pylint: disable=too-many-locals,too-many-branches,too-many-statem
     # handle a help for the CLI
     if parsed.command is None or (parsed.command is None and parsed.help):
         parser.print_help()
-
-        # commands to manage CLI users (don't call out to API)
-        print()
-        print("CLI user management commands:")
-        um_commands = [["configure", "set-user", "show-users"], ["remove-user"]]
-        table = SingleTable(um_commands)
-        table.inner_heading_row_border = False
-        print(table.table)
-
-        # commands to manage plugins (don't call out to API)
-        print()
-        print("CLI Plugin management commands:")
-        pm_commands = [["register-plugin", "remove-plugin"]]
-        table = SingleTable(pm_commands)
-        table.inner_heading_row_border = False
-        print(table.table)
-
-        # other CLI commands
-        print()
-        print("Other CLI commands:")
-        other_commands = [["completion"]]
-        table = SingleTable(other_commands)
-        table.inner_heading_row_border = False
-        print(table.table)
-
-        # commands generated from the spec (call the API directly)
-        print()
-        print("Available commands:")
-
-        content = list(sorted(cli.ops.keys()))
-        proc = []
-        for i in range(0, len(content), 3):
-            proc.append(content[i : i + 3])
-        if content[i + 3 :]:
-            proc.append(content[i + 3 :])
-
-        table = SingleTable(proc)
-        table.inner_heading_row_border = False
-        print(table.table)
-
-        # plugins registered to the CLI (do arbitrary things)
-        if plugins.available(cli.config):
-            # only show this if there are any available plugins
-            print("Available plugins:")
-
-            plugin_content = list(plugins.available(cli.config))
-            plugin_proc = []
-
-            for i in range(0, len(plugin_content), 3):
-                plugin_proc.append(plugin_content[i : i + 3])
-            if plugin_content[i + 3 :]:
-                plugin_proc.append(plugin_content[i + 3 :])
-
-            plugin_table = SingleTable(plugin_proc)
-            plugin_table.inner_heading_row_border = False
-
-            print(plugin_table.table)
-
-        print()
-        print("To reconfigure, call `linode-cli configure`")
-        print(
-            "For comprehensive documentation, visit https://www.linode.com/docs/api/"
-        )
+        help_with_ops(cli.ops, cli.config)
         sys.exit(0)
 
     # configure
     if parsed.command == "configure":
         if parsed.help:
-            print("linode-cli configure")
-            print()
-            print(
-                "Configured the Linode CLI.  This command can be used to change"
-            )
-            print(
-                "defaults selected for the current user, or to configure additional"
-            )
-            print("users.")
-            sys.exit(0)
+            print("linode-cli configure\n\n"
+                  "Configured the Linode CLI.  This command can be used to change\n"
+                  "defaults selected for the current user, or to configure additional users.")
         else:
             cli.configure()
-            sys.exit(0)
+        sys.exit(0)
 
     # block of commands for user-focused operations
     if parsed.command == "set-user":
         if parsed.help or not parsed.action:
-            print("linode-cli set-user [USER]")
-            print()
-            print(
-                "Sets the active user for the CLI out of users you have configured."
-            )
-            print("To configure a new user, see `linode-cli configure`")
-            sys.exit(0)
+            print("linode-cli set-user [USER]\n\n"
+                  "Sets the active user for the CLI out of users you have configured.\n"
+                  "To configure a new user, see `linode-cli configure`")
         else:
             cli.config.set_default_user(parsed.action)
-            sys.exit(0)
+        sys.exit(0)
 
     if parsed.command == "show-users":
         if parsed.help:
-            print("linode-cli show-users")
-            print()
-            print("Lists configured users.  Configured users can be set as the")
-            print("active user (used for all commands going forward) with the")
-            print("`set-user` command, or used for a single command with the")
-            print(
-                "`--as-user` flag.  New users can be added with `linode-cli configure`."
-            )
-            print("The user that is currently active is indicated with a `*`")
-            sys.exit(0)
+            print("linode-cli show-users\n\n"
+                  "Lists configured users.  Configured users can be set as the\n"
+                  "active user (used for all commands going forward) with the\n"
+                  "`set-user` command, or used for a single command with the\n"
+                  "`--as-user` flag.  New users can be added with `linode-cli configure`.\n"
+                  "The user that is currently active is indicated with a `*`")
         else:
             cli.config.print_users()
-            sys.exit(0)
+        sys.exit(0)
 
     if parsed.command == "remove-user":
         if parsed.help or not parsed.action:
-            print("linode-cli remove-user [USER]")
-            print()
-            print(
-                "Removes a user the CLI was configured with.  This does not change"
-            )
-            print(
-                "your Linode account, only this CLI installation.  Once removed,"
-            )
-            print(
-                "the user may not be set as active or used for commands unless"
-            )
-            print("configured again.")
-            sys.exit(0)
+            print("linode-cli remove-user [USER]\n\n"
+                  "Removes a user the CLI was configured with. This does not change\n"
+                  "your Linode account, only this CLI installation. Once removed,\n"
+                  "the user may not be set as active or used for commands unless\n"
+                  "configured again.")
         else:
             cli.config.remove_user(parsed.action)
-            sys.exit(0)
+        sys.exit(0)
 
     # special command to bake shell completion script
     if parsed.command == "bake-bash":
         bake_completions(cli.ops)
+        sys.exit(0)
 
     # check for plugin invocation
-    if parsed.command not in cli.ops and parsed.command in plugins.available(
-        cli.config
-    ):
+    if (parsed.command not in cli.ops
+        and parsed.command in plugins.available(cli.config)):
         context = plugins.PluginContext(cli.config.get_token(), cli)
 
         # reconstruct arguments to send to the plugin
         plugin_args = argv[1:]  # don't include the program name
-        plugin_args.remove(parsed.command)  # don't include the plugin name tho
-
+        plugin_args.remove(parsed.command)  # don't include the plugin name
         plugins.invoke(parsed.command, plugin_args, context)
         sys.exit(0)
 
-    if (
-        parsed.command not in cli.ops
-        and parsed.command not in plugins.available(cli.config)
-    ):
-        # unknown commands
+    # unknown commands
+    if (parsed.command not in cli.ops
+        and parsed.command not in plugins.available(cli.config)):
         print(f"Unrecognized command {parsed.command}")
 
     # handle a help for a command - either --help or no action triggers this
-    if parsed.command is not None and parsed.action is None:
-        if parsed.command in cli.ops:
-            actions = cli.ops[parsed.command]
-            print(f"linode-cli {parsed.command} [ACTION]")
-            print()
-            print("Available actions: ")
-
-            content = [
-                [", ".join([action, *op.action_aliases]), op.summary]
-                for action, op in actions.items()
-            ]
-
-            header = ["action", "summary"]
-            table = SingleTable([header] + content)
-            print(table.table)
-            sys.exit(0)
-
-    # handle a help for an action
-    try:
-        parsed_operation = cli.find_operation(parsed.command, parsed.action)
-    except ValueError:
-        # No operation was found
-        parsed_operation = None
-
-    if parsed_operation is not None and parsed.help:
-        print(f"linode-cli {parsed.command} {parsed.action}", end="")
-        for param in parsed_operation.params:
-            # clean up parameter names - we add an '_' at the end of them
-            # during baking if it conflicts with the name of an argument.
-            # Remove the trailing underscores on output (they're not
-            # important to the end user).
-            pname = param.name.upper()
-            if pname[-1] == "_":
-                pname = pname[:-1]
-            print(f" [{pname}]", end="")
+    if (parsed.command is not None
+        and parsed.action is None
+        and parsed.command in cli.ops):
+        print(f"linode-cli {parsed.command} [ACTION]")
         print()
-        print(parsed_operation.summary)
-        if parsed_operation.docs_url:
-            print(f"API Documentation: {parsed_operation.docs_url}")
-        print()
-        if parsed_operation.args:
-            print("Arguments:")
-            for arg in sorted(
-                parsed_operation.args, key=lambda s: not s.required
-            ):
-                is_required = (
-                    "(required) "
-                    if parsed_operation.method in {"post", "put"}
-                    and arg.required
-                    else ""
-                )
-                print(f"  --{arg.path}: {is_required}{arg.description}")
-        elif (
-            parsed_operation.method == "get"
-            and parsed_operation.action == "list"
-        ):
-            filterable_attrs = [
-                attr
-                for attr in parsed_operation.response_model.attrs
-                if attr.filterable
-            ]
+        print("Available actions: ")
 
-            if filterable_attrs:
-                print("You may filter results with:")
-                for attr in filterable_attrs:
-                    print(f"  --{attr.name}")
+        content = [
+            [", ".join([action, *op.action_aliases]), op.summary]
+            for action, op in cli.ops[parsed.command].items()
+        ]
+
+        table = SingleTable([["action", "summary"]] + content)
+        print(table.table)
         sys.exit(0)
 
     if parsed.command is not None and parsed.action is not None:
+        if parsed.help:
+            action_help(cli, parsed.command, parsed.action)
+            sys.exit(0)
         cli.handle_command(parsed.command, parsed.action, args)
