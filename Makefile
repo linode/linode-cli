@@ -39,8 +39,8 @@ clean:
 
 .PHONY: test
 test:
-	pytest tests
-	python -m unittest tests/*.py
+	pytest tests/unit
+	python -m unittest tests/unit/*.py
 
 
 black:
