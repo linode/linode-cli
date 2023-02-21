@@ -82,6 +82,15 @@ class CLI:  # pylint: disable=too-many-instance-attributes
 
         return tmp
 
+    def _resolve_arg_recursive(self, info):
+        if "allOf" in info:
+            return self._resolve_arg_recursive(self._resolve_allOf(info["allOf"]))
+
+        if "$ref" in info:
+            return self._resolve_arg_recursive(self._resolve_ref(info["$ref"]))
+
+        return info
+
     def _parse_args(
         self, node, prefix=None, args=None
     ):  # pylint: disable=too-many-branches
@@ -95,10 +104,14 @@ class CLI:  # pylint: disable=too-many-instance-attributes
             prefix = []
 
         for arg, info in node.items():
-            if "allOf" in info:
-                info = self._resolve_allOf(info["allOf"])
-            while "$ref" in info:
-                info = self._resolve_ref(info["$ref"])
+            read_only = info.get("readOnly")
+
+            info = self._resolve_arg_recursive(info)
+
+            # We want to apply the top-level read-only value to this argument if necessary
+            if read_only:
+                info["readOnly"] = read_only
+
             if "properties" in info:
                 self._parse_args(
                     info["properties"], prefix=prefix + [arg], args=args
