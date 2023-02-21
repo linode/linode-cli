@@ -1068,7 +1068,7 @@ def _get_s3_creds(client: CLI, force: bool = False):
 
         client.config.plugin_set_value("access-key", access_key)
         client.config.plugin_set_value("secret-key", secret_key)
-        client.config.write_config(silent=True)
+        client.config.write_config()
 
     return access_key, secret_key
 

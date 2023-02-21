@@ -3,6 +3,7 @@ General helper functions for configuraiton
 """
 
 import os
+import webbrowser
 
 from .auth import _do_get_request
 
@@ -21,6 +22,21 @@ CONFIG_DIR = os.environ.get(
     "XDG_CONFIG_HOME", f"{os.path.expanduser('~')}/.config"
 )
 
+
+# this is a list of browser that _should_ work for web-based auth.  This is mostly
+# intended to exclude lynx and other terminal browsers which could be opened, but
+# won't work.
+KNOWN_GOOD_BROWSERS = {
+    "chrome",
+    "firefox",
+    "mozilla",
+    "netscape",
+    "opera",
+    "safari",
+    "chromium",
+    "chromium-browser",
+    "epiphany",
+}
 
 def _get_config_path():
     """
@@ -49,6 +65,24 @@ def _get_config(load=True):
 
     return conf
 
+def _check_browsers():
+    # let's see if we _can_ use web
+    try:
+        webbrowser.get()
+    except webbrowser.Error:
+        # there are no browsers installed
+        return False
+
+    # pylint: disable-next=protected-access
+    if not KNOWN_GOOD_BROWSERS.intersection(webbrowser._tryorder):
+        print("""
+This tool defaults to web-based authentication,
+however no known-working browsers were found.""")
+        while True:
+            r = input("Try it anyway? [y/N]: ")
+            if r.lower() in "yn ":
+                return r.lower() == "y"
+    return True
 
 def _default_thing_input(
     ask, things, prompt, error, optional=True
@@ -84,7 +118,6 @@ def _default_thing_input(
             print(error)
     return ret
 
-
 def _handle_no_default_user(self):
     """
     Handle the case that there is no default user in the config
@@ -94,7 +127,7 @@ def _handle_no_default_user(self):
     if len(users) == 1:
         # only one user configured - they're the default
         self.config.set("DEFAULT", "default-user", users[0])
-        self.write_config(silent=True)
+        self.write_config()
         return
 
     if len(users) == 0:
@@ -133,7 +166,7 @@ def _handle_no_default_user(self):
                 self.config.get("DEFAULT", "authorized_keys"),
             )
 
-            self.write_config(silent=True)
+            self.write_config()
         else:
             # got nothin', reconfigure
             self.configure()
