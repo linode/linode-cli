@@ -61,7 +61,13 @@ class ModelAttr:  # pylint: disable=too-many-instance-attributes
     """
 
     def __init__(  # pylint: disable=too-many-arguments
-        self, name, filterable, display, datatype, color_map=None, item_type=None
+        self,
+        name,
+        filterable,
+        display,
+        datatype,
+        color_map=None,
+        item_type=None,
     ):
         self.name = name
         self.value = None
@@ -144,54 +150,62 @@ class ResponseModel:  # pylint: disable=too-few-public-methods
         """
         Takes JSON from the API and formats it into a list of rows
         """
-        if self.rows:  # pylint: disable=no-else-return
-            # take the columns as specified
-            ret = []
-            for c in self.rows:
-                cur = json
-                for part in c.split("."):
-                    cur = cur.get(part)
+        if self.rows:
+            return self._fix_json_rows(json)
 
-                if not cur:
-                    # probably shouldn't happen, but ok
-                    continue
+        if self.nested_list:
+            return self._fix_json_nested_list(json)
 
-                if isinstance(cur, list):
-                    ret += cur
-                else:
-                    ret.append(cur)
-
-            # we're good
-            return ret
-        elif self.nested_list:
-            # we need to explode the rows into one row per entry in the nested list,
-            # copying the external values
-            if "pages" in json:
-                json = json["data"]
-
-            nested_lists = [c.strip() for c in self.nested_list.split(",")]
-            ret = []
-
-            for nested_list in nested_lists:
-                path_parts = nested_list.split(".")
-
-                if not isinstance(json, list):
-                    json = [json]
-                for cur in json:
-
-                    nlist_path = cur
-                    for p in path_parts:
-                        nlist_path = nlist_path.get(p)
-                    nlist = nlist_path
-
-                    for item in nlist:
-                        cobj = {k: v for k, v in cur.items() if k != path_parts[0]}
-                        cobj["_split"] = path_parts[-1]
-                        cobj[path_parts[0]] = item
-                        ret.append(cobj)
-
-            return ret
-        elif "pages" in json:
+        if "pages" in json:
             return json["data"]
-        else:
-            return [json]
+
+        return [json]
+
+    def _fix_json_rows(self, json):
+        # take the columns as specified
+        ret = []
+        for c in self.rows:
+            cur = json
+            for part in c.split("."):
+                cur = cur.get(part)
+
+            if not cur:
+                # probably shouldn't happen, but ok
+                continue
+
+            if isinstance(cur, list):
+                ret += cur
+            else:
+                ret.append(cur)
+
+        # we're good
+        return ret
+
+    def _fix_json_nested_list(self, json):
+        # we need to explode the rows into one row per entry in the nested list,
+        # copying the external values
+        if "pages" in json:
+            json = json["data"]
+
+        nested_lists = [c.strip() for c in self.nested_list.split(",")]
+        ret = []
+
+        for nested_list in nested_lists:
+            path_parts = nested_list.split(".")
+
+            if not isinstance(json, list):
+                json = [json]
+
+            for cur in json:
+                nlist_path = cur
+                for p in path_parts:
+                    nlist_path = nlist_path.get(p)
+                nlist = nlist_path
+
+                for item in nlist:
+                    cobj = {k: v for k, v in cur.items() if k != path_parts[0]}
+                    cobj["_split"] = path_parts[-1]
+                    cobj[path_parts[0]] = item
+                    ret.append(cobj)
+
+        return ret

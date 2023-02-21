@@ -6,6 +6,8 @@ from importlib import import_module
 from os import listdir
 from os.path import dirname
 
+from linodecli.cli import CLI
+
 _available_files = listdir(dirname(__file__))
 available_local = [
     f[:-3] for f in _available_files if f.endswith(".py") and f != "__init__.py"
@@ -64,7 +66,7 @@ class PluginContext:  # pylint: disable=too-few-public-methods
     and the CLI access token the user has provided.
     """
 
-    def __init__(self, token, client):
+    def __init__(self, token: str, client: CLI):
         """
         Constructs a new PluginContext with the given information
         """

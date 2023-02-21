@@ -4,8 +4,8 @@ Argument parser for the linode CLI
 """
 
 import argparse
-import sys
 import os
+import sys
 from importlib import import_module
 from sys import argv, stderr, version_info
 
@@ -17,7 +17,9 @@ from terminaltables import SingleTable
 from linodecli import plugins
 
 from .cli import CLI
+from .completion import bake_completions, get_completions
 from .configuration import ENV_TOKEN_NAME
+from .helpers import handle_url_overrides
 from .operation import CLIArg, CLIOperation, URLParam
 from .output import OutputMode
 from .response import ModelAttr, ResponseModel
@@ -27,13 +29,14 @@ try:
     VERSION = pkg_resources.require("linode-cli")[0].version
 except:
     VERSION = "building"
+
 BASE_URL = "https://api.linode.com/v4"
 
 
 # if any of these arguments are given, we don't need to prompt for configuration
 skip_config = any(c in argv for c in ["--skip-config", "--help", "--version"])
 
-cli = CLI(VERSION, BASE_URL, skip_config=skip_config)
+cli = CLI(VERSION, handle_url_overrides(BASE_URL), skip_config=skip_config)
 
 
 def warn_python2_eol():
@@ -76,7 +79,8 @@ def main():  # pylint: disable=too-many-locals,too-many-branches,too-many-statem
     parser.add_argument(
         "--help",
         action="store_true",
-        help="Display information about a command, action, or " "the CLI overall.",
+        help="Display information about a command, action, or "
+        "the CLI overall.",
     )
     parser.add_argument(
         "--text",
@@ -89,9 +93,13 @@ def main():  # pylint: disable=too-many-locals,too-many-branches,too-many-statem
         type=str,
         help="The delimiter when displaying raw output.",
     )
-    parser.add_argument("--json", action="store_true", help="Display output as JSON")
     parser.add_argument(
-        "--markdown", action="store_true", help="Display output in Markdown format."
+        "--json", action="store_true", help="Display output as JSON"
+    )
+    parser.add_argument(
+        "--markdown",
+        action="store_true",
+        help="Display output in Markdown format.",
     )
     parser.add_argument(
         "--pretty", action="store_true", help="If set, pretty-print JSON output"
@@ -150,6 +158,12 @@ def main():  # pylint: disable=too-many-locals,too-many-branches,too-many-statem
         "This is useful for scripting the CLI's behavior.",
     )
     parser.add_argument(
+        "--no-truncation",
+        action="store_true",
+        default=False,
+        help="Prevent the truncation of long values in command outputs.",
+    )
+    parser.add_argument(
         "--version",
         "-v",
         action="store_true",
@@ -184,9 +198,13 @@ def main():  # pylint: disable=too-many-locals,too-many-branches,too-many-statem
 
     cli.defaults = not parsed.no_defaults
     cli.suppress_warnings = parsed.suppress_warnings
+
     cli.page = parsed.page
     cli.page_size = parsed.page_size
     cli.debug_request = parsed.debug
+
+    cli.output_handler.suppress_warnings = parsed.suppress_warnings
+    cli.output_handler.disable_truncation = parsed.no_truncation
 
     if not cli.suppress_warnings:
         warn_python2_eol()
@@ -229,14 +247,7 @@ def main():  # pylint: disable=too-many-locals,too-many-branches,too-many-statem
             sys.exit(2)
 
         cli.bake(spec)
-        print("Baking bash completions...")
-        # this step would normally happen on laod
-        if "_base_url" in cli.ops:
-            del cli.ops["_base_url"]
-        if "_spec_version" in cli.ops:
-            del cli.ops["_spec_version"]
-        # do the baking
-        cli.bake_completions()
+        bake_completions(cli.ops)
         print("Done.")
         sys.exit(0)
     elif cli.ops is None:
@@ -262,7 +273,9 @@ def main():  # pylint: disable=too-many-locals,too-many-branches,too-many-statem
         try:
             plugin_name = plugin.PLUGIN_NAME
         except AttributeError:
-            print(f"{module} is not a valid Linode CLI plugin - missing PLUGIN_NAME")
+            print(
+                f"{module} is not a valid Linode CLI plugin - missing PLUGIN_NAME"
+            )
             sys.exit(11)
 
         # prove it's callable
@@ -276,7 +289,9 @@ def main():  # pylint: disable=too-many-locals,too-many-branches,too-many-statem
         reregistering = False
         # check for naming conflicts
         if plugin_name in cli.ops:
-            print("Plugin name conflicts with CLI operation - registration failed.")
+            print(
+                "Plugin name conflicts with CLI operation - registration failed."
+            )
             sys.exit(12)
         elif plugin_name in plugins.available_local:
             # conflicts with an internal plugin - can't do that
@@ -305,7 +320,9 @@ def main():  # pylint: disable=too-many-locals,too-many-branches,too-many-statem
 
         if reregistering:
             already_registered.remove(plugin_name)
-            cli.config.config.remove_option("DEFAULT", f"plugin-name-{plugin_name}")
+            cli.config.config.remove_option(
+                "DEFAULT", f"plugin-name-{plugin_name}"
+            )
 
         already_registered.append(plugin_name)
         cli.config.config.set(
@@ -328,24 +345,30 @@ def main():  # pylint: disable=too-many-locals,too-many-branches,too-many-statem
         plugin_name = parsed.action
         if plugin_name in plugins.available_local:
             # can't remove first-party plugins
-            print(f"{plugin_name} is bundled with the CLI and cannot be removed")
+            print(
+                f"{plugin_name} is bundled with the CLI and cannot be removed"
+            )
             sys.exit(13)
         elif plugin_name not in plugins.available(cli.config):
             print(f"{plugin_name} is not a registered plugin")
             sys.exit(14)
 
         # do the removal
-        current_plugins = cli.config.config.get("DEFAULT", "registered-plugins").split(
-            ","
-        )
+        current_plugins = cli.config.config.get(
+            "DEFAULT", "registered-plugins"
+        ).split(",")
         current_plugins.remove(plugin_name)
         cli.config.config.set(
             "DEFAULT", "registered-plugins", ",".join(current_plugins)
         )
 
-        if cli.config.config.has_option("DEFAULT", f"plugin-name-{plugin_name}"):
+        if cli.config.config.has_option(
+            "DEFAULT", f"plugin-name-{plugin_name}"
+        ):
             # if the config if malformed, don't blow up
-            cli.config.config.remove_option("DEFAULT", f"plugin-name-{plugin_name}")
+            cli.config.config.remove_option(
+                "DEFAULT", f"plugin-name-{plugin_name}"
+            )
 
         cli.config.write_config()
 
@@ -353,29 +376,7 @@ def main():  # pylint: disable=too-many-locals,too-many-branches,too-many-statem
         sys.exit(0)
 
     if parsed.command == "completion":
-        if parsed.help or not parsed.action:
-            print("linode-cli completion [SHELL]")
-            print()
-            print(
-                "Prints shell completions for the requested shell to stdout. "
-                "Currently, only completions for bash and fish are available."
-            )
-            sys.exit(0)
-
-        completions = ""
-
-        if parsed.action == "bash":
-            completions = cli.get_bash_completions()
-        elif parsed.action == "fish":
-            completions = cli.get_fish_completions()
-        else:
-            print(
-                "Completions are only available for bash and fish at this time.  To retrieve "
-                "these, please invoke as `linode-cli completion bash` "
-                "or `linode-cli completion fish`."
-            )
-            sys.exit(1)
-        print(completions)
+        print(get_completions(cli.ops, parsed.help, parsed.action))
         sys.exit(0)
 
     # handle a help for the CLI
@@ -441,7 +442,9 @@ def main():  # pylint: disable=too-many-locals,too-many-branches,too-many-statem
 
         print()
         print("To reconfigure, call `linode-cli configure`")
-        print("For comprehensive documentation, visit https://www.linode.com/docs/api/")
+        print(
+            "For comprehensive documentation, visit https://www.linode.com/docs/api/"
+        )
         sys.exit(0)
 
     # configure
@@ -449,8 +452,12 @@ def main():  # pylint: disable=too-many-locals,too-many-branches,too-many-statem
         if parsed.help:
             print("linode-cli configure")
             print()
-            print("Configured the Linode CLI.  This command can be used to change")
-            print("defaults selected for the current user, or to configure additional")
+            print(
+                "Configured the Linode CLI.  This command can be used to change"
+            )
+            print(
+                "defaults selected for the current user, or to configure additional"
+            )
             print("users.")
             sys.exit(0)
         else:
@@ -462,7 +469,9 @@ def main():  # pylint: disable=too-many-locals,too-many-branches,too-many-statem
         if parsed.help or not parsed.action:
             print("linode-cli set-user [USER]")
             print()
-            print("Sets the active user for the CLI out of users you have configured.")
+            print(
+                "Sets the active user for the CLI out of users you have configured."
+            )
             print("To configure a new user, see `linode-cli configure`")
             sys.exit(0)
         else:
@@ -489,9 +498,15 @@ def main():  # pylint: disable=too-many-locals,too-many-branches,too-many-statem
         if parsed.help or not parsed.action:
             print("linode-cli remove-user [USER]")
             print()
-            print("Removes a user the CLI was configured with.  This does not change")
-            print("your Linode account, only this CLI installation.  Once removed,")
-            print("the user may not be set as active or used for commands unless")
+            print(
+                "Removes a user the CLI was configured with.  This does not change"
+            )
+            print(
+                "your Linode account, only this CLI installation.  Once removed,"
+            )
+            print(
+                "the user may not be set as active or used for commands unless"
+            )
             print("configured again.")
             sys.exit(0)
         else:
@@ -500,7 +515,7 @@ def main():  # pylint: disable=too-many-locals,too-many-branches,too-many-statem
 
     # special command to bake shell completion script
     if parsed.command == "bake-bash":
-        cli.bake_completions()
+        bake_completions(cli.ops)
 
     # check for plugin invocation
     if parsed.command not in cli.ops and parsed.command in plugins.available(
@@ -515,8 +530,9 @@ def main():  # pylint: disable=too-many-locals,too-many-branches,too-many-statem
         plugins.invoke(parsed.command, plugin_args, context)
         sys.exit(0)
 
-    if parsed.command not in cli.ops and parsed.command not in plugins.available(
-        cli.config
+    if (
+        parsed.command not in cli.ops
+        and parsed.command not in plugins.available(cli.config)
     ):
         # unknown commands
         print(f"Unrecognized command {parsed.command}")
@@ -540,42 +556,54 @@ def main():  # pylint: disable=too-many-locals,too-many-branches,too-many-statem
             sys.exit(0)
 
     # handle a help for an action
-    if parsed.command is not None and parsed.action is not None and parsed.help:
-        if parsed.command in cli.ops and parsed.action in cli.ops[parsed.command]:
-            operation = cli.ops[parsed.command][parsed.action]
-            print(f"linode-cli {parsed.command} {parsed.action}", end="")
-            for param in operation.params:
-                # clean up parameter names - we add an '_' at the end of them
-                # during baking if it conflicts with the name of an argument.
-                # Remove the trailing underscores on output (they're not
-                # important to the end user).
-                pname = param.name.upper()
-                if pname[-1] == "_":
-                    pname = pname[:-1]
-                print(f" [{pname}]", end="")
-            print()
-            print(operation.summary)
-            if operation.docs_url:
-                print(f"API Documentation: {operation.docs_url}")
-            print()
-            if operation.args:
-                print("Arguments:")
-                for arg in sorted(operation.args, key=lambda s: not s.required):
-                    is_required = (
-                        "(required) "
-                        if operation.method in {"post", "put"} and arg.required
-                        else ""
-                    )
-                    print(f"  --{arg.path}: {is_required}{arg.description}")
-            elif operation.method == "get" and parsed.action == "list":
-                filterable_attrs = [
-                    attr for attr in operation.response_model.attrs if attr.filterable
-                ]
+    try:
+        parsed_operation = cli.find_operation(parsed.command, parsed.action)
+    except ValueError:
+        # No operation was found
+        parsed_operation = None
 
-                if filterable_attrs:
-                    print("You may filter results with:")
-                    for attr in filterable_attrs:
-                        print(f"  --{attr.name}")
+    if parsed_operation is not None and parsed.help:
+        print(f"linode-cli {parsed.command} {parsed.action}", end="")
+        for param in parsed_operation.params:
+            # clean up parameter names - we add an '_' at the end of them
+            # during baking if it conflicts with the name of an argument.
+            # Remove the trailing underscores on output (they're not
+            # important to the end user).
+            pname = param.name.upper()
+            if pname[-1] == "_":
+                pname = pname[:-1]
+            print(f" [{pname}]", end="")
+        print()
+        print(parsed_operation.summary)
+        if parsed_operation.docs_url:
+            print(f"API Documentation: {parsed_operation.docs_url}")
+        print()
+        if parsed_operation.args:
+            print("Arguments:")
+            for arg in sorted(
+                parsed_operation.args, key=lambda s: not s.required
+            ):
+                is_required = (
+                    "(required) "
+                    if parsed_operation.method in {"post", "put"}
+                    and arg.required
+                    else ""
+                )
+                print(f"  --{arg.path}: {is_required}{arg.description}")
+        elif (
+            parsed_operation.method == "get"
+            and parsed_operation.action == "list"
+        ):
+            filterable_attrs = [
+                attr
+                for attr in parsed_operation.response_model.attrs
+                if attr.filterable
+            ]
+
+            if filterable_attrs:
+                print("You may filter results with:")
+                for attr in filterable_attrs:
+                    print(f"  --{attr.name}")
         sys.exit(0)
 
     if parsed.command is not None and parsed.action is not None:
