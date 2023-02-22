@@ -21,6 +21,12 @@ teardown() {
     fi
 }
 
+@test "it should not allow you to update a linode with an image" {
+    run linode-cli linodes update --help
+
+    refute_output --partial "--image"
+}
+
 @test "it should create linodes with a label" {
     run linode-cli linodes create \
         --type g6-standard-2 \
