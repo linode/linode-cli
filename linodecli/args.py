@@ -3,10 +3,15 @@
 Argument parser for the linode CLI
 """
 
+import os
+import sys
 from importlib import import_module
 from terminaltables import SingleTable
 
+import yaml
+import requests
 from linodecli import plugins
+from .completion import bake_completions
 
 def register_args(parser):
     """
@@ -235,8 +240,6 @@ def action_help(cli, command, action):
     for param in op.params:
         # clean up parameter names - we add an '_' at the end of them
         # during baking if it conflicts with the name of an argument.
-        # Remove the trailing underscores on output (they're not
-        # important to the end user).
         pname = param.name.upper()
         if pname[-1] == "_":
             pname = pname[:-1]
@@ -272,3 +275,24 @@ def action_help(cli, command, action):
             print("You may filter results with:")
             for attr in filterable_attrs:
                 print(f"  --{attr.name}")
+
+def bake_command(cli, spec_loc):
+    """
+    Handle a bake command from args
+    """
+    try:
+        if os.path.exists(os.path.expanduser(spec_loc)):
+            with open(os.path.expanduser(spec_loc), encoding="utf-8") as f:
+                spec = yaml.safe_load(f.read())
+        else:  # try to GET it
+            resp = requests.get(spec_loc, timeout=120)
+            if resp.status_code == 200:
+                spec = yaml.safe_load(resp.content)
+            else:
+                raise RuntimeError(f"Request failed to {spec_loc}")
+    except Exception as e:
+        print(f"Could not load spec: {e}")
+        sys.exit(2)
+
+    cli.bake(spec)
+    bake_completions(cli.ops)

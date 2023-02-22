@@ -4,19 +4,19 @@ Argument parser for the linode CLI
 """
 
 import argparse
-import os
 import sys
 from sys import argv, stderr, version_info
 
 import pkg_resources
-import requests
-import yaml
 from terminaltables import SingleTable
 
 from linodecli import plugins
 
 from .cli import CLI
-from .args import register_args, register_plugin, remove_plugin, help_with_ops, action_help
+from .args import (
+    register_args, register_plugin, remove_plugin,
+    help_with_ops, action_help, bake_command
+)
 from .completion import bake_completions, get_completions
 from .configuration import ENV_TOKEN_NAME
 from .helpers import handle_url_overrides
@@ -37,24 +37,6 @@ BASE_URL = "https://api.linode.com/v4"
 skip_config = any(c in argv for c in ["--skip-config", "--help", "--version"])
 
 cli = CLI(VERSION, handle_url_overrides(BASE_URL), skip_config=skip_config)
-
-
-def warn_python2_eol():
-    """
-    Prints a warning the first time each day that the CLI is used under python2.
-    This is included to help users upgrade to python3 before python2 support is
-    dropped in the CLI.
-    """
-    if version_info.major < 3:
-        print(
-            "You are running the Linode CLI using Python 2, which reached its end of life on "
-            "Jan 1st, 2020.  The Linode CLI will be dropping support for Python 2, and "
-            "upgrading your installation is strongly encouraged so that you can continue "
-            "to receive updates.\n\nFor information about upgrading your installation, see our "
-            "official guide:\n\nhttps://www.linode.com/docs/guides/upgrade-to-linode-cli-python-3/",
-            file=stderr,
-        )
-
 
 def main(): #pylint: disable=too-many-branches,too-many-statements
     """
@@ -95,9 +77,6 @@ def main(): #pylint: disable=too-many-branches,too-many-statements
     cli.output_handler.suppress_warnings = parsed.suppress_warnings
     cli.output_handler.disable_truncation = parsed.no_truncation
 
-    if not cli.suppress_warnings:
-        warn_python2_eol()
-
     # if they are acting as a non-default user, set it up early
     if parsed.as_user and not skip_config:
         cli.config.set_user(parsed.as_user)
@@ -119,25 +98,7 @@ def main(): #pylint: disable=too-many-branches,too-many-statements
         if parsed.action is None:
             print("No spec provided, cannot bake")
             sys.exit(9)
-        print("Baking...")
-        spec_loc = parsed.action
-        try:
-            if os.path.exists(os.path.expanduser(spec_loc)):
-                with open(os.path.expanduser(spec_loc), encoding="utf-8") as f:
-                    spec = yaml.safe_load(f.read())
-            else:  # try to GET it
-                resp = requests.get(spec_loc, timeout=120)
-                if resp.status_code == 200:
-                    spec = yaml.safe_load(resp.content)
-                else:
-                    raise RuntimeError(f"Request failed to {spec_loc}")
-        except Exception as e:
-            print(f"Could not load spec: {e}")
-            sys.exit(2)
-
-        cli.bake(spec)
-        bake_completions(cli.ops)
-        print("Done.")
+        bake_command(cli, parsed.action)
         sys.exit(0)
     elif cli.ops is None:
         # if not spec was found and we weren't baking, we're doomed
@@ -232,6 +193,7 @@ def main(): #pylint: disable=too-many-branches,too-many-statements
     if (parsed.command not in cli.ops
         and parsed.command not in plugins.available(cli.config)):
         print(f"Unrecognized command {parsed.command}")
+        sys.exit(1)
 
     # handle a help for a command - either --help or no action triggers this
     if (parsed.command is not None
