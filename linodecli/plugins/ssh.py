@@ -12,6 +12,7 @@ import argparse
 import subprocess
 import sys
 from sys import platform
+from linodecli.plugins import inherit_relevant_args
 
 
 def call(args, context):  # pylint: disable=too-many-branches
@@ -26,7 +27,10 @@ def call(args, context):  # pylint: disable=too-many-branches
         )
         sys.exit(1)
 
-    parser = argparse.ArgumentParser("linode-cli ssh", add_help=True)
+    parser = inherit_relevant_args(
+        argparse.ArgumentParser("linode-cli ssh", add_help=True)
+    )
+
     parser.add_argument(
         "label",
         metavar="[USERNAME@]LABEL",

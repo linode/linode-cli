@@ -145,13 +145,6 @@ def main():  # pylint: disable=too-many-locals,too-many-branches,too-many-statem
         "are configured on initial setup or with linode-cli configure",
     )
     parser.add_argument(
-        "--as-user",
-        metavar="USERNAME",
-        type=str,
-        help="The username to execute this command as.  This user must "
-        "be configured.",
-    )
-    parser.add_argument(
         "--suppress-warnings",
         action="store_true",
         help="Suppress warnings that are intended for human users. "
@@ -172,6 +165,8 @@ def main():  # pylint: disable=too-many-locals,too-many-branches,too-many-statem
     parser.add_argument(
         "--debug", action="store_true", help="Enable verbose HTTP debug output"
     )
+
+    helpers.register_args_shared(parser)
 
     parsed, args = parser.parse_known_args()
 

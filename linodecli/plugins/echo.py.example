@@ -1,4 +1,5 @@
 import argparse
+from linodecli.plugins import inherit_relevant_args
 
 def call(args, context):
     """
@@ -7,7 +8,10 @@ def call(args, context):
     :param args: sys.argv, trimmed to represent only arguments to this command
     :type args: list
     """
-    parser = argparse.ArgumentParser("echo", add_help=True)
+    parser = inherit_relevant_args(
+        argparse.ArgumentParser("echo", add_help=True)
+    )
+
     parser.add_argument('word', nargs='*', help="The stuff to echo")
     data = parser.parse_args(args)
 
