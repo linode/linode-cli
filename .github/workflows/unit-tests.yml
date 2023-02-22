@@ -22,8 +22,5 @@ jobs:
       - name: Install deps
         run: pip install -r requirements.txt -r requirements-dev.txt
 
-      - name: Install Python deps
-        run: pip install wheel
-
       - name: Run the unit test suite
-        run: echo "y" | make test
+        run: make test
