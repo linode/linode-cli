@@ -9,9 +9,9 @@ from helpers import BASE_URL, create_file_random_text, get_token
 
 from linodecli.configuration.auth import _do_request
 
-
 REGION = "us-southeast-1"
 BASE_CMD = ["linode-cli", "obj", "--cluster", REGION]
+
 
 @pytest.fixture(scope="session")
 def created_buckets():
@@ -83,7 +83,8 @@ def delete_bucket(bucket_name: str, force: bool = True):
 
 
 def test_obj_single_file_single_bucket(
-    name_generator: Callable, created_buckets: Set[str],
+    name_generator: Callable,
+    created_buckets: Set[str],
 ):
     file_path = create_file_random_text(name_generator)
     bucket_name = create_bucket(name_generator, created_buckets)
@@ -114,7 +115,9 @@ def test_multi_files_multi_bucket(
     name_generator: Callable, created_buckets: Set[str]
 ):
     number = 5
-    bucket_names = [create_bucket(name_generator, created_buckets) for _ in range(number)]
+    bucket_names = [
+        create_bucket(name_generator, created_buckets) for _ in range(number)
+    ]
     file_paths = [
         create_file_random_text(name_generator) for _ in range(number)
     ]
@@ -128,4 +131,3 @@ def test_multi_files_multi_bucket(
             assert "Done" in output
     for file in file_paths:
         file.unlink()
-        
