@@ -227,7 +227,11 @@ authorized_users = cli-dev2"""
                 return "test-token"
             return next(answers)
 
-        with (patch('linodecli.configuration.open', mock_open()),
+
+
+        with (
+                patch('os.chmod', lambda a,b: None),
+                patch('linodecli.configuration.open', mock_open()),
                 patch('builtins.input', mock_input),
                 contextlib.redirect_stdout(io.StringIO()),
                 patch('linodecli.configuration._check_browsers', lambda: False),
@@ -260,7 +264,9 @@ authorized_users = cli-dev2"""
             answers = (a for a in ["1", "1", "1", "1"])
             return next(answers)
 
-        with (patch('linodecli.configuration.open', mock_open()),
+        with (
+                patch('linodecli.configuration.open', mock_open()),
+                patch('os.chmod', lambda a, b: None),
                 patch('builtins.input', mock_input),
                 contextlib.redirect_stdout(io.StringIO()),
                 patch('linodecli.configuration._check_browsers', lambda: False),
