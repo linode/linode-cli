@@ -16,7 +16,6 @@ from .output import OutputHandler, OutputMode
 from .response import ModelAttr, ResponseModel
 
 METHODS = ("get", "post", "put", "delete")
-PIP_CMD = "pip3" if version_info.major == 3 else "pip"
 
 
 class CLI:  # pylint: disable=too-many-instance-attributes

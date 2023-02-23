@@ -2,17 +2,11 @@
 General helper functions for configuraiton
 """
 
+import configparser
 import os
 import webbrowser
 
 from .auth import _do_get_request
-
-try:
-    # python3
-    import configparser
-except ImportError:
-    # python2
-    import ConfigParser as configparser
 
 LEGACY_CONFIG_NAME = ".linode-cli"
 LEGACY_CONFIG_DIR = os.path.expanduser("~")
