@@ -7,7 +7,7 @@ import argparse
 import os
 import sys
 from importlib import import_module
-from sys import argv, stderr, version_info
+from sys import argv
 
 import pkg_resources
 import requests
@@ -37,23 +37,6 @@ BASE_URL = "https://api.linode.com/v4"
 skip_config = any(c in argv for c in ["--skip-config", "--help", "--version"])
 
 cli = CLI(VERSION, handle_url_overrides(BASE_URL), skip_config=skip_config)
-
-
-def warn_python2_eol():
-    """
-    Prints a warning the first time each day that the CLI is used under python2.
-    This is included to help users upgrade to python3 before python2 support is
-    dropped in the CLI.
-    """
-    if version_info.major < 3:
-        print(
-            "You are running the Linode CLI using Python 2, which reached its end of life on "
-            "Jan 1st, 2020.  The Linode CLI will be dropping support for Python 2, and "
-            "upgrading your installation is strongly encouraged so that you can continue "
-            "to receive updates.\n\nFor information about upgrading your installation, see our "
-            "official guide:\n\nhttps://www.linode.com/docs/guides/upgrade-to-linode-cli-python-3/",
-            file=stderr,
-        )
 
 
 def main():  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
@@ -205,9 +188,6 @@ def main():  # pylint: disable=too-many-locals,too-many-branches,too-many-statem
 
     cli.output_handler.suppress_warnings = parsed.suppress_warnings
     cli.output_handler.disable_truncation = parsed.no_truncation
-
-    if not cli.suppress_warnings:
-        warn_python2_eol()
 
     if parsed.as_user and not skip_config:
         # if they are acting as a non-default user, set it up early
