@@ -236,7 +236,9 @@ class CLIConfig:
             if self.config.has_option(username, key):
                 value = self.config.get(username, key)
             else:
-                value = allowed_defaults[key]
+                value = ns_dict[key]
+            if not value:
+                continue
             if key == "authorized_users":
                 ns_dict[key] = [value]
                 warn_dict[key] = [value]
