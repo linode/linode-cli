@@ -35,8 +35,10 @@ BASE_URL = "https://api.linode.com/v4"
 TEST_MODE = os.getenv("LINODE_CLI_TEST_MODE") == "1"
 
 # if any of these arguments are given, we don't need to prompt for configuration
-skip_config = any(c in argv for c in ["--skip-config", "--help", "--version"]) \
-              or TEST_MODE
+skip_config = (
+    any(c in argv for c in ["--skip-config", "--help", "--version"])
+    or TEST_MODE
+)
 
 cli = CLI(VERSION, handle_url_overrides(BASE_URL), skip_config=skip_config)
 

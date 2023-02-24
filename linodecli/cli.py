@@ -83,7 +83,9 @@ class CLI:  # pylint: disable=too-many-instance-attributes
 
     def _resolve_arg_recursive(self, info):
         if "allOf" in info:
-            return self._resolve_arg_recursive(self._resolve_allOf(info["allOf"]))
+            return self._resolve_arg_recursive(
+                self._resolve_allOf(info["allOf"])
+            )
 
         if "$ref" in info:
             return self._resolve_arg_recursive(self._resolve_ref(info["$ref"]))
@@ -247,7 +249,9 @@ class CLI:  # pylint: disable=too-many-instance-attributes
                         action_aliases = action[1:]
                         action = action[0]
 
-                    summary = filter_markdown_links(data[m].get("summary")) or ""
+                    summary = (
+                        filter_markdown_links(data[m].get("summary")) or ""
+                    )
 
                     # Resolve the documentation URL
                     docs_url = None
@@ -373,7 +377,9 @@ class CLI:  # pylint: disable=too-many-instance-attributes
                         new_arg = CLIArg(
                             info["name"],
                             info["type"],
-                            filter_markdown_links(info["desc"].split(".")[0] + "."),
+                            filter_markdown_links(
+                                info["desc"].split(".")[0] + "."
+                            ),
                             arg,
                             info["format"],
                             list_item=info.get("list_item"),
