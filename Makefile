@@ -24,6 +24,9 @@ requirements:
 .PHONY: requirements
 lint:
 	pylint linodecli
+	isort --check-only linodecli tests
+	autoflake --check linodecli tests
+	black --check --verbose linodecli tests
 
 .PHONY: check-prerequisites
 check-prerequisites:
@@ -38,10 +41,9 @@ clean:
 	rm -rf dist
 
 .PHONY: test
-test: export LINODE_CLI_TEST_MODE = 1
 test:
-	pytest tests/unit
-	python -m unittest tests/unit/*.py
+	pytest tests
+	python -m unittest tests/*.py
 
 
 black:
