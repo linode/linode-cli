@@ -19,6 +19,9 @@ jobs:
         with:
           python-version: '3.x'
 
+      - name: Install Python wheel
+        run: pip install wheel
+
       - name: Install deps
         run: pip install -r requirements.txt -r requirements-dev.txt
 
