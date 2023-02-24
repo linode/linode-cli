@@ -230,31 +230,22 @@ authorized_users = cli-dev2"""
                 return "test-token"
             return next(answers)
 
+
+
         with (
-            patch("linodecli.configuration.open", mock_open()),
-            patch("builtins.input", mock_input),
-            contextlib.redirect_stdout(io.StringIO()),
-            patch("linodecli.configuration._check_browsers", lambda: False),
-            patch.dict(os.environ, {}),
-            requests_mock.Mocker() as m,
-        ):
-            m.get(f"{self.base_url}/profile", json={"username": "cli-dev"})
-            m.get(f"{self.base_url}/profile/grants", status_code=204)
-            m.get(
-                f"{self.base_url}/regions",
-                json={"data": [{"id": "test-region"}]},
-            )
-            m.get(
-                f"{self.base_url}/linode/types",
-                json={"data": [{"id": "test-type"}]},
-            )
-            m.get(
-                f"{self.base_url}/images", json={"data": [{"id": "test-image"}]}
-            )
-            m.get(
-                f"{self.base_url}/account/users",
-                json={"data": [{"username": "cli-dev", "ssh_keys": "testkey"}]},
-            )
+                patch('os.chmod', lambda a,b: None),
+                patch('linodecli.configuration.open', mock_open()),
+                patch('builtins.input', mock_input),
+                contextlib.redirect_stdout(io.StringIO()),
+                patch('linodecli.configuration._check_browsers', lambda: False),
+                patch.dict(os.environ, {}), requests_mock.Mocker() as m):
+            m.get(f'{self.base_url}/profile', json= {"username": "cli-dev"})
+            m.get(f'{self.base_url}/profile/grants', status_code=204)
+            m.get(f'{self.base_url}/regions', json= {"data":[{"id": "test-region"}]})
+            m.get(f'{self.base_url}/linode/types', json= {"data":[{"id": "test-type"}]})
+            m.get(f'{self.base_url}/images', json= {"data":[{"id": "test-image"}]})
+            m.get(f'{self.base_url}/account/users',
+                  json= {"data":[{"username": "cli-dev", "ssh_keys": "testkey"}]})
             conf.configure()
 
         self.assertEqual(conf.get_value("type"), "test-type")
@@ -277,30 +268,20 @@ authorized_users = cli-dev2"""
             return next(answers)
 
         with (
-            patch("linodecli.configuration.open", mock_open()),
-            patch("builtins.input", mock_input),
-            contextlib.redirect_stdout(io.StringIO()),
-            patch("linodecli.configuration._check_browsers", lambda: False),
-            patch.dict(os.environ, {"LINODE_CLI_TOKEN": "test-token"}),
-            requests_mock.Mocker() as m,
-        ):
-            m.get(f"{self.base_url}/profile", json={"username": "cli-dev"})
-            m.get(f"{self.base_url}/profile/grants", status_code=204)
-            m.get(
-                f"{self.base_url}/regions",
-                json={"data": [{"id": "test-region"}]},
-            )
-            m.get(
-                f"{self.base_url}/linode/types",
-                json={"data": [{"id": "test-type"}]},
-            )
-            m.get(
-                f"{self.base_url}/images", json={"data": [{"id": "test-image"}]}
-            )
-            m.get(
-                f"{self.base_url}/account/users",
-                json={"data": [{"username": "cli-dev", "ssh_keys": "testkey"}]},
-            )
+                patch('linodecli.configuration.open', mock_open()),
+                patch('os.chmod', lambda a, b: None),
+                patch('builtins.input', mock_input),
+                contextlib.redirect_stdout(io.StringIO()),
+                patch('linodecli.configuration._check_browsers', lambda: False),
+                patch.dict(os.environ, {"LINODE_CLI_TOKEN": "test-token"}),
+                requests_mock.Mocker() as m):
+            m.get(f'{self.base_url}/profile', json= {"username": "cli-dev"})
+            m.get(f'{self.base_url}/profile/grants', status_code=204)
+            m.get(f'{self.base_url}/regions', json= {"data":[{"id": "test-region"}]})
+            m.get(f'{self.base_url}/linode/types', json= {"data":[{"id": "test-type"}]})
+            m.get(f'{self.base_url}/images', json= {"data":[{"id": "test-image"}]})
+            m.get(f'{self.base_url}/account/users',
+                  json= {"data":[{"username": "cli-dev", "ssh_keys": "testkey"}]})
             conf.configure()
 
         self.assertEqual(conf.get_value("type"), "test-type")
