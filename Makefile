@@ -41,8 +41,7 @@ clean:
 	rm -rf dist
 
 .PHONY: test
-test:
-	export LINODE_CLI_TEST_MODE=1
+test: export LINODE_CLI_TEST_MODE=1
 	pytest tests/unit
 	python -m unittest tests/unit/*.py
 
