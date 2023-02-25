@@ -42,7 +42,7 @@ clean:
 
 .PHONY: test
 test:
-	export LINODE_CLI_TEST_MODE = 1
+	export LINODE_CLI_TEST_MODE=1
 	pytest tests/unit
 	python -m unittest tests/unit/*.py
 
