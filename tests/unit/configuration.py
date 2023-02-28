@@ -236,7 +236,7 @@ authorized_users = cli-dev2"""
             patch("builtins.input", mock_input),
             contextlib.redirect_stdout(io.StringIO()),
             patch("linodecli.configuration._check_browsers", lambda: False),
-            patch.dict(os.environ, {}),
+            patch.dict(os.environ, {}, clear=True),
             requests_mock.Mocker() as m,
         ):
             m.get(f"{self.base_url}/profile", json={"username": "cli-dev"})
