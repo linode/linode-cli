@@ -1,11 +1,12 @@
 import logging
 import os
 import subprocess
+from pathlib import Path
 from typing import Callable, List, Optional, Set
 
 import pytest
 import requests
-from helpers import BASE_URL, create_file_random_text, get_token
+from helpers import BASE_URL, create_file_random_text
 
 from linodecli.configuration.auth import _do_request
 
@@ -25,12 +26,12 @@ def created_buckets():
 
 
 @pytest.fixture(scope="session", autouse=True)
-def keys():
+def keys(token: str):
     response = _do_request(
         BASE_URL,
         requests.post,
         "object-storage/keys",
-        get_token(),
+        token,
         False,
         {"label": "cli-integration-test-obj-key"},
     )
@@ -47,7 +48,7 @@ def keys():
         BASE_URL,
         requests.delete,
         f"object-storage/keys/{response['id']}",
-        get_token(),
+        token,
     )
     os.environ["LINODE_CLI_OBJ_ACCESS_KEY"] = backup_access_key
     os.environ["LINODE_CLI_OBJ_SECRET_KEY"] = backup_secret_key
@@ -108,7 +109,17 @@ def test_obj_single_file_single_bucket(
     assert str(file_size) in output
     assert file_path.name in output
 
-    file_path.unlink(missing_ok=True)
+    downloaded_file_path = Path.cwd() / f"downloaded_{file_path.name}"
+    process = exec_test_command(
+        BASE_CMD
+        + ["get", bucket_name, file_path.name, downloaded_file_path.name]
+    )
+    output = process.stdout.decode()
+    with open(downloaded_file_path) as f2, open(file_path) as f1:
+        assert f1.read() == f2.read()
+
+    downloaded_file_path.unlink()
+    file_path.unlink()
 
 
 def test_multi_files_multi_bucket(
