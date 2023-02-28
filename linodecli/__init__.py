@@ -3,9 +3,10 @@
 Argument parser for the linode CLI
 """
 
+import os
 import argparse
 import sys
-from sys import argv, stderr, version_info
+from sys import argv
 
 import pkg_resources
 from terminaltables import SingleTable
@@ -18,11 +19,8 @@ from .args import (
     help_with_ops, action_help, bake_command
 )
 from .completion import bake_completions, get_completions
-from .configuration import ENV_TOKEN_NAME
 from .helpers import handle_url_overrides
-from .operation import CLIArg, CLIOperation, URLParam
 from .output import OutputMode
-from .response import ModelAttr, ResponseModel
 
 # this might not be installed at the time of building
 try:
@@ -32,9 +30,13 @@ except:
 
 BASE_URL = "https://api.linode.com/v4"
 
+TEST_MODE = os.getenv("LINODE_CLI_TEST_MODE") == "1"
 
 # if any of these arguments are given, we don't need to prompt for configuration
-skip_config = any(c in argv for c in ["--skip-config", "--help", "--version"])
+skip_config = (
+    any(c in argv for c in ["--skip-config", "--help", "--version"])
+    or TEST_MODE
+)
 
 cli = CLI(VERSION, handle_url_overrides(BASE_URL), skip_config=skip_config)
 
@@ -77,7 +79,6 @@ def main(): #pylint: disable=too-many-branches,too-many-statements
     cli.output_handler.suppress_warnings = parsed.suppress_warnings
     cli.output_handler.disable_truncation = parsed.no_truncation
 
-    # if they are acting as a non-default user, set it up early
     if parsed.as_user and not skip_config:
         cli.config.set_user(parsed.as_user)
 

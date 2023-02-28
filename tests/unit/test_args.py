@@ -1,3 +1,5 @@
+import pytest
+
 from linodecli import args
 
 class TestArgParsing:
@@ -108,8 +110,88 @@ class TestArgParsing:
         assert "testing.plugin" in captured.out
 
     # args.action_help(cli, command, action)
-    def test_action_help_value_error(self, capsys, mocker, mock_cli):
-        mocker.patch("linodecli.args.action_help.cli.find_operation", side_effect=ValueError())
+    def test_action_help_value_error(self, capsys, mock_cli):
         args.action_help(mock_cli, None, None)
         captured = capsys.readouterr()
         assert not captured.out
+
+    def test_action_help_post_method(self, capsys, mocker, mock_cli):
+        mocked_ops = mocker.MagicMock()
+        mocked_ops.summary = "test summary"
+        mocked_ops.docs_url = "https://website.com/endpoint"
+        mocked_ops.method = "post"
+
+        mocked_args = mocker.MagicMock()
+        mocked_args.required = True
+        mocked_args.path = "path"
+        mocked_args.description = "test description"
+
+        mocked_ops.args = [mocked_args]
+
+        mock_cli.find_operation = mocker.Mock(return_value=mocked_ops)
+
+        args.action_help(mock_cli, "command", "action")
+        captured = capsys.readouterr()
+        assert "test summary" in captured.out
+        assert "API Documentation" in captured.out
+        assert "https://website.com/endpoint" in captured.out
+        assert "Arguments" in captured.out
+        assert "test description" in captured.out
+        assert "(required)" in captured.out
+        assert "filter results" not in captured.out
+
+    def test_action_help_get_method(self, capsys, mocker, mock_cli):
+        mocked_ops = mocker.MagicMock()
+        mocked_ops.summary = "test summary"
+        mocked_ops.docs_url = "https://website.com/endpoint"
+        mocked_ops.method = "get"
+        mocked_ops.action = "list"
+        mocked_ops.args = None
+
+        mock_attr = mocker.MagicMock()
+        mock_attr.filterable = True
+        mock_attr.name = "filtername"
+        mocked_ops.response_model.attrs = [mock_attr]
+
+        mock_cli.find_operation = mocker.Mock(return_value=mocked_ops)
+
+        args.action_help(mock_cli, "command", "action")
+        captured = capsys.readouterr()
+        assert "test summary" in captured.out
+        assert "API Documentation" in captured.out
+        assert "https://website.com/endpoint" in captured.out
+        assert "Arguments" not in captured.out
+        assert "filter results" in captured.out
+        assert "filtername" in captured.out
+
+    def test_bake_command_bad_website(self, capsys, mocker, mock_cli):
+        with pytest.raises(SystemExit) as ex:
+            args.bake_command(mock_cli, "https://website.com")
+        captured = capsys.readouterr()
+        assert ex.value.code == 2
+        assert "Request failed to https://website.com" in captured.out
+
+    def test_bake_command_good_website(self, capsys, mocker, mock_cli):
+        mock_cli.bake = print
+        mocker.patch("linodecli.completion.bake_completions")
+
+        mock_res = mocker.MagicMock()
+        mock_res.status_code = 200
+        mock_res.content = "yaml loaded"
+        mocker.patch("requests.get", return_value=mock_res)
+        mocker.patch("yaml.safe_load", return_value=mock_res.content)
+
+        args.bake_command(mock_cli, "realwebsite")
+        captured = capsys.readouterr()
+        assert "yaml loaded" in captured.out
+
+    def test_bake_command_good_file(self, capsys, mocker, mock_cli):
+        mock_cli.bake = print
+        mocker.patch("linodecli.completion.bake_completions")
+        mocker.patch("os.path.exists", return_value=True)
+        mocker.patch("builtins.open", mocker.mock_open())
+        mocker.patch("yaml.safe_load", return_value="yaml loaded")
+
+        args.bake_command(mock_cli, "real/file")
+        captured = capsys.readouterr()
+        assert "yaml loaded" in captured.out

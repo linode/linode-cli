@@ -3,8 +3,9 @@ import sys
 
 import pytest
 
-from linodecli import CLIArg, CLIOperation, ModelAttr, ResponseModel, URLParam
 from linodecli.cli import CLI
+from linodecli.operation import CLIArg, CLIOperation, URLParam
+from linodecli.response import ModelAttr, ResponseModel
 
 MOCK_CONFIG = """
 [DEFAULT]

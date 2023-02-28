@@ -2,17 +2,18 @@
 """
 Unit tests for linodecli.configuration
 """
+import argparse
+import contextlib
 import io
 import os
 import sys
-import argparse
-import contextlib
-
 import unittest
-from unittest.mock import call, patch, mock_open
+from unittest.mock import call, mock_open, patch
+
 import requests_mock
 
 from linodecli import configuration
+
 
 class ConfigurationTests(unittest.TestCase):
     """
@@ -44,8 +45,10 @@ authorized_users = cli-dev2"""
         Helper to generate config with mock data
         """
         conf = None
-        with patch('linodecli.configuration.helpers.configparser.open',
-                   mock_open(read_data=config)):
+        with patch(
+            "linodecli.configuration.helpers.configparser.open",
+            mock_open(read_data=config),
+        ):
             conf = configuration.CLIConfig(base_url)
         return conf
 
@@ -87,7 +90,7 @@ authorized_users = cli-dev2"""
         self.assertEqual(cm.exception.code, 1)
         self.assertTrue("default user!" in f.getvalue())
 
-        with patch('linodecli.configuration.open', mock_open()):
+        with patch("linodecli.configuration.open", mock_open()):
             conf.remove_user("cli-dev2")
         self.assertFalse(conf.config.has_section("cli-dev2"))
 
@@ -115,7 +118,7 @@ authorized_users = cli-dev2"""
         self.assertEqual(cm.exception.code, 1)
         self.assertTrue("not configured!" in f.getvalue())
 
-        with patch('linodecli.configuration.open', mock_open()):
+        with patch("linodecli.configuration.open", mock_open()):
             conf.set_default_user("cli-dev2")
         self.assertEqual(conf.config.get("DEFAULT", "default-user"), "cli-dev2")
 
@@ -172,16 +175,16 @@ authorized_users = cli-dev2"""
         conf = self._build_test_config()
 
         parser = argparse.ArgumentParser()
-        parser.add_argument('--newkey')
-        parser.add_argument('--testkey')
-        parser.add_argument('--authorized_users')
-        parser.add_argument('--plugin-testplugin-testkey')
-        ns = parser.parse_args(['--testkey', 'testvalue'])
+        parser.add_argument("--newkey")
+        parser.add_argument("--testkey")
+        parser.add_argument("--authorized_users")
+        parser.add_argument("--plugin-testplugin-testkey")
+        ns = parser.parse_args(["--testkey", "testvalue"])
 
         update_dict = {
-            'newkey': 'newvalue',
-            'authorized_users': ['user1'],
-            'plugin-testplugin-testkey': 'plugin-value',
+            "newkey": "newvalue",
+            "authorized_users": ["user1"],
+            "plugin-testplugin-testkey": "plugin-value",
         }
 
         f = io.StringIO()
@@ -210,7 +213,7 @@ authorized_users = cli-dev2"""
 
         conf.config.set("cli-dev", "type", "newvalue")
         m = mock_open()
-        with patch('builtins.open', m):
+        with patch("builtins.open", m):
             conf.write_config()
         self.assertIn(call("type = newvalue\n"), m().write.call_args_list)
 
@@ -223,29 +226,43 @@ authorized_users = cli-dev2"""
 
         def mock_input(prompt):
             answers = (a for a in ["1", "1", "1", "1"])
-            if 'token' in prompt.lower():
+            if "token" in prompt.lower():
                 return "test-token"
             return next(answers)
 
-        with (patch('linodecli.configuration.open', mock_open()),
-                patch('builtins.input', mock_input),
-                contextlib.redirect_stdout(io.StringIO()),
-                patch('linodecli.configuration._check_browsers', lambda: False),
-                patch.dict(os.environ, {}), requests_mock.Mocker() as m):
-            m.get(f'{self.base_url}/profile', json= {"username": "cli-dev"})
-            m.get(f'{self.base_url}/profile/grants', status_code=204)
-            m.get(f'{self.base_url}/regions', json= {"data":[{"id": "test-region"}]})
-            m.get(f'{self.base_url}/linode/types', json= {"data":[{"id": "test-type"}]})
-            m.get(f'{self.base_url}/images', json= {"data":[{"id": "test-image"}]})
-            m.get(f'{self.base_url}/account/users',
-                  json= {"data":[{"username": "cli-dev", "ssh_keys": "testkey"}]})
+        with (
+            patch("os.chmod", lambda a, b: None),
+            patch("linodecli.configuration.open", mock_open()),
+            patch("builtins.input", mock_input),
+            contextlib.redirect_stdout(io.StringIO()),
+            patch("linodecli.configuration._check_browsers", lambda: False),
+            patch.dict(os.environ, {}, clear=True),
+            requests_mock.Mocker() as m,
+        ):
+            m.get(f"{self.base_url}/profile", json={"username": "cli-dev"})
+            m.get(f"{self.base_url}/profile/grants", status_code=204)
+            m.get(
+                f"{self.base_url}/regions",
+                json={"data": [{"id": "test-region"}]},
+            )
+            m.get(
+                f"{self.base_url}/linode/types",
+                json={"data": [{"id": "test-type"}]},
+            )
+            m.get(
+                f"{self.base_url}/images", json={"data": [{"id": "test-image"}]}
+            )
+            m.get(
+                f"{self.base_url}/account/users",
+                json={"data": [{"username": "cli-dev", "ssh_keys": "testkey"}]},
+            )
             conf.configure()
 
-        self.assertEqual(conf.get_value('type'), 'test-type')
-        self.assertEqual(conf.get_value('token'), 'test-token')
-        self.assertEqual(conf.get_value('image'), 'test-image')
-        self.assertEqual(conf.get_value('region'), 'test-region')
-        self.assertEqual(conf.get_value('authorized_users'), 'cli-dev')
+        self.assertEqual(conf.get_value("type"), "test-type")
+        self.assertEqual(conf.get_value("token"), "test-token")
+        self.assertEqual(conf.get_value("image"), "test-image")
+        self.assertEqual(conf.get_value("region"), "test-region")
+        self.assertEqual(conf.get_value("authorized_users"), "cli-dev")
 
     def test_configure_default_terminal(self):
         """
@@ -260,23 +277,36 @@ authorized_users = cli-dev2"""
             answers = (a for a in ["1", "1", "1", "1"])
             return next(answers)
 
-        with (patch('linodecli.configuration.open', mock_open()),
-                patch('builtins.input', mock_input),
-                contextlib.redirect_stdout(io.StringIO()),
-                patch('linodecli.configuration._check_browsers', lambda: False),
-                patch.dict(os.environ, {"LINODE_CLI_TOKEN": "test-token"}),
-                requests_mock.Mocker() as m):
-            m.get(f'{self.base_url}/profile', json= {"username": "cli-dev"})
-            m.get(f'{self.base_url}/profile/grants', status_code=204)
-            m.get(f'{self.base_url}/regions', json= {"data":[{"id": "test-region"}]})
-            m.get(f'{self.base_url}/linode/types', json= {"data":[{"id": "test-type"}]})
-            m.get(f'{self.base_url}/images', json= {"data":[{"id": "test-image"}]})
-            m.get(f'{self.base_url}/account/users',
-                  json= {"data":[{"username": "cli-dev", "ssh_keys": "testkey"}]})
+        with (
+            patch("linodecli.configuration.open", mock_open()),
+            patch("os.chmod", lambda a, b: None),
+            patch("builtins.input", mock_input),
+            contextlib.redirect_stdout(io.StringIO()),
+            patch("linodecli.configuration._check_browsers", lambda: False),
+            patch.dict(os.environ, {"LINODE_CLI_TOKEN": "test-token"}),
+            requests_mock.Mocker() as m,
+        ):
+            m.get(f"{self.base_url}/profile", json={"username": "cli-dev"})
+            m.get(f"{self.base_url}/profile/grants", status_code=204)
+            m.get(
+                f"{self.base_url}/regions",
+                json={"data": [{"id": "test-region"}]},
+            )
+            m.get(
+                f"{self.base_url}/linode/types",
+                json={"data": [{"id": "test-type"}]},
+            )
+            m.get(
+                f"{self.base_url}/images", json={"data": [{"id": "test-image"}]}
+            )
+            m.get(
+                f"{self.base_url}/account/users",
+                json={"data": [{"username": "cli-dev", "ssh_keys": "testkey"}]},
+            )
             conf.configure()
 
-        self.assertEqual(conf.get_value('type'), 'test-type')
-        self.assertEqual(conf.get_value('image'), 'test-image')
-        self.assertEqual(conf.get_value('region'), 'test-region')
-        self.assertEqual(conf.get_value('authorized_users'), 'cli-dev')
-        self.assertEqual(conf.config.get('DEFAULT', 'default-user'), 'DEFAULT')
+        self.assertEqual(conf.get_value("type"), "test-type")
+        self.assertEqual(conf.get_value("image"), "test-image")
+        self.assertEqual(conf.get_value("region"), "test-region")
+        self.assertEqual(conf.get_value("authorized_users"), "cli-dev")
+        self.assertEqual(conf.config.get("DEFAULT", "default-user"), "DEFAULT")

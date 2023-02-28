@@ -13,8 +13,6 @@ from typing import Optional
 
 import requests
 
-PIP_CMD = "pip3"
-
 
 def do_request(
     ctx, operation, args, filter_header=None, skip_error_handling=False
@@ -228,7 +226,7 @@ def _attempt_warn_old_version(ctx, result):
                 f"The API responded with version {spec_version}, which is newer than "
                 f"the CLI's version of {ctx.spec_version}.  Please update the CLI to get "
                 "access to the newest features.  You can update with a "
-                f"simple `{PIP_CMD} install --upgrade linode-cli`",
+                "simple `pip3 install --upgrade linode-cli`",
                 file=sys.stderr,
             )
 
