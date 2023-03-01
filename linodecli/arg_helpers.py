@@ -6,82 +6,133 @@ Argument parser for the linode CLI
 import os
 import sys
 from importlib import import_module
+
+import requests
+import yaml
 from terminaltables import SingleTable
 
-import yaml
-import requests
 from linodecli import plugins
+
 from .completion import bake_completions
+
 
 def register_args(parser):
     """
     Register static command arguments
     """
-    parser.add_argument("command",
-        metavar="COMMAND", nargs="?", type=str,
-        help="The command to invoke in the CLI.")
-    parser.add_argument("action",
-        metavar="ACTION", nargs="?", type=str,
-        help="The action to perform in this command.")
-    parser.add_argument( "--help",
+    parser.add_argument(
+        "command",
+        metavar="COMMAND",
+        nargs="?",
+        type=str,
+        help="The command to invoke in the CLI.",
+    )
+    parser.add_argument(
+        "action",
+        metavar="ACTION",
+        nargs="?",
+        type=str,
+        help="The action to perform in this command.",
+    )
+    parser.add_argument(
+        "--help",
         action="store_true",
-        help="Display information about a command, action, or the CLI overall.")
-    parser.add_argument("--text",
+        help="Display information about a command, action, or the CLI overall.",
+    )
+    parser.add_argument(
+        "--text",
         action="store_true",
-        help="Display text output with a delimiter (defaults to tabs).")
-    parser.add_argument("--delimiter",
-        metavar="DELIMITER", type=str,
-        help="The delimiter when displaying raw output.")
-    parser.add_argument("--json",
+        help="Display text output with a delimiter (defaults to tabs).",
+    )
+    parser.add_argument(
+        "--delimiter",
+        metavar="DELIMITER",
+        type=str,
+        help="The delimiter when displaying raw output.",
+    )
+    parser.add_argument(
+        "--json", action="store_true", help="Display output as JSON."
+    )
+    parser.add_argument(
+        "--markdown",
         action="store_true",
-        help="Display output as JSON.")
-    parser.add_argument("--markdown",
+        help="Display output in Markdown format.",
+    )
+    parser.add_argument(
+        "--pretty",
         action="store_true",
-        help="Display output in Markdown format.")
-    parser.add_argument("--pretty",
+        help="If set, pretty-print JSON output.",
+    )
+    parser.add_argument(
+        "--no-headers",
         action="store_true",
-        help="If set, pretty-print JSON output.")
-    parser.add_argument("--no-headers",
-        action="store_true",
-        help="If set, does not display headers in output.")
-    parser.add_argument("--page",
-        metavar="PAGE", default=1, type=int,
-        help="For listing actions, specifies the page to request")
-    parser.add_argument("--page-size",
-        metavar="PAGESIZE", default=100, type=int,
+        help="If set, does not display headers in output.",
+    )
+    parser.add_argument(
+        "--page",
+        metavar="PAGE",
+        default=1,
+        type=int,
+        help="For listing actions, specifies the page to request",
+    )
+    parser.add_argument(
+        "--page-size",
+        metavar="PAGESIZE",
+        default=100,
+        type=int,
         help="For listing actions, specifies the number of items per page, "
-             "accepts any value between 25 and 500")
-    parser.add_argument("--all",
+        "accepts any value between 25 and 500",
+    )
+    parser.add_argument(
+        "--all",
         action="store_true",
         help="If set, displays all possible columns instead of "
-             "the default columns. This may not work well on some terminals.")
-    parser.add_argument("--format",
-        metavar="FORMAT", type=str,
+        "the default columns. This may not work well on some terminals.",
+    )
+    parser.add_argument(
+        "--format",
+        metavar="FORMAT",
+        type=str,
         help="The columns to display in output. Provide a comma-"
-             "separated list of column names.")
-    parser.add_argument("--no-defaults",
+        "separated list of column names.",
+    )
+    parser.add_argument(
+        "--no-defaults",
         action="store_true",
         help="Suppress default values for arguments.  Default values "
-             "are configured on initial setup or with linode-cli configure")
-    parser.add_argument("--as-user",
-        metavar="USERNAME", type=str,
+        "are configured on initial setup or with linode-cli configure",
+    )
+    parser.add_argument(
+        "--as-user",
+        metavar="USERNAME",
+        type=str,
         help="The username to execute this command as.  This user must "
-             "be configured.")
-    parser.add_argument("--suppress-warnings",
+        "be configured.",
+    )
+    parser.add_argument(
+        "--suppress-warnings",
         action="store_true",
         help="Suppress warnings that are intended for human users. "
-             "This is useful for scripting the CLI's behavior.")
-    parser.add_argument("--no-truncation",
-        action="store_true", default=False,
-        help="Prevent the truncation of long values in command outputs.")
-    parser.add_argument("--version", "-v",
+        "This is useful for scripting the CLI's behavior.",
+    )
+    parser.add_argument(
+        "--no-truncation",
         action="store_true",
-        help="Prints version information and exits.")
-    parser.add_argument("--debug",
+        default=False,
+        help="Prevent the truncation of long values in command outputs.",
+    )
+    parser.add_argument(
+        "--version",
+        "-v",
         action="store_true",
-        help="Enable verbose HTTP debug output.")
+        help="Prints version information and exits.",
+    )
+    parser.add_argument(
+        "--debug", action="store_true", help="Enable verbose HTTP debug output."
+    )
 
     return parser
+
 
 # TODO: maybe move to plugins/__init__.py
 def register_plugin(module, config, ops):
@@ -126,21 +177,28 @@ def register_plugin(module, config, ops):
 
     already_registered = []
     if config.config.has_option("DEFAULT", "registered-plugins"):
-        already_registered = config.config.get("DEFAULT", "registered-plugins").split(",")
+        already_registered = config.config.get(
+            "DEFAULT", "registered-plugins"
+        ).split(",")
 
     if reregistering:
         already_registered.remove(plugin_name)
         config.config.remove_option("DEFAULT", f"plugin-name-{plugin_name}")
 
     already_registered.append(plugin_name)
-    config.config.set("DEFAULT", "registered-plugins", ",".join(already_registered))
+    config.config.set(
+        "DEFAULT", "registered-plugins", ",".join(already_registered)
+    )
     config.config.set("DEFAULT", f"plugin-name-{plugin_name}", module)
     config.write_config()
 
-    msg = ("Plugin registered successfully!\n\n"
-           "Invoke this plugin by running the following:\n\n"
-           "  linode-cli {plugin_name}")
+    msg = (
+        "Plugin registered successfully!\n\n"
+        "Invoke this plugin by running the following:\n\n"
+        "  linode-cli {plugin_name}"
+    )
     return msg, 0
+
 
 # TODO: also maybe move to plugins
 def remove_plugin(plugin_name, config):
@@ -156,9 +214,13 @@ def remove_plugin(plugin_name, config):
         return msg, 14
 
     # do the removal
-    current_plugins = config.config.get("DEFAULT", "registered-plugins").split(",")
+    current_plugins = config.config.get("DEFAULT", "registered-plugins").split(
+        ","
+    )
     current_plugins.remove(plugin_name)
-    config.config.set("DEFAULT", "registered-plugins", ",".join(current_plugins))
+    config.config.set(
+        "DEFAULT", "registered-plugins", ",".join(current_plugins)
+    )
 
     # if the config if malformed, don't blow up
     if config.config.has_option("DEFAULT", f"plugin-name-{plugin_name}"):
@@ -166,6 +228,7 @@ def remove_plugin(plugin_name, config):
 
     config.write_config()
     return f"Plugin {plugin_name} removed", 0
+
 
 def help_with_ops(ops, config):
     """
@@ -225,8 +288,11 @@ def help_with_ops(ops, config):
         print(plugin_table.table)
 
     print("\nTo reconfigure, call `linode-cli configure`")
-    print("For comprehensive documentation,"
-          "visit https://www.linode.com/docs/api/")
+    print(
+        "For comprehensive documentation,"
+        "visit https://www.linode.com/docs/api/"
+    )
+
 
 def action_help(cli, command, action):
     """
@@ -251,30 +317,23 @@ def action_help(cli, command, action):
     print()
     if op.args:
         print("Arguments:")
-        for arg in sorted(
-            op.args, key=lambda s: not s.required
-        ):
+        for arg in sorted(op.args, key=lambda s: not s.required):
             is_required = (
                 "(required) "
-                if op.method in {"post", "put"}
-                and arg.required
+                if op.method in {"post", "put"} and arg.required
                 else ""
             )
             print(f"  --{arg.path}: {is_required}{arg.description}")
-    elif (
-        op.method == "get"
-        and op.action == "list"
-    ):
+    elif op.method == "get" and op.action == "list":
         filterable_attrs = [
-            attr
-            for attr in op.response_model.attrs
-            if attr.filterable
+            attr for attr in op.response_model.attrs if attr.filterable
         ]
 
         if filterable_attrs:
             print("You may filter results with:")
             for attr in filterable_attrs:
                 print(f"  --{attr.name}")
+
 
 def bake_command(cli, spec_loc):
     """

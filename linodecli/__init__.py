@@ -3,8 +3,8 @@
 Argument parser for the linode CLI
 """
 
-import os
 import argparse
+import os
 import sys
 from sys import argv
 
@@ -13,11 +13,15 @@ from terminaltables import SingleTable
 
 from linodecli import plugins
 
-from .cli import CLI
 from .arg_helpers import (
-    register_args, register_plugin, remove_plugin,
-    help_with_ops, action_help, bake_command
+    action_help,
+    bake_command,
+    help_with_ops,
+    register_args,
+    register_plugin,
+    remove_plugin,
 )
+from .cli import CLI
 from .completion import bake_completions, get_completions
 from .helpers import handle_url_overrides
 from .output import OutputMode
@@ -41,14 +45,15 @@ skip_config = (
 
 cli = CLI(VERSION, handle_url_overrides(BASE_URL), skip_config=skip_config)
 
-def main(): #pylint: disable=too-many-branches,too-many-statements
+
+def main():  # pylint: disable=too-many-branches,too-many-statements
     """
     Handle incoming command arguments
     """
     parser = argparse.ArgumentParser("linode-cli", add_help=False)
     parsed, args = register_args(parser).parse_known_args()
 
-    #output/formatting settings
+    # output/formatting settings
     if parsed.text:
         cli.output_handler.mode = OutputMode.delimited
     elif parsed.json:
@@ -135,9 +140,11 @@ def main(): #pylint: disable=too-many-branches,too-many-statements
     # configure
     if parsed.command == "configure":
         if parsed.help:
-            print("linode-cli configure\n\n"
-                  "Configured the Linode CLI.  This command can be used to change\n"
-                  "defaults selected for the current user, or to configure additional users.")
+            print(
+                "linode-cli configure\n\n"
+                "Configured the Linode CLI.  This command can be used to change\n"
+                "defaults selected for the current user, or to configure additional users."
+            )
         else:
             cli.configure()
         sys.exit(0)
@@ -145,32 +152,38 @@ def main(): #pylint: disable=too-many-branches,too-many-statements
     # block of commands for user-focused operations
     if parsed.command == "set-user":
         if parsed.help or not parsed.action:
-            print("linode-cli set-user [USER]\n\n"
-                  "Sets the active user for the CLI out of users you have configured.\n"
-                  "To configure a new user, see `linode-cli configure`")
+            print(
+                "linode-cli set-user [USER]\n\n"
+                "Sets the active user for the CLI out of users you have configured.\n"
+                "To configure a new user, see `linode-cli configure`"
+            )
         else:
             cli.config.set_default_user(parsed.action)
         sys.exit(0)
 
     if parsed.command == "show-users":
         if parsed.help:
-            print("linode-cli show-users\n\n"
-                  "Lists configured users.  Configured users can be set as the\n"
-                  "active user (used for all commands going forward) with the\n"
-                  "`set-user` command, or used for a single command with the\n"
-                  "`--as-user` flag.  New users can be added with `linode-cli configure`.\n"
-                  "The user that is currently active is indicated with a `*`")
+            print(
+                "linode-cli show-users\n\n"
+                "Lists configured users.  Configured users can be set as the\n"
+                "active user (used for all commands going forward) with the\n"
+                "`set-user` command, or used for a single command with the\n"
+                "`--as-user` flag.  New users can be added with `linode-cli configure`.\n"
+                "The user that is currently active is indicated with a `*`"
+            )
         else:
             cli.config.print_users()
         sys.exit(0)
 
     if parsed.command == "remove-user":
         if parsed.help or not parsed.action:
-            print("linode-cli remove-user [USER]\n\n"
-                  "Removes a user the CLI was configured with. This does not change\n"
-                  "your Linode account, only this CLI installation. Once removed,\n"
-                  "the user may not be set as active or used for commands unless\n"
-                  "configured again.")
+            print(
+                "linode-cli remove-user [USER]\n\n"
+                "Removes a user the CLI was configured with. This does not change\n"
+                "your Linode account, only this CLI installation. Once removed,\n"
+                "the user may not be set as active or used for commands unless\n"
+                "configured again."
+            )
         else:
             cli.config.remove_user(parsed.action)
         sys.exit(0)
@@ -181,8 +194,9 @@ def main(): #pylint: disable=too-many-branches,too-many-statements
         sys.exit(0)
 
     # check for plugin invocation
-    if (parsed.command not in cli.ops
-        and parsed.command in plugins.available(cli.config)):
+    if parsed.command not in cli.ops and parsed.command in plugins.available(
+        cli.config
+    ):
         context = plugins.PluginContext(cli.config.get_token(), cli)
 
         # reconstruct arguments to send to the plugin
@@ -192,15 +206,19 @@ def main(): #pylint: disable=too-many-branches,too-many-statements
         sys.exit(0)
 
     # unknown commands
-    if (parsed.command not in cli.ops
-        and parsed.command not in plugins.available(cli.config)):
+    if (
+        parsed.command not in cli.ops
+        and parsed.command not in plugins.available(cli.config)
+    ):
         print(f"Unrecognized command {parsed.command}")
         sys.exit(1)
 
     # handle a help for a command - either --help or no action triggers this
-    if (parsed.command is not None
+    if (
+        parsed.command is not None
         and parsed.action is None
-        and parsed.command in cli.ops):
+        and parsed.command in cli.ops
+    ):
         print(f"linode-cli {parsed.command} [ACTION]")
         print()
         print("Available actions: ")

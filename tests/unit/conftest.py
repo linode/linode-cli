@@ -157,13 +157,17 @@ def create_operation():
         [URLParam("test_param", "integer")],
     )
 
+
 @pytest.fixture
 def mocked_config():
     """
     mock config representing cli.config
     """
-    class Config():
+
+    class Config:
         config = configparser.ConfigParser()
-        def write_config(self): #pylint: disable=missing-function-docstring
+
+        def write_config(self):  # pylint: disable=missing-function-docstring
             pass
+
     return Config()
