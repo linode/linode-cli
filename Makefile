@@ -47,6 +47,11 @@ test:
 	python -m unittest tests/unit/*.py
 
 
+.PHONY: testint
+testint:
+	pytest tests/integration
+
+
 black:
 	black linodecli tests
 
