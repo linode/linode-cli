@@ -41,8 +41,8 @@ def test_help():
     output = process.stdout.decode()
 
     assert process.returncode == 0
-    assert "positional arguments" in output
-    assert "optional arguments" in output
+    assert "The image file to upload" in output
+    assert "The region to upload the image to" in output
 
 
 def test_invalid_file(

@@ -16,8 +16,8 @@ def test_print_help(capsys: CaptureFixture):
         assert err.code == 0
 
     captured_text = capsys.readouterr().out
-    assert "positional arguments" in captured_text
-    assert "optional arguments" in captured_text
+    assert "The image file to upload" in captured_text
+    assert "The region to upload the image to" in captured_text
 
 
 def test_no_file(mock_cli, capsys: CaptureFixture):
