@@ -6,6 +6,8 @@ from typing import Callable, Optional
 
 BASE_URL = "https://api.linode.com/v4/"
 
+COMMAND_JSON_OUTPUT = ["--suppress-warnings", "--no-defaults", "--json"]
+
 
 def get_token():
     return os.getenv("LINODE_CLI_TOKEN")
