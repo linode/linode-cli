@@ -21,6 +21,7 @@ from .arg_helpers import (
 from .completion import bake_completions, get_completions
 from .helpers import handle_url_overrides
 from .output import OutputMode
+from .response import ModelAttr, ResponseModel
 
 # this might not be installed at the time of building
 try:

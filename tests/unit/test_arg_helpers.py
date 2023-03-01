@@ -9,20 +9,20 @@ class TestArgParsing:
     def test_register_plugin_success(self, mocker, module_mocker, mocked_config):
         module_mocker.call = print
         module_mocker.PLUGIN_NAME = "testing.plugin"
-        mocker.patch("linodecli.args.import_module", return_value=module_mocker)
+        mocker.patch("linodecli.arg_helpers.import_module", return_value=module_mocker)
         msg, code = arg_helpers.register_plugin("a", mocked_config, {})
         assert "successfully!" in msg
         assert code == 0
 
     def test_register_plugin_no_mod(self, mocker, mocked_config):
-        mocker.patch("linodecli.args.import_module", side_effect=ImportError())
+        mocker.patch("linodecli.arg_helpers.import_module", side_effect=ImportError())
         msg, code = arg_helpers.register_plugin("a", mocked_config, {})
         assert "not installed" in msg
         assert code == 10
 
     def test_register_plugin_no_name(self, mocker, module_mocker, mocked_config):
         del module_mocker.PLUGIN_NAME
-        mocker.patch("linodecli.args.import_module", return_value=module_mocker)
+        mocker.patch("linodecli.arg_helpers.import_module", return_value=module_mocker)
         msg, code = arg_helpers.register_plugin("a", mocked_config, {})
         assert "missing PLUGIN_NAME" in msg
         assert code == 11
@@ -30,7 +30,7 @@ class TestArgParsing:
     def test_register_plugin_no_call(self, mocker, module_mocker, mocked_config):
         del module_mocker.call
         module_mocker.PLUGIN_NAME = "testing.plugin"
-        mocker.patch("linodecli.args.import_module", return_value=module_mocker)
+        mocker.patch("linodecli.arg_helpers.import_module", return_value=module_mocker)
         msg, code = arg_helpers.register_plugin("a", mocked_config, {})
         assert "missing call" in msg
         assert code == 11
@@ -38,7 +38,7 @@ class TestArgParsing:
     def test_register_plugin_in_ops(self, mocker, module_mocker, mocked_config):
         module_mocker.call = print
         module_mocker.PLUGIN_NAME = "testing.plugin"
-        mocker.patch("linodecli.args.import_module", return_value=module_mocker)
+        mocker.patch("linodecli.arg_helpers.import_module", return_value=module_mocker)
         msg, code = arg_helpers.register_plugin("a", mocked_config, ["testing.plugin"])
         assert "conflicts with CLI operation" in msg
         assert code == 12
@@ -46,8 +46,8 @@ class TestArgParsing:
     def test_register_plugin_in_available_local(self, mocker, module_mocker, mocked_config):
         module_mocker.call = print
         module_mocker.PLUGIN_NAME = "testing.plugin"
-        mocker.patch("linodecli.args.import_module", return_value=module_mocker)
-        mocker.patch("linodecli.args.plugins.available_local", ["testing.plugin"])
+        mocker.patch("linodecli.arg_helpers.import_module", return_value=module_mocker)
+        mocker.patch("linodecli.arg_helpers.plugins.available_local", ["testing.plugin"])
         msg, code = arg_helpers.register_plugin("a", mocked_config, {})
         assert "conflicts with internal CLI plugin" in msg
         assert code == 13
@@ -55,9 +55,9 @@ class TestArgParsing:
     def test_register_plugin_re_register(self, mocker, module_mocker, mocked_config):
         module_mocker.call = print
         module_mocker.PLUGIN_NAME = "testing.plugin"
-        mocker.patch("linodecli.args.import_module", return_value=module_mocker)
-        mocker.patch("linodecli.args.plugins.available", return_value=["testing.plugin"])
-        mocker.patch("linodecli.args.input", lambda _: "y")
+        mocker.patch("linodecli.arg_helpers.import_module", return_value=module_mocker)
+        mocker.patch("linodecli.arg_helpers.plugins.available", return_value=["testing.plugin"])
+        mocker.patch("linodecli.arg_helpers.input", lambda _: "y")
         mocked_config.config.set("DEFAULT", "plugin-name-testing.plugin", "temp")
         mocked_config.config.set("DEFAULT", "registered-plugins", "testing.plugin")
         msg, code = arg_helpers.register_plugin("a", mocked_config, {})
@@ -67,9 +67,9 @@ class TestArgParsing:
     def test_register_plugin_re_register_no(self, mocker, module_mocker, mocked_config):
         module_mocker.call = print
         module_mocker.PLUGIN_NAME = "testing.plugin"
-        mocker.patch("linodecli.args.import_module", return_value=module_mocker)
-        mocker.patch("linodecli.args.plugins.available", return_value=["testing.plugin"])
-        mocker.patch("linodecli.args.input", lambda _: "n")
+        mocker.patch("linodecli.arg_helpers.import_module", return_value=module_mocker)
+        mocker.patch("linodecli.arg_helpers.plugins.available", return_value=["testing.plugin"])
+        mocker.patch("linodecli.arg_helpers.input", lambda _: "n")
         mocked_config.config.set("DEFAULT", "plugin-name-testing.plugin", "temp")
         mocked_config.config.set("DEFAULT", "registered-plugins", "testing.plugin")
         msg, code = arg_helpers.register_plugin("a", mocked_config, {})
@@ -78,7 +78,7 @@ class TestArgParsing:
 
     # arg_helpers.remove_plugin(plugin_name, config)
     def test_remove_plugin_success(self, mocker, mocked_config):
-        mocker.patch("linodecli.args.plugins.available", return_value=["testing.plugin"])
+        mocker.patch("linodecli.arg_helpers.plugins.available", return_value=["testing.plugin"])
         mocked_config.config.set("DEFAULT", "registered-plugins", "testing.plugin")
         mocked_config.config.set("DEFAULT", "plugin-name-testing.plugin", "temp")
         msg, code = arg_helpers.remove_plugin("testing.plugin", mocked_config)
@@ -86,7 +86,7 @@ class TestArgParsing:
         assert code == 0
 
     def test_remove_plugin_in_available_local(self, mocker, mocked_config):
-        mocker.patch("linodecli.args.plugins.available_local", ["testing.plugin"])
+        mocker.patch("linodecli.arg_helpers.plugins.available_local", ["testing.plugin"])
         msg, code = arg_helpers.remove_plugin("testing.plugin", mocked_config)
         assert "cannot be removed" in msg
         assert code == 13
@@ -105,7 +105,7 @@ class TestArgParsing:
 
     def test_help_with_ops_with_plugins(self, capsys, mocker, mocked_config):
         mock_ops = {"testkey1": "testvalue1"}
-        mocker.patch("linodecli.args.plugins.available", return_value=["testing.plugin"])
+        mocker.patch("linodecli.arg_helpers.plugins.available", return_value=["testing.plugin"])
         arg_helpers.help_with_ops(mock_ops, mocked_config)
         captured = capsys.readouterr()
         assert "testing.plugin" in captured.out
@@ -123,7 +123,7 @@ class TestArgParsing:
         mocked_ops.method = "post"
 
         mocked_args = mocker.MagicMock()
-        mocked_arg_helpers.required = True
+        mocked_args.required = True
         mocked_args.path = "path"
         mocked_args.description = "test description"
 
