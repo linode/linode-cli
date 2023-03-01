@@ -10,38 +10,10 @@ from helpers import get_random_text
 REGION = "us-southeast"
 BASE_CMD = ["linode-cli", "image-upload", "--region", REGION]
 
-TEST_IMAGE_CONTENT = bytes(
-    [
-        0x1F,
-        0x8B,
-        0x08,
-        0x08,
-        0xBD,
-        0x5C,
-        0x91,
-        0x60,
-        0x00,
-        0x03,
-        0x74,
-        0x65,
-        0x73,
-        0x74,
-        0x2E,
-        0x69,
-        0x6D,
-        0x67,
-        0x00,
-        0x03,
-        0x00,
-        0x00,
-        0x00,
-        0x00,
-        0x00,
-        0x00,
-        0x00,
-        0x00,
-        0x00,
-    ]
+# A minimal gzipped image that will be accepted by the API
+TEST_IMAGE_CONTENT = (
+    b"\x1F\x8B\x08\x08\xBD\x5C\x91\x60\x00\x03\x74\x65\x73\x74\x2E\x69"
+    b"\x6D\x67\x00\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 )
 
 
