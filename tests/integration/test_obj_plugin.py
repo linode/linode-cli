@@ -1,17 +1,24 @@
 import logging
-import os
 import subprocess
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, List, Optional, Set
 
 import pytest
 import requests
 from helpers import BASE_URL, create_file_random_text
+from pytest import MonkeyPatch
 
 from linodecli.configuration.auth import _do_request
 
 REGION = "us-southeast-1"
 BASE_CMD = ["linode-cli", "obj", "--cluster", REGION]
+
+
+@dataclass
+class Keys:
+    access_key: str
+    secret_key: str
 
 
 @pytest.fixture(scope="session")
@@ -25,7 +32,7 @@ def created_buckets():
             logging.exception(f"Failed to cleanup bucket: {bk}")
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="session")
 def keys(token: str):
     response = _do_request(
         BASE_URL,
@@ -36,22 +43,17 @@ def keys(token: str):
         {"label": "cli-integration-test-obj-key"},
     )
 
-    access_key, secret_key = response.get("access_key"), response.get(
-        "secret_key"
+    _keys = Keys(
+        access_key=response.get("access_key"),
+        secret_key=response.get("secret_key"),
     )
-    backup_access_key = os.getenv("LINODE_CLI_OBJ_ACCESS_KEY") or ""
-    backup_secret_key = os.getenv("LINODE_CLI_OBJ_SECRET_KEY") or ""
-    os.environ["LINODE_CLI_OBJ_ACCESS_KEY"] = access_key
-    os.environ["LINODE_CLI_OBJ_SECRET_KEY"] = secret_key
-    yield access_key, secret_key
+    yield _keys
     _do_request(
         BASE_URL,
         requests.delete,
         f"object-storage/keys/{response['id']}",
         token,
     )
-    os.environ["LINODE_CLI_OBJ_ACCESS_KEY"] = backup_access_key
-    os.environ["LINODE_CLI_OBJ_SECRET_KEY"] = backup_secret_key
 
 
 def exec_test_command(args: List[str]):
@@ -86,7 +88,11 @@ def delete_bucket(bucket_name: str, force: bool = True):
 def test_obj_single_file_single_bucket(
     name_generator: Callable,
     created_buckets: Set[str],
+    keys: Keys,
+    monkeypatch: MonkeyPatch,
 ):
+    monkeypatch.setenv("LINODE_CLI_OBJ_ACCESS_KEY", keys.access_key)
+    monkeypatch.setenv("LINODE_CLI_OBJ_SECRET_KEY", keys.secret_key)
     file_path = create_file_random_text(name_generator)
     bucket_name = create_bucket(name_generator, created_buckets)
     exec_test_command(BASE_CMD + ["put", str(file_path), bucket_name])
@@ -123,8 +129,13 @@ def test_obj_single_file_single_bucket(
 
 
 def test_multi_files_multi_bucket(
-    name_generator: Callable, created_buckets: Set[str]
+    name_generator: Callable,
+    created_buckets: Set[str],
+    keys: Keys,
+    monkeypatch: MonkeyPatch,
 ):
+    monkeypatch.setenv("LINODE_CLI_OBJ_ACCESS_KEY", keys.access_key)
+    monkeypatch.setenv("LINODE_CLI_OBJ_SECRET_KEY", keys.secret_key)
     number = 5
     bucket_names = [
         create_bucket(name_generator, created_buckets) for _ in range(number)
