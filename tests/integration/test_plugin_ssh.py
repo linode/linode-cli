@@ -1,10 +1,9 @@
 import json
 import subprocess
-import time
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import pytest
-from helpers import COMMAND_JSON_OUTPUT, get_random_text
+from helpers import COMMAND_JSON_OUTPUT, get_random_text, wait_for_condition
 
 TEST_REGION = "us-southeast"
 TEST_IMAGE = "linode/alpine3.16"
@@ -14,9 +13,20 @@ TEST_ROOT_PASS = "r00tp@ss!"
 BASE_CMD = ["linode-cli", "ssh"]
 
 
+INSTANCE_WAIT_TIMEOUT_SECONDS = 120
+SSH_WAIT_TIMEOUT_SECONDS = 80
+POLL_INTERVAL = 5
+
+
 @pytest.fixture
-def target_instance():
+def target_instance(ssh_key_pair_generator):
     instance_label = f"cli-test-{get_random_text(length=6)}"
+
+    pubkey_file, privkey_file = ssh_key_pair_generator
+
+    with open(pubkey_file, "r") as f:
+        pubkey = f.read().rstrip()
+
     process = exec_test_command(
         [
             "linode-cli",
@@ -32,6 +42,8 @@ def target_instance():
             instance_label,
             "--root_pass",
             TEST_ROOT_PASS,
+            "--authorized_keys",
+            pubkey,
         ]
         + COMMAND_JSON_OUTPUT
     )
@@ -56,8 +68,8 @@ def test_help():
     output = process.stdout.decode()
 
     assert process.returncode == 0
-    assert "positional arguments" in output
-    assert "optional arguments" in output
+    assert "[USERNAME@]LABEL" in output
+    assert "uses the Linode's SLAAC address for SSH" in output
 
 
 def test_ssh_instance_provisioning(target_instance: Dict[str, Any]):
@@ -68,12 +80,18 @@ def test_ssh_instance_provisioning(target_instance: Dict[str, Any]):
     assert "is not running" in output
 
 
-def test_ssh_instance_ready(target_instance: Dict[str, Any]):
-    instance_data = target_instance
+def test_ssh_instance_ready(
+    ssh_key_pair_generator, target_instance: Dict[str, Any]
+):
+    pubkey, privkey = ssh_key_pair_generator
 
-    # Wait for the instance to be running
-    continue_polling = True
-    while continue_polling:
+    process: Optional[subprocess.CompletedProcess] = None
+    instance_data = {}
+
+    def instance_poll_func():
+        nonlocal instance_data
+        nonlocal process
+
         process = exec_test_command(
             ["linode-cli", "linodes", "view", str(target_instance["id"])]
             + COMMAND_JSON_OUTPUT
@@ -81,19 +99,35 @@ def test_ssh_instance_ready(target_instance: Dict[str, Any]):
         assert process.returncode == 0
         instance_data = json.loads(process.stdout.decode())[0]
 
-        continue_polling = instance_data["status"] != "running"
+        return instance_data["status"] == "running"
 
-        # Evil
-        time.sleep(5)
+    def ssh_poll_func():
+        nonlocal process
+        process = exec_test_command(
+            BASE_CMD
+            + [
+                "root@" + instance_data["label"],
+                "-o",
+                "StrictHostKeyChecking=no",
+                "-i",
+                privkey,
+                "echo 'hello world!'",
+            ]
+        )
+        return process.returncode == 0
 
+    # Wait for the instance to be ready
+    wait_for_condition(
+        POLL_INTERVAL, INSTANCE_WAIT_TIMEOUT_SECONDS, instance_poll_func
+    )
+
+    assert process.returncode == 0
     assert instance_data["status"] == "running"
 
-    p = subprocess.Popen(BASE_CMD + ["root@" + instance_data["label"]])
+    # Wait for SSH to be available
+    wait_for_condition(POLL_INTERVAL, SSH_WAIT_TIMEOUT_SECONDS, ssh_poll_func)
 
-    # Also evil; just checking that the process is
-    # continually reading stdin (assumed SSH)
-    time.sleep(3)
+    assert process.returncode == 0
 
-    # Is the process still alive?
-    assert p.poll() is None
-    p.terminate()
+    # Did we get a response from the instance?
+    assert "hello world!" in process.stdout.decode()
