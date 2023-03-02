@@ -1,5 +1,6 @@
 # Use random integer as the start point here to avoid
 # id conflicts when multiple testings are running.
+import logging
 import os
 from collections import defaultdict
 from itertools import count
@@ -23,4 +24,9 @@ def name_generator(_id_generators: dict):
 
 @pytest.fixture(scope="session")
 def token():
-    return os.getenv(ENV_TOKEN_NAME)
+    token = os.getenv(ENV_TOKEN_NAME)
+    if not token:
+        logging.error(
+            f"Token is required in the environment as {ENV_TOKEN_NAME}"
+        )
+    return token
