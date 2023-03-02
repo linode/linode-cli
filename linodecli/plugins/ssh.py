@@ -8,6 +8,7 @@ Invoke as follows::
    LINODE_LABEL - the label of the Linode to ssh into
    USERNAME - the user to ssh into the Linode as.  Defaults to the current user
 """
+
 import argparse
 import subprocess
 import sys
@@ -78,6 +79,11 @@ def call(args, context):  # pylint: disable=too-many-branches
 
 
 def find_linode_with_label(context, label: str) -> str:
+    """
+    Finds a Linode Instance with the given label.
+    If no matching instance is found, the plugin prints similar instances
+    and exits.
+    """
     result, potential_matches = context.client.call_operation(
         "linodes", "list", filters={"label": {"+contains": label}}
     )
@@ -104,6 +110,11 @@ def find_linode_with_label(context, label: str) -> str:
 
 
 def parse_target_components(label: str) -> Tuple[Optional[str], str]:
+    """
+    Returns the components (username, label) of the
+    given `label` argument.
+    """
+
     if "@" in label:
         username, label = label.split("@", 1)
         return username, label
@@ -114,6 +125,10 @@ def parse_target_components(label: str) -> Tuple[Optional[str], str]:
 def parse_target_address(
     parsed: argparse.Namespace, target: Dict[str, Any]
 ) -> str:
+    """
+    Returns the first available public IP address
+    given the conditions defined in parsed.
+    """
     if getattr(
         parsed, "6"
     ):  # this is necessary since the name isn't a valid python variable name
