@@ -223,7 +223,7 @@ class TestArgParsing:
         assert "filter results" in captured.out
         assert "filtername" in captured.out
 
-    def test_bake_command_bad_website(self, capsys, mocker, mock_cli):
+    def test_bake_command_bad_website(self, capsys, mock_cli):
         with pytest.raises(SystemExit) as ex:
             arg_helpers.bake_command(mock_cli, "https://website.com")
         captured = capsys.readouterr()
