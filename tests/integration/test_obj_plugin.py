@@ -56,6 +56,11 @@ def keys(token: str):
     )
 
 
+def patch_keys(keys: Keys, monkeypatch: MonkeyPatch):
+    monkeypatch.setenv("LINODE_CLI_OBJ_ACCESS_KEY", keys.access_key)
+    monkeypatch.setenv("LINODE_CLI_OBJ_SECRET_KEY", keys.secret_key)
+
+
 def exec_test_command(args: List[str]):
     process = subprocess.run(
         args,
@@ -91,8 +96,7 @@ def test_obj_single_file_single_bucket(
     keys: Keys,
     monkeypatch: MonkeyPatch,
 ):
-    monkeypatch.setenv("LINODE_CLI_OBJ_ACCESS_KEY", keys.access_key)
-    monkeypatch.setenv("LINODE_CLI_OBJ_SECRET_KEY", keys.secret_key)
+    patch_keys(keys, monkeypatch)
     file_path = create_file_random_text(name_generator)
     bucket_name = create_bucket(name_generator, created_buckets)
     exec_test_command(BASE_CMD + ["put", str(file_path), bucket_name])
@@ -134,8 +138,7 @@ def test_multi_files_multi_bucket(
     keys: Keys,
     monkeypatch: MonkeyPatch,
 ):
-    monkeypatch.setenv("LINODE_CLI_OBJ_ACCESS_KEY", keys.access_key)
-    monkeypatch.setenv("LINODE_CLI_OBJ_SECRET_KEY", keys.secret_key)
+    patch_keys(keys, monkeypatch)
     number = 5
     bucket_names = [
         create_bucket(name_generator, created_buckets) for _ in range(number)
