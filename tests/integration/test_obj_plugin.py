@@ -1,16 +1,24 @@
 import logging
-import os
 import subprocess
+from dataclasses import dataclass
+from pathlib import Path
 from typing import Callable, List, Optional, Set
 
 import pytest
 import requests
-from helpers import BASE_URL, create_file_random_text, get_token
+from helpers import BASE_URL, create_file_random_text
+from pytest import MonkeyPatch
 
 from linodecli.configuration.auth import _do_request
 
 REGION = "us-southeast-1"
 BASE_CMD = ["linode-cli", "obj", "--cluster", REGION]
+
+
+@dataclass
+class Keys:
+    access_key: str
+    secret_key: str
 
 
 @pytest.fixture(scope="session")
@@ -24,33 +32,33 @@ def created_buckets():
             logging.exception(f"Failed to cleanup bucket: {bk}")
 
 
-@pytest.fixture(scope="session", autouse=True)
-def keys():
+@pytest.fixture(scope="session")
+def keys(token: str):
     response = _do_request(
         BASE_URL,
         requests.post,
         "object-storage/keys",
-        get_token(),
+        token,
         False,
         {"label": "cli-integration-test-obj-key"},
     )
 
-    access_key, secret_key = response.get("access_key"), response.get(
-        "secret_key"
+    _keys = Keys(
+        access_key=response.get("access_key"),
+        secret_key=response.get("secret_key"),
     )
-    backup_access_key = os.getenv("LINODE_CLI_OBJ_ACCESS_KEY") or ""
-    backup_secret_key = os.getenv("LINODE_CLI_OBJ_SECRET_KEY") or ""
-    os.environ["LINODE_CLI_OBJ_ACCESS_KEY"] = access_key
-    os.environ["LINODE_CLI_OBJ_SECRET_KEY"] = secret_key
-    yield access_key, secret_key
+    yield _keys
     _do_request(
         BASE_URL,
         requests.delete,
         f"object-storage/keys/{response['id']}",
-        get_token(),
+        token,
     )
-    os.environ["LINODE_CLI_OBJ_ACCESS_KEY"] = backup_access_key
-    os.environ["LINODE_CLI_OBJ_SECRET_KEY"] = backup_secret_key
+
+
+def patch_keys(keys: Keys, monkeypatch: MonkeyPatch):
+    monkeypatch.setenv("LINODE_CLI_OBJ_ACCESS_KEY", keys.access_key)
+    monkeypatch.setenv("LINODE_CLI_OBJ_SECRET_KEY", keys.secret_key)
 
 
 def exec_test_command(args: List[str]):
@@ -85,7 +93,10 @@ def delete_bucket(bucket_name: str, force: bool = True):
 def test_obj_single_file_single_bucket(
     name_generator: Callable,
     created_buckets: Set[str],
+    keys: Keys,
+    monkeypatch: MonkeyPatch,
 ):
+    patch_keys(keys, monkeypatch)
     file_path = create_file_random_text(name_generator)
     bucket_name = create_bucket(name_generator, created_buckets)
     exec_test_command(BASE_CMD + ["put", str(file_path), bucket_name])
@@ -108,12 +119,26 @@ def test_obj_single_file_single_bucket(
     assert str(file_size) in output
     assert file_path.name in output
 
-    file_path.unlink(missing_ok=True)
+    downloaded_file_path = Path.cwd() / f"downloaded_{file_path.name}"
+    process = exec_test_command(
+        BASE_CMD
+        + ["get", bucket_name, file_path.name, downloaded_file_path.name]
+    )
+    output = process.stdout.decode()
+    with open(downloaded_file_path) as f2, open(file_path) as f1:
+        assert f1.read() == f2.read()
+
+    downloaded_file_path.unlink()
+    file_path.unlink()
 
 
 def test_multi_files_multi_bucket(
-    name_generator: Callable, created_buckets: Set[str]
+    name_generator: Callable,
+    created_buckets: Set[str],
+    keys: Keys,
+    monkeypatch: MonkeyPatch,
 ):
+    patch_keys(keys, monkeypatch)
     number = 5
     bucket_names = [
         create_bucket(name_generator, created_buckets) for _ in range(number)
