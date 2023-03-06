@@ -854,6 +854,42 @@ def get_obj_args_parser():
     return parser
 
 
+def get_credentials(cli: CLI):
+    """
+    Get access_key and secret_key of the object storage.
+    """
+    access_key, secret_key = (
+        os.getenv(ENV_ACCESS_KEY_NAME, None),
+        os.getenv(ENV_SECRET_KEY_NAME, None),
+    )
+    if bool(access_key) != bool(secret_key):
+        print(
+            f"You must set both {ENV_ACCESS_KEY_NAME} "
+            f"and {ENV_SECRET_KEY_NAME}, or neither"
+        )
+        sys.exit(1)
+
+    # not given on command line, so look them up
+    if not access_key:
+        access_key, secret_key = _get_s3_creds(cli)
+
+    return access_key, secret_key
+
+
+def regenerate_s3_credentials(cli: CLI):
+    """
+    Force regenerate object storage access key and secret key.
+    """
+    print("Regenerating Object Storage keys..")
+    _get_s3_creds(cli, force=True)
+    print("Done.")
+    print(
+        "Warning: Your old Object Storage keys _were not_ automatically expired!  If you want "
+        "to expire them, see `linode-cli object-storage keys-list` and "
+        "`linode-cli object-storage keys-delete [KEYID]`."
+    )
+
+
 def call(
     args: List[str], context: PluginContext
 ):  # pylint: disable=too-many-branches,too-many-statements
@@ -880,23 +916,12 @@ def call(
         print_help(parser)
         sys.exit(0)
 
+    access_key = None
+    secret_key = None
+
     # make a client, but only if we weren't printing help
-
-    access_key, secret_key = (
-        os.getenv(ENV_ACCESS_KEY_NAME, None),
-        os.getenv(ENV_SECRET_KEY_NAME, None),
-    )
-
     if not "--help" in args:
-        if bool(access_key) != bool(secret_key):
-            print(
-                f"You must set both {ENV_ACCESS_KEY_NAME} and {ENV_SECRET_KEY_NAME}, or neither"
-            )
-            sys.exit(1)
-
-        # not given on command line, so look them up
-        if not access_key:
-            access_key, secret_key = _get_s3_creds(context.client)
+        access_key, secret_key = get_credentials(context.client)
 
     cluster = parsed.cluster
     if context.client.defaults:
@@ -911,11 +936,11 @@ def call(
         or having a valid OBJ key.
         """
         current_cluster = cluster
-        if current_cluster is None and not context.client.defaults:
-            print("Error: cluster is required.")
-            sys.exit(1)
-
         if current_cluster is None:
+            if not context.client.defaults:
+                print("Error: cluster is required.")
+                sys.exit(1)
+
             print(
                 "Error: No default cluster is configured.  Either configure the CLI "
                 "or invoke with --cluster to specify a cluster."
@@ -946,14 +971,7 @@ def call(
             print(f"Error: {message}")
             sys.exit(6)
     elif parsed.command == "regenerate-keys":
-        print("Regenerating Object Storage keys..")
-        _get_s3_creds(context.client, force=True)
-        print("Done.")
-        print(
-            "Warning: Your old Object Storage keys _were not_ automatically expired!  If you want "
-            "to expire them, see `linode-cli object-storage keys-list` and "
-            "`linode-cli object-storage keys-delete [KEYID]`."
-        )
+        regenerate_s3_credentials(context.client)
     elif parsed.command == "configure":
         _configure_plugin(context.client)
     else:

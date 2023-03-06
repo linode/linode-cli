@@ -16,7 +16,6 @@ from .output import OutputHandler, OutputMode
 from .response import ModelAttr, ResponseModel
 
 METHODS = ("get", "post", "put", "delete")
-PIP_CMD = "pip3" if version_info.major == 3 else "pip"
 
 
 class CLI:  # pylint: disable=too-many-instance-attributes
@@ -82,6 +81,17 @@ class CLI:  # pylint: disable=too-many-instance-attributes
 
         return tmp
 
+    def _resolve_arg_recursive(self, info):
+        if "allOf" in info:
+            return self._resolve_arg_recursive(
+                self._resolve_allOf(info["allOf"])
+            )
+
+        if "$ref" in info:
+            return self._resolve_arg_recursive(self._resolve_ref(info["$ref"]))
+
+        return info
+
     def _parse_args(
         self, node, prefix=None, args=None
     ):  # pylint: disable=too-many-branches
@@ -95,10 +105,14 @@ class CLI:  # pylint: disable=too-many-instance-attributes
             prefix = []
 
         for arg, info in node.items():
-            if "allOf" in info:
-                info = self._resolve_allOf(info["allOf"])
-            while "$ref" in info:
-                info = self._resolve_ref(info["$ref"])
+            read_only = info.get("readOnly")
+
+            info = self._resolve_arg_recursive(info)
+
+            # We want to apply the top-level read-only value to this argument if necessary
+            if read_only:
+                info["readOnly"] = read_only
+
             if "properties" in info:
                 self._parse_args(
                     info["properties"], prefix=prefix + [arg], args=args
@@ -235,7 +249,9 @@ class CLI:  # pylint: disable=too-many-instance-attributes
                         action_aliases = action[1:]
                         action = action[0]
 
-                    summary = filter_markdown_links(data[m].get("summary")) or ""
+                    summary = (
+                        filter_markdown_links(data[m].get("summary")) or ""
+                    )
 
                     # Resolve the documentation URL
                     docs_url = None
@@ -361,7 +377,9 @@ class CLI:  # pylint: disable=too-many-instance-attributes
                         new_arg = CLIArg(
                             info["name"],
                             info["type"],
-                            filter_markdown_links(info["desc"].split(".")[0] + "."),
+                            filter_markdown_links(
+                                info["desc"].split(".")[0] + "."
+                            ),
                             arg,
                             info["format"],
                             list_item=info.get("list_item"),

@@ -2,17 +2,11 @@
 General helper functions for configuraiton
 """
 
+import configparser
 import os
 import webbrowser
 
 from .auth import _do_get_request
-
-try:
-    # python3
-    import configparser
-except ImportError:
-    # python2
-    import ConfigParser as configparser
 
 LEGACY_CONFIG_NAME = ".linode-cli"
 LEGACY_CONFIG_DIR = os.path.expanduser("~")
@@ -37,6 +31,7 @@ KNOWN_GOOD_BROWSERS = {
     "chromium-browser",
     "epiphany",
 }
+
 
 def _get_config_path():
     """
@@ -65,6 +60,7 @@ def _get_config(load=True):
 
     return conf
 
+
 def _check_browsers():
     # let's see if we _can_ use web
     try:
@@ -75,14 +71,17 @@ def _check_browsers():
 
     # pylint: disable-next=protected-access
     if not KNOWN_GOOD_BROWSERS.intersection(webbrowser._tryorder):
-        print("""
+        print(
+            """
 This tool defaults to web-based authentication,
-however no known-working browsers were found.""")
+however no known-working browsers were found."""
+        )
         while True:
             r = input("Try it anyway? [y/N]: ")
             if r.lower() in "yn ":
                 return r.lower() == "y"
     return True
+
 
 def _default_thing_input(
     ask, things, prompt, error, optional=True
@@ -117,6 +116,7 @@ def _default_thing_input(
                 break
             print(error)
     return ret
+
 
 def _handle_no_default_user(self):
     """
