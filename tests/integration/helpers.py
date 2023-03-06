@@ -1,14 +1,9 @@
-import os
 import random
 from pathlib import Path
 from string import ascii_lowercase
 from typing import Callable, Optional
 
 BASE_URL = "https://api.linode.com/v4/"
-
-
-def get_token():
-    return os.getenv("LINODE_CLI_TOKEN")
 
 
 def get_random_text(length: int = 10):
