@@ -211,7 +211,9 @@ class CLIConfig:
     # TODO: this is more of an argparsing function than it is a config function
     # might be better to move this to argparsing during refactor and just have
     # configuration return defaults or keys or something
-    def update(self, namespace, allowed_defaults): #pylint: disable=too-many-branches
+    def update(
+        self, namespace, allowed_defaults
+    ):  # pylint: disable=too-many-branches
         """
         This updates a Namespace (as returned by ArgumentParser) with config values
         if they aren't present in the Namespace already.

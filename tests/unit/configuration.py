@@ -181,13 +181,17 @@ authorized_users = cli-dev2"""
         parser.add_argument("--plugin-testplugin-testkey")
         ns = parser.parse_args(["--testkey", "testvalue"])
 
-        conf.username = 'tester'
-        conf.config.add_section('tester')
-        conf.config.set('tester', 'token', 'testtoken')
-        conf.config.set('tester', 'newkey', 'newvalue')
-        conf.config.set('tester', 'authorized_users', 'tester')
-        conf.config.set('tester', 'plugin-testplugin-testkey', 'plugin-value')
-        allowed_defaults = {'newkey', 'authorized_users', 'plugin-testplugin-testkey'}
+        conf.username = "tester"
+        conf.config.add_section("tester")
+        conf.config.set("tester", "token", "testtoken")
+        conf.config.set("tester", "newkey", "newvalue")
+        conf.config.set("tester", "authorized_users", "tester")
+        conf.config.set("tester", "plugin-testplugin-testkey", "plugin-value")
+        allowed_defaults = {
+            "newkey",
+            "authorized_users",
+            "plugin-testplugin-testkey",
+        }
 
         f = io.StringIO()
         with contextlib.redirect_stdout(f):
