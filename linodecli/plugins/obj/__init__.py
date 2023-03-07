@@ -43,7 +43,7 @@ except ImportError:
     HAS_BOTO = False
 
 
-from config import *
+from linodecli.plugins.obj.config import *
 
 
 def list_objects_or_buckets(get_client, args):
