@@ -38,7 +38,7 @@ clean:
 	rm -f linodecli/data-*
 	rm -f linode-cli.sh baked_version
 	rm -f data-*
-	rm -rf dist
+	rm -rf dist linode_cli.egg-info build
 
 .PHONY: testunit
 testunit: export LINODE_CLI_TEST_MODE = 1
