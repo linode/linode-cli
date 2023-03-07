@@ -8,7 +8,7 @@ def call(args, context):
     :param args: sys.argv, trimmed to represent only arguments to this command
     :type args: list
     """
-    parser = inherit_relevant_args(
+    parser = inherit_plugin_args(
         argparse.ArgumentParser("echo", add_help=True)
     )
 
