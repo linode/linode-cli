@@ -1,5 +1,7 @@
 # Use random integer as the start point here to avoid
 # id conflicts when multiple testings are running.
+import logging
+import os
 import subprocess
 import tempfile
 from collections import defaultdict
@@ -7,6 +9,8 @@ from itertools import count
 from random import randint
 
 import pytest
+
+from linodecli import ENV_TOKEN_NAME
 
 
 @pytest.fixture(scope="session")
@@ -45,3 +49,13 @@ def ssh_key_pair_generator():
     yield f"{key_dir.name}/key.pub", f"{key_dir.name}/key"
 
     key_dir.cleanup()
+
+
+@pytest.fixture(scope="session")
+def token():
+    token = os.getenv(ENV_TOKEN_NAME)
+    if not token:
+        logging.error(
+            f"Token is required in the environment as {ENV_TOKEN_NAME}"
+        )
+    return token
