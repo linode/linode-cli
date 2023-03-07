@@ -8,7 +8,7 @@ from os import listdir
 from os.path import dirname
 
 from linodecli.cli import CLI
-from linodecli.arg_helpers import register_args_shared
+from linodecli.helpers import register_args_shared
 
 _available_files = listdir(dirname(__file__))
 available_local = [

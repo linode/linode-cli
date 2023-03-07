@@ -14,6 +14,7 @@ from terminaltables import SingleTable
 from linodecli import plugins
 
 from .completion import bake_completions
+from .helpers import register_args_shared
 
 
 def register_args(parser):
@@ -127,25 +128,6 @@ def register_args(parser):
     register_args_shared(parser)
 
     return parser
-
-
-def register_args_shared(parser):
-    """
-    Adds certain arguments to the given ArgumentParser that may be shared across
-    the CLI and plugins.
-    This function is wrapped in linodecli.plugins.
-    """
-
-    parser.add_argument(
-        "--as-user",
-        metavar="USERNAME",
-        type=str,
-        help="The username to execute this command as.  This user must "
-        "be configured.",
-    )
-
-    return parser
-
 
 
 # TODO: maybe move to plugins/__init__.py
