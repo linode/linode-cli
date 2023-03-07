@@ -3,8 +3,9 @@ import sys
 
 import pytest
 
-from linodecli import CLIArg, CLIOperation, ModelAttr, ResponseModel, URLParam
 from linodecli.cli import CLI
+from linodecli.operation import CLIArg, CLIOperation, URLParam
+from linodecli.response import ModelAttr, ResponseModel
 
 MOCK_CONFIG = """
 [DEFAULT]
@@ -155,3 +156,18 @@ def create_operation():
         ResponseModel([ModelAttr("result", False, True, "string")]),
         [URLParam("test_param", "integer")],
     )
+
+
+@pytest.fixture
+def mocked_config():
+    """
+    mock config representing cli.config
+    """
+
+    class Config:
+        config = configparser.ConfigParser()
+
+        def write_config(self):  # pylint: disable=missing-function-docstring
+            pass
+
+    return Config()

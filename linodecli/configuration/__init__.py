@@ -3,15 +3,15 @@ Handles configuring the cli, as well as loading configs so that they can be
 used elsewhere.
 """
 
+import argparse
 import os
 import sys
-import argparse
 
 from .auth import (
-    _get_token_web,
     _check_full_access,
     _do_get_request,
     _get_token_terminal,
+    _get_token_web,
 )
 from .helpers import (
     _check_browsers,
@@ -22,6 +22,7 @@ from .helpers import (
 )
 
 ENV_TOKEN_NAME = "LINODE_CLI_TOKEN"
+
 
 class CLIConfig:
     """
@@ -123,8 +124,12 @@ class CLIConfig:
         if self.used_env_token:
             return os.environ.get(ENV_TOKEN_NAME, None)
 
-        if self.config.has_option(self.username or self.default_username(), "token"):
-            return self.config.get(self.username or self.default_username(), "token")
+        if self.config.has_option(
+            self.username or self.default_username(), "token"
+        ):
+            return self.config.get(
+                self.username or self.default_username(), "token"
+            )
         return ""
 
     def get_value(self, key):
@@ -206,7 +211,9 @@ class CLIConfig:
     # TODO: this is more of an argparsing function than it is a config function
     # might be better to move this to argparsing during refactor and just have
     # configuration return defaults or keys or something
-    def update(self, namespace, allowed_defaults):
+    def update(
+        self, namespace, allowed_defaults
+    ):  # pylint: disable=too-many-branches
         """
         This updates a Namespace (as returned by ArgumentParser) with config values
         if they aren't present in the Namespace already.
@@ -214,12 +221,12 @@ class CLIConfig:
         if self.used_env_token and self.config is None:
             return None
         username = self.username or self.default_username()
-        if (not self.config.has_option(username, "token")
-            and not os.environ.get(ENV_TOKEN_NAME, None)):
+        if not self.config.has_option(username, "token") and not os.environ.get(
+            ENV_TOKEN_NAME, None
+        ):
             print(f"User {username} is not configured.")
             sys.exit(1)
-        if (not self.config.has_section(username)
-            or allowed_defaults is None):
+        if not self.config.has_section(username) or allowed_defaults is None:
             return namespace
 
         warn_dict = {}
@@ -236,7 +243,9 @@ class CLIConfig:
             if self.config.has_option(username, key):
                 value = self.config.get(username, key)
             else:
-                value = allowed_defaults[key]
+                value = ns_dict[key]
+            if not value:
+                continue
             if key == "authorized_users":
                 ns_dict[key] = [value]
                 warn_dict[key] = [value]
@@ -244,9 +253,13 @@ class CLIConfig:
                 ns_dict[key] = value
                 warn_dict[key] = value
 
-        if not any(x in ["--suppress-warnings", "--no-headers"] for x in sys.argv):
-            print(f"using default values: {warn_dict}, "
-                "use --no-defaults flag to disable defaults")
+        if not any(
+            x in ["--suppress-warnings", "--no-headers"] for x in sys.argv
+        ):
+            print(
+                f"using default values: {warn_dict}, "
+                "use --no-defaults flag to disable defaults"
+            )
         return argparse.Namespace(**ns_dict)
 
     def write_config(self):
@@ -260,8 +273,9 @@ class CLIConfig:
         with open(_get_config_path(), "w", encoding="utf-8") as f:
             self.config.write(f)
 
-
-    def configure(self):  # pylint: disable=too-many-branches,too-many-statements
+    def configure(
+        self,
+    ):  # pylint: disable=too-many-branches,too-many-statements
         """
         This assumes we're running interactively, and prompts the user
         for a series of defaults in order to make future CLI calls
@@ -277,7 +291,9 @@ class CLIConfig:
         username = None
         token = None
 
-        print("Welcome to the Linode CLI.  This will walk you through some initial setup.")
+        print(
+            "Welcome to the Linode CLI.  This will walk you through some initial setup."
+        )
 
         if ENV_TOKEN_NAME in os.environ:
             print(
@@ -291,10 +307,12 @@ Note that no token will be saved in your configuration file.
 
         else:
             if _check_browsers() and not self.configure_with_pat:
-                print("""
+                print(
+                    """
 The CLI will use its web-based authentication to log you in.
 If you prefer to supply a Personal Access Token, use `linode-cli configure --token`.
-                    """)
+                    """
+                )
                 input(
                     "Press enter to continue. "
                     "This will open a browser and proceed with authentication."
@@ -372,14 +390,18 @@ If you prefer to supply a Personal Access Token, use `linode-cli configure --tok
         if not is_default:
             if username != self.default_username():
                 while True:
-                    value = input("Make this user the default when using the CLI? [y/N]: ")
+                    value = input(
+                        "Make this user the default when using the CLI? [y/N]: "
+                    )
                     if value.lower() in "yn":
                         is_default = value.lower() == "y"
                         break
                     if not value.strip():
                         break
             if not is_default:  # they didn't change the default user
-                print(f"Active user will remain {self.config.get('DEFAULT', 'default-user')}")
+                print(
+                    f"Active user will remain {self.config.get('DEFAULT', 'default-user')}"
+                )
 
         if is_default:
             # if this is the default user, make it so

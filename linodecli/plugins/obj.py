@@ -21,7 +21,7 @@ from terminaltables import SingleTable
 from linodecli.cli import CLI
 from linodecli.configuration import _do_get_request
 from linodecli.configuration.helpers import _default_thing_input
-from linodecli.plugins import PluginContext, inherit_relevant_args
+from linodecli.plugins import PluginContext, inherit_plugin_args
 
 ENV_ACCESS_KEY_NAME = "LINODE_CLI_OBJ_ACCESS_KEY"
 ENV_SECRET_KEY_NAME = "LINODE_CLI_OBJ_SECRET_KEY"
@@ -101,7 +101,7 @@ def list_objects_or_buckets(get_client, args):
     """
     Lists buckets or objects
     """
-    parser = inherit_relevant_args(
+    parser = inherit_plugin_args(
         ArgumentParser(PLUGIN_BASE + " ls")
     )
 
@@ -170,7 +170,7 @@ def create_bucket(get_client, args):
     """
     Creates a new bucket
     """
-    parser = inherit_relevant_args(
+    parser = inherit_plugin_args(
         ArgumentParser(PLUGIN_BASE + " mb")
     )
 
@@ -194,7 +194,7 @@ def delete_bucket(get_client, args):
     """
     Deletes a bucket
     """
-    parser = inherit_relevant_args(
+    parser = inherit_plugin_args(
         ArgumentParser(PLUGIN_BASE + " rb")
     )
 
@@ -237,7 +237,7 @@ def upload_object(get_client, args):  # pylint: disable=too-many-locals
     """
     Uploads an object to object storage
     """
-    parser = inherit_relevant_args(
+    parser = inherit_plugin_args(
         ArgumentParser(PLUGIN_BASE + " put")
     )
 
@@ -391,7 +391,7 @@ def get_object(get_client, args):
     """
     Retrieves an uploaded object and writes it to a file
     """
-    parser = inherit_relevant_args(
+    parser = inherit_plugin_args(
         ArgumentParser(PLUGIN_BASE + " get")
     )
 
@@ -441,7 +441,7 @@ def delete_object(get_client, args):
     """
     Removes a file from a bucket
     """
-    parser = inherit_relevant_args(
+    parser = inherit_plugin_args(
         ArgumentParser(PLUGIN_BASE + " del")
     )
 
@@ -478,7 +478,7 @@ def generate_url(get_client, args):
     """
     Generates a URL to an object
     """
-    parser = inherit_relevant_args(
+    parser = inherit_plugin_args(
         ArgumentParser(PLUGIN_BASE + " signurl")
     )
 
@@ -534,7 +534,7 @@ def set_acl(get_client, args):
     """
     Modify Access Control List for a Bucket or Objects
     """
-    parser = inherit_relevant_args(
+    parser = inherit_plugin_args(
         ArgumentParser(PLUGIN_BASE + " setacl")
     )
 
@@ -598,7 +598,7 @@ def enable_static_site(get_client, args):
     """
     Turns a bucket into a static website
     """
-    parser = inherit_relevant_args(
+    parser = inherit_plugin_args(
         ArgumentParser(PLUGIN_BASE + " ws-create")
     )
 
@@ -644,7 +644,7 @@ def static_site_info(get_client, args):
     """
     Returns info about a configured static site
     """
-    parser = inherit_relevant_args(
+    parser = inherit_plugin_args(
         ArgumentParser(PLUGIN_BASE + " ws-info")
     )
 
@@ -681,7 +681,7 @@ def show_usage(get_client, args):
     """
     Shows space used by all buckets in this cluster, and total space
     """
-    parser = inherit_relevant_args(
+    parser = inherit_plugin_args(
         ArgumentParser(PLUGIN_BASE + " du")
     )
 
@@ -752,7 +752,7 @@ def list_all_objects(get_client, args):
     Lists all objects in all buckets
     """
     # this is for printing help when --help is in the args
-    parser = inherit_relevant_args(
+    parser = inherit_plugin_args(
         ArgumentParser(PLUGIN_BASE + " la")
     )
 
@@ -785,7 +785,7 @@ def disable_static_site(get_client, args):
     """
     Disables static site for a bucket
     """
-    parser = inherit_relevant_args(
+    parser = inherit_plugin_args(
         ArgumentParser(PLUGIN_BASE + " du")
     )
 
@@ -864,7 +864,7 @@ def get_obj_args_parser():
     """
     Initialize and return the argument parser for the obj plug-in.
     """
-    parser = inherit_relevant_args(
+    parser = inherit_plugin_args(
         ArgumentParser(PLUGIN_BASE, add_help=False)
     )
 
@@ -883,6 +883,42 @@ def get_obj_args_parser():
     )
 
     return parser
+
+
+def get_credentials(cli: CLI):
+    """
+    Get access_key and secret_key of the object storage.
+    """
+    access_key, secret_key = (
+        os.getenv(ENV_ACCESS_KEY_NAME, None),
+        os.getenv(ENV_SECRET_KEY_NAME, None),
+    )
+    if bool(access_key) != bool(secret_key):
+        print(
+            f"You must set both {ENV_ACCESS_KEY_NAME} "
+            f"and {ENV_SECRET_KEY_NAME}, or neither"
+        )
+        sys.exit(1)
+
+    # not given on command line, so look them up
+    if not access_key:
+        access_key, secret_key = _get_s3_creds(cli)
+
+    return access_key, secret_key
+
+
+def regenerate_s3_credentials(cli: CLI):
+    """
+    Force regenerate object storage access key and secret key.
+    """
+    print("Regenerating Object Storage keys..")
+    _get_s3_creds(cli, force=True)
+    print("Done.")
+    print(
+        "Warning: Your old Object Storage keys _were not_ automatically expired!  If you want "
+        "to expire them, see `linode-cli object-storage keys-list` and "
+        "`linode-cli object-storage keys-delete [KEYID]`."
+    )
 
 
 def call(
@@ -911,23 +947,12 @@ def call(
         print_help(parser)
         sys.exit(0)
 
+    access_key = None
+    secret_key = None
+
     # make a client, but only if we weren't printing help
-
-    access_key, secret_key = (
-        os.getenv(ENV_ACCESS_KEY_NAME, None),
-        os.getenv(ENV_SECRET_KEY_NAME, None),
-    )
-
     if not "--help" in args:
-        if bool(access_key) != bool(secret_key):
-            print(
-                f"You must set both {ENV_ACCESS_KEY_NAME} and {ENV_SECRET_KEY_NAME}, or neither"
-            )
-            sys.exit(1)
-
-        # not given on command line, so look them up
-        if not access_key:
-            access_key, secret_key = _get_s3_creds(context.client)
+        access_key, secret_key = get_credentials(context.client)
 
     cluster = parsed.cluster
     if context.client.defaults:
@@ -942,11 +967,11 @@ def call(
         or having a valid OBJ key.
         """
         current_cluster = cluster
-        if current_cluster is None and not context.client.defaults:
-            print("Error: cluster is required.")
-            sys.exit(1)
-
         if current_cluster is None:
+            if not context.client.defaults:
+                print("Error: cluster is required.")
+                sys.exit(1)
+
             print(
                 "Error: No default cluster is configured.  Either configure the CLI "
                 "or invoke with --cluster to specify a cluster."
@@ -977,14 +1002,7 @@ def call(
             print(f"Error: {message}")
             sys.exit(6)
     elif parsed.command == "regenerate-keys":
-        print("Regenerating Object Storage keys..")
-        _get_s3_creds(context.client, force=True)
-        print("Done.")
-        print(
-            "Warning: Your old Object Storage keys _were not_ automatically expired!  If you want "
-            "to expire them, see `linode-cli object-storage keys-list` and "
-            "`linode-cli object-storage keys-delete [KEYID]`."
-        )
+        regenerate_s3_credentials(context.client)
     elif parsed.command == "configure":
         _configure_plugin(context.client)
     else:

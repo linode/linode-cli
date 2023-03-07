@@ -10,14 +10,12 @@ def bake_completions(ops):
     """
     Given a baked CLI, generates and saves a bash completion file
     """
-    print("Baking bash completions...")
     if "_base_url" in ops:
         del ops["_base_url"]
     if "_spec_version" in ops:
         del ops["_spec_version"]
     rendered = get_bash_completions(ops)
     with open("linode-cli.sh", "w", encoding="utf-8") as bash_f:
-        print("Writing file...")
         bash_f.write(rendered)
 
 

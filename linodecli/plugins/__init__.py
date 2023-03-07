@@ -8,7 +8,7 @@ from os import listdir
 from os.path import dirname
 
 from linodecli.cli import CLI
-from linodecli.helpers import register_args_shared
+from linodecli.arg_helpers import register_args_shared
 
 _available_files = listdir(dirname(__file__))
 available_local = [
@@ -76,7 +76,7 @@ class PluginContext:  # pylint: disable=too-few-public-methods
         self.client = client
 
 
-def inherit_relevant_args(parser: ArgumentParser):
+def inherit_plugin_args(parser: ArgumentParser):
     """
     This function allows plugin-defined ArgumentParsers to inherit
     certain CLI configuration arguments (`--as-user`, etc.).

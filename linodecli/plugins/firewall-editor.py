@@ -12,7 +12,7 @@ from typing import Callable
 
 from terminaltables import PorcelainTable
 
-from linodecli.plugins import inherit_relevant_args
+from linodecli.plugins import inherit_plugin_args
 
 BOLD = "\033[1m"
 NOT_BOLD = "\033[0m"
@@ -575,7 +575,7 @@ def call(args, context):
     """
     Invokes the Interactive Firewall Plugin
     """
-    parser = inherit_relevant_args(
+    parser = inherit_plugin_args(
         argparse.ArgumentParser("firewall-editor", add_help=True)
     )
     parser.add_argument("firewall_id", help="The ID of the firewall to edit.")
