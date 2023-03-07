@@ -14,14 +14,23 @@ reserved_files = {this_file}
 
 
 def is_single_file_plugin(f: Path):
+    """
+    Determine if the file is a single-file plugin.
+    """
     return f.suffix == ".py"
 
 
 def is_module_plugin(f: Path):
+    """
+    Determine if the file is a module (directory) based plugin.
+    """
     return f.is_dir() and f.name[:1] != "_"
 
 
 def is_plugin(f: Path):
+    """
+    Determine if the file is a linode-cli plugin.
+    """
     if f in reserved_files:
         return False
     return is_module_plugin(f) or is_single_file_plugin(f)

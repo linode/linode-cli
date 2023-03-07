@@ -22,6 +22,19 @@ from linodecli.cli import CLI
 from linodecli.configuration import _do_get_request
 from linodecli.configuration.helpers import _default_thing_input
 from linodecli.plugins import PluginContext
+from linodecli.plugins.obj.config import (
+    BASE_URL_TEMPLATE,
+    BASE_WEBSITE_TEMPLATE,
+    DATE_FORMAT,
+    ENV_ACCESS_KEY_NAME,
+    ENV_SECRET_KEY_NAME,
+    INCOMING_DATE_FORMAT,
+    MULTIPART_UPLOAD_CHUNK_SIZE_DEFAULT,
+    NO_ACCESS_ERROR,
+    NO_SCOPES_ERROR,
+    PLUGIN_BASE,
+    UPLOAD_MAX_FILE_SIZE,
+)
 from linodecli.plugins.obj.helpers import (
     _borderless_table,
     _convert_datetime,
@@ -41,9 +54,6 @@ try:
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
-
-
-from linodecli.plugins.obj.config import *
 
 
 def list_objects_or_buckets(get_client, args):

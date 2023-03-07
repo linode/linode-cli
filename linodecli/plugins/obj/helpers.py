@@ -1,3 +1,7 @@
+"""
+The helper functions for the object storage plugin.
+"""
+
 from argparse import ArgumentTypeError
 from datetime import datetime
 
