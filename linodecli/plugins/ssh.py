@@ -8,10 +8,12 @@ Invoke as follows::
    LINODE_LABEL - the label of the Linode to ssh into
    USERNAME - the user to ssh into the Linode as.  Defaults to the current user
 """
+
 import argparse
 import subprocess
 import sys
 from sys import platform
+from typing import Any, Dict, Optional, Tuple
 
 
 def call(args, context):  # pylint: disable=too-many-branches
@@ -48,57 +50,18 @@ def call(args, context):  # pylint: disable=too-many-branches
         parser.print_help()
         sys.exit(0)
 
-    label = parsed.label
-    username = None
-    if "@" in parsed.label:
-        username, label = parsed.label.split("@", 1)
+    username, label = parse_target_components(parsed.label)
 
-    result, potential_matches = context.client.call_operation(
-        "linodes", "list", filters={"label": {"+contains": label}}
-    )
+    target = find_linode_with_label(context, label)
 
-    if result != 200:
-        print(f"Could not retrieve Linode: {result} error")
-        sys.exit(2)
-
-    potential_matches = potential_matches["data"]
-    exact_match = None
-
-    # see if we got a match
-    for match in potential_matches:
-        if match["label"] == label:
-            exact_match = match
-            break
-
-    if exact_match is None:
-        # no match - stop
-        print(f"No Linode found for label {label}")
-
-        if potential_matches:
-            print("Did you mean: ")
-            print("\n".join([f" {p['label']}" for p in potential_matches]))
-        sys.exit(1)
-
-    if exact_match["status"] != "running":
+    if target["status"] != "running":
         print(
-            f"{label} is not running (status is {exact_match['status']}); operation aborted."
+            f"{label} is not running (status is {target['status']}); operation aborted."
         )
         sys.exit(2)
 
     # find a public IP Address to use
-    public_ip = None
-
-    if getattr(
-        parsed, "6"
-    ):  # this is necessary since the name isn't a valid python variable name
-        public_ip = exact_match["ipv6"].split("/")[0]
-    else:
-        for ip in exact_match["ipv4"]:
-            if not ip.startswith("192.168"):
-                public_ip = ip  # TODO - this uses the "first" IP Address
-                break
-
-    address = public_ip
+    address = parse_target_address(parsed, target)
     if username:
         address = username + "@" + address
 
@@ -113,3 +76,67 @@ def call(args, context):  # pylint: disable=too-many-branches
 
     # exit with the same code as ssh
     sys.exit(code)
+
+
+def find_linode_with_label(context, label: str) -> str:
+    """
+    Finds a Linode Instance with the given label.
+    If no matching instance is found, the plugin prints similar instances
+    and exits.
+    """
+    result, potential_matches = context.client.call_operation(
+        "linodes", "list", filters={"label": {"+contains": label}}
+    )
+
+    if result != 200:
+        print(f"Could not retrieve Linode: {result} error")
+        sys.exit(2)
+
+    potential_matches = potential_matches["data"]
+
+    # see if we got a match
+    for match in potential_matches:
+        if match["label"] == label:
+            return match
+
+    # no match - stop
+    print(f"No Linode found for label {label}")
+
+    if potential_matches:
+        print("Did you mean: ")
+        print("\n".join([f" {p['label']}" for p in potential_matches]))
+
+    sys.exit(1)
+
+
+def parse_target_components(label: str) -> Tuple[Optional[str], str]:
+    """
+    Returns the components (username, label) of the
+    given `label` argument.
+    """
+
+    if "@" in label:
+        username, label = label.split("@", 1)
+        return username, label
+
+    return None, label
+
+
+def parse_target_address(
+    parsed: argparse.Namespace, target: Dict[str, Any]
+) -> str:
+    """
+    Returns the first available public IP address
+    given the conditions defined in parsed.
+    """
+    if getattr(
+        parsed, "6"
+    ):  # this is necessary since the name isn't a valid python variable name
+        return target["ipv6"].split("/")[0]
+
+    for ip in target["ipv4"]:
+        # Ignore private IPs
+        if ip.startswith("192.168"):
+            continue
+
+        return ip
