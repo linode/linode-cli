@@ -8,7 +8,7 @@ CLI as other features are. All plugins are found in this directory.
 
 To create a plugin, simply drop a new python file into this directory or write a
 Python module that presents the interface described below. If the
-plugin is a Python module, make sure the `call` method is in `__init__.py`
+plugin is a Python module, make sure the `call` method is in the `__init__.py`
 file in the root of the module.
 
 Plugins in this directory are called "Internal Plugins," and must meet the
