@@ -8,7 +8,7 @@ from helpers import COMMAND_JSON_OUTPUT, get_random_text, wait_for_condition
 TEST_REGION = "us-southeast"
 TEST_IMAGE = "linode/alpine3.16"
 TEST_TYPE = "g6-nanode-1"
-TEST_ROOT_PASS = "r00tp@ss!"
+TEST_ROOT_PASS = "r00tp@ss!long-long-and-longer"
 
 BASE_CMD = ["linode-cli", "ssh"]
 
