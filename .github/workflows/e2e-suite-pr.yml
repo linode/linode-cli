@@ -3,7 +3,7 @@ on:
   repository_dispatch:
     types: [acctest-command]
 
-name: Run Integration Tests
+name: PR E2e Tests
 
 jobs:
   # Maintainer has commented /acctest on a pull request
