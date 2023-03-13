@@ -40,7 +40,7 @@ jobs:
           python-version: '3.x'
 
       - name: Install Python deps
-        run: pip install -r requirements.txt -r requirements-dev.txt wheel
+        run: pip install -r requirements.txt -r requirements-dev.txt wheel boto
 
       - name: Install the CLI
         run: make install
