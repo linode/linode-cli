@@ -491,8 +491,8 @@ class CLI:  # pylint: disable=too-many-instance-attributes
             and "--json" not in args
         ):
             print(
-                "Not using --json mode for ips-list will result in unreadable output." + 
-                " Use --json instead. A fix is on our roadmap but is not yet implemented.",
+                "Not using --json mode for ips-list will result in unreadable output."
+                + " Use --json instead. A fix is on our roadmap but is not yet implemented.",
                 file=sys.stderr,
             )
 
