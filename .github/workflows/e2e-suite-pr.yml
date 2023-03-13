@@ -19,7 +19,7 @@ jobs:
         id: validate-tests
         with:
           text: ${{ github.event.client_payload.slash_command.tests }}
-          regex: '[^a-z0-9-:.\/]'  # Tests validation
+          regex: '[^a-z0-9_-:.\/]'  # Tests validation
           flags: gi
 
       # Check out merge commit
