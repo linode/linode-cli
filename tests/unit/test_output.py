@@ -309,3 +309,17 @@ class TestOutputHandler:
             "|---|\n"
             f"| {test_str_truncated} |\n"
         )
+
+    def test_warn_broken_output(self, mock_cli):
+        stderr_buf = io.StringIO()
+
+        try:
+            with contextlib.redirect_stderr(stderr_buf):
+                mock_cli.handle_command("linodes", "ips-list", ["10"])
+        except SystemExit:
+            pass
+
+        assert (
+            "Not using --json mode for ips-list will result in unreadable output. Use --json instead. A fix is on our roadmap but is not yet implemented."
+            in stderr_buf.getvalue()
+        )

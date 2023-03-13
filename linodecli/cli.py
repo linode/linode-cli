@@ -485,6 +485,16 @@ class CLI:  # pylint: disable=too-many-instance-attributes
         action
         """
 
+        if (
+            command == "linodes"
+            and action == "ips-list"
+            and "--json" not in args
+        ):
+            print(
+                "Not using --json mode for ips-list will result in unreadable output. Use --json instead. A fix is on our roadmap but is not yet implemented.",
+                file=sys.stderr,
+            )
+
         try:
             operation = self.find_operation(command, action)
         except ValueError as e:
