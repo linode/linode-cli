@@ -63,7 +63,7 @@ def list_objects_or_buckets(get_client, args):
     parser = inherit_plugin_args(ArgumentParser(PLUGIN_BASE + " ls"))
 
     parser.add_argument(
-        name_or_flags="bucket",
+        "bucket",
         metavar="NAME",
         type=str,
         nargs="?",
