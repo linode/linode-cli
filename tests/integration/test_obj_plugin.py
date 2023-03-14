@@ -24,17 +24,6 @@ class Keys:
 
 
 @pytest.fixture(scope="session")
-def created_buckets():
-    buckets = set()
-    yield buckets
-    for bk in buckets:
-        try:
-            delete_bucket(bk)
-        except:
-            logging.exception(f"Failed to cleanup bucket: {bk}")
-
-
-@pytest.fixture(scope="session")
 def keys(token: str):
     response = _do_request(
         BASE_URL,
@@ -74,16 +63,26 @@ def exec_test_command(args: List[str]):
     return process
 
 
+@pytest.fixture
 def create_bucket(
     name_generator: Callable,
-    created_buckets: Set[str],
-    bucket_name: Optional[str] = None,
 ):
-    if not bucket_name:
-        bucket_name = name_generator("test-bk")
-    exec_test_command(BASE_CMD + ["mb", bucket_name])
-    created_buckets.add(bucket_name)
-    return bucket_name
+    created_buckets = set()
+
+    def _create_bucket(bucket_name: Optional[str] = None):
+        if not bucket_name:
+            bucket_name = name_generator("test-bk")
+
+        exec_test_command(BASE_CMD + ["mb", bucket_name])
+        created_buckets.add(bucket_name)
+        return bucket_name
+
+    yield _create_bucket
+    for bk in created_buckets:
+        try:
+            delete_bucket(bk)
+        except:
+            logging.exception(f"Failed to cleanup bucket: {bk}")
 
 
 def delete_bucket(bucket_name: str, force: bool = True):
@@ -95,15 +94,14 @@ def delete_bucket(bucket_name: str, force: bool = True):
 
 
 def test_obj_single_file_single_bucket(
-    name_generator: Callable[[str], str],
+    create_bucket: Callable[[Optional[str]], str],
     generate_test_files: GetTestFileType,
-    created_buckets: Set[str],
     keys: Keys,
     monkeypatch: MonkeyPatch,
 ):
     patch_keys(keys, monkeypatch)
     file_path = generate_test_files()[0]
-    bucket_name = create_bucket(name_generator, created_buckets)
+    bucket_name = create_bucket()
     exec_test_command(BASE_CMD + ["put", str(file_path), bucket_name])
     process = exec_test_command(BASE_CMD + ["la"])
     output = process.stdout.decode()
@@ -138,17 +136,14 @@ def test_obj_single_file_single_bucket(
 
 
 def test_multi_files_multi_bucket(
-    name_generator: Callable[[str], str],
+    create_bucket: Callable[[Optional[str]], str],
     generate_test_files: GetTestFileType,
-    created_buckets: Set[str],
     keys: Keys,
     monkeypatch: MonkeyPatch,
 ):
     patch_keys(keys, monkeypatch)
     number = 5
-    bucket_names = [
-        create_bucket(name_generator, created_buckets) for _ in range(number)
-    ]
+    bucket_names = [create_bucket() for _ in range(number)]
     file_paths = generate_test_files(number)
     for bucket in bucket_names:
         for file in file_paths:
@@ -160,3 +155,29 @@ def test_multi_files_multi_bucket(
             assert "Done" in output
     for file in file_paths:
         file.unlink()
+
+
+def test_modify_access_control(
+    keys: Keys,
+    monkeypatch: MonkeyPatch,
+    create_bucket: Callable[[Optional[str]], str],
+    generate_test_files: GetTestFileType,
+):
+    patch_keys(keys, monkeypatch)
+    bucket = create_bucket()
+    file = generate_test_files()[0]
+    exec_test_command(
+        BASE_CMD + ["put", str(file.resolve()), bucket]
+    )
+    file_url = f"https://{bucket}.{REGION}.linodeobjects.com/{file.name}"
+    exec_test_command(
+        BASE_CMD + ["setacl", bucket, file.name, "--acl-public"]
+    )
+    response = requests.get(file_url)
+    assert response.status_code == 200
+    exec_test_command(
+        BASE_CMD + ["setacl", bucket, file.name, "--acl-private"]
+    )
+    response = requests.get(file_url)
+    assert response.status_code == 403
+
