@@ -6,10 +6,12 @@ from typing import Callable, List, Optional, Set
 
 import pytest
 import requests
-from helpers import BASE_URL, create_file_random_text
+from fixture_types import GetTestFileType
+from helpers import BASE_URL
 from pytest import MonkeyPatch
 
 from linodecli.configuration.auth import _do_request
+from linodecli.plugins.obj import ENV_ACCESS_KEY_NAME, ENV_SECRET_KEY_NAME
 
 REGION = "us-southeast-1"
 BASE_CMD = ["linode-cli", "obj", "--cluster", REGION]
@@ -57,8 +59,10 @@ def keys(token: str):
 
 
 def patch_keys(keys: Keys, monkeypatch: MonkeyPatch):
-    monkeypatch.setenv("LINODE_CLI_OBJ_ACCESS_KEY", keys.access_key)
-    monkeypatch.setenv("LINODE_CLI_OBJ_SECRET_KEY", keys.secret_key)
+    assert keys.access_key is not None
+    assert keys.secret_key is not None
+    monkeypatch.setenv(ENV_ACCESS_KEY_NAME, keys.access_key)
+    monkeypatch.setenv(ENV_SECRET_KEY_NAME, keys.secret_key)
 
 
 def exec_test_command(args: List[str]):
@@ -91,13 +95,14 @@ def delete_bucket(bucket_name: str, force: bool = True):
 
 
 def test_obj_single_file_single_bucket(
-    name_generator: Callable,
+    name_generator: Callable[[str], str],
+    generate_test_files: GetTestFileType,
     created_buckets: Set[str],
     keys: Keys,
     monkeypatch: MonkeyPatch,
 ):
     patch_keys(keys, monkeypatch)
-    file_path = create_file_random_text(name_generator)
+    file_path = generate_test_files()[0]
     bucket_name = create_bucket(name_generator, created_buckets)
     exec_test_command(BASE_CMD + ["put", str(file_path), bucket_name])
     process = exec_test_command(BASE_CMD + ["la"])
@@ -133,7 +138,8 @@ def test_obj_single_file_single_bucket(
 
 
 def test_multi_files_multi_bucket(
-    name_generator: Callable,
+    name_generator: Callable[[str], str],
+    generate_test_files: GetTestFileType,
     created_buckets: Set[str],
     keys: Keys,
     monkeypatch: MonkeyPatch,
@@ -143,9 +149,7 @@ def test_multi_files_multi_bucket(
     bucket_names = [
         create_bucket(name_generator, created_buckets) for _ in range(number)
     ]
-    file_paths = [
-        create_file_random_text(name_generator) for _ in range(number)
-    ]
+    file_paths = generate_test_files(number)
     for bucket in bucket_names:
         for file in file_paths:
             process = exec_test_command(

@@ -2,41 +2,42 @@
 
 The Linode CLI supports embedded plugins, features that are hard-coded (instead
 of generated as the rest of the CLI is) but are accessible directly through the
-CLI as other features are.  All plugins are found in this directory.
+CLI as other features are. All plugins are found in this directory.
 
 ## Creating a Plugin
 
 To create a plugin, simply drop a new python file into this directory or write a
-module that presents the interface described below.
+Python module that presents the interface described below. If the
+plugin is a Python module, make sure the `call` method is in the `__init__.py`
+file in the root of the module.
 
 Plugins in this directory are called "Internal Plugins," and must meet the
 following conditions:
 
- * It must be compatible with python 2 and 3
- * Its name must be unique, both with the other plugins and with all commands
+* Its name must be unique, both with the other plugins and with all commands
    offered through the generated CLI
- * Its name must not contain special characters, and should be easily to enter
+* Its name must not contain special characters, and should be easily to enter
    on the command line
- * It must contain a `call(args, context)` function for invocation
- * It must support a `--help` command as all other CLI commands do.
+* It must contain a `call(args, context)` function for invocation
+* It must support a `--help` command as all other CLI commands do.
 
 Plugins that are installed separately and registered with the `register-plugin`
 command are called "Third Party Plugins," and must meet the following
 conditions:
 
- * It should be compatible with python 2 and 3
- * Its name must be unique, both with the internal plugins and all CLI operations
- * It must contain a `call(args, context)` function for invocation
- * It must contain a `PLUGIN_NAME` constant whose value is a string that does not
+* Its name must be unique, both with the internal plugins and all CLI operations
+* It must contain a `call(args, context)` function for invocation
+* It must contain a `PLUGIN_NAME` constant whose value is a string that does not
    contain special characters, and should be easy to enter on the command line.
- * It should support a `--help` command as all other CLI commands do.
+* It should support a `--help` command as all other CLI commands do.
 
 ## The Plugin Interface
 
-All plugins are individual python files that reside in this directory.  Plugins
-must have one function, `call`, that matches the following signature:
+All plugins are either an individual python file or a Python module
+that reside in this directory or installed separately.  Plugins must have one function, `call`, that
+matches the following signature:
 
-```
+```python
 def call(args, context):
     """
     This is the function used to invoke the plugin.  It will receive the remainder
@@ -50,8 +51,8 @@ def call(args, context):
 The `PluginContext` class, passed as `context` to the `call` function, includes
 all information the plugin is given during invocation.  This includes the following:
 
- * `token` - The Personal Access Token registered with the CLI to make requests
- * `client` - The CLI Client object that can make authenticated requests on behalf
+* `token` - The Personal Access Token registered with the CLI to make requests
+* `client` - The CLI Client object that can make authenticated requests on behalf
     of the acting user.  This is preferrable to using `requests` or another library
     directly (see below).
 
@@ -68,8 +69,8 @@ JSON data.
 Plugins can access the CLI's configuration through the CLI Client mentioned above.
 Plugins are allowed to:
 
- * Read values from the current user's config
- * Read and write their own values to the current user's config
+* Read values from the current user's config
+* Read and write their own values to the current user's config
 
 Any other operation is not supported and may break without notice.
 

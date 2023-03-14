@@ -2,7 +2,7 @@
 import subprocess
 from os import path
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 here = path.abspath(path.dirname(__file__))
 
@@ -73,11 +73,7 @@ setup(
     author="Linode",
     author_email="developers@linode.com",
     url="https://www.linode.com/docs/api/",
-    packages=[
-        "linodecli",
-        "linodecli.plugins",
-        "linodecli.configuration",
-    ],
+    packages=find_packages(include=['linodecli*']),
     license="BSD 3-Clause License",
     install_requires=[
         "terminaltables",
