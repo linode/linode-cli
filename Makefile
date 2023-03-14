@@ -2,6 +2,8 @@
 # Makefile for more convenient building of the Linode CLI and its baked content
 #
 
+INTEGRATION_TEST_PATH :=
+
 SPEC_VERSION ?= latest
 ifndef SPEC
 override SPEC = $(shell ./resolve_spec_url ${SPEC_VERSION})
@@ -48,7 +50,7 @@ testunit:
 
 .PHONY: testint
 testint:
-	pytest tests/integration
+	pytest tests/integration/${INTEGRATION_TEST_PATH}
 
 
 # Alias for unit; integration tests should be explicit
