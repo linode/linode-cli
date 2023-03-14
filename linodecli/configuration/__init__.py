@@ -7,6 +7,8 @@ import argparse
 import os
 import sys
 
+from linode_api4 import ApiError
+
 from .auth import (
     _check_full_access,
     _do_get_request,
@@ -342,16 +344,19 @@ If you prefer to supply a Personal Access Token, use `linode-cli configure --tok
         auth_users = []
 
         if is_full_access:
-            auth_users = [
-                u["username"]
-                for u in _do_get_request(
-                    self.base_url,
-                    "/account/users",
-                    exit_on_error=False,
-                    token=token,
-                )["data"]
-                if "ssh_keys" in u
-            ]
+            users = _do_get_request(
+                self.base_url,
+                "/account/users",
+                token=token,
+                # Allow 401 responses so tokens without
+                # account perms can be configured
+                status_validator=lambda status: status == 401,
+            )
+
+            if "data" in users:
+                auth_users = [
+                    u["username"] for u in users["data"] if "ssh_keys" in u
+                ]
 
         # get the preferred things
         config["region"] = _default_thing_input(
