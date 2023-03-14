@@ -2,7 +2,7 @@ import logging
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, List, Optional, Set
+from typing import Callable, List, Optional
 
 import pytest
 import requests
@@ -166,18 +166,11 @@ def test_modify_access_control(
     patch_keys(keys, monkeypatch)
     bucket = create_bucket()
     file = generate_test_files()[0]
-    exec_test_command(
-        BASE_CMD + ["put", str(file.resolve()), bucket]
-    )
+    exec_test_command(BASE_CMD + ["put", str(file.resolve()), bucket])
     file_url = f"https://{bucket}.{REGION}.linodeobjects.com/{file.name}"
-    exec_test_command(
-        BASE_CMD + ["setacl", bucket, file.name, "--acl-public"]
-    )
+    exec_test_command(BASE_CMD + ["setacl", bucket, file.name, "--acl-public"])
     response = requests.get(file_url)
     assert response.status_code == 200
-    exec_test_command(
-        BASE_CMD + ["setacl", bucket, file.name, "--acl-private"]
-    )
+    exec_test_command(BASE_CMD + ["setacl", bucket, file.name, "--acl-private"])
     response = requests.get(file_url)
     assert response.status_code == 403
-
