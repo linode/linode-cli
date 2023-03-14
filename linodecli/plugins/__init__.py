@@ -37,7 +37,7 @@ def is_plugin(f: Path):
 
 
 available_local = [
-    f.name for f in Path.iterdir(this_file.parent) if is_plugin(f)
+    f.stem for f in Path.iterdir(this_file.parent) if is_plugin(f)
 ]
 
 
