@@ -11,6 +11,7 @@ from helpers import BASE_URL
 from pytest import MonkeyPatch
 
 from linodecli.configuration.auth import _do_request
+from linodecli.plugins.obj import ENV_ACCESS_KEY_NAME, ENV_SECRET_KEY_NAME
 
 REGION = "us-southeast-1"
 BASE_CMD = ["linode-cli", "obj", "--cluster", REGION]
@@ -60,8 +61,8 @@ def keys(token: str):
 def patch_keys(keys: Keys, monkeypatch: MonkeyPatch):
     assert keys.access_key is not None
     assert keys.secret_key is not None
-    monkeypatch.setenv("LINODE_CLI_OBJ_ACCESS_KEY", keys.access_key)
-    monkeypatch.setenv("LINODE_CLI_OBJ_SECRET_KEY", keys.secret_key)
+    monkeypatch.setenv(ENV_ACCESS_KEY_NAME, keys.access_key)
+    monkeypatch.setenv(ENV_SECRET_KEY_NAME, keys.secret_key)
 
 
 def exec_test_command(args: List[str]):

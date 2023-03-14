@@ -1,0 +1,44 @@
+name: Remote Release Trigger
+on:
+  repository_dispatch:
+    types: [ cli-release ]
+jobs:
+  remote-release-trigger:
+    runs-on: ubuntu-22.04
+    environment: CLI Automated Release
+    steps:
+      - name: Generate App Installation Token
+        id: generate_token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92 # pin@v1
+        with:
+          app_id: ${{ secrets.CLI_RELEASE_APP_ID }}
+          private_key: ${{ secrets.CLI_RELEASE_PRIVATE_KEY }}
+
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Get previous tag
+        id: previoustag
+        uses: WyriHaximus/github-action-get-previous-tag@385a2a0b6abf6c2efeb95adfac83d96d6f968e0c # pin@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get the next minor version
+        id: semvers
+        uses: WyriHaximus/github-action-next-semvers@d079934efaf011a4cf8912d4637097fe35d32b93 # pin@v1
+        with:
+          version: ${{ steps.previoustag.outputs.tag }}
+
+      - uses: rickstaa/action-create-tag@84c90e6ba79b47b5147dcb11ff25d6a0e06238ba # pin@v1
+        with:
+          tag: ${{ steps.semvers.outputs.v_minor }}
+
+      - name: Release
+        uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 # pin@v1
+        with:
+          token: ${{ steps.generate_token.outputs.token }}
+          body: Built from Linode OpenAPI spec ${{
+            github.event.client_payload.spec_version }}
+          tag_name: ${{ steps.semvers.outputs.v_minor }}
