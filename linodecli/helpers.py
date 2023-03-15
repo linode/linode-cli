@@ -51,3 +51,23 @@ def filter_markdown_links(text):
         result = result.replace(match.group(), f"{match.group('text')} ({url})")
 
     return result
+
+
+def register_args_shared(parser):
+    """
+    Adds certain arguments to the given ArgumentParser that may be shared across
+    the CLI and plugins.
+    This function is wrapped in linodecli.plugins.
+
+    NOTE: This file is not located in arg_helpers.py to prevent a cyclic dependency.
+    """
+
+    parser.add_argument(
+        "--as-user",
+        metavar="USERNAME",
+        type=str,
+        help="The username to execute this command as.  This user must "
+        "be configured.",
+    )
+
+    return parser

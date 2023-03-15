@@ -21,7 +21,7 @@ from terminaltables import SingleTable
 from linodecli.cli import CLI
 from linodecli.configuration import _do_get_request
 from linodecli.configuration.helpers import _default_thing_input
-from linodecli.plugins import PluginContext
+from linodecli.plugins import PluginContext, inherit_plugin_args
 from linodecli.plugins.obj.config import (
     BASE_URL_TEMPLATE,
     BASE_WEBSITE_TEMPLATE,
@@ -60,10 +60,10 @@ def list_objects_or_buckets(get_client, args):
     """
     Lists buckets or objects
     """
-    parser = ArgumentParser(PLUGIN_BASE + " ls")
+    parser = inherit_plugin_args(ArgumentParser(PLUGIN_BASE + " ls"))
 
     parser.add_argument(
-        name_or_flags="bucket",
+        "bucket",
         metavar="NAME",
         type=str,
         nargs="?",
@@ -129,7 +129,7 @@ def create_bucket(get_client, args):
     """
     Creates a new bucket
     """
-    parser = ArgumentParser(PLUGIN_BASE + " mb")
+    parser = inherit_plugin_args(ArgumentParser(PLUGIN_BASE + " mb"))
 
     parser.add_argument(
         "name",
@@ -151,7 +151,7 @@ def delete_bucket(get_client, args):
     """
     Deletes a bucket
     """
-    parser = ArgumentParser(PLUGIN_BASE + " rb")
+    parser = inherit_plugin_args(ArgumentParser(PLUGIN_BASE + " rb"))
 
     parser.add_argument(
         "name",
@@ -192,7 +192,7 @@ def upload_object(get_client, args):  # pylint: disable=too-many-locals
     """
     Uploads an object to object storage
     """
-    parser = ArgumentParser(PLUGIN_BASE + " put")
+    parser = inherit_plugin_args(ArgumentParser(PLUGIN_BASE + " put"))
 
     parser.add_argument(
         "file", metavar="FILE", type=str, nargs="+", help="The files to upload."
@@ -344,7 +344,7 @@ def get_object(get_client, args):
     """
     Retrieves an uploaded object and writes it to a file
     """
-    parser = ArgumentParser(PLUGIN_BASE + " get")
+    parser = inherit_plugin_args(ArgumentParser(PLUGIN_BASE + " get"))
 
     parser.add_argument(
         "bucket", metavar="BUCKET", type=str, help="The bucket the file is in."
@@ -392,7 +392,7 @@ def delete_object(get_client, args):
     """
     Removes a file from a bucket
     """
-    parser = ArgumentParser(PLUGIN_BASE + " del")
+    parser = inherit_plugin_args(ArgumentParser(PLUGIN_BASE + " del"))
 
     parser.add_argument(
         "bucket", metavar="BUCKET", type=str, help="The bucket to delete from."
@@ -427,7 +427,7 @@ def generate_url(get_client, args):
     """
     Generates a URL to an object
     """
-    parser = ArgumentParser(PLUGIN_BASE + " signurl")
+    parser = inherit_plugin_args(ArgumentParser(PLUGIN_BASE + " signurl"))
 
     parser.add_argument(
         "bucket",
@@ -481,7 +481,7 @@ def set_acl(get_client, args):
     """
     Modify Access Control List for a Bucket or Objects
     """
-    parser = ArgumentParser(PLUGIN_BASE + " setacl")
+    parser = inherit_plugin_args(ArgumentParser(PLUGIN_BASE + " setacl"))
 
     parser.add_argument(
         "bucket", metavar="BUCKET", type=str, help="The bucket to modify."
@@ -543,7 +543,7 @@ def enable_static_site(get_client, args):
     """
     Turns a bucket into a static website
     """
-    parser = ArgumentParser(PLUGIN_BASE + " ws-create")
+    parser = inherit_plugin_args(ArgumentParser(PLUGIN_BASE + " ws-create"))
 
     parser.add_argument(
         "bucket",
@@ -587,7 +587,7 @@ def static_site_info(get_client, args):
     """
     Returns info about a configured static site
     """
-    parser = ArgumentParser(PLUGIN_BASE + " ws-info")
+    parser = inherit_plugin_args(ArgumentParser(PLUGIN_BASE + " ws-info"))
 
     parser.add_argument(
         "bucket",
@@ -622,7 +622,7 @@ def show_usage(get_client, args):
     """
     Shows space used by all buckets in this cluster, and total space
     """
-    parser = ArgumentParser(PLUGIN_BASE + " du")
+    parser = inherit_plugin_args(ArgumentParser(PLUGIN_BASE + " du"))
 
     parser.add_argument(
         "bucket",
@@ -675,7 +675,8 @@ def list_all_objects(get_client, args):
     Lists all objects in all buckets
     """
     # this is for printing help when --help is in the args
-    parser = ArgumentParser(PLUGIN_BASE + " la")
+    parser = inherit_plugin_args(ArgumentParser(PLUGIN_BASE + " la"))
+
     parser.parse_args(args)
 
     client = get_client()
@@ -705,7 +706,7 @@ def disable_static_site(get_client, args):
     """
     Disables static site for a bucket
     """
-    parser = ArgumentParser(PLUGIN_BASE + " du")
+    parser = inherit_plugin_args(ArgumentParser(PLUGIN_BASE + " du"))
 
     parser.add_argument(
         "bucket",
@@ -782,7 +783,8 @@ def get_obj_args_parser():
     """
     Initialize and return the argument parser for the obj plug-in.
     """
-    parser = ArgumentParser(PLUGIN_BASE, add_help=False)
+    parser = inherit_plugin_args(ArgumentParser(PLUGIN_BASE, add_help=False))
+
     parser.add_argument(
         "command",
         metavar="COMMAND",
@@ -796,6 +798,7 @@ def get_obj_args_parser():
         type=str,
         help="The cluster to use for the operation",
     )
+
     return parser
 
 

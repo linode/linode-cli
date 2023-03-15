@@ -15,6 +15,8 @@ import sys
 from sys import platform
 from typing import Any, Dict, Optional, Tuple
 
+from linodecli.plugins import inherit_plugin_args
+
 
 def call(args, context):  # pylint: disable=too-many-branches
     """
@@ -28,7 +30,10 @@ def call(args, context):  # pylint: disable=too-many-branches
         )
         sys.exit(1)
 
-    parser = argparse.ArgumentParser("linode-cli ssh", add_help=True)
+    parser = inherit_plugin_args(
+        argparse.ArgumentParser("linode-cli ssh", add_help=True)
+    )
+
     parser.add_argument(
         "label",
         metavar="[USERNAME@]LABEL",
