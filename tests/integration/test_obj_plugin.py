@@ -65,9 +65,10 @@ def exec_test_command(args: List[str]):
 
 @pytest.fixture
 def create_bucket(
-    name_generator: Callable,
+    name_generator: Callable, keys: Keys, monkeypatch: MonkeyPatch
 ):
     created_buckets = set()
+    patch_keys(keys, monkeypatch)
 
     def _create_bucket(bucket_name: Optional[str] = None):
         if not bucket_name:
