@@ -486,14 +486,12 @@ class CLI:  # pylint: disable=too-many-instance-attributes
         """
 
         if (
-            ((command == "linodes"
-            and action == "ips-list") or
-            (command == "firewalls"
-            and action == "rules-list"))
-            and "--json" not in args
-        ):
+            (command == "linodes" and action == "ips-list")
+            or (command == "firewalls" and action == "rules-list")
+        ) and "--json" not in args:
             print(
-                "This output contains a nested structure that may not properly be displayed by linode-cli.",
+                "This output contains a nested structure that may not properly "
+                + "be displayed by linode-cli.",
                 "A fix is currently on the roadmap but has not yet been implemented.",
                 "Please use --json for endpoints like this in the meantime.",
                 file=sys.stderr,
