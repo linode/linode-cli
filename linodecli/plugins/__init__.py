@@ -2,12 +2,14 @@
 Initialize plugins for the CLI
 """
 import sys
+from argparse import ArgumentParser
 from importlib import import_module
 from os import listdir
 from os.path import dirname
 from pathlib import Path
 
 from linodecli.cli import CLI
+from linodecli.helpers import register_args_shared
 
 this_file = Path(__file__)
 reserved_files = {this_file}
@@ -99,3 +101,15 @@ class PluginContext:  # pylint: disable=too-few-public-methods
         """
         self.token = token
         self.client = client
+
+
+def inherit_plugin_args(parser: ArgumentParser):
+    """
+    This function allows plugin-defined ArgumentParsers to inherit
+    certain CLI configuration arguments (`--as-user`, etc.).
+
+    These arguments will be automatically applied to the CLI instance
+    provided in the PluginContext object.
+    """
+
+    return register_args_shared(parser)
