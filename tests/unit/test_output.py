@@ -320,6 +320,17 @@ class TestOutputHandler:
             pass
 
         assert (
-            "Not using --json mode for ips-list will result in unreadable output. Use --json instead. A fix is on our roadmap but is not yet implemented."
+            "This output contains a nested structure that may not properly be displayed by linode-cli."
+            in stderr_buf.getvalue()
+        )
+
+        try:
+            with contextlib.redirect_stderr(stderr_buf):
+                mock_cli.handle_command("firewalls", "rules-list", ["10"])
+        except SystemExit:
+            pass
+
+        assert (
+            "This output contains a nested structure that may not properly be displayed by linode-cli."
             in stderr_buf.getvalue()
         )
