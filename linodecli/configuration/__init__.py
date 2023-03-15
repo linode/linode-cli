@@ -7,8 +7,6 @@ import argparse
 import os
 import sys
 
-from linode_api4 import ApiError
-
 from .auth import (
     _check_full_access,
     _do_get_request,
