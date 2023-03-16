@@ -1,5 +1,6 @@
 import random
 import subprocess
+import os
 
 from typing import List
 from pathlib import Path
@@ -50,6 +51,7 @@ def exec_failing_test_command(args: List[str]):
     return process
 
 
+# Delete/Remove helper functions (mainly used in clean-ups after test
 def delete_all_domains():
     domain_ids = exec_test_command(['linode-cli', '--text', '--no-headers', 'domains', 'list', '--format=id']).stdout.decode()
     domain_id_arr = domain_ids.splitlines()
@@ -61,3 +63,23 @@ def delete_all_domains():
 def delete_tag(arg: str):
     result = exec_test_command(['linode-cli', 'tags', 'delete', arg])
     assert(result.returncode == SUCCESS_STATUS_CODE)
+
+
+def remove_lke_clusters():
+    cluster_ids = os.popen(
+        "linode-cli --text --no-headers lke clusters-list --format id | grep -v 'linuke-keep' | awk '{ print $1 }' |  xargs").read().split()
+    for id in cluster_ids:
+        exec_test_command(["linode-cli", "lke", 'cluster-delete', id])
+
+
+def remove_all(target: str):
+    entity_ids = ""
+    if target == "stackscripts":
+        entity_ids = os.popen(
+            "linode-cli --is_public=false --text --no-headers " + target + " list --format='id,tags' | grep -v 'linuke-keep' | awk '{ print $1 }' | xargs").read().split()
+    else:
+        entity_ids = os.popen(
+            "linode-cli --text --no-headers " + target + " list --format='id,tags' | grep -v 'linuke-keep' | awk '{ print $1 }' | xargs").read().split()
+
+    for id in entity_ids:
+        exec_test_command(['linode-cli', target, 'delete', id])

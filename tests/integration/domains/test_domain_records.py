@@ -4,7 +4,7 @@ import re
 import pytest
 import logging
 
-from tests.integration.helpers import exec_test_command, SUCCESS_STATUS_CODE, get_token, delete_all_domains
+from tests.integration.helpers import exec_test_command, SUCCESS_STATUS_CODE, delete_all_domains
 
 BASE_CMD = ["linode-cli", "domains"]
 
