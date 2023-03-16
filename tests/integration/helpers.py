@@ -10,6 +10,7 @@ from typing import Callable
 BASE_URL = "https://api.linode.com/v4/"
 INVALID_HOST = "https://wrongapi.linode.com"
 SUCCESS_STATUS_CODE = 0
+FAILED_STATUS_CODE = 256
 
 COMMAND_JSON_OUTPUT = ["--suppress-warnings", "--no-defaults", "--json"]
 
@@ -47,3 +48,16 @@ def exec_failing_test_command(args: List[str]):
     )
     assert process.returncode == 1
     return process
+
+
+def delete_all_domains():
+    domain_ids = exec_test_command(['linode-cli', '--text', '--no-headers', 'domains', 'list', '--format=id']).stdout.decode()
+    domain_id_arr = domain_ids.splitlines()
+
+    for id in domain_id_arr:
+        result = exec_test_command(['linode-cli', 'domains', 'delete', id])
+
+
+def delete_tag(arg: str):
+    result = exec_test_command(['linode-cli', 'tags', 'delete', arg])
+    assert(result.returncode == SUCCESS_STATUS_CODE)

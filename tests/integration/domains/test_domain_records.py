@@ -1,120 +1,128 @@
 import os
 import time
 import re
+import pytest
 import logging
 
-import pytest
+from tests.integration.helpers import exec_test_command, SUCCESS_STATUS_CODE, get_token, delete_all_domains
 
-from tests.integration.helpers import exec_test_command, exec_failing_test_command, INVALID_HOST, SUCCESS_STATUS_CODE, get_token
-
-
-class TestDomainRecords:
-
-    def test_create_a_domain(self):
-        timestamp = str(time.time())
-
-        # Current domain list
-        output_current = os.popen('linode-cli domains list --format="id" --text --no-header').read()
-
-        result = os.system('linode-cli domains create \
-        --type master \
-        --domain "' + timestamp + 'example.com" \
-        --soa_email="pthiel@linode.com" \
-        --text \
-        --no-header')
-
-        # Assert on status code returned from creating domain
-        assert(result == SUCCESS_STATUS_CODE)
-
-        output_after = os.popen('linode-cli domains list --format="id" --text --no-header').read()
-
-        # Check if list is bigger than previous list
-        assert(len(output_after.splitlines()) > len(output_current.splitlines()), "the list is not updated with new domain..")
+BASE_CMD = ["linode-cli", "domains"]
 
 
-    def test_create_domain_srv_record(self):
-        domain_ids = os.popen('linode-cli domains list --format="id" --text --no-header').read()
+@pytest.fixture(scope="session", autouse=True)
+def domain_records_setup():
+    # Create one domain for some tests in this suite
+    try:
+        timestamp = str(int(time.time()))
+        # Create domain
+        process = exec_test_command(BASE_CMD+['create', '--type', 'master', '--domain', timestamp + "example.com",
+                                              '--soa_email=pthiel@linode.com', '--text', '--no-header', '--format=id'])
+        output = process.stdout.decode()
+        domain_id_arr = output.splitlines()
 
-        domain_id_arr = domain_ids.splitlines()
+        # Create record
+        exec_test_command(BASE_CMD + ['records-create', '--protocol=tcp', '--type=SRV', '--port=23', '--priority=4',
+                                      '--service=telnet', '--target=8.8.8.8', '--weight=4', '--text', '--no-header',
+                                      '--delimiter=,', domain_id_arr[0]])
 
-        result = os.popen('linode-cli domains records-create \
-        --protocol=tcp \
-        --type=SRV \
-        --port=23 \
-        --priority=4 \
-        --service=telnet \
-        --target=8.8.8.8 \
-        --weight=4 \
-        --text \
-        --no-header \
-        --delimiter="," \
-        ' + domain_id_arr[0]).read()
+    except:
+        logging.exception("Failed creating domain in setup")
 
-        assert(re.search("[0-9]+,SRV,_telnet._tcp,8.8.8.8,0,4,4", result),
-                "Output does not match the format")
+    yield "setup"
 
-    def test_list_srv_record(self):
-        domain_ids = os.popen('linode-cli domains list --format="id" --text --no-header').read()
-
-        domain_id_arr = domain_ids.splitlines()
-
-        result = os.popen('linode-cli domains records-list ' + domain_id_arr[0] + ' \
-        --text \
-        --no-header \
-        --delimiter=","').read()
-
-        assert(re.search("[0-9]+,SRV,_telnet._tcp,8.8.8.8,0,4,4", result),
-                "Output does not match the format")
-
-    def test_view_domain_record(self):
-        domain_ids = os.popen('linode-cli domains list --format="id" --text --no-header').read()
-        domain_id_arr = domain_ids.splitlines()
-
-        record_ids = os.popen('linode-cli domains records-list ' + domain_id_arr[0] +' --text --no-header --format="id"').read()
-        record_id_arr = record_ids.splitlines()
-
-        result = os.popen('linode-cli domains records-view '+domain_id_arr[0] + ' ' + record_id_arr[0] + ' \
-        --target="8.8.4.4" \
-        --text \
-        --no-header \
-        --delimiter=","').read()
-
-        assert (re.search("[0-9]+,SRV,_telnet._tcp,8.8.8.8,0,4,4", result),
-                "Output does not match the format")
+    try:
+        delete_all_domains()
+    except:
+        logging.exception("Failed to delete all domains")
 
 
-    def test_update_domain_record(self):
-        domain_ids = os.popen('linode-cli domains list --format="id" --text --no-header').read()
-        domain_id_arr = domain_ids.splitlines()
+def get_domain_id():
+    process = exec_test_command(BASE_CMD + ['list', '--format=id', '--text', '--no-header'])
+    output = process.stdout.decode()
+    domain_id_arr = output.splitlines()
+    return domain_id_arr[0]
 
-        record_ids = os.popen('linode-cli domains records-list ' + domain_id_arr[0] +' --text --no-header --format="id"').read()
-        record_id_arr = record_ids.splitlines()
 
-        result = os.popen('linode-cli domains records-update '+domain_id_arr[0] + ' ' + record_id_arr[0] + ' \
-        --target="8.8.4.4" \
-        --text \
-        --no-header \
-        --delimiter=","').read()
+def get_record_id(domain_id: str):
+    process = exec_test_command(BASE_CMD + ['records-list', domain_id, '--format=id', '--text', '--no-header'])
+    output = process.stdout.decode()
+    record_id_arr = output.splitlines()
+    return record_id_arr[0]
 
-        assert (re.search("[0-9]+,SRV,_telnet._tcp,8.8.8.8,0,4,4", result),
-                "Output does not match the format")
 
-    def test_delete_a_domain_record(self):
-        domain_ids = os.popen('linode-cli domains list --format="id" --text --no-header').read()
-        domain_id_arr = domain_ids.splitlines()
+def test_create_a_domain():
+    timestamp = str(int(time.time()))
 
-        record_ids = os.popen('linode-cli domains records-list ' + domain_id_arr[0] +' --text --no-header --format="id"').read()
-        record_id_arr = record_ids.splitlines()
+    # Current domain list
+    process = exec_test_command(BASE_CMD + ["list", '--format="id"', "--text", "--no-header"])
+    output_current = process.stdout.decode()
 
-        result = os.system('linode-cli domains records-delete '+domain_id_arr[0] + ' ' + record_id_arr[0])
+    # Create domain
+    exec_test_command(BASE_CMD+['create', '--type', 'master', '--domain', timestamp + "example.com", '--soa_email=pthiel@linode.com', '--text', '--no-header'])
 
-        # Assert on status code returned from deleting domain
-        assert(result == SUCCESS_STATUS_CODE)
+    process = exec_test_command(BASE_CMD+['list', '--format=id', '--text', '--no-header'])
+    output_after = process.stdout.decode()
 
-    def test_delete_all_domains(self):
-        domain_ids = os.popen('linode-cli --text --no-headers domains list --format "id,tags"').read()
-        domain_id_arr = domain_ids.splitlines()
+    # Check if list is bigger than previous list
+    assert(len(output_after.splitlines()) > len(output_current.splitlines()), "the list is not updated with new domain..")
 
-        for id in domain_id_arr:
-            result = os.system('linode-cli domains delete ' + id)
-            assert(result == SUCCESS_STATUS_CODE)
+
+def test_create_domain_srv_record():
+    process = exec_test_command(BASE_CMD + ['list', '--format=id', '--text', '--no-header'])
+    output = process.stdout.decode()
+
+    domain_id_arr = output.splitlines()
+
+    process = exec_test_command(BASE_CMD + ['records-create', '--protocol=tcp','--type=SRV', '--port=23', '--priority=4',
+                                            '--service=telnet','--target=8.8.8.8', '--weight=4', '--text', '--no-header',
+                                            '--delimiter=,', domain_id_arr[0]])
+
+    output = process.stdout.decode()
+
+    assert(re.search("[0-9]+,SRV,_telnet._tcp,8.8.8.8,0,4,4", output),
+            "Output does not match the format")
+
+
+def test_list_srv_record():
+    process = exec_test_command(BASE_CMD + ['records-list', get_domain_id(), '--text',
+                                                     '--no-header', '--delimiter=,'])
+    output = process.stdout.decode()
+
+    assert(re.search("[0-9]+,SRV,_telnet._tcp,8.8.8.8,0,4,4", output), "Output does not match the format")
+
+
+def test_view_domain_record():
+    domain_id = get_domain_id()
+    record_id = get_record_id(domain_id)
+
+    process = exec_test_command(BASE_CMD + ['records-view', domain_id, record_id, '--target= 8.8.4.4', '--text', '--no-header', '--delimiter=,'])
+    output = process.stdout.decode()
+
+    assert (re.search("[0-9]+,SRV,_telnet._tcp,8.8.8.8,0,4,4", output),
+            "Output does not match the format")
+
+
+def test_update_domain_record():
+    domain_id = get_domain_id()
+    record_id = get_record_id(domain_id)
+
+    process = exec_test_command(BASE_CMD + ['records-update', domain_id, record_id, '--target= 8.8.4.4', '--text', '--no-header', '--delimiter=,'])
+    output = process.stdout.decode()
+
+    assert (re.search("[0-9]+,SRV,_telnet._tcp,8.8.8.8,0,4,4", output),
+            "Output does not match the format")
+
+
+def test_delete_a_domain_record():
+    domain_id = get_domain_id()
+    record_id = get_record_id(domain_id)
+
+    process = exec_test_command(BASE_CMD + ['records-delete', domain_id, record_id])
+
+    # Assert on status code returned from deleting domain
+    assert(process.returncode == SUCCESS_STATUS_CODE)
+
+
+def test_delete_all_domains():
+    delete_all_domains()
+
