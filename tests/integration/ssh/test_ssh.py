@@ -1,7 +1,8 @@
-import pytest
-import re
 import os
+import re
 import time
+
+import pytest
 
 from tests.integration.helpers import exec_test_command
 from tests.integration.linodes.helpers_linodes import (
@@ -15,6 +16,7 @@ NUM_OF_RETRIES = 10
 SSH_SLEEP_PERIOD = 50
 key_pair = generate_random_ssh_key()
 public_key = key_pair[1]
+private_key = key_pair[0]
 private_key_path = key_pair[2]
 
 
@@ -40,6 +42,8 @@ def test_create_a_linode_in_running_state():
     )
 
     yield linode_id
+    # remove temporary ssh identity
+    os.system("ssh-add -d " + private_key_path)
     remove_linodes()
 
 
@@ -69,7 +73,9 @@ def test_fail_to_ssh_to_nonexistent_linode():
     assert "No Linode found for label aasdkjlf" in result
 
 
-def test_ssh_to_linode_and_get_kernel_version(test_create_a_linode_in_running_state):
+def test_ssh_to_linode_and_get_kernel_version(
+    test_create_a_linode_in_running_state,
+):
     linode_id = test_create_a_linode_in_running_state
     linode_label = (
         exec_test_command(
@@ -89,15 +95,17 @@ def test_ssh_to_linode_and_get_kernel_version(test_create_a_linode_in_running_st
         .rstrip()
     )
 
-    print(private_key_path, public_key)
+    # add ssh identity
+    os.system("eval $(ssh-add " + private_key_path)
 
     time.sleep(SSH_SLEEP_PERIOD)
+
     output = os.popen(
         "linode-cli ssh root@"
         + linode_label
         + " -i "
         + private_key_path
-        + " -oStrictHostKeyChecking=no  uname -r"
+        + " -o StrictHostKeyChecking=no -o IdentitiesOnly=yes uname -r"
     ).read()
 
     assert re.search("[0-9]\.[0-9]*\.[0-9]*-.*-virt", output)
@@ -123,6 +131,9 @@ def test_check_vm_for_ipv4_connectivity(test_create_a_linode_in_running_state):
         .rstrip()
     )
 
+    # add ssh identity
+    os.system("eval $(ssh-add " + private_key_path)
+
     time.sleep(SSH_SLEEP_PERIOD)
 
     output = os.popen(
@@ -130,7 +141,7 @@ def test_check_vm_for_ipv4_connectivity(test_create_a_linode_in_running_state):
         + linode_label
         + " -i "
         + private_key_path
-        + ' -oStrictHostKeyChecking=no "ping -4 -W60 -c3 google.com"'
+        + ' -o StrictHostKeyChecking=no -o IdentitiesOnly=yes "ping -4 -W60 -c3 google.com"'
     ).read()
 
     assert "0% packet loss" in output
