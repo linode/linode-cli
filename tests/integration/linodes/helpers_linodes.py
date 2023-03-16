@@ -29,7 +29,7 @@ BASE_CMD = ["linode-cli", "linodes"]
 
 def generate_random_ssh_key():
     key_path = "/tmp/cli-e2e-key"
-    os.popen("ssh-keygen -q -t rsa -N " " -f " + key_path)
+    os.popen("ssh-keygen -q -t rsa -N ' ' -f " + key_path)
     time.sleep(1)
     private_ssh_key = (
         exec_test_command(["cat", key_path]).stdout.decode().rstrip()

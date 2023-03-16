@@ -1,7 +1,8 @@
 import logging
-import re
-import pytest
 import os
+import re
+
+import pytest
 
 from tests.integration.helpers import exec_test_command
 from tests.integration.linodes.helpers_linodes import (

@@ -114,6 +114,8 @@ def test_ssh_instance_ready(
                 "root@" + instance_data["label"],
                 "-o",
                 "StrictHostKeyChecking=no",
+                "-o",
+                "IdentitiesOnly=yes",
                 "-i",
                 privkey,
                 "echo 'hello world!'",

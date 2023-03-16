@@ -1,9 +1,11 @@
-import time
 import os
+import time
+
 import pytest
 
-from tests.integration.helpers import exec_test_command, exec_failing_test_command
 from tests.integration.helpers import (
+    exec_failing_test_command,
+    exec_test_command,
     remove_all,
 )
 
