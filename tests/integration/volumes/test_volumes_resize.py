@@ -6,7 +6,6 @@ import pytest
 from tests.integration.helpers import (
     exec_failing_test_command,
     exec_test_command,
-    remove_all,
 )
 
 BASE_CMD = ["linode-cli", "volumes"]
@@ -16,7 +15,6 @@ VOLUME_CREATION_WAIT = 5
 
 @pytest.fixture(scope="session", autouse=True)
 def setup_test_volumes_resize():
-    remove_all(target="volumes")
     volume_id = (
         exec_test_command(
             BASE_CMD
@@ -40,7 +38,7 @@ def setup_test_volumes_resize():
         .rstrip()
     )
     yield volume_id
-    exec_test_command(BASE_CMD+["delete", volume_id])
+    exec_test_command(BASE_CMD + ["delete", volume_id])
 
 
 def test_resize_fails_to_smaller_volume(setup_test_volumes_resize):
