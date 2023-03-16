@@ -1,6 +1,5 @@
 import re
 
-
 from tests.integration.helpers import exec_test_command
 
 BASE_CMD = ["linode-cli", "kernels", "list", "--text", "--no-headers"]

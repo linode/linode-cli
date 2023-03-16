@@ -2,7 +2,10 @@ import time
 
 import pytest
 
-from tests.integration.helpers import exec_failing_test_command, exec_test_command
+from tests.integration.helpers import (
+    exec_failing_test_command,
+    exec_test_command,
+)
 
 BASE_CMD = ["linode-cli", "tags"]
 unique_tag = str(int(time.time())) + "-tag"

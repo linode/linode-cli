@@ -2,7 +2,14 @@ import logging
 
 import pytest
 
-from tests.integration.linodes.helpers_linodes import BASE_CMD, create_linode, create_linode_and_wait, exec_test_command, remove_linodes, wait_until
+from tests.integration.linodes.helpers_linodes import (
+    BASE_CMD,
+    create_linode,
+    create_linode_and_wait,
+    exec_test_command,
+    remove_linodes,
+    wait_until,
+)
 
 
 @pytest.fixture(scope="session", autouse=True)
