@@ -19,7 +19,7 @@ def domain_records_setup():
     try:
         timestamp = str(int(time.time()))
         # Create domain
-        process = exec_test_command(
+        domain_id = exec_test_command(
             BASE_CMD
             + [
                 "create",
@@ -30,14 +30,12 @@ def domain_records_setup():
                 "--soa_email=pthiel@linode.com",
                 "--text",
                 "--no-header",
-                "--format=id",
+                "--format=id"
             ]
-        )
-        output = process.stdout.decode()
-        domain_id_arr = output.splitlines()
+        ).stdout.decode().rstrip()
 
         # Create record
-        exec_test_command(
+        record_id = exec_test_command(
             BASE_CMD
             + [
                 "records-create",
@@ -51,38 +49,20 @@ def domain_records_setup():
                 "--text",
                 "--no-header",
                 "--delimiter=,",
-                domain_id_arr[0],
+                "--format=id",
+                domain_id
             ]
-        )
+        ).stdout.decode().rstrip()
 
     except:
         logging.exception("Failed creating domain in setup")
 
-    yield "setup"
+    yield domain_id, record_id
 
     try:
         delete_all_domains()
     except:
         logging.exception("Failed to delete all domains")
-
-
-def get_domain_id():
-    process = exec_test_command(
-        BASE_CMD + ["list", "--format=id", "--text", "--no-header"]
-    )
-    output = process.stdout.decode()
-    domain_id_arr = output.splitlines()
-    return domain_id_arr[0]
-
-
-def get_record_id(domain_id: str):
-    process = exec_test_command(
-        BASE_CMD
-        + ["records-list", domain_id, "--format=id", "--text", "--no-header"]
-    )
-    output = process.stdout.decode()
-    record_id_arr = output.splitlines()
-    return record_id_arr[0]
 
 
 def test_create_a_domain():
@@ -121,13 +101,8 @@ def test_create_a_domain():
     )
 
 
-def test_create_domain_srv_record():
-    process = exec_test_command(
-        BASE_CMD + ["list", "--format=id", "--text", "--no-header"]
-    )
-    output = process.stdout.decode()
-
-    domain_id_arr = output.splitlines()
+def test_create_domain_srv_record(domain_records_setup):
+    domain_id = domain_records_setup[0]
 
     process = exec_test_command(
         BASE_CMD
@@ -143,7 +118,7 @@ def test_create_domain_srv_record():
             "--text",
             "--no-header",
             "--delimiter=,",
-            domain_id_arr[0],
+            domain_id
         ]
     )
 
@@ -155,12 +130,13 @@ def test_create_domain_srv_record():
     )
 
 
-def test_list_srv_record():
+def test_list_srv_record(domain_records_setup):
+    domain_id = domain_records_setup[0]
     process = exec_test_command(
         BASE_CMD
         + [
             "records-list",
-            get_domain_id(),
+            domain_id,
             "--text",
             "--no-header",
             "--delimiter=,",
@@ -174,9 +150,9 @@ def test_list_srv_record():
     )
 
 
-def test_view_domain_record():
-    domain_id = get_domain_id()
-    record_id = get_record_id(domain_id)
+def test_view_domain_record(domain_records_setup):
+    domain_id = domain_records_setup[0]
+    record_id = domain_records_setup[1]
 
     process = exec_test_command(
         BASE_CMD
@@ -198,9 +174,9 @@ def test_view_domain_record():
     )
 
 
-def test_update_domain_record():
-    domain_id = get_domain_id()
-    record_id = get_record_id(domain_id)
+def test_update_domain_record(domain_records_setup):
+    domain_id = domain_records_setup[0]
+    record_id = domain_records_setup[1]
 
     process = exec_test_command(
         BASE_CMD
@@ -222,9 +198,9 @@ def test_update_domain_record():
     )
 
 
-def test_delete_a_domain_record():
-    domain_id = get_domain_id()
-    record_id = get_record_id(domain_id)
+def test_delete_a_domain_record(domain_records_setup):
+    domain_id = domain_records_setup[0]
+    record_id = domain_records_setup[1]
 
     process = exec_test_command(
         BASE_CMD + ["records-delete", domain_id, record_id]

@@ -64,7 +64,7 @@ def delete_all_domains():
     domain_id_arr = domain_ids.splitlines()
 
     for id in domain_id_arr:
-        result = exec_test_command(["linode-cli", "domains", "delete", id])
+        exec_test_command(["linode-cli", "domains", "delete", id])
 
 
 def delete_tag(arg: str):
