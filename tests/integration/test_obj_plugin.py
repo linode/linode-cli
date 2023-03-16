@@ -13,6 +13,8 @@ from pytest import MonkeyPatch
 
 from linodecli.configuration.auth import _do_request
 from linodecli.plugins.obj import ENV_ACCESS_KEY_NAME, ENV_SECRET_KEY_NAME
+from tests.integration.fixture_types import GetTestFileType
+from tests.integration.helpers import BASE_URL
 
 REGION = "us-southeast-1"
 BASE_CMD = ["linode-cli", "obj", "--cluster", REGION]
