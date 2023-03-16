@@ -46,21 +46,23 @@ def test_create_a_linode_in_running_state(ssh_key_pair_generator):
 
 
 def test_display_ssh_plugin_usage_info():
-    result = exec_test_command(BASE_CMD + ["-h"]).stdout.decode()
-    assert "usage: linode-cli ssh [-h] [-6] [[USERNAME@]LABEL]" in result
-    assert "positional arguments:" in result
-    assert (
-        "[USERNAME@]LABEL  The label of the Linode to SSH into, optionally with a"
-        in result
-    )
-    assert "username before it in USERNAME@LABEL format. If no" in result
-    assert "username is given, defaults to the current user." in result
-    assert "option" in result
-    assert "-h, --help        show this help message and exit" in result
-    assert (
-        "-6                If given, uses the Linode's SLAAC address for SSH."
-        in result
-    )
+    result = exec_test_command(BASE_CMD+['-h']).stdout.decode()
+    assert("usage: linode-cli ssh [-h] [-6] [[USERNAME@]LABEL]" in result)
+    assert("positional arguments:" in result)
+    assert("[USERNAME@]LABEL  The label of the Linode to SSH into, optionally with a" in result)
+    assert("username before it in USERNAME@LABEL format. If no" in result)
+    assert("username is given, defaults to the current user." in result)
+    assert("option" in result)
+    assert("-h, --help        show this help message and exit" in result)
+    assert("-6                If given, uses the Linode's SLAAC address for SSH." in result)
+
+
+@pytest.fixture(scope="session")
+def test_create_a_linode_in_running_state():
+    alpine_image = os.popen("linode-cli images list --format id --text --no-headers | grep 'alpine' | xargs | awk '{ print $1 }'").read().rstrip()
+    plan = os.popen("linode-cli linodes types --text --no-headers --format=id | xargs | awk '{ print $1 }'").read().rstrip()
+
+    create_linode_and_wait(test_plan=plan, test_image=alpine_image, ssh_key=public_key)
 
 
 def test_fail_to_ssh_to_nonexistent_linode():
@@ -71,11 +73,9 @@ def test_fail_to_ssh_to_nonexistent_linode():
     assert "No Linode found for label aasdkjlf" in result
 
 
-def test_ssh_to_linode_and_get_kernel_version(
-    test_create_a_linode_in_running_state, ssh_key_pair_generator
-):
-    linode_id = test_create_a_linode_in_running_state
-    pubkey_file, privkey_file = ssh_key_pair_generator
+@pytest.mark.usefixtures('test_create_a_linode_in_running_state')
+def test_ssh_to_linode_and_get_kerel_version():
+    linode_label = exec_test_command(['linode-cli', 'linodes', 'list', '--format', 'label', '--text', '--no-headers']).stdout.decode().rstrip()
 
     linode_label = (
         exec_test_command(
