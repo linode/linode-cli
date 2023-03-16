@@ -1,4 +1,6 @@
 import random
+from typing import List
+from pathlib import Path
 import subprocess
 import os
 
@@ -10,6 +12,8 @@ BASE_URL = "https://api.linode.com/v4/"
 INVALID_HOST = "https://wrongapi.linode.com"
 SUCCESS_STATUS_CODE = 0
 FAILED_STATUS_CODE = 256
+INVALID_HOST = "https://wrongapi.linode.com"
+SUCCESS_STATUS_CODE = 0
 
 COMMAND_JSON_OUTPUT = ["--suppress-warnings", "--no-defaults", "--json"]
 
@@ -109,3 +113,21 @@ def remove_all(target: str):
 
     for id in entity_ids:
         exec_test_command(["linode-cli", target, "delete", id])
+
+
+def exec_test_command(args: List[str]):
+    process = subprocess.run(
+        args,
+        stdout=subprocess.PIPE,
+    )
+    assert process.returncode == 0
+    return process
+
+
+def exec_failing_test_command(args: List[str]):
+    process = subprocess.run(
+        args,
+        stderr=subprocess.PIPE,
+    )
+    assert process.returncode == 1
+    return process
