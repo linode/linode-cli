@@ -11,9 +11,9 @@ from random import randint
 from typing import Callable, Optional
 
 import pytest
-from helpers import get_random_text
 
 from linodecli import ENV_TOKEN_NAME
+from tests.integration.helpers import get_random_text
 
 
 @pytest.fixture(scope="session")
@@ -65,26 +65,38 @@ def token():
 
 
 @pytest.fixture
-def generate_test_files(name_generator: Callable[[str], str]):
+def generate_test_file(name_generator: Callable[[str], str]):
+    test_files_dir = tempfile.TemporaryDirectory()
+
+    def _generate_test_file(
+        content: Optional[str] = None, filename: Optional[str] = None
+    ):
+        if content is None:
+            content = f"Linode CLI integration test\n{get_random_text(100)}\n"
+        if filename is None:
+            filename = f"{name_generator('test-file')}.txt"
+        file_path = Path(test_files_dir.name) / filename
+        file_path = file_path.resolve()
+        with open(file_path, "w") as f:
+            f.write(content)
+        return file_path
+
+    yield _generate_test_file
+    test_files_dir.cleanup()
+
+
+@pytest.fixture
+def generate_test_files(
+    generate_test_file: Callable[[Optional[str], Optional[str]], Path]
+):
     """
     Return a function that can generate files with random text.
     """
-    test_files_dir = tempfile.TemporaryDirectory()
 
     def _generate_test_files(
         num: Optional[int] = 1, content: Optional[str] = None
     ):
-        if content is None:
-            content = f"Linode CLI integration test\n{get_random_text(100)}\n"
-        file_paths = [
-            Path(test_files_dir.name) / f"{name_generator('test-file')}.txt"
-            for _ in range(num)
-        ]
-        file_paths = [f.resolve() for f in file_paths]
-        for f in file_paths:
-            with open(f, "w") as f:
-                f.write(content)
+        file_paths = [generate_test_file(content=content) for _ in range(num)]
         return file_paths
 
-    yield _generate_test_files
-    test_files_dir.cleanup()
+    return _generate_test_files
