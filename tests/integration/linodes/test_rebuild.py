@@ -1,12 +1,8 @@
 import logging
 import os
-
 import pytest
 
-from tests.integration.helpers import (
-    exec_failing_test_command,
-    exec_test_command,
-)
+from tests.integration.helpers import exec_test_command, exec_failing_test_command
 from tests.integration.linodes.helpers_linodes import (
     BASE_CMD,
     DEFAULT_RANDOM_PASS,

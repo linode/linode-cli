@@ -1,13 +1,8 @@
-import os
-import re
-
 import pytest
+import re
+import os
 
-from tests.integration.helpers import (
-    exec_failing_test_command,
-    exec_test_command,
-    remove_all,
-)
+from tests.integration.helpers import exec_failing_test_command, exec_test_command, remove_all
 from tests.integration.linodes.helpers_linodes import DEFAULT_TEST_IMAGE
 
 BASE_CMD = ["linode-cli", "nodebalancers"]
