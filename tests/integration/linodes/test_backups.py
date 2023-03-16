@@ -1,7 +1,9 @@
 import logging
 import re
 import pytest
+import os
 
+from tests.integration.helpers import exec_test_command
 from tests.integration.linodes.helpers_linodes import (
     BASE_CMD,
     DEFAULT_RANDOM_PASS,
@@ -9,8 +11,6 @@ from tests.integration.linodes.helpers_linodes import (
     DEFAULT_TEST_IMAGE,
     create_linode,
     create_linode_and_wait,
-    exec_test_command,
-    os,
     remove_linodes,
 )
 

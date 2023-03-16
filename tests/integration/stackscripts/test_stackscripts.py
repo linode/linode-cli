@@ -1,10 +1,9 @@
 import pytest
+import os
 
-from tests.integration.helpers import exec_failing_test_command
+from tests.integration.helpers import exec_failing_test_command, exec_test_command
 from tests.integration.linodes.helpers_linodes import (
     DEFAULT_RANDOM_PASS,
-    exec_test_command,
-    os,
     remove_linodes,
 )
 

@@ -1,13 +1,13 @@
 import pytest
 import re
+import os
+import time
 
+from tests.integration.helpers import exec_test_command
 from tests.integration.linodes.helpers_linodes import (
     create_linode_and_wait,
-    exec_test_command,
     generate_random_ssh_key,
-    os,
     remove_linodes,
-    time,
 )
 
 BASE_CMD = ["linode-cli", "ssh"]
@@ -19,9 +19,27 @@ private_key_path = key_pair[2]
 
 
 @pytest.fixture(scope="session", autouse=True)
-def setup_test_ssh():
-    remove_linodes()
-    yield "setup"
+def test_create_a_linode_in_running_state():
+    alpine_image = (
+        os.popen(
+            "linode-cli images list --format id --text --no-headers | grep 'alpine' | xargs | awk '{ print $1 }'"
+        )
+        .read()
+        .rstrip()
+    )
+    plan = (
+        os.popen(
+            "linode-cli linodes types --text --no-headers --format=id | xargs | awk '{ print $1 }'"
+        )
+        .read()
+        .rstrip()
+    )
+
+    linode_id = create_linode_and_wait(
+        test_plan=plan, test_image=alpine_image, ssh_key=public_key
+    )
+
+    yield linode_id
     remove_linodes()
 
 
@@ -43,28 +61,6 @@ def test_display_ssh_plugin_usage_info():
     )
 
 
-@pytest.fixture(scope="session")
-def test_create_a_linode_in_running_state():
-    alpine_image = (
-        os.popen(
-            "linode-cli images list --format id --text --no-headers | grep 'alpine' | xargs | awk '{ print $1 }'"
-        )
-        .read()
-        .rstrip()
-    )
-    plan = (
-        os.popen(
-            "linode-cli linodes types --text --no-headers --format=id | xargs | awk '{ print $1 }'"
-        )
-        .read()
-        .rstrip()
-    )
-
-    create_linode_and_wait(
-        test_plan=plan, test_image=alpine_image, ssh_key=public_key
-    )
-
-
 def test_fail_to_ssh_to_nonexistent_linode():
     os.system("linode-cli ssh root@aasdkjlf 2>&1 | tee /tmp/output_file.txt")
 
@@ -73,14 +69,16 @@ def test_fail_to_ssh_to_nonexistent_linode():
     assert "No Linode found for label aasdkjlf" in result
 
 
-@pytest.mark.usefixtures("test_create_a_linode_in_running_state")
-def test_ssh_to_linode_and_get_kerel_version():
+def test_ssh_to_linode_and_get_kernel_version(test_create_a_linode_in_running_state):
+    linode_id = test_create_a_linode_in_running_state
     linode_label = (
         exec_test_command(
             [
                 "linode-cli",
                 "linodes",
                 "list",
+                "--id",
+                linode_id,
                 "--format",
                 "label",
                 "--text",
@@ -105,14 +103,16 @@ def test_ssh_to_linode_and_get_kerel_version():
     assert re.search("[0-9]\.[0-9]*\.[0-9]*-.*-virt", output)
 
 
-@pytest.mark.usefixtures("test_create_a_linode_in_running_state")
-def test_check_vm_for_ipv4_connectivity():
+def test_check_vm_for_ipv4_connectivity(test_create_a_linode_in_running_state):
+    linode_id = test_create_a_linode_in_running_state
     linode_label = (
         exec_test_command(
             [
                 "linode-cli",
                 "linodes",
                 "list",
+                "--id",
+                linode_id,
                 "--format",
                 "label",
                 "--text",

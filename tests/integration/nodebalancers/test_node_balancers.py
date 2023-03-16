@@ -1,13 +1,9 @@
 import pytest
 import re
+import os
 
-from tests.integration.linodes.helpers_linodes import (
-    DEFAULT_TEST_IMAGE,
-    exec_failing_test_command,
-    exec_test_command,
-    os,
-    remove_all,
-)
+from tests.integration.helpers import exec_failing_test_command, exec_test_command, remove_all
+from tests.integration.linodes.helpers_linodes import DEFAULT_TEST_IMAGE
 
 BASE_CMD = ["linode-cli", "nodebalancers"]
 nodebalancer_created = "[0-9]+,balancer[0-9]+,us-east,[0-9]+-[0-9]+-[0-9]+-[0-9]+.ip.linodeusercontent.com,0"
