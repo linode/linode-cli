@@ -19,40 +19,48 @@ def domain_records_setup():
     try:
         timestamp = str(int(time.time()))
         # Create domain
-        domain_id = exec_test_command(
-            BASE_CMD
-            + [
-                "create",
-                "--type",
-                "master",
-                "--domain",
-                timestamp + "example.com",
-                "--soa_email=pthiel@linode.com",
-                "--text",
-                "--no-header",
-                "--format=id"
-            ]
-        ).stdout.decode().rstrip()
+        domain_id = (
+            exec_test_command(
+                BASE_CMD
+                + [
+                    "create",
+                    "--type",
+                    "master",
+                    "--domain",
+                    timestamp + "example.com",
+                    "--soa_email=pthiel@linode.com",
+                    "--text",
+                    "--no-header",
+                    "--format=id",
+                ]
+            )
+            .stdout.decode()
+            .rstrip()
+        )
 
         # Create record
-        record_id = exec_test_command(
-            BASE_CMD
-            + [
-                "records-create",
-                "--protocol=tcp",
-                "--type=SRV",
-                "--port=23",
-                "--priority=4",
-                "--service=telnet",
-                "--target=8.8.8.8",
-                "--weight=4",
-                "--text",
-                "--no-header",
-                "--delimiter=,",
-                "--format=id",
-                domain_id
-            ]
-        ).stdout.decode().rstrip()
+        record_id = (
+            exec_test_command(
+                BASE_CMD
+                + [
+                    "records-create",
+                    "--protocol=tcp",
+                    "--type=SRV",
+                    "--port=23",
+                    "--priority=4",
+                    "--service=telnet",
+                    "--target=8.8.8.8",
+                    "--weight=4",
+                    "--text",
+                    "--no-header",
+                    "--delimiter=,",
+                    "--format=id",
+                    domain_id,
+                ]
+            )
+            .stdout.decode()
+            .rstrip()
+        )
 
     except:
         logging.exception("Failed creating domain in setup")
@@ -118,7 +126,7 @@ def test_create_domain_srv_record(domain_records_setup):
             "--text",
             "--no-header",
             "--delimiter=,",
-            domain_id
+            domain_id,
         ]
     )
 
