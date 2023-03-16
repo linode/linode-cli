@@ -1,11 +1,11 @@
 import pytest
+import re
 
 from tests.integration.linodes.helpers_linodes import (
     create_linode_and_wait,
     exec_test_command,
     generate_random_ssh_key,
     os,
-    re,
     remove_linodes,
     time,
 )

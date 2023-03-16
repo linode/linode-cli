@@ -1,11 +1,11 @@
 import pytest
+import re
 
 from tests.integration.linodes.helpers_linodes import (
     DEFAULT_TEST_IMAGE,
     exec_failing_test_command,
     exec_test_command,
     os,
-    re,
     remove_all,
 )
 

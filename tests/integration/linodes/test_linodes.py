@@ -1,4 +1,5 @@
 import logging
+import re
 
 import pytest
 
@@ -10,7 +11,6 @@ from tests.integration.linodes.helpers_linodes import (
     exec_failing_test_command,
     exec_test_command,
     os,
-    re,
     remove_linodes,
     time,
     wait_until,
