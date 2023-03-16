@@ -3,7 +3,12 @@ import subprocess
 from typing import Any, Dict, List, Optional
 
 import pytest
-from tests.integration.helpers import COMMAND_JSON_OUTPUT, get_random_text, wait_for_condition
+
+from tests.integration.helpers import (
+    COMMAND_JSON_OUTPUT,
+    get_random_text,
+    wait_for_condition,
+)
 
 TEST_REGION = "us-southeast"
 TEST_IMAGE = "linode/alpine3.16"
