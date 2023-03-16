@@ -10,15 +10,15 @@ BASE_CMD = ["linode-cli", "domains"]
 
 
 @pytest.fixture(scope="session", autouse=True)
-def setup():
+def setup_master_domains():
     timestamp = str(int(time.time()))
     # create one master domain for some tests in this suite
     try:
         # Create domain
-        process = exec_test_command(BASE_CMD+['create', '--type', 'master', '--domain', 'BC'+timestamp + "-example.com", '--soa_email=pthiel'+timestamp+'@linode.com', '--text', '--no-header', '--delimiter', ',', '--format=id']).stdout.decode()
+        master_domain_id = exec_test_command(BASE_CMD+['create', '--type', 'master', '--domain', 'BC'+timestamp + "-example.com", '--soa_email=pthiel'+timestamp+'@linode.com', '--text', '--no-header', '--delimiter', ',', '--format=id']).stdout.decode().rstrip()
     except:
         logging.exception("Failed to create master domain in setup")
-    yield "setup"
+    yield master_domain_id
     try:
         delete_all_domains()
     except:
@@ -81,26 +81,25 @@ def test_create_master_domain():
     assert(re.search('[0-9]+,BC' + timestamp + '-example.com,master,active,pthiel'+timestamp+'@linode.com', result))
 
 
-def test_update_master_domain_soa_email():
+def test_update_master_domain_soa_email(setup_master_domains):
     # Remove --master_ips param when 872 is resolved
     timestamp = str(int(time.time()))
-    new_soa_email = 'pthiel@linode.com'
+    new_soa_email = 'pthiel_new@linode.com'
 
-    # create domain and get id then strip trailing new line
-    domain_id = exec_test_command(BASE_CMD+['create', '--type', 'master', '--domain', 'BC'+timestamp+'-example.com', '--soa_email=pthiel'+timestamp+'@linode.com', '--text', '--no-header', '--delimiter', ",", '--format=id']).stdout.decode().rstrip()
+    domain_id = setup_master_domains
 
     result = exec_test_command(BASE_CMD+['update', domain_id, '--type',  'master', '--master_ips', '8.8.8.8', '--soa_email', new_soa_email, '--format=soa_email', '--text', '--no-header']).stdout.decode()
 
     assert(new_soa_email in result)
 
 
-def test_list_master_domain():
+def test_list_master_domain(setup_master_domains):
     result = exec_test_command(BASE_CMD+['list', '--format=id,domain,type,status', '--text', '--no-header', '--delimiter', ',']).stdout.decode()
 
     assert(re.search("[0-9]+,BC[0-9]+-example.com,master,active", result))
 
 
-def test_show_domain_detail():
+def test_show_domain_detail(setup_master_domains):
     result = exec_test_command(BASE_CMD+['list', '--format=id,domain,type,status', '--text', '--no-header', '--delimiter', ',']).stdout.decode()
 
     assert(re.search("[0-9]+,BC[0-9]+-example.com,master,active", result))

@@ -11,8 +11,8 @@ unique_tag = str(int(time.time()))+'-tag'
 
 @pytest.fixture(scope="session", autouse=True)
 def setup_test_volumes():
-    remove_all(target="volumes")
-    yield "setup"
+    volume_id = exec_test_command(BASE_CMD+['create', '--label', "A"+timestamp, '--region', 'us-east', '--size', '10', '--text', '--no-headers', '--delimiter', ',', '--format', 'id']).stdout.decode().rstrip()
+    yield volume_id
     remove_all(target="tags")
     remove_all(target="volumes")
 
@@ -57,46 +57,40 @@ def test_fail_to_create_volume_with_all_numberic_label():
     assert("label	Must begin with a letter" in result)
 
 
-@pytest.fixture(scope="session")
-def test_create_unattached_volume():
-    result = exec_test_command(BASE_CMD+['create', '--label', "A"+timestamp, '--region', 'us-east', '--size', '10', '--text', '--no-headers']).stdout.decode()
-    assert(re.search("[0-9]+,A[0-9]+,creating,10,us-east" in result))
-
-
-@pytest.mark.usesfixture('test_create_unattached_volume')
-def test_list_volume():
+def test_list_volume(setup_test_volumes):
     result = exec_test_command(BASE_CMD+['list', '--text', '--no-headers', '--delimiter', ',']).stdout.decode()
     assert(re.search("[0-9]+,[A-Za-z0-9]+,(creating|active|offline),10,[a-z-]+", result))
 
 
-def test_view_single_volume():
-    volume_id = get_volume_id()
+def test_view_single_volume(setup_test_volumes):
+    volume_id = setup_test_volumes
     result = exec_test_command(BASE_CMD+['view', volume_id, '--text', '--no-headers', '--delimiter', ',', '--format', 'id,label,size,region']).stdout.decode()
 
     assert(re.search(volume_id+",[A-Za-z0-9-]+,[0-9]+,[a-z-]+", result))
 
 
-def test_update_volume_label():
-    volume_id = get_volume_id()
-    result = exec_test_command(BASE_CMD+['update', volume_id, '--label', 'A-NewLabel-2', '--format', 'label', '--text', '--no-headers']).stdout.decode()
+def test_update_volume_label(setup_test_volumes):
+    volume_id = setup_test_volumes
+    new_unique_label = 'label-'+str(int(time.time()))
+    result = exec_test_command(BASE_CMD+['update', volume_id, '--label', new_unique_label, '--format', 'label', '--text', '--no-headers']).stdout.decode()
 
-    assert('A-NewLabel-2' in result)
+    assert(new_unique_label in result)
 
 
-def test_add_new_tag_to_volume():
-    volume_id = get_volume_id()
+def test_add_new_tag_to_volume(setup_test_volumes):
+    volume_id = setup_test_volumes
     result = exec_test_command(BASE_CMD+['update', volume_id, '--tag', unique_tag, '--format', 'tags', '--text', '--no-headers']).stdout.decode()
 
     assert(unique_tag in result)
 
 
-def test_view_tags_attached_to_volume():
-    volume_id = get_volume_id()
+def test_view_tags_attached_to_volume(setup_test_volumes):
+    volume_id = setup_test_volumes
     exec_test_command(BASE_CMD+['view', volume_id, '--format', 'tags', '--text', '--no-headers']).stdout.decode()
 
 
-def test_fail_to_update_volume_size():
-    volume_id = get_volume_id()
+def test_fail_to_update_volume_size(setup_test_volumes):
+    volume_id = setup_test_volumes
     os.system('linode-cli volumes update --size=15 ' + volume_id + ' 2>&1 | tee /tmp/output_file.txt')
 
     result = os.popen("cat /tmp/output_file.txt").read()

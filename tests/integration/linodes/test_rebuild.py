@@ -7,7 +7,7 @@ from tests.integration.linodes.helpers_linodes import *
 def setup_rebuild():
     # create linode
     try:
-        linode_id = create_linode()
+        linode_id = create_linode_and_wait()
     except:
         logging.exception("Failed in creating linode in setup..")
     yield linode_id
@@ -18,8 +18,8 @@ def setup_rebuild():
         logging.exception("Failed removing all linodes..")
 
 
-def test_rebuild_fails_without_image():
-    linode_id = create_linode_and_wait()
+def test_rebuild_fails_without_image(setup_rebuild):
+    linode_id = setup_rebuild
 
     result = exec_failing_test_command(BASE_CMD+['rebuild', '--root_pass', DEFAULT_RANDOM_PASS, linode_id, '--text', '--no-headers']).stderr.decode()
 
@@ -27,8 +27,8 @@ def test_rebuild_fails_without_image():
     assert('You must specify an image' in result)
 
 
-def test_rebuild_fails_with_invalid_image():
-    linode_id = os.popen('linode-cli linodes list --format id --text --no-header | head -n 1').read().rstrip()
+def test_rebuild_fails_with_invalid_image(setup_rebuild):
+    linode_id = setup_rebuild
     rebuild_image = "bad/image"
 
     result = exec_failing_test_command(BASE_CMD+['rebuild', '--image', rebuild_image, '--root_pass', DEFAULT_RANDOM_PASS, linode_id, '--text', '--no-headers']).stderr.decode()
@@ -37,8 +37,8 @@ def test_rebuild_fails_with_invalid_image():
 
 
 @pytest.mark.skipif(os.environ.get("RUN_LONG_TESTS", None) != "TRUE", reason="Skipping long-running Test, to run set RUN_LONG_TESTS=TRUE")
-def test_rebuild_a_linode():
-    linode_id = create_linode_and_wait()
+def test_rebuild_a_linode(setup_rebuild):
+    linode_id = setup_rebuild
     rebuild_image = os.popen('linode-cli images list --text --no-headers --format=id | sed -n 3p').read().rstrip()
 
     # trigger rebuild

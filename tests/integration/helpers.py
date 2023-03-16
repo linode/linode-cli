@@ -42,16 +42,16 @@ def exec_test_command(args: List[str]):
     return process
 
 
-def exec_failing_test_command(args: List[str]):
+def exec_failing_test_command(args: List[str], expected_code: int = 1):
     process = subprocess.run(
         args,
         stderr=subprocess.PIPE,
     )
-    assert process.returncode == 1
+    assert process.returncode == expected_code
     return process
 
 
-# Delete/Remove helper functions (mainly used in clean-ups after test
+# Delete/Remove helper functions (mainly used in clean-ups after test)
 def delete_all_domains():
     domain_ids = exec_test_command(['linode-cli', '--text', '--no-headers', 'domains', 'list', '--format=id']).stdout.decode()
     domain_id_arr = domain_ids.splitlines()

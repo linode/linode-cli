@@ -33,13 +33,9 @@ def test_create_linode_with_backup_disabled():
     assert (re.search(new_linode_id+',False', result))
 
 
-def test_enable_backups():
+def test_enable_backups(setup_backup):
     # get linode id
-    output = exec_test_command(
-        BASE_CMD + ['list', '--format=id', '--delimiter', ',', '--text', '--no-headers']).stdout.decode().rstrip()
-
-    linode_arr = output.splitlines()
-    linode_id = linode_arr[0]
+    linode_id = setup_backup
 
     # enable backup
     exec_test_command(BASE_CMD+['backups-enable', linode_id, '--text', '--no-headers'])

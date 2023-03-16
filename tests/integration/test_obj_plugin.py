@@ -6,6 +6,7 @@ from typing import Callable, List, Optional
 
 import pytest
 import requests
+from tests.integration.helpers import BASE_URL, create_file_random_text
 from fixture_types import GetTestFileType
 from helpers import BASE_URL
 from pytest import MonkeyPatch

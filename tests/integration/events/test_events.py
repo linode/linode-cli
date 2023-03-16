@@ -16,14 +16,13 @@ def events_setup():
     try:
         timestamp = str(int(time.time()))
         # Create domain
-        process = exec_test_command(['linode-cli', 'domains', 'create', '--type', 'master', '--domain', 'A'+timestamp + "example.com",
-                                              '--soa_email=developer-test@linode.com', '--text', '--no-header'])
-        output = process.stdout.decode()
+        domain_id = exec_test_command(['linode-cli', 'domains', 'create', '--type', 'master', '--domain', 'A'+timestamp + "example.com",
+                                              '--soa_email=developer-test@linode.com', '--text', '--no-header', '--format', 'id']).stdout.decode().rstrip()
 
     except:
         logging.exception("Failed creating domain in setup")
 
-    yield "setup"
+    yield domain_id
 
     try:
         delete_all_domains()
@@ -98,8 +97,8 @@ def test_filter_events_by_entity_id():
     assert (re.search(event_id+",.*,.*,[0-9]+-[0-9][0-9]-.*,.*,[a-z]+.*", result))
 
 
-def test_create_domain_and_filter_domain_events():
-    domain_id = get_domain_id()
+def test_create_domain_and_filter_domain_events(events_setup):
+    domain_id = events_setup
     result = exec_test_command(BASE_CMD+['list', '--entity.id', domain_id, '--entity.type', 'domain', '--text', '--no-headers', '--delimiter', ',']).stdout.decode()
 
     assert (re.search("[0-9]+,.*,domain_create,A[0-9]+.*,[0-9]+-[0-9][0-9]-.*,.*", result))

@@ -49,6 +49,8 @@ def test_fail_to_ssh_to_nonexistent_linode():
 def test_ssh_to_linode_and_get_kerel_version():
     linode_label = exec_test_command(['linode-cli', 'linodes', 'list', '--format', 'label', '--text', '--no-headers']).stdout.decode().rstrip()
 
+    print(private_key_path, public_key)
+
     time.sleep(SSH_SLEEP_PERIOD)
     output = os.popen(
         'linode-cli ssh root@' + linode_label + ' -i ' + private_key_path + ' -oStrictHostKeyChecking=no  uname -r').read()

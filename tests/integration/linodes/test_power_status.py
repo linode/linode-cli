@@ -18,11 +18,8 @@ def setup_power_status():
         logging.exception("Failed removing all linodes..")
 
 
-def test_create_linode_and_boot():
-    output = exec_test_command(
-        BASE_CMD + ['list', '--format=id', '--delimiter', ',', '--text', '--no-headers']).stdout.decode().rstrip()
-    linode_arr = output.splitlines()
-    linode_id = linode_arr[0]
+def test_create_linode_and_boot(setup_power_status):
+    linode_id = setup_power_status
 
     # returns false if status is not running after 240s
     result = wait_until(linode_id=linode_id, timeout=240, status="running")
@@ -41,11 +38,8 @@ def test_reboot_linode():
     assert wait_until(linode_id=linode_id, timeout=240, status="running"), "Linode status has not changed to running from provisioning"
 
 
-def test_shutdown_linode():
-    output = exec_test_command(
-        BASE_CMD + ['list', '--format=id', '--delimiter', ',', '--text', '--no-headers']).stdout.decode().rstrip()
-    linode_arr = output.splitlines()
-    linode_id = linode_arr[0]
+def test_shutdown_linode(setup_power_status):
+    linode_id = setup_power_status
 
     # returns false if status is not running after 240s after reboot
     assert wait_until(linode_id=linode_id, timeout=240, status="running"), "Linode status has not changed to running from provisioning"

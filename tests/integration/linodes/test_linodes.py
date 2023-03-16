@@ -7,25 +7,18 @@ from tests.integration.linodes.helpers_linodes import *
 def setup_linodes():
     try:
         # create one linode with default label for some tests
-        result = exec_test_command(BASE_CMD + ['create', '--type', 'g6-standard-2', '--region',  'us-east', '--image',
+        linode_id = exec_test_command(BASE_CMD + ['create', '--type', 'g6-standard-2', '--region',  'us-east', '--image',
                                               DEFAULT_TEST_IMAGE, '--label', DEFAULT_LABEL, '--root_pass', DEFAULT_RANDOM_PASS,
                                               '--text', '--delimiter', ",", '--no-headers', '--format',
-                                              'label,region,type,image', '--no-defaults']).stdout.decode()
-        assert (re.search(DEFAULT_LABEL+",us-east,g6-standard-2," + DEFAULT_TEST_IMAGE, result))
+                                              'label,region,type,image', '--no-defaults', '--format', 'id']).stdout.decode().rstrip()
     except:
         logging.exception("Failed to create default linode in setup..")
-    yield "setup"
+    yield linode_id
     try:
         # clean up
         remove_linodes()
     except:
         logging.exception("Failed removing all linodes..")
-
-
-def get_default_linode_id():
-    linode_id = exec_test_command(BASE_CMD+['list', '--label', DEFAULT_LABEL, '--text', '--no-headers',
-                                            '--format', 'id']).stdout.decode().rstrip()
-    return linode_id
 
 
 def test_update_linode_with_a_image():
@@ -40,11 +33,12 @@ def test_create_linodes_with_a_label():
                                           '--text', '--delimiter', ",", '--no-headers', '--format',
                                           'label,region,type,image', '--no-defaults']).stdout.decode()
 
+    print(result)
     assert(re.search("cli-1,us-east,g6-standard-2,"+DEFAULT_TEST_IMAGE, result))
 
 
-def test_view_linode_configuration():
-    linode_id = get_default_linode_id()
+def test_view_linode_configuration(setup_linodes):
+    linode_id = setup_linodes
     result = exec_test_command(BASE_CMD+['view', linode_id, '--text', '--delimiter', ',', '--no-headers', '--format',
                                          'id,label,region,type,image', '--no-defaults']).stdout.decode()
 
@@ -81,13 +75,13 @@ def test_create_linode_without_image_and_not_boot():
     assert("offline" in result)
 
 
-def test_list_linodes():
+def test_list_linodes(setup_linodes):
     result = exec_test_command(BASE_CMD+['list', '--format', 'label', '--text', '--no-headers']).stdout.decode()
     assert(DEFAULT_LABEL in result)
 
 
-def test_add_tag_to_linode():
-    linode_id = get_default_linode_id()
+def test_add_tag_to_linode(setup_linodes):
+    linode_id = setup_linodes
     unique_tag = str(int(time.time()))+'tag'
 
     result = exec_test_command(BASE_CMD+['update', linode_id, '--tags', unique_tag, '--format', 'tags', '--text', '--no-headers']).stdout.decode()

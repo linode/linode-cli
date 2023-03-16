@@ -13,7 +13,8 @@ BASE_CMD = ["linode-cli", "linodes"]
 
 def generate_random_ssh_key():
     key_path = "/tmp/cli-e2e-key"
-    os.popen('ssh-keygen -q -t rsa -N '' -f '+key_path+' <<<y >/dev/null 2>&1')
+    os.popen('ssh-keygen -q -t rsa -N '' -f '+key_path)
+    time.sleep(1)
     private_ssh_key = exec_test_command(['cat', key_path]).stdout.decode().rstrip()
     public_ssh_key = exec_test_command(['cat', key_path+'.pub']).stdout.decode().rstrip()
 
@@ -38,15 +39,10 @@ def create_linode():
     test_image = os.popen('linode-cli images list --format id --text --no-header | egrep "linode\/.*" | head -n 1').read().rstrip()
 
     # create linode
-    result = exec_test_command(
+    linode_id = exec_test_command(
         ['linode-cli', 'linodes', 'create', '--type', linode_type, '--region', region, '--image', test_image,
-         '--root_pass', DEFAULT_RANDOM_PASS, '--format=id']).stdout.decode()
+         '--root_pass', DEFAULT_RANDOM_PASS, '--format=id', '--text', '--no-headers']).stdout.decode().rstrip()
 
-    linode_id = ""
-    linode_id_arr = re.findall("[0-9]+", result)
-    for id in linode_id_arr:
-        if id > "0":
-            linode_id = id
     return linode_id
 
 
@@ -73,22 +69,15 @@ def create_linode_and_wait(test_plan=DEFAULT_LINODE_TYPE, test_image=DEFAULT_TES
     if ssh_key:
         output = exec_test_command(
             ['linode-cli', 'linodes', 'create', '--type', linode_type, '--region', 'us-east', '--image', test_image,
-             '--root_pass', DEFAULT_RANDOM_PASS, '--authorized_keys', ssh_key, '--format=id', '--backups_enabled', 'true']).stdout.decode()
+             '--root_pass', DEFAULT_RANDOM_PASS, '--authorized_keys', ssh_key, '--format=id', '--backups_enabled', 'true', '--text', '--no-headers']).stdout.decode().rstrip()
     else:
         output = exec_test_command(
             ['linode-cli', 'linodes', 'create', '--type', linode_type, '--region', 'us-east', '--image', test_image,
-             '--root_pass', DEFAULT_RANDOM_PASS, '--format=id', '--backups_enabled', 'true']).stdout.decode()
-
-    linode_id = ""
-    linode_id_arr = re.findall("[0-9]+", output)
-    for id in linode_id_arr:
-        if id > "0":
-            linode_id = id
+             '--root_pass', DEFAULT_RANDOM_PASS, '--format=id', '--backups_enabled', 'true', '--text', '--no-headers']).stdout.decode().rstrip()
+    linode_id = output
 
     # wait until linode is running
-    result = wait_until(linode_id=linode_id, timeout=240, status="running")
-
-    assert(result, "linode is not in running state after creation..")
+    assert(wait_until(linode_id=linode_id, timeout=240, status="running"), "linode failed to change status to running")
 
     return linode_id
 
