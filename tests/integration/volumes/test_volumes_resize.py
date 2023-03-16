@@ -38,7 +38,7 @@ def setup_test_volumes_resize():
         .rstrip()
     )
     yield volume_id
-    exec_test_command(BASE_CMD + ["delete", volume_id])
+    remove_all(target="volumes")
 
 
 def test_resize_fails_to_smaller_volume(setup_test_volumes_resize):
