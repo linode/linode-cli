@@ -1,9 +1,15 @@
 import random
+import subprocess
+
+from typing import List
+from pathlib import Path
 import time
 from string import ascii_lowercase
 from typing import Callable
 
 BASE_URL = "https://api.linode.com/v4/"
+INVALID_HOST = "https://wrongapi.linode.com"
+SUCCESS_STATUS_CODE = 0
 
 COMMAND_JSON_OUTPUT = ["--suppress-warnings", "--no-defaults", "--json"]
 
@@ -23,3 +29,21 @@ def wait_for_condition(interval: int, timeout: int, condition: Callable):
 
         # Evil
         time.sleep(interval)
+
+
+def exec_test_command(args: List[str]):
+    process = subprocess.run(
+        args,
+        stdout=subprocess.PIPE,
+    )
+    assert process.returncode == 0
+    return process
+
+
+def exec_failing_test_command(args: List[str]):
+    process = subprocess.run(
+        args,
+        stderr=subprocess.PIPE,
+    )
+    assert process.returncode == 1
+    return process
