@@ -7,21 +7,21 @@ import pytest
 from tests.integration.helpers import exec_test_command
 from tests.integration.linodes.helpers_linodes import (
     create_linode_and_wait,
-    generate_random_ssh_key,
     remove_linodes,
 )
 
 BASE_CMD = ["linode-cli", "ssh"]
 NUM_OF_RETRIES = 10
 SSH_SLEEP_PERIOD = 50
-key_pair = generate_random_ssh_key()
-public_key = key_pair[1]
-private_key = key_pair[0]
-private_key_path = key_pair[2]
 
 
 @pytest.fixture(scope="session", autouse=True)
-def test_create_a_linode_in_running_state():
+def test_create_a_linode_in_running_state(ssh_key_pair_generator):
+    pubkey_file, privkey_file = ssh_key_pair_generator
+
+    with open(pubkey_file, "r") as f:
+        pubkey = f.read().rstrip()
+
     alpine_image = (
         os.popen(
             "linode-cli images list --format id --text --no-headers | grep 'alpine' | xargs | awk '{ print $1 }'"
@@ -38,12 +38,10 @@ def test_create_a_linode_in_running_state():
     )
 
     linode_id = create_linode_and_wait(
-        test_plan=plan, test_image=alpine_image, ssh_key=public_key
+        test_plan=plan, test_image=alpine_image, ssh_key=pubkey
     )
 
     yield linode_id
-    # remove temporary ssh identity
-    os.system("ssh-add -d " + private_key_path)
     remove_linodes()
 
 
@@ -74,9 +72,11 @@ def test_fail_to_ssh_to_nonexistent_linode():
 
 
 def test_ssh_to_linode_and_get_kernel_version(
-    test_create_a_linode_in_running_state,
+    test_create_a_linode_in_running_state, ssh_key_pair_generator
 ):
     linode_id = test_create_a_linode_in_running_state
+    pubkey_file, privkey_file = ssh_key_pair_generator
+
     linode_label = (
         exec_test_command(
             [
@@ -95,23 +95,23 @@ def test_ssh_to_linode_and_get_kernel_version(
         .rstrip()
     )
 
-    # add ssh identity
-    os.system("eval $(ssh-add " + private_key_path)
-
     time.sleep(SSH_SLEEP_PERIOD)
 
     output = os.popen(
         "linode-cli ssh root@"
         + linode_label
         + " -i "
-        + private_key_path
+        + privkey_file
         + " -o StrictHostKeyChecking=no -o IdentitiesOnly=yes uname -r"
     ).read()
 
     assert re.search("[0-9]\.[0-9]*\.[0-9]*-.*-virt", output)
 
 
-def test_check_vm_for_ipv4_connectivity(test_create_a_linode_in_running_state):
+def test_check_vm_for_ipv4_connectivity(
+    test_create_a_linode_in_running_state, ssh_key_pair_generator
+):
+    pubkey_file, privkey_file = ssh_key_pair_generator
     linode_id = test_create_a_linode_in_running_state
     linode_label = (
         exec_test_command(
@@ -131,16 +131,13 @@ def test_check_vm_for_ipv4_connectivity(test_create_a_linode_in_running_state):
         .rstrip()
     )
 
-    # add ssh identity
-    os.system("eval $(ssh-add " + private_key_path)
-
     time.sleep(SSH_SLEEP_PERIOD)
 
     output = os.popen(
         "linode-cli ssh root@"
         + linode_label
         + " -i "
-        + private_key_path
+        + privkey_file
         + ' -o StrictHostKeyChecking=no -o IdentitiesOnly=yes "ping -4 -W60 -c3 google.com"'
     ).read()
 
