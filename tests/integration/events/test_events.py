@@ -5,7 +5,8 @@ import time
 
 import pytest
 
-from tests.integration.helpers import delete_all_domains, exec_test_command
+from tests.integration.helpers import exec_test_command, get_token, delete_all_domains
+
 
 BASE_CMD = ["linode-cli", "events"]
 
