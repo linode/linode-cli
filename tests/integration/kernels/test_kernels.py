@@ -1,5 +1,4 @@
 import re
-import pytest
 
 from tests.integration.helpers import exec_test_command
 
