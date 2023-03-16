@@ -55,6 +55,7 @@ def exec_failing_test_command(args: List[str], expected_code: int = 1):
     return process
 
 
+# Delete/Remove helper functions (mainly used in clean-ups after test
 def delete_all_domains():
     domain_ids = exec_test_command(
         [
