@@ -5,7 +5,8 @@ import tempfile
 from typing import List
 
 import pytest
-from helpers import get_random_text
+
+from tests.integration.helpers import get_random_text
 
 REGION = "us-southeast"
 BASE_CMD = ["linode-cli", "image-upload", "--region", REGION]

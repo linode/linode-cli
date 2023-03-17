@@ -3,7 +3,12 @@ import subprocess
 from typing import Any, Dict, List, Optional
 
 import pytest
-from helpers import COMMAND_JSON_OUTPUT, get_random_text, wait_for_condition
+
+from tests.integration.helpers import (
+    COMMAND_JSON_OUTPUT,
+    get_random_text,
+    wait_for_condition,
+)
 
 TEST_REGION = "us-southeast"
 TEST_IMAGE = "linode/alpine3.16"
@@ -109,6 +114,8 @@ def test_ssh_instance_ready(
                 "root@" + instance_data["label"],
                 "-o",
                 "StrictHostKeyChecking=no",
+                "-o",
+                "IdentitiesOnly=yes",
                 "-i",
                 privkey,
                 "echo 'hello world!'",

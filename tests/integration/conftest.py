@@ -11,9 +11,9 @@ from random import randint
 from typing import Callable, Optional
 
 import pytest
-from helpers import get_random_text
 
 from linodecli import ENV_TOKEN_NAME
+from tests.integration.helpers import get_random_text
 
 
 @pytest.fixture(scope="session")
