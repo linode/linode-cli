@@ -4,14 +4,11 @@ This module is responsible for handling HTTP requests to the Linode API.
 
 import json
 import sys
-from distutils.version import (  # pylint: disable=deprecated-module
-    LooseVersion,
-    StrictVersion,
-)
 from sys import version_info
 from typing import Optional
 
 import requests
+from packaging import version
 
 
 def do_request(
@@ -160,18 +157,16 @@ def _attempt_warn_old_version(ctx, result):
 
         try:
             # Parse the spec versions from the API and local CLI.
-            StrictVersion(spec_version)
-            StrictVersion(ctx.spec_version)
+            spec_version_parsed = version.parse(spec_version)
+            current_version_parsed = version.parse(ctx.spec_version)
 
             # Get only the Major/Minor version of the API Spec and CLI Spec,
             # ignore patch version differences
             spec_major_minor_version = (
-                spec_version.split(".")[0] + "." + spec_version.split(".")[1]
+                f"{spec_version_parsed.major}.{spec_version_parsed.minor}"
             )
             current_major_minor_version = (
-                ctx.spec_version.split(".")[0]
-                + "."
-                + ctx.spec_version.split(".")[1]
+                f"{current_version_parsed.major}.{current_version_parsed.minor}"
             )
         except ValueError:
             # If versions are non-standard like, "DEVELOPMENT" use them and don't complain.
@@ -179,7 +174,7 @@ def _attempt_warn_old_version(ctx, result):
             current_major_minor_version = ctx.spec_version
 
         try:
-            if LooseVersion(spec_major_minor_version) > LooseVersion(
+            if version.parse(spec_major_minor_version) > version.parse(
                 current_major_minor_version
             ):
                 api_version_higher = True
@@ -209,7 +204,7 @@ def _attempt_warn_old_version(ctx, result):
                 pypi_version = pypi_response.json()["info"]["version"]
 
                 # no need to be fancy; these should always be valid versions
-                if LooseVersion(pypi_version) > LooseVersion(ctx.version):
+                if version.parse(pypi_version) > version.parse(ctx.version):
                     new_version_exists = True
         except:
             # I know, but if anything happens here the end user should still
