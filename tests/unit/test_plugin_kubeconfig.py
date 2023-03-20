@@ -122,7 +122,7 @@ def test_improper_file(mock_cli):
     mock_cli.call_operation = mock_call_operation
 
     os.makedirs(os.path.expanduser("~/fake/path"), exist_ok=True)
-    with open(os.path.expanduser("~/fake/path/config"), "w"):
+    with open(os.path.expanduser("~/fake/path/config"), "w", encoding="utf-8"):
         pass
 
     try:

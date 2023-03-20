@@ -67,7 +67,7 @@ def call(args, context):
     elif parsed.label:
         kubeconfig = _get_kubeconfig_by_label(parsed.label, context.client)
     else:
-        print(f"Either --label or --id must be used.", file=sys.stderr)
+        print("Either --label or --id must be used.", file=sys.stderr)
         sys.exit(1)
 
     # Load the specified cluster's kubeconfig and the current kubeconfig
@@ -130,7 +130,7 @@ def _get_kubeconfig_by_label(cluster_label, client):
 
 # Loads a yaml file
 def _load_config(filepath):
-    with open(filepath, "r") as file_descriptor:
+    with open(filepath, "r", encoding="utf-8") as file_descriptor:
         data = yaml.load(file_descriptor, Loader=yaml.Loader)
 
     if not data:
@@ -143,7 +143,7 @@ def _load_config(filepath):
 # Dumps data to a yaml file
 def _dump_config(filepath, data):
     os.makedirs(os.path.dirname(filepath), exist_ok=True)
-    with open(filepath, "w") as file_descriptor:
+    with open(filepath, "w", encoding="utf-8") as file_descriptor:
         yaml.dump(data, file_descriptor)
 
 
@@ -159,9 +159,9 @@ def _merge_dict(dict_1, dict_2):
             new_entries = []
 
             # Add all dict_2 entries with unique names to new_entries
-            for i in range(len(dict2_names)):
-                if dict2_names[i] not in dict1_names:
-                    new_entries.append(dict_2[key][i])
+            for index, value in enumerate(dict2_names):
+                if value not in dict1_names:
+                    new_entries.append(dict_2[key][index])
 
             # Concat dict_1 list with new_entries and update dict_1 list to concatenated list
             merged = dict_1[key] + new_entries
