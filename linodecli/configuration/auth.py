@@ -27,7 +27,12 @@ r.send();
 """
 
 
-def _handle_response_status(response, exit_on_error=None):
+def _handle_response_status(
+    response, exit_on_error=None, status_validator=None
+):
+    if status_validator is not None and status_validator(response.status_code):
+        return
+
     if 199 < response.status_code < 300:
         return
 
@@ -37,17 +42,30 @@ def _handle_response_status(response, exit_on_error=None):
 
 
 # TODO: merge config do_request and cli do_request
-def _do_get_request(base_url, url, token=None, exit_on_error=True):
+def _do_get_request(
+    base_url, url, token=None, exit_on_error=True, status_validator=None
+):
     """
     Does helper get requests during configuration
     """
     return _do_request(
-        base_url, requests.get, url, token=token, exit_on_error=exit_on_error
+        base_url,
+        requests.get,
+        url,
+        token=token,
+        exit_on_error=exit_on_error,
+        status_validator=status_validator,
     )
 
 
 def _do_request(
-    base_url, method, url, token=None, exit_on_error=None, body=None
+    base_url,
+    method,
+    url,
+    token=None,
+    exit_on_error=None,
+    body=None,
+    status_validator=None,
 ):  # pylint: disable=too-many-arguments
     """
     Does helper requests during configuration
@@ -60,7 +78,9 @@ def _do_request(
 
     result = method(base_url + url, headers=headers, json=body)
 
-    _handle_response_status(result, exit_on_error=exit_on_error)
+    _handle_response_status(
+        result, exit_on_error=exit_on_error, status_validator=status_validator
+    )
 
     return result.json()
 

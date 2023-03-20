@@ -14,6 +14,7 @@ from terminaltables import SingleTable
 from linodecli import plugins
 
 from .completion import bake_completions
+from .helpers import register_args_shared
 
 
 def register_args(parser):
@@ -103,13 +104,6 @@ def register_args(parser):
         "are configured on initial setup or with linode-cli configure",
     )
     parser.add_argument(
-        "--as-user",
-        metavar="USERNAME",
-        type=str,
-        help="The username to execute this command as.  This user must "
-        "be configured.",
-    )
-    parser.add_argument(
         "--suppress-warnings",
         action="store_true",
         help="Suppress warnings that are intended for human users. "
@@ -130,6 +124,8 @@ def register_args(parser):
     parser.add_argument(
         "--debug", action="store_true", help="Enable verbose HTTP debug output."
     )
+
+    register_args_shared(parser)
 
     return parser
 

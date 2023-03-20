@@ -21,10 +21,28 @@ from terminaltables import SingleTable
 from linodecli.cli import CLI
 from linodecli.configuration import _do_get_request
 from linodecli.configuration.helpers import _default_thing_input
-from linodecli.plugins import PluginContext
-
-ENV_ACCESS_KEY_NAME = "LINODE_CLI_OBJ_ACCESS_KEY"
-ENV_SECRET_KEY_NAME = "LINODE_CLI_OBJ_SECRET_KEY"
+from linodecli.plugins import PluginContext, inherit_plugin_args
+from linodecli.plugins.obj.config import (
+    BASE_URL_TEMPLATE,
+    BASE_WEBSITE_TEMPLATE,
+    DATE_FORMAT,
+    ENV_ACCESS_KEY_NAME,
+    ENV_SECRET_KEY_NAME,
+    INCOMING_DATE_FORMAT,
+    MULTIPART_UPLOAD_CHUNK_SIZE_DEFAULT,
+    NO_ACCESS_ERROR,
+    NO_SCOPES_ERROR,
+    PLUGIN_BASE,
+    UPLOAD_MAX_FILE_SIZE,
+)
+from linodecli.plugins.obj.helpers import (
+    _borderless_table,
+    _convert_datetime,
+    _denominate,
+    _pad_to,
+    _progress,
+    restricted_int_arg_type,
+)
 
 try:
     import boto
@@ -38,80 +56,23 @@ except ImportError:
     HAS_BOTO = False
 
 
-# replace {} with the cluster name
-BASE_URL_TEMPLATE = "{}.linodeobjects.com"
-BASE_WEBSITE_TEMPLATE = "website-{}.linodeobjects.com"
-
-# for all date output
-DATE_FORMAT = "%Y-%m-%d %H:%M"
-INCOMING_DATE_FORMAT = "%Y-%m-%dT%H:%M:%S.%fZ"
-
-# for help commands
-PLUGIN_BASE = "linode-cli obj"
-
-# constant error messages
-NO_SCOPES_ERROR = """Your OAuth token isn't authorized to create Object Storage keys.
-To fix this, please generate a new token at this URL:
-
-  https://cloud.linode.com/profile/tokens
-
-Be sure to select 'Read/Write' for Object Storage and 'Read Only'
-for Account during token generation (as well as any other access
-you want the Linode CLI to have).
-
-Once you've generated a new token, you can use it with the
-Linode CLI by running this command and entering it:
-
-  linode-cli configure
-"""
-
-NO_ACCESS_ERROR = """You are not authorized to use Object Storage at this time.
-Please contact your Linode Account administrator to request
-access, or ask them to generate Object Storage Keys for you."""
-
-
-# Files larger than this need to be uploaded via a multipart upload
-UPLOAD_MAX_FILE_SIZE = 1024 * 1024 * 1024 * 5
-# This is how big (in MB) the chunks of the file that we upload will be
-MULTIPART_UPLOAD_CHUNK_SIZE_DEFAULT = 1024
-
-
-def restricted_int_arg_type(max, min=1):  # pylint: disable=redefined-builtin
-    """
-    An ArgumentParser arg type for integers that restricts the value to between `min` and `max`
-    (inclusive for both.)
-    """
-
-    def restricted_int(string):
-        err_msg = f"Value must be an integer between {min} and {max}"
-        try:
-            value = int(string)
-        except ValueError as e:
-            # argparse can handle ValueErrors, but shows an unfriendly "invalid restricted_int
-            # value: '0.1'" message, so catch and raise with a better message.
-            raise ArgumentTypeError(err_msg) from e
-        if value < min or value > max:
-            raise ArgumentTypeError(err_msg)
-        return value
-
-    return restricted_int
-
-
 def list_objects_or_buckets(get_client, args):
     """
     Lists buckets or objects
     """
-    parser = ArgumentParser(PLUGIN_BASE + " ls")
+    parser = inherit_plugin_args(ArgumentParser(PLUGIN_BASE + " ls"))
 
     parser.add_argument(
         "bucket",
         metavar="NAME",
         type=str,
         nargs="?",
-        help="Optional.  If not given, lists all buckets.  If given, "
-        "lists the contents of the given bucket.  May contain a "
-        "/ followed by a directory path to show the contents of "
-        "a directory within the named bucket.",
+        help=(
+            "Optional.  If not given, lists all buckets.  If given, "
+            "lists the contents of the given bucket.  May contain a "
+            "/ followed by a directory path to show the contents of "
+            "a directory within the named bucket."
+        ),
     )
 
     parsed = parser.parse_args(args)
@@ -168,7 +129,7 @@ def create_bucket(get_client, args):
     """
     Creates a new bucket
     """
-    parser = ArgumentParser(PLUGIN_BASE + " mb")
+    parser = inherit_plugin_args(ArgumentParser(PLUGIN_BASE + " mb"))
 
     parser.add_argument(
         "name",
@@ -190,7 +151,7 @@ def delete_bucket(get_client, args):
     """
     Deletes a bucket
     """
-    parser = ArgumentParser(PLUGIN_BASE + " rb")
+    parser = inherit_plugin_args(ArgumentParser(PLUGIN_BASE + " rb"))
 
     parser.add_argument(
         "name",
@@ -231,7 +192,7 @@ def upload_object(get_client, args):  # pylint: disable=too-many-locals
     """
     Uploads an object to object storage
     """
-    parser = ArgumentParser(PLUGIN_BASE + " put")
+    parser = inherit_plugin_args(ArgumentParser(PLUGIN_BASE + " put"))
 
     parser.add_argument(
         "file", metavar="FILE", type=str, nargs="+", help="The files to upload."
@@ -383,7 +344,7 @@ def get_object(get_client, args):
     """
     Retrieves an uploaded object and writes it to a file
     """
-    parser = ArgumentParser(PLUGIN_BASE + " get")
+    parser = inherit_plugin_args(ArgumentParser(PLUGIN_BASE + " get"))
 
     parser.add_argument(
         "bucket", metavar="BUCKET", type=str, help="The bucket the file is in."
@@ -431,7 +392,7 @@ def delete_object(get_client, args):
     """
     Removes a file from a bucket
     """
-    parser = ArgumentParser(PLUGIN_BASE + " del")
+    parser = inherit_plugin_args(ArgumentParser(PLUGIN_BASE + " del"))
 
     parser.add_argument(
         "bucket", metavar="BUCKET", type=str, help="The bucket to delete from."
@@ -466,7 +427,7 @@ def generate_url(get_client, args):
     """
     Generates a URL to an object
     """
-    parser = ArgumentParser(PLUGIN_BASE + " signurl")
+    parser = inherit_plugin_args(ArgumentParser(PLUGIN_BASE + " signurl"))
 
     parser.add_argument(
         "bucket",
@@ -520,7 +481,7 @@ def set_acl(get_client, args):
     """
     Modify Access Control List for a Bucket or Objects
     """
-    parser = ArgumentParser(PLUGIN_BASE + " setacl")
+    parser = inherit_plugin_args(ArgumentParser(PLUGIN_BASE + " setacl"))
 
     parser.add_argument(
         "bucket", metavar="BUCKET", type=str, help="The bucket to modify."
@@ -582,7 +543,7 @@ def enable_static_site(get_client, args):
     """
     Turns a bucket into a static website
     """
-    parser = ArgumentParser(PLUGIN_BASE + " ws-create")
+    parser = inherit_plugin_args(ArgumentParser(PLUGIN_BASE + " ws-create"))
 
     parser.add_argument(
         "bucket",
@@ -626,7 +587,7 @@ def static_site_info(get_client, args):
     """
     Returns info about a configured static site
     """
-    parser = ArgumentParser(PLUGIN_BASE + " ws-info")
+    parser = inherit_plugin_args(ArgumentParser(PLUGIN_BASE + " ws-info"))
 
     parser.add_argument(
         "bucket",
@@ -661,7 +622,7 @@ def show_usage(get_client, args):
     """
     Shows space used by all buckets in this cluster, and total space
     """
-    parser = ArgumentParser(PLUGIN_BASE + " du")
+    parser = inherit_plugin_args(ArgumentParser(PLUGIN_BASE + " du"))
 
     parser.add_argument(
         "bucket",
@@ -709,28 +670,13 @@ def show_usage(get_client, args):
     sys.exit(0)
 
 
-def _denominate(total):
-    """
-    Coverts bucket size to human readable bytes.
-    """
-    total = float(total)
-    denomination = ["KB", "MB", "GB", "TB"]
-    for x in denomination:
-        if total > 1024:
-            total = total / 1024
-        if total < 1024:
-            total = round(total, 2)
-            total = str(total) + " " + x
-            break
-    return total
-
-
 def list_all_objects(get_client, args):
     """
     Lists all objects in all buckets
     """
     # this is for printing help when --help is in the args
-    parser = ArgumentParser(PLUGIN_BASE + " la")
+    parser = inherit_plugin_args(ArgumentParser(PLUGIN_BASE + " la"))
+
     parser.parse_args(args)
 
     client = get_client()
@@ -760,7 +706,7 @@ def disable_static_site(get_client, args):
     """
     Disables static site for a bucket
     """
-    parser = ArgumentParser(PLUGIN_BASE + " du")
+    parser = inherit_plugin_args(ArgumentParser(PLUGIN_BASE + " du"))
 
     parser.add_argument(
         "bucket",
@@ -837,7 +783,8 @@ def get_obj_args_parser():
     """
     Initialize and return the argument parser for the obj plug-in.
     """
-    parser = ArgumentParser(PLUGIN_BASE, add_help=False)
+    parser = inherit_plugin_args(ArgumentParser(PLUGIN_BASE, add_help=False))
+
     parser.add_argument(
         "command",
         metavar="COMMAND",
@@ -851,6 +798,7 @@ def get_obj_args_parser():
         type=str,
         help="The cluster to use for the operation",
     )
+
     return parser
 
 
@@ -1114,64 +1062,3 @@ def _configure_plugin(client: CLI):
 
     client.config.plugin_set_value("cluster", cluster)
     client.config.write_config()
-
-
-def _progress(cur, total):
-    """
-    Draws the upload progress bar.
-    """
-    # We can't divide by zero :)
-    if total == 0.0:
-        return
-
-    percent = f"{100 * (cur / float(total)):.1f}"
-    progress = int(100 * cur // total)
-    progress_bar = ("#" * progress) + ("-" * (100 - progress))
-    print(f"\r |{progress_bar}| {percent}%", end="\r")
-
-    if cur == total:
-        print()
-
-
-# helper functions for output
-def _borderless_table(data):
-    """
-    Returns a terminaltables.SingleTable object with no borders and correct padding
-    """
-    tab = SingleTable(data)
-    tab.inner_heading_row_border = False
-    tab.inner_column_border = False
-    tab.outer_border = False
-    tab.padding_left = 0
-    tab.padding_right = 2
-
-    return tab
-
-
-def _convert_datetime(datetime_str):
-    """
-    Given a string in INCOMING_DATE_FORMAT, returns a string in DATE_FORMAT
-    """
-    return datetime.strptime(datetime_str, INCOMING_DATE_FORMAT).strftime(
-        DATE_FORMAT
-    )
-
-
-def _pad_to(
-    val, length=10, right_align=False
-):  # pylint: disable=unused-argument
-    """
-    Pads val to be at minimum length characters long
-    """
-    ret = str(val)
-    padding = ""
-
-    if len(ret) < 10:
-        padding = " " * (10 - len(ret))
-
-    if right_align:
-        ret = padding + ret
-    else:
-        ret = ret + padding
-
-    return ret

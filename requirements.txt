@@ -1,3 +1,4 @@
 terminaltables
 requests
 PyYAML
+packaging>=23.0

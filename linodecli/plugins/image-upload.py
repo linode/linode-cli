@@ -14,6 +14,8 @@ import sys
 
 import requests
 
+from linodecli.plugins import inherit_plugin_args
+
 PLUGIN_BASE = "linode-cli image-upload"
 MAX_UPLOAD_SIZE = 5 * 1024 * 1024 * 1024  # 5GB
 
@@ -64,7 +66,9 @@ def call(args, context):
     """
     The entrypoint for this plugin
     """
-    parser = argparse.ArgumentParser(PLUGIN_BASE, add_help=True)
+    parser = inherit_plugin_args(
+        argparse.ArgumentParser(PLUGIN_BASE, add_help=True)
+    )
 
     parser.add_argument(
         "--region",
