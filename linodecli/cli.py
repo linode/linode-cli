@@ -484,11 +484,10 @@ class CLI:  # pylint: disable=too-many-instance-attributes
         Given a command, action, and remaining kwargs, finds and executes the
         action
         """
-
-        if (
-            (command == "linodes" and action == "ips-list")
-            or (command == "firewalls" and action == "rules-list")
-        ) and "--json" not in args:
+        if (command, action) in [
+            ("linodes", "ips-list"),
+            ("firewalls", "rules-list"),
+        ] and "--json" not in args:
             print(
                 "This output contains a nested structure that may not properly "
                 + "be displayed by linode-cli.",
