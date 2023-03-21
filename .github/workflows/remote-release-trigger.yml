@@ -17,6 +17,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
         with:
+          # We want to checkout the main branch
+          ref: 'main'
           fetch-depth: 0
 
       - name: Get previous tag
@@ -38,7 +40,7 @@ jobs:
       - name: Release
         uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 # pin@v1
         with:
+          target_commitish: 'main'
           token: ${{ steps.generate_token.outputs.token }}
-          body: Built from Linode OpenAPI spec ${{
-            github.event.client_payload.spec_version }}
+          body: Built from Linode OpenAPI spec ${{ github.event.client_payload.spec_version }}
           tag_name: ${{ steps.semvers.outputs.v_minor }}
