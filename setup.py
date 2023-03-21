@@ -79,6 +79,7 @@ setup(
         "terminaltables",
         "requests",
         "PyYAML",
+        "packaging"
     ],
     entry_points={
         "console_scripts": [
