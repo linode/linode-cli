@@ -309,3 +309,28 @@ class TestOutputHandler:
             "|---|\n"
             f"| {test_str_truncated} |\n"
         )
+
+    def test_warn_broken_output(self, mock_cli):
+        stderr_buf = io.StringIO()
+
+        try:
+            with contextlib.redirect_stderr(stderr_buf):
+                mock_cli.handle_command("linodes", "ips-list", ["10"])
+        except SystemExit:
+            pass
+
+        assert (
+            "This output contains a nested structure that may not properly be displayed by linode-cli."
+            in stderr_buf.getvalue()
+        )
+
+        try:
+            with contextlib.redirect_stderr(stderr_buf):
+                mock_cli.handle_command("firewalls", "rules-list", ["10"])
+        except SystemExit:
+            pass
+
+        assert (
+            "This output contains a nested structure that may not properly be displayed by linode-cli."
+            in stderr_buf.getvalue()
+        )

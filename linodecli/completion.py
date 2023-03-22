@@ -47,11 +47,17 @@ def get_fish_completions(ops):
     completion_template = Template(
         """# This is a generated file by Linode-CLI! Do not modify!
 complete -c linode-cli -n "not __fish_seen_subcommand_from $subcommands" -x -a '$subcommands --help'
+complete -c linode -n "not __fish_seen_subcommand_from $subcommands" -x -a '$subcommands --help'
+complete -c lin -n "not __fish_seen_subcommand_from $subcommands" -x -a '$subcommands --help'
 $command_items"""
     )
 
     command_template = Template(
         """complete -c linode-cli -n "__fish_seen_subcommand_from $command" \
+-x -a '$actions --help'
+complete -c linode -n "__fish_seen_subcommand_from $command" \
+-x -a '$actions --help'
+complete -c lin -n "__fish_seen_subcommand_from $command" \
 -x -a '$actions --help'"""
     )
 
@@ -84,7 +90,7 @@ cur="${COMP_WORDS[COMP_CWORD]}"
 prev="${COMP_WORDS[COMP_CWORD-1]}"
 
 case "${prev}" in
-    linode-cli)
+    linode-cli | linode | lin)
         COMPREPLY=( $(compgen -W "$actions --help" -- ${cur}) )
         return 0
         ;;
@@ -94,7 +100,9 @@ case "${prev}" in
 esac
 }
 
-complete -F _linode_cli linode-cli"""
+complete -F _linode_cli linode-cli
+complete -F _linode_cli linode
+complete -F _linode_cli lin"""
     )
 
     command_template = Template(

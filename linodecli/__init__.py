@@ -52,7 +52,11 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
     """
     Handle incoming command arguments
     """
-    parser = argparse.ArgumentParser("linode-cli", add_help=False)
+    parser = argparse.ArgumentParser(
+        "linode-cli",
+        add_help=False,
+        description="The Linode Command Line Interface.\n\nAliases: lin, linode",
+    )
     parsed, args = register_args(parser).parse_known_args()
 
     # output/formatting settings

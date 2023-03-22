@@ -484,6 +484,17 @@ class CLI:  # pylint: disable=too-many-instance-attributes
         Given a command, action, and remaining kwargs, finds and executes the
         action
         """
+        if (command, action) in [
+            ("linodes", "ips-list"),
+            ("firewalls", "rules-list"),
+        ] and "--json" not in args:
+            print(
+                "This output contains a nested structure that may not properly "
+                + "be displayed by linode-cli.",
+                "A fix is currently on the roadmap but has not yet been implemented.",
+                "Please use --json for endpoints like this in the meantime.",
+                file=sys.stderr,
+            )
 
         try:
             operation = self.find_operation(command, action)
