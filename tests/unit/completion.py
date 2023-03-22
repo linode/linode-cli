@@ -31,7 +31,7 @@ cur="${COMP_WORDS[COMP_CWORD]}"
 prev="${COMP_WORDS[COMP_CWORD-1]}"
 
 case "${prev}" in
-    linode-cli)
+    linode-cli | linode | lin)
         COMPREPLY=( $(compgen -W "temp_key --help" -- ${cur}) )
         return 0
         ;;
@@ -93,5 +93,5 @@ complete -F _linode_cli lin"""
             self.assertNotIn("_base_url", new_ops)
             self.assertNotIn("_spec_version", new_ops)
 
-        m.assert_called_with("lin.sh", "w", encoding="utf-8")
-        m.return_value.write.assert_called_with(self.bash_expected)
+        m.assert_called_with("linode-cli.sh", "w", encoding="utf-8")
+        m.return_value.write.assert_called_once_with(self.bash_expected)

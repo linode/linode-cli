@@ -4,8 +4,6 @@ build
 dist
 *.egg-info
 linode-cli.sh
-linode.sh
-lin.sh
 baked_version
 data-2
 data-3

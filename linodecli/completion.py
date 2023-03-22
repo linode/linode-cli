@@ -17,10 +17,6 @@ def bake_completions(ops):
     rendered = get_bash_completions(ops)
     with open("linode-cli.sh", "w", encoding="utf-8") as bash_f:
         bash_f.write(rendered)
-    with open("linode.sh", "w", encoding="utf-8") as bash_f:
-        bash_f.write(rendered)
-    with open("lin.sh", "w", encoding="utf-8") as bash_f:
-        bash_f.write(rendered)
 
 
 def get_completions(ops, help_flag, action):
@@ -94,7 +90,7 @@ cur="${COMP_WORDS[COMP_CWORD]}"
 prev="${COMP_WORDS[COMP_CWORD-1]}"
 
 case "${prev}" in
-    linode-cli)
+    linode-cli | linode | lin)
         COMPREPLY=( $(compgen -W "$actions --help" -- ${cur}) )
         return 0
         ;;
