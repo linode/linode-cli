@@ -83,6 +83,8 @@ setup(
     entry_points={
         "console_scripts": [
             "linode-cli = linodecli:main",
+            "linode = linodecli:main",
+            "lin  = linodecli:main",
         ]
     },
     data_files=get_baked_files(),
