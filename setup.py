@@ -65,6 +65,9 @@ else:
     version = get_version()
     bake_version(version)
 
+with open('requirements.txt') as f:
+    requirements = f.read().splitlines()
+
 setup(
     name="linode-cli",
     version=version,
@@ -75,11 +78,7 @@ setup(
     url="https://www.linode.com/docs/api/",
     packages=find_packages(include=['linodecli*']),
     license="BSD 3-Clause License",
-    install_requires=[
-        "terminaltables",
-        "requests",
-        "PyYAML",
-    ],
+    install_requires=requirements,
     entry_points={
         "console_scripts": [
             "linode-cli = linodecli:main",
