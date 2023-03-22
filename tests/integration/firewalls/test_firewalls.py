@@ -114,13 +114,15 @@ def test_create_firewall_with_minimum_required_args():
 
 
 def test_fails_to_create_firewall_without_inbound_policy():
+    timestamp = str(int(time.time()))
+    firewall_label = "label-fw-test_in" + timestamp
     result = (
         exec_failing_test_command(
             BASE_CMD
             + [
                 "create",
                 "--label",
-                FIREWALL_LABEL,
+                firewall_label,
                 "--rules.outbound_policy",
                 "ACCEPT",
                 "--text",
@@ -137,13 +139,15 @@ def test_fails_to_create_firewall_without_inbound_policy():
 
 
 def test_fails_to_create_firewall_without_outbound_policy():
+    timestamp = str(int(time.time()))
+    firewall_label = "label-fw-test_out" + timestamp
     result = (
         exec_failing_test_command(
             BASE_CMD
             + [
                 "create",
                 "--label",
-                FIREWALL_LABEL,
+                firewall_label,
                 "--rules.inbound_policy",
                 "DROP",
                 "--text",
