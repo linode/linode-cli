@@ -151,20 +151,28 @@ def _handle_no_default_user(self):
             self.config.set("DEFAULT", "default-user", username)
             self.config.add_section(username)
             self.config.set(username, "token", token)
-            self.config.set(
-                username, "region", self.config.get("DEFAULT", "region")
-            )
-            self.config.set(
-                username, "type", self.config.get("DEFAULT", "type")
-            )
-            self.config.set(
-                username, "image", self.config.get("DEFAULT", "image")
-            )
-            self.config.set(
-                username,
-                "authorized_keys",
-                self.config.get("DEFAULT", "authorized_keys"),
-            )
+
+            if self.config.has_option("DEFAULT", "region"):
+                self.config.set(
+                    username, "region", self.config.get("DEFAULT", "region")
+                )
+
+            if self.config.has_option("DEFAULT", "type"):
+                self.config.set(
+                    username, "type", self.config.get("DEFAULT", "type")
+                )
+
+            if self.config.has_option("DEFAULT", "image"):
+                self.config.set(
+                    username, "image", self.config.get("DEFAULT", "image")
+                )
+
+            if self.config.has_option("DEFAULT", "authorized_keys"):
+                self.config.set(
+                    username,
+                    "authorized_keys",
+                    self.config.get("DEFAULT", "authorized_keys"),
+                )
 
             self.write_config()
         else:
