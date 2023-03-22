@@ -59,9 +59,9 @@ $command_items"""
     command_template = Template(
         """complete -c linode-cli -n "__fish_seen_subcommand_from $command" \
 -x -a '$actions --help'
-    complete -c linode -n "__fish_seen_subcommand_from $command" \
+complete -c linode -n "__fish_seen_subcommand_from $command" \
 -x -a '$actions --help'
-    complete -c lin -n "__fish_seen_subcommand_from $command" \
+complete -c lin -n "__fish_seen_subcommand_from $command" \
 -x -a '$actions --help'"""
     )
 
@@ -106,8 +106,7 @@ esac
 
 complete -F _linode_cli linode-cli
 complete -F _linode_cli linode
-complete -F _linode_cli lin
-"""
+complete -F _linode_cli lin"""
     )
 
     command_template = Template(

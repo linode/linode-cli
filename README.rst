@@ -66,7 +66,7 @@ Upgrading::
 Usage
 -----
 
-The Linode CLI is invoked with the `linode-cli`. There are two aliases availabe `linode` and `lin`.
+The Linode CLI is invoked with the `linode-cli`. There are two aliases available: `linode` and `lin`.
 The CLI accepts two primary arguments, *command*  and *action*::
 
    linode-cli <command> <action>

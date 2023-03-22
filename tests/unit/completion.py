@@ -17,7 +17,11 @@ class CompletionTests(unittest.TestCase):
     ops = {"temp_key": {"temp_action": "description"}}
     fish_expected = """# This is a generated file by Linode-CLI! Do not modify!
 complete -c linode-cli -n "not __fish_seen_subcommand_from temp_key" -x -a 'temp_key --help'
-complete -c linode-cli -n "__fish_seen_subcommand_from temp_key" -x -a 'temp_action --help'"""
+complete -c linode -n "not __fish_seen_subcommand_from temp_key" -x -a 'temp_key --help'
+complete -c lin -n "not __fish_seen_subcommand_from temp_key" -x -a 'temp_key --help'
+complete -c linode-cli -n "__fish_seen_subcommand_from temp_key" -x -a 'temp_action --help'
+complete -c linode -n "__fish_seen_subcommand_from temp_key" -x -a 'temp_action --help'
+complete -c lin -n "__fish_seen_subcommand_from temp_key" -x -a 'temp_action --help'"""
     bash_expected = """# This is a generated file by Linode-CLI! Do not modify!
 _linode_cli()
 {
@@ -40,7 +44,9 @@ case "${prev}" in
 esac
 }
 
-complete -F _linode_cli linode-cli"""
+complete -F _linode_cli linode-cli
+complete -F _linode_cli linode
+complete -F _linode_cli lin"""
 
     def test_fish_completion(self):
         """
@@ -87,5 +93,5 @@ complete -F _linode_cli linode-cli"""
             self.assertNotIn("_base_url", new_ops)
             self.assertNotIn("_spec_version", new_ops)
 
-        m.assert_called_with("linode-cli.sh", "w", encoding="utf-8")
-        m.return_value.write.assert_called_once_with(self.bash_expected)
+        m.assert_called_with("lin.sh", "w", encoding="utf-8")
+        m.return_value.write.assert_called_with(self.bash_expected)
