@@ -2,6 +2,7 @@
 The helper functions for the object storage plugin.
 """
 import getpass
+import os
 import socket
 import sys
 import time
@@ -292,3 +293,25 @@ def _configure_plugin(client: CLI):
 
     client.config.plugin_set_value("cluster", cluster)
     client.config.write_config()
+
+
+def get_credentials(cli: CLI):
+    """
+    Get access_key and secret_key of the object storage.
+    """
+    access_key, secret_key = (
+        os.getenv(ENV_ACCESS_KEY_NAME, None),
+        os.getenv(ENV_SECRET_KEY_NAME, None),
+    )
+    if bool(access_key) != bool(secret_key):
+        print(
+            f"You must set both {ENV_ACCESS_KEY_NAME} "
+            f"and {ENV_SECRET_KEY_NAME}, or neither"
+        )
+        sys.exit(1)
+
+    # not given on command line, so look them up
+    if not access_key:
+        access_key, secret_key = _get_s3_creds(cli)
+
+    return access_key, secret_key
