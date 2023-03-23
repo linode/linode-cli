@@ -5,8 +5,8 @@ The config of the object storage plugin.
 ENV_ACCESS_KEY_NAME = "LINODE_CLI_OBJ_ACCESS_KEY"
 ENV_SECRET_KEY_NAME = "LINODE_CLI_OBJ_SECRET_KEY"
 # replace {} with the cluster name
-BASE_URL_TEMPLATE = "{}.linodeobjects.com"
-BASE_WEBSITE_TEMPLATE = "website-{}.linodeobjects.com"
+BASE_URL_TEMPLATE = "https://{}.linodeobjects.com"
+BASE_WEBSITE_TEMPLATE = "{bucket}.website-{cluster}.linodeobjects.com"
 
 # for all date output
 DATE_FORMAT = "%Y-%m-%d %H:%M"
@@ -14,6 +14,8 @@ INCOMING_DATE_FORMAT = "%Y-%m-%dT%H:%M:%S.%fZ"
 
 # for help commands
 PLUGIN_BASE = "linode-cli obj"
+
+PROGRESS_BAR_WIDTH = 100
 
 # constant error messages
 NO_SCOPES_ERROR = """Your OAuth token isn't authorized to create Object Storage keys.
