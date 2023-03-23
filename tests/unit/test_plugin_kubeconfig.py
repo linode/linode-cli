@@ -3,7 +3,8 @@ import contextlib
 import importlib
 import io
 import os
-import shutil
+import random
+import string
 import tempfile
 
 import pytest
@@ -117,13 +118,11 @@ def test_nonexisting_id(mock_cli):
 
 
 # Test the output when the provided path exists but the file there contains improper YAML
-def test_improper_file(mock_cli):
+def test_improper_file(mock_cli, fake_empty_file):
     stderr_buf = io.StringIO()
     mock_cli.call_operation = mock_call_operation
 
-    os.makedirs(os.path.expanduser("~/fake/path"), exist_ok=True)
-    with open(os.path.expanduser("~/fake/path/config"), "w", encoding="utf-8"):
-        pass
+    file_path = fake_empty_file
 
     try:
         with contextlib.redirect_stderr(stderr_buf):
@@ -132,14 +131,12 @@ def test_improper_file(mock_cli):
                     "--label",
                     "nonempty_data",
                     "--kubeconfig",
-                    "~/fake/path/config",
+                    file_path,
                 ],
                 PluginContext("REALTOKEN", mock_cli),
             )
     except SystemExit as err:
         assert err.code == 1
-
-    shutil.rmtree(os.path.expanduser("~/fake/"))
 
     assert "Could not load file at" in stderr_buf.getvalue()
 
@@ -149,6 +146,8 @@ def test_no_existing_config(mock_cli):
     stdout_buf = io.StringIO()
     mock_cli.call_operation = mock_call_operation
 
+    random_dir = "".join(random.choice(string.ascii_letters) for i in range(10))
+
     try:
         with contextlib.redirect_stdout(stdout_buf):
             plugin.call(
@@ -156,7 +155,7 @@ def test_no_existing_config(mock_cli):
                     "--label",
                     "nonempty_data",
                     "--kubeconfig",
-                    "~/fake/path/config",
+                    "~/fake/path/" + random_dir + "/config",
                     "--dry-run",
                 ],
                 PluginContext("REALTOKEN", mock_cli),
@@ -204,6 +203,16 @@ def test_merge(mock_cli, fake_kubeconfig_file):
 def fake_kubeconfig_file():
     with tempfile.NamedTemporaryFile(delete=False) as fp:
         fp.write(bytes(TEST_YAML_CONTENT_A, "utf-8"))
+        file_path = fp.name
+
+    yield file_path
+
+    os.remove(file_path)
+
+
+@pytest.fixture(scope="session", autouse=True)
+def fake_empty_file():
+    with tempfile.NamedTemporaryFile(delete=False) as fp:
         file_path = fp.name
 
     yield file_path

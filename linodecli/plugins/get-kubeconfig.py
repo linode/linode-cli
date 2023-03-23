@@ -81,19 +81,15 @@ def call(args, context):
 
     # If there is no current kubeconfig, dump the cluster config to the specified file location.
     # If there is a current kubeconfig, merge it with the cluster's kubeconfig
-    if not currentConfig:
-        if parsed.dry_run:
-            print(clusterConfig)
-        else:
-            _dump_config(os.path.expanduser(parsed.kubeconfig), clusterConfig)
+    clusterConfig = (
+        _merge_dict(currentConfig, clusterConfig)
+        if currentConfig is not None
+        else clusterConfig
+    )
+    if parsed.dry_run:
+        print(clusterConfig)
     else:
-        if parsed.dry_run:
-            print(_merge_dict(currentConfig, clusterConfig))
-        else:
-            _dump_config(
-                os.path.expanduser(parsed.kubeconfig),
-                _merge_dict(currentConfig, clusterConfig),
-            )
+        _dump_config(os.path.expanduser(parsed.kubeconfig), clusterConfig)
 
 
 # Fetches the kubeconfig of the lke cluster with the specified label
@@ -151,20 +147,22 @@ def _dump_config(filepath, data):
 # dicts differ, uses the value from the first dict.
 def _merge_dict(dict_1, dict_2):
     for key in dict_1:
-        if isinstance(dict_1[key], list):
-            # Extract names of each list item for both dicts
-            dict1_names = [sub["name"] for sub in dict_1[key]]
-            dict2_names = [sub["name"] for sub in dict_2[key]]
+        if not isinstance(dict_1[key], list):
+            continue
 
-            new_entries = []
+        # Extract names of each list item for both dicts
+        dict1_names = [sub["name"] for sub in dict_1[key]]
+        dict2_names = [sub["name"] for sub in dict_2[key]]
 
-            # Add all dict_2 entries with unique names to new_entries
-            for index, value in enumerate(dict2_names):
-                if value not in dict1_names:
-                    new_entries.append(dict_2[key][index])
+        new_entries = []
 
-            # Concat dict_1 list with new_entries and update dict_1 list to concatenated list
-            merged = dict_1[key] + new_entries
-            dict_1[key] = merged
+        # Add all dict_2 entries with unique names to new_entries
+        for index, value in enumerate(dict2_names):
+            if value not in dict1_names:
+                new_entries.append(dict_2[key][index])
+
+        # Concat dict_1 list with new_entries and update dict_1 list to concatenated list
+        merged = dict_1[key] + new_entries
+        dict_1[key] = merged
 
     return dict_1
