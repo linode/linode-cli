@@ -60,8 +60,6 @@ try:
     import boto3
     from boto3.exceptions import S3UploadFailedError
     from boto3.s3.transfer import MB, TransferConfig
-    from boto.exception import BotoClientError, S3CreateError, S3ResponseError
-    from boto.s3.prefix import Prefix
     from botocore.exceptions import ClientError
 
     HAS_BOTO = True
@@ -185,24 +183,27 @@ def delete_bucket(get_client, args):
 
     parsed = parser.parse_args(args)
     client = get_client()
+    bucket_name = parsed.name
 
     if parsed.recursive:
-        try:
-            bucket = client.get_bucket(parsed.name)
-        except S3ResponseError:
-            print("No bucket named " + parsed.name)
-            sys.exit(2)
+        objects = [
+            {"Key": obj.get("Key")}
+            for obj in client.list_objects_v2(Bucket=bucket_name).get(
+                "Contents", []
+            )
+            if obj.get("Key")
+        ]
+        client.delete_objects(
+            Bucket=bucket_name,
+            Delete={
+                "Objects": objects,
+                "Quiet": False,
+            },
+        )
 
-        for c in bucket.list():
-            print(f"delete: {parsed.name} {c.key}")
-            bucket.delete_key(c)
-    bucket_name = parsed.name
-    try:
-        client.delete_bucket(Bucket=bucket_name)
-    except client.exceptions.NoSuchBucket:
-        print("No bucket named " + bucket_name)
-        sys.exit(2)
-    print("Bucket {parsed.name} removed")
+    client.delete_bucket(Bucket=bucket_name)
+
+    print(f"Bucket {parsed.name} removed")
 
     sys.exit(0)
 
@@ -616,8 +617,8 @@ def call(
     if not HAS_BOTO:
         # we can't do anything - ask for an install
         print(
-            "This plugin requires the 'boto' module.  Please install it by running "
-            "'pip3 install boto' or 'pip install boto'"
+            "This plugin requires the 'boto3' module.  Please install it by running "
+            "'pip3 install boto3' or 'pip install boto3'"
         )
 
         sys.exit(2)  # requirements not met - we can't go on
@@ -658,7 +659,7 @@ def call(
 
     def get_client():
         """
-        Get the boto client based on the cluster, or ask to configure a
+        Get the boto3 client based on the cluster, or ask to configure a
         default cluster if one is not specified. This is in a method so
         command methods can do this work AFTER displaying help,
         that way help can be shown without specifying a cluster
@@ -686,7 +687,7 @@ def call(
 
 def _get_boto_client(cluster, access_key, secret_key):
     """
-    Returns a boto client object that can be used to communicate with the Object
+    Returns a boto3 client object that can be used to communicate with the Object
     Storage cluster.
     """
     client = boto3.client(
@@ -697,16 +698,4 @@ def _get_boto_client(cluster, access_key, secret_key):
         endpoint_url=BASE_URL_TEMPLATE.format(cluster),
     )
     client.cluster = cluster
-    # print(s3_client, type(s3_client))
-    # boto3_bucket = s3.Bucket('mybucket')
-    # client = boto.connect_s3(
-    #     aws_access_key_id=access_key,
-    #     aws_secret_access_key=secret_key,
-    #     host=BASE_URL_TEMPLATE.format(cluster),
-    #     calling_format=OrdinaryCallingFormat(),
-    # )
-
-    # # set this for later use
-    # client.cluster = cluster
-    # s3_client.get_buck
     return client
