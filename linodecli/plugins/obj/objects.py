@@ -1,6 +1,5 @@
-# pylint: disable=too-many-lines
 """
-CLI Plugin for handling OBJ
+Resources for object manipulation related commands
 """
 import platform
 import sys
@@ -68,15 +67,13 @@ def upload_object(get_client, args):  # pylint: disable=too-many-locals
     to_upload = []
     # to_multipart_upload = []
     files = list(parsed.file)
-    for c in files:
-        file_path = Path(c).resolve()
-
+    for f in files:
         # Windows doesn't natively expand globs, so we should implement it here
-        if platform.system() == "Windows" and "*" in file_path:
-            results = expand_globs(file_path)
+        if platform.system() == "Windows" and "*" in f:
+            results = expand_globs(f)
             files.extend(results)
             continue
-
+        file_path = Path(f).resolve()
         if not file_path.is_file():
             print(f"No file {file_path}")
             sys.exit(5)
@@ -89,9 +86,6 @@ def upload_object(get_client, args):  # pylint: disable=too-many-locals
     upload_options = {
         "Bucket": parsed.bucket,
         "Config": TransferConfig(multipart_chunksize=chunk_size * MB),
-        "Callback": ProgressPercentage(
-            file_path.stat().st_size, PROGRESS_BAR_WIDTH
-        ),
     }
 
     if policy:
@@ -102,6 +96,9 @@ def upload_object(get_client, args):  # pylint: disable=too-many-locals
         upload_options["Filename"] = str(file_path.resolve())
         upload_options["Key"] = filename
         try:
+            upload_options["Callback"] = ProgressPercentage(
+                file_path.stat().st_size, PROGRESS_BAR_WIDTH
+            )
             client.upload_file(**upload_options)
         except S3UploadFailedError as e:
             sys.exit(e)

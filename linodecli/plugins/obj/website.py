@@ -1,6 +1,5 @@
-# pylint: disable=too-many-lines
 """
-CLI Plugin for handling OBJ
+Resources for static website hosting related commands.
 """
 from argparse import ArgumentParser
 

@@ -1,6 +1,5 @@
-# pylint: disable=too-many-lines
 """
-CLI Plugin for handling OBJ
+Resources for usage checking commands.
 """
 import sys
 from argparse import ArgumentParser

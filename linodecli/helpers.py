@@ -76,6 +76,10 @@ def register_args_shared(parser):
 
 
 def expand_globs(pattern: str):
+    """
+    Expand glob pattern (for example, '/some/path/*.txt')
+    to be a list of path object.
+    """
     results = glob.glob(pattern, recursive=True)
     if len(results) < 1:
         print(f"No file found matching pattern {pattern}")

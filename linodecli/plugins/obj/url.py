@@ -1,6 +1,5 @@
-# pylint: disable=too-many-lines
 """
-CLI Plugin for handling OBJ
+Resources for generating url command.
 """
 from argparse import ArgumentParser
 from datetime import datetime

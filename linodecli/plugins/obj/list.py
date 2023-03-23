@@ -1,3 +1,6 @@
+"""
+Resources for `ls` or `la` commands
+"""
 import sys
 from argparse import ArgumentParser
 
@@ -10,7 +13,9 @@ from linodecli.plugins.obj.helpers import (
 )
 
 
-def list_objects_or_buckets(get_client, args):
+def list_objects_or_buckets(
+    get_client, args
+):  # pylint: disable=too-many-locals
     """
     Lists buckets or objects
     """

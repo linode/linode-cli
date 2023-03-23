@@ -2,19 +2,10 @@
 """
 CLI Plugin for handling OBJ
 """
-import getpass
-import glob
-import math
-import os
-import platform
-import socket
 import sys
-import time
 from argparse import ArgumentParser
 from contextlib import suppress
-from datetime import datetime
 from math import ceil
-from pathlib import Path
 from typing import List
 
 from terminaltables import SingleTable
@@ -49,9 +40,7 @@ from linodecli.plugins.obj.helpers import (
     _get_s3_creds,
     _pad_to,
     _progress,
-    bucket_accessible,
     get_credentials,
-    object_accessible,
     regenerate_s3_credentials,
     restricted_int_arg_type,
 )
@@ -196,7 +185,7 @@ def call(
             "or invoke with --cluster to specify a cluster."
         )
         _configure_plugin(context.client)
-        current_cluster = context.client.config.plugin_get_value("cluster")
+        return context.client.config.plugin_get_value("cluster")
 
     def get_client():
         """

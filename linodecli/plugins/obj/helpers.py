@@ -9,7 +9,6 @@ import time
 from argparse import ArgumentTypeError
 from datetime import datetime
 
-from botocore.exceptions import ClientError
 from terminaltables import SingleTable
 
 from linodecli.cli import CLI
@@ -24,7 +23,11 @@ from linodecli.plugins.obj.config import (
 )
 
 
-class ProgressPercentage:
+class ProgressPercentage:  # pylint: disable=too-few-public-methods
+    """
+    Progress bar class for boto3 file upload/download
+    """
+
     def __init__(self, file_size: int, bar_width: int):
         self.size = file_size
         self.uploaded = 0
@@ -54,6 +57,8 @@ def _progress(cur: float, total: float):
 
     percent = f"{100 * (cur / float(total)):.1f}"
     progress = int(100 * cur // total)
+    progress_bar = ("#" * progress) + ("-" * (100 - progress))
+    print(f"\r |{progress_bar}| {percent}%", end="\r")
 
     if cur == total:
         print()
@@ -139,27 +144,6 @@ def _borderless_table(data):
     tab.padding_right = 2
 
     return tab
-
-
-def object_accessible(bucket: str, key: str, get_client, *args, **kwargs):
-    client = get_client()
-    try:
-        client.head_object(
-            Bucket=bucket,
-            Key=key,
-        )
-    except ClientError:
-        return False
-    return True
-
-
-def bucket_accessible(bucket: str, get_client, *args, **kwargs):
-    client = get_client()
-    try:
-        print(client.head_bucket(Bucket=bucket))
-    except ClientError:
-        return False
-    return True
 
 
 def _get_s3_creds(client: CLI, force: bool = False):
