@@ -260,7 +260,6 @@ def test_show_usage(
     generate_test_file: GetTestFileType,
     create_bucket: Callable[[Optional[str]], str],
 ):
-    
     patch_keys(keys, monkeypatch)
 
     KB = 1024
@@ -272,9 +271,7 @@ def test_show_usage(
     bucket1 = create_bucket()
     bucket2 = create_bucket()
 
-    exec_test_command(
-        BASE_CMD + ["put", str(large_file1), bucket1]
-    )
+    exec_test_command(BASE_CMD + ["put", str(large_file1), bucket1])
 
     exec_test_command(
         BASE_CMD + ["put", str(large_file1), str(large_file2), bucket2]
@@ -305,11 +302,11 @@ def test_generate_url(
     bucket = create_bucket()
     test_file = generate_test_file().resolve()
 
-    exec_test_command(
-        BASE_CMD + ["put", str(test_file), bucket]
-    )
+    exec_test_command(BASE_CMD + ["put", str(test_file), bucket])
 
-    process = exec_test_command(BASE_CMD + ["signurl", bucket, test_file.name, "+300"])
+    process = exec_test_command(
+        BASE_CMD + ["signurl", bucket, test_file.name, "+300"]
+    )
     url = process.stdout.decode()
     response = requests.get(url)
     assert response.status_code == 200
