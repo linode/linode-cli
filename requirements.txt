@@ -1,4 +1,5 @@
 terminaltables
+openapi3
 requests
 PyYAML
 packaging

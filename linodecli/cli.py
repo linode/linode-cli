@@ -7,6 +7,7 @@ import pickle
 import re
 import sys
 from sys import version_info
+from openapi3 import OpenAPI
 
 from .api_request import do_request
 from .configuration import CLIConfig
@@ -38,136 +39,6 @@ class CLI:  # pylint: disable=too-many-instance-attributes
         self.output_handler = OutputHandler()
         self.config = CLIConfig(self.base_url, skip_config=skip_config)
         self.load_baked()
-
-    def _resolve_allOf(self, node):
-        """
-        Given the contents of an "allOf" node, returns the entire dct having parsed
-        all refs and combined all other nodes.
-
-        :param node: The contents of an 'allOf'
-        :type node: list
-        """
-        ret = {}
-
-        for cur in node:
-            data = cur
-            if "$ref" in cur:
-                data = self._resolve_ref(cur["$ref"])
-            props = {}
-            if "properties" in data:
-                props = data["properties"]
-            elif "$ref" in cur and "/properties/" in cur["$ref"]:
-                # if we referenced a property, we got a property
-                props = data
-            else:
-                print(f"Warning: Resolved empty node for {cur} in {node}")
-            ret.update(props)
-        return ret
-
-    def _resolve_ref(self, ref):
-        """
-        Resolves a reference to the referenced component.
-
-        :param ref: A reference path, like '#/components/schemas/Linode'
-        :type ref: str
-
-        :returns: The resolved reference
-        :rtype: dct
-        """
-        path_parts = ref.split("/")[1:]
-        tmp = self.spec
-        for part in path_parts:
-            tmp = tmp[part]
-
-        return tmp
-
-    def _resolve_arg_recursive(self, info):
-        if "allOf" in info:
-            return self._resolve_arg_recursive(
-                self._resolve_allOf(info["allOf"])
-            )
-
-        if "$ref" in info:
-            return self._resolve_arg_recursive(self._resolve_ref(info["$ref"]))
-
-        return info
-
-    def _parse_args(
-        self, node, prefix=None, args=None
-    ):  # pylint: disable=too-many-branches
-        """
-        Given a node in a requestBody, parses out the properties and returns the
-        CLIArg info
-        """
-        if args is None:
-            args = {}
-        if prefix is None:
-            prefix = []
-
-        for arg, info in node.items():
-            read_only = info.get("readOnly")
-
-            info = self._resolve_arg_recursive(info)
-
-            # We want to apply the top-level read-only value to this argument if necessary
-            if read_only:
-                info["readOnly"] = read_only
-
-            if "properties" in info:
-                self._parse_args(
-                    info["properties"], prefix=prefix + [arg], args=args
-                )
-                continue  # we can't edit this level of the tree
-            if info.get("readOnly"):
-                continue
-            if "$ref" in info:
-                info = self._resolve_ref(info["$ref"])
-            path = ".".join(prefix + [arg])
-            args[path] = {
-                "type": info.get("type") or "string",
-                "desc": info.get("description") or "",
-                "name": arg,
-                "format": info.get(
-                    "x-linode-cli-format", info.get("format", None)
-                ),
-            }
-
-            # if this is coming in as json, stop here
-            if args[path]["format"] == "json":
-                args[path]["type"] = "object"
-                continue
-
-            # handle input lists
-            if args[path]["type"] == "array" and "items" in info:
-                items = info["items"]
-
-                if "allOf" in items:
-                    # if items contain an "allOf", parse it down and format it
-                    # as is expected here
-                    items = self._resolve_allOf(items["allOf"])
-                    items = {"type": "object", "items": items}
-                if "$ref" in items:
-                    # if it's just a ref, parse that out too
-                    items = self._resolve_ref(items["$ref"])
-
-                args[path]["item_type"] = items["type"]
-
-                if (
-                    items["type"] == "object"
-                    and "properties" in items
-                    and not items.get("readOnly")
-                ):
-                    # this is a special case - each item has its own properties
-                    # that we need to capture separately
-                    item_args = self._parse_args(
-                        items["properties"], prefix=prefix + [arg]
-                    )
-                    for _, v in item_args.items():
-                        v["list_item"] = path
-                    args.update(item_args)
-                    del args[path]  # remove the base element, which is junk
-
-        return args
 
     def _parse_properties(self, node, prefix=None):
         """
@@ -206,232 +77,117 @@ class CLI:  # pylint: disable=too-many-instance-attributes
         """
         Generates ops and bakes them to a pickle
         """
+        spec = OpenAPI(spec)
         self.spec = spec
         self.ops = {}
-        default_servers = [c["url"] for c in spec["servers"]]
+        default_servers = [c.url for c in spec.servers]
+        ext = {
+            'skip': 'linode-cli-skip',
+            'action': 'linode-cli-action',
+            'command': 'linode-cli-command',
+            'defaults': 'linode-cli-allowed-defaults',
+        }
 
-        for path, data in self.spec[  # pylint: disable=too-many-nested-blocks
-            "paths"
-        ].items():  # pylint: disable=too-many-nested-blocks
-            command = data.get("x-linode-cli-command") or "default"
-            if command not in self.ops:
-                self.ops[command] = {}
+        for path in spec.paths:
+            if hasattr(spec.paths[path], 'extensions'):
+                if ext['command'] in spec.paths[path].extensions:
+                    command = spec.paths[path].extensions[ext['command']]
+                else:
+                    continue
 
-            params = []
-            if "parameters" in data:
-                for info in data["parameters"]:
-                    if "$ref" in info:
-                        info = self._resolve_ref(info["$ref"])
-                    params.append(
-                        URLParam(info["name"], info["schema"]["type"])
-                    )
-            for m in METHODS:
-                if m in data:
-                    if data[m].get("x-linode-cli-skip"):
-                        # some actions aren't available to the CLI - skip them
+            for method in METHODS:
+                if (hasattr(spec.paths[path], method)
+                    and hasattr(getattr(spec.paths[path], method), 'extensions')):
+                    method_spec = getattr(spec.paths[path], method)
+                    extensions = method_spec.extensions
+                    if ext['skip'] in extensions:
                         continue
-
-                    action = data[m].get("x-linode-cli-action") or data[m].get(
-                        "operationId"
-                    )
-
-                    if action is None:
-                        print(f"warn: no operationId for {m.upper()} {path}")
+                    if ext['action'] in extensions:
+                        action = extensions[ext['action']]
+                        if isinstance(action, list):
+                            action_alias = action[1:]
+                            action = action[0]
+                        self.ops[command][action] = {}
+                    else:
                         continue
+                else:
+                    continue
 
-                    action_aliases = None
+                request_schema = method_spec.requestBody.content['application/json'].schema
+                response_schema = method_spec.respones['200'].content['application/json'].schema
 
-                    if isinstance(action, list):
-                        if len(action) < 1:
-                            print(f"warn: empty list for action {m.upper()}")
-                            continue
+                summary = method_spec.summary
+                required_fields = request_schema.required
+                allowed_defaults = method_spec.extensions[ext['defaults']] or None
 
-                        action_aliases = action[1:]
-                        action = action[0]
+                args = {}
+                params = {}
+                response_model={}
 
-                    summary = (
-                        filter_markdown_links(data[m].get("summary")) or ""
+                docs_url = None
+                tags = method_spec.tags
+                if tags is not None and len(tags) > 0 and len(summary) > 0:
+                    tag_path = self._flatten_url_path(tags[0])
+                    summary_path = self._flatten_url_path(summary)
+                    docs_url = f"https://www.linode.com/docs/api/{tag_path}/#{summary_path}"
+
+                use_servers = (
+                    [c.url for c in spec.servers]
+                    if hasattr(method_spec, 'servers')
+                    else default_servers
+                )
+
+                cli_args = []
+                for arg, info in args.items():
+                    new_arg = CLIArg(
+                        info["name"],
+                        info["type"],
+                        filter_markdown_links(
+                            info["desc"].split(".")[0] + "."
+                        ),
+                        arg,
+                        info["format"],
+                        list_item=info.get("list_item"),
                     )
 
-                    # Resolve the documentation URL
-                    docs_url = None
-                    tags = data[m].get("tags")
-                    if tags is not None and len(tags) > 0 and len(summary) > 0:
-                        tag_path = self._flatten_url_path(tags[0])
-                        summary_path = self._flatten_url_path(summary)
-                        docs_url = f"https://www.linode.com/docs/api/{tag_path}/#{summary_path}"
+                    if arg in required_fields:
+                        new_arg.required = True
 
-                    use_servers = (
-                        [c["url"] for c in data[m]["servers"]]
-                        if "servers" in data[m]
-                        else default_servers
-                    )
+                    # handle arrays
+                    if "item_type" in info:
+                        new_arg.arg_item_type = info["item_type"]
+                    cli_args.append(new_arg)
 
-                    args = {}
-                    required_fields = []
-                    allowed_defaults = None
-                    if m in ("post", "put") and "requestBody" in data[m]:
-                        allowed_defaults = data[m]["requestBody"].get(
-                            "x-linode-cli-allowed-defaults", None
+                # looks for param names that will be obscured by args
+                # clone the params since they're shared by all methods in this
+                # path, and we only want to modify this method's params
+                use_params = [c.clone() for c in params]
+                use_path = path
+                for p in use_params:
+                    if p.name in args:
+                        # or (m == 'get' and p.name in model_attrs):
+                        # if we found a parameter name that is also and argument name
+                        # append an underscore to both the parameter name and the
+                        # parameter name in the URL
+                        use_path = use_path.replace(
+                            "{" + p.name + "}", "{" + p.name + "_}"
                         )
+                        p.name += "_"
 
-                        if (
-                            "application/json"
-                            in data[m]["requestBody"]["content"]
-                        ):
-                            body_schema = data[m]["requestBody"]["content"][
-                                "application/json"
-                            ]["schema"]
-
-                            if "required" in body_schema:
-                                required_fields = body_schema["required"]
-
-                            if "allOf" in body_schema:
-                                body_schema = self._resolve_allOf(
-                                    body_schema["allOf"]
-                                )
-                            if "required" in body_schema:
-                                required_fields += body_schema["required"]
-                            if "$ref" in body_schema:
-                                body_schema = self._resolve_ref(
-                                    body_schema["$ref"]
-                                )
-                            if "required" in body_schema:
-                                required_fields += body_schema["required"]
-                            if "properties" in body_schema:
-                                body_schema = body_schema["properties"]
-                            if "required" in body_schema:
-                                required_fields += body_schema["required"]
-
-                            args = self._parse_args(body_schema, args={})
-
-                    response_model = None
-                    if (
-                        "200" in data[m]["responses"]
-                        and "application/json"
-                        in data[m]["responses"]["200"]["content"]
-                    ):
-                        resp_con = data[m]["responses"]["200"]["content"][
-                            "application/json"
-                        ]["schema"]
-
-                        if (
-                            "x-linode-cli-use-schema"
-                            in data[m]["responses"]["200"]["content"][
-                                "application/json"
-                            ]
-                        ):
-                            # this body is atypical, and defines its own columns
-                            # using this schema instead of the normal one.  This
-                            # is usually pairs with x-linode-cli-rows so to handle
-                            # endpoints that returns irregularly formatted data
-                            resp_con = data[m]["responses"]["200"]["content"][
-                                "application/json"
-                            ]["x-linode-cli-use-schema"]
-
-                        if "$ref" in resp_con:
-                            resp_con = self._resolve_ref(resp_con["$ref"])
-                        if "allOf" in resp_con:
-                            resp_con.update(
-                                self._resolve_allOf(resp_con["allOf"])
-                            )
-                        # handle pagination envelope
-                        if (
-                            "properties" in resp_con
-                            and "pages" in resp_con["properties"]
-                        ):
-                            resp_con = resp_con["properties"]
-                        if "pages" in resp_con and "data" in resp_con:
-                            if "$ref" in resp_con["data"]["items"]:
-                                resp_con = self._resolve_ref(
-                                    resp_con["data"]["items"]["$ref"]
-                                )
-                            else:
-                                resp_con = resp_con["data"]["items"]
-
-                        attrs = []
-                        if "properties" in resp_con:
-                            attrs = self._parse_properties(
-                                resp_con["properties"]
-                            )
-                            # maybe we have special columns?
-                            rows = (
-                                data[m]["responses"]["200"]["content"][
-                                    "application/json"
-                                ].get("x-linode-cli-rows")
-                                or None
-                            )
-                            nested_list = (
-                                data[m]["responses"]["200"]["content"][
-                                    "application/json"
-                                ].get("x-linode-cli-nested-list")
-                                or None
-                            )
-                            response_model = ResponseModel(
-                                attrs, rows=rows, nested_list=nested_list
-                            )
-
-                    cli_args = []
-
-                    for arg, info in args.items():
-                        new_arg = CLIArg(
-                            info["name"],
-                            info["type"],
-                            filter_markdown_links(
-                                info["desc"].split(".")[0] + "."
-                            ),
-                            arg,
-                            info["format"],
-                            list_item=info.get("list_item"),
-                        )
-
-                        if arg in required_fields:
-                            new_arg.required = True
-
-                        # handle arrays
-                        if "item_type" in info:
-                            new_arg.arg_item_type = info["item_type"]
-                        cli_args.append(new_arg)
-
-                    # looks for param names that will be obscured by args
-                    # clone the params since they're shared by all methods in this
-                    # path, and we only want to modify this method's params
-                    use_params = [c.clone() for c in params]
-                    use_path = path
-                    for p in use_params:
-                        if p.name in args:
-                            # or (m == 'get' and p.name in model_attrs):
-                            # if we found a parameter name that is also and argument name
-                            # append an underscore to both the parameter name and the
-                            # parameter name in the URL
-                            use_path = use_path.replace(
-                                "{" + p.name + "}", "{" + p.name + "_}"
-                            )
-                            p.name += "_"
-
-                    self.ops[command][action] = CLIOperation(
-                        command,
-                        action,
-                        m,
-                        use_path,
-                        summary,
-                        cli_args,
-                        response_model,
-                        use_params,
-                        use_servers,
-                        docs_url=docs_url,
-                        allowed_defaults=allowed_defaults,
-                        action_aliases=action_aliases,
-                    )
-
-        # remove any empty commands (those that have no actions)
-        to_remove = []
-        for command, actions in self.ops.items():
-            if len(actions) == 0:
-                to_remove.append(command)
-
-        for command in to_remove:
-            del self.ops[command]
+                self.ops[command][action] = CLIOperation(
+                    command,
+                    action,
+                    method,
+                    use_path,
+                    summary,
+                    cli_args,
+                    response_model,
+                    use_params,
+                    use_servers,
+                    docs_url=docs_url,
+                    allowed_defaults=allowed_defaults,
+                    action_aliases=action_alias,
+                )
 
         # hide the base_url from the spec away
         self.ops["_base_url"] = spec["servers"][0]["url"]
