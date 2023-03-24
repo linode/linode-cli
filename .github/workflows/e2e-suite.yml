@@ -15,12 +15,15 @@ jobs:
         run: sudo apt-get update -y
 
       - name: Setup Python
-        uses: actions/setup-python@v4 # pin@v2
+        uses: actions/setup-python@v4
         with:
           python-version: '3.x'
 
       - name: Install Python wheel
         run: pip install wheel
+
+      - name: Update cert
+        run: pip install certifi -U
 
       - name: Install deps
         run: pip install -r requirements.txt -r requirements-dev.txt
