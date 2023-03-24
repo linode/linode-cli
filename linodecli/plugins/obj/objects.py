@@ -55,9 +55,8 @@ def upload_object(get_client, args):  # pylint: disable=too-many-locals
 
     # TODO:
     # 1. Allow user specified key (filename on cloud)
-    # 2. handle exceptions
-    # 3. test windows globs
-    # 4. As below:
+    # 2. test windows globs
+    # 3. As below:
     # parser.add_argument('--recursive', action='store_true',
     #                    help="If set, upload directories recursively.")
 
@@ -95,10 +94,10 @@ def upload_object(get_client, args):  # pylint: disable=too-many-locals
         print(f"Uploading {filename}:")
         upload_options["Filename"] = str(file_path.resolve())
         upload_options["Key"] = filename
+        upload_options["Callback"] = ProgressPercentage(
+            file_path.stat().st_size, PROGRESS_BAR_WIDTH
+        )
         try:
-            upload_options["Callback"] = ProgressPercentage(
-                file_path.stat().st_size, PROGRESS_BAR_WIDTH
-            )
             client.upload_file(**upload_options)
         except S3UploadFailedError as e:
             sys.exit(e)
