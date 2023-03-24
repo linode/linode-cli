@@ -164,6 +164,6 @@ def _merge_dict(dict_1, dict_2):
             merge_map[sub["name"]] = sub
 
         # Convert back to a list
-        result[key] = [v for v in merge_map.values()]
+        result[key] = list(merge_map.values())
 
     return result
