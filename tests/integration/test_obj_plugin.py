@@ -300,7 +300,8 @@ def test_generate_url(
 ):
     patch_keys(keys, monkeypatch)
     bucket = create_bucket()
-    test_file = generate_test_file().resolve()
+    content = "Hello, World!"
+    test_file = generate_test_file(content=content).resolve()
 
     exec_test_command(BASE_CMD + ["put", str(test_file), bucket])
 
@@ -309,4 +310,5 @@ def test_generate_url(
     )
     url = process.stdout.decode()
     response = requests.get(url)
+    assert response.text == content
     assert response.status_code == 200
