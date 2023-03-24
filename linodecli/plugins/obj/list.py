@@ -65,7 +65,7 @@ def list_objects_or_buckets(
             key = obj.get("Key")
 
             # This is to remove the dir itself from the results
-            # when the the files list inside a dir is desired.
+            # when the the files list inside a directory (prefix) are desired.
             if key == prefix:
                 continue
 
