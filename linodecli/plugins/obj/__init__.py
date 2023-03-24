@@ -227,5 +227,8 @@ def _get_boto_client(cluster, access_key, secret_key):
         region_name=cluster,
         endpoint_url=BASE_URL_TEMPLATE.format(cluster),
     )
+
+    # set this for later use
     client.cluster = cluster
+
     return client
