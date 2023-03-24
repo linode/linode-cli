@@ -146,23 +146,24 @@ def _dump_config(filepath, data):
 # Merges the lists in the provided dicts. If non-list properties of the two
 # dicts differ, uses the value from the first dict.
 def _merge_dict(dict_1, dict_2):
+    # Return a new dict to prevent any accidental mutations
+    result = {}
+
     for key in dict_1:
         if not isinstance(dict_1[key], list):
+            result[key] = dict_1[key]
             continue
 
-        # Extract names of each list item for both dicts
-        dict1_names = [sub["name"] for sub in dict_1[key]]
-        dict2_names = [sub["name"] for sub in dict_2[key]]
+        merge_map = {sub["name"]: sub for sub in dict_1[key]}
 
-        new_entries = []
+        for sub in dict_2[key]:
+            # If the name is already in the merge map, skip
+            if sub["name"] in merge_map:
+                continue
 
-        # Add all dict_2 entries with unique names to new_entries
-        for index, value in enumerate(dict2_names):
-            if value not in dict1_names:
-                new_entries.append(dict_2[key][index])
+            merge_map[sub["name"]] = sub
 
-        # Concat dict_1 list with new_entries and update dict_1 list to concatenated list
-        merged = dict_1[key] + new_entries
-        dict_1[key] = merged
+        # Convert back to a list
+        result[key] = [v for v in merge_map.values()]
 
-    return dict_1
+    return result
