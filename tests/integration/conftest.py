@@ -69,10 +69,12 @@ def generate_test_file(name_generator: Callable[[str], str]):
     test_files_dir = tempfile.TemporaryDirectory()
 
     def _generate_test_file(
-        content: Optional[str] = None, filename: Optional[str] = None
+        content: Optional[str] = None,
+        filename: Optional[str] = None,
+        size: Optional[int] = 100,
     ):
         if content is None:
-            content = f"Linode CLI integration test\n{get_random_text(100)}\n"
+            content = f"{get_random_text(size)}"
         if filename is None:
             filename = f"{name_generator('test-file')}.txt"
         file_path = Path(test_files_dir.name) / filename
