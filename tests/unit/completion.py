@@ -17,7 +17,11 @@ class CompletionTests(unittest.TestCase):
     ops = {"temp_key": {"temp_action": "description"}}
     fish_expected = """# This is a generated file by Linode-CLI! Do not modify!
 complete -c linode-cli -n "not __fish_seen_subcommand_from temp_key" -x -a 'temp_key --help'
-complete -c linode-cli -n "__fish_seen_subcommand_from temp_key" -x -a 'temp_action --help'"""
+complete -c linode -n "not __fish_seen_subcommand_from temp_key" -x -a 'temp_key --help'
+complete -c lin -n "not __fish_seen_subcommand_from temp_key" -x -a 'temp_key --help'
+complete -c linode-cli -n "__fish_seen_subcommand_from temp_key" -x -a 'temp_action --help'
+complete -c linode -n "__fish_seen_subcommand_from temp_key" -x -a 'temp_action --help'
+complete -c lin -n "__fish_seen_subcommand_from temp_key" -x -a 'temp_action --help'"""
     bash_expected = """# This is a generated file by Linode-CLI! Do not modify!
 _linode_cli()
 {
@@ -27,7 +31,7 @@ cur="${COMP_WORDS[COMP_CWORD]}"
 prev="${COMP_WORDS[COMP_CWORD-1]}"
 
 case "${prev}" in
-    linode-cli)
+    linode-cli | linode | lin)
         COMPREPLY=( $(compgen -W "temp_key --help" -- ${cur}) )
         return 0
         ;;
@@ -40,7 +44,9 @@ case "${prev}" in
 esac
 }
 
-complete -F _linode_cli linode-cli"""
+complete -F _linode_cli linode-cli
+complete -F _linode_cli linode
+complete -F _linode_cli lin"""
 
     def test_fish_completion(self):
         """
