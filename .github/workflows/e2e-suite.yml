@@ -1,12 +1,10 @@
-name: E2E Test Suite
+name: Integration Tests
 on:
   workflow_dispatch: null
   push:
-    branches:
-      - main
-      - dev
+  pull_request:
 jobs:
-  integration_tests:
+  integration-tests:
     name: Run integration tests
     runs-on: ubuntu-latest
     steps:
@@ -16,28 +14,21 @@ jobs:
       - name: Update system packages
         run: sudo apt-get update -y
 
-      - name: Install system deps
-        run: sudo apt-get install -y build-essential bats parallel netcat
-
       - name: Setup Python
         uses: actions/setup-python@75f3110429a8c05be0e1bf360334e4cced2b63fa # pin@v2
         with:
           python-version: '3.x'
 
-      - name: Install Python deps
+      - name: Install Python wheel
         run: pip install wheel
 
-      - name: Install the CLI
+      - name: Install deps
+        run: pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: Install Package
         run: make install
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Download submodules
-        run: git submodule init && git submodule update
-
-      - name: Run the E2E test suite
-        run: echo "y" | ./test/test-runner.sh --allow-delete-resources --from-env --no-parallel
-        # We do not have multiple CLI testing accounts at the moment
-        env:
-          TOKEN_1: ${{ secrets.LINODE_TOKEN }}
-          TOKEN_2: ${{ secrets.LINODE_TOKEN }}
+      - name: Run the integration test suite
+        run: make testint
