@@ -78,7 +78,6 @@ def upload_object(get_client, args):  # pylint: disable=too-many-locals
 
         to_upload.append((file_path.name, file_path))
 
-    policy = "public-read" if parsed.acl_public else None
     chunk_size = 1024 * 1024 * parsed.chunk_size
 
     upload_options = {
@@ -86,8 +85,8 @@ def upload_object(get_client, args):  # pylint: disable=too-many-locals
         "Config": TransferConfig(multipart_chunksize=chunk_size * MB),
     }
 
-    if policy:
-        upload_options["ExtraArgs"] = {"ACL": policy}
+    if parsed.acl_public:
+        upload_options["ExtraArgs"] = {"ACL": "public-read"}
 
     for filename, file_path in to_upload:
         print(f"Uploading {filename}:")
