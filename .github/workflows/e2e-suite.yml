@@ -36,5 +36,4 @@ jobs:
       - name: Run the integration test suite
         run: make testint
         env:
-          TOKEN_1: ${{ secrets.LINODE_TOKEN }}
-          TOKEN_2: ${{ secrets.LINODE_TOKEN }}
+          LINODE_CLI_TOKEN: ${{ secrets.LINODE_TOKEN }}
