@@ -55,8 +55,7 @@ def upload_object(get_client, args):  # pylint: disable=too-many-locals
 
     # TODO:
     # 1. Allow user specified key (filename on cloud)
-    # 2. test windows globs
-    # 3. As below:
+    # 2. As below:
     # parser.add_argument('--recursive', action='store_true',
     #                    help="If set, upload directories recursively.")
 
