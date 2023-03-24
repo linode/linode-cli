@@ -15,7 +15,7 @@ jobs:
         run: sudo apt-get update -y
 
       - name: Setup Python
-        uses: actions/setup-python@75f3110429a8c05be0e1bf360334e4cced2b63fa # pin@v2
+        uses: actions/setup-python@v4 # pin@v2
         with:
           python-version: '3.x'
 
