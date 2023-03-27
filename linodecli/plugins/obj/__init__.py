@@ -67,26 +67,6 @@ except ImportError:
     HAS_BOTO = False
 
 
-COMMAND_MAP = {
-    "mb": create_bucket,
-    "rb": delete_bucket,
-    "ls": list_objects_or_buckets,
-    "la": list_all_objects,
-    "du": show_usage,
-    "put": upload_object,
-    "get": get_object,
-    "rm": delete_object,
-    "del": delete_object,
-    #'sync': sync_dir, TODO - syncs a directory
-    "signurl": generate_url,
-    "setacl": set_acl,
-    "ws-create": enable_static_site,
-    "ws-info": static_site_info,
-    "ws-delete": disable_static_site,
-    #'info': get_info,
-}
-
-
 def list_objects_or_buckets(
     get_client, args
 ):  # pylint: disable=too-many-locals
@@ -697,6 +677,26 @@ def disable_static_site(get_client, args):
     client.delete_bucket_website(Bucket=bucket)
 
     print(f"Website configuration deleted for {parsed.bucket}")
+
+
+COMMAND_MAP = {
+    "mb": create_bucket,
+    "rb": delete_bucket,
+    "ls": list_objects_or_buckets,
+    "la": list_all_objects,
+    "du": show_usage,
+    "put": upload_object,
+    "get": get_object,
+    "rm": delete_object,
+    "del": delete_object,
+    #'sync': sync_dir, TODO - syncs a directory
+    "signurl": generate_url,
+    "setacl": set_acl,
+    "ws-create": enable_static_site,
+    "ws-info": static_site_info,
+    "ws-delete": disable_static_site,
+    #'info': get_info,
+}
 
 
 def print_help(parser: ArgumentParser):
