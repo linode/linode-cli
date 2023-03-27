@@ -24,8 +24,6 @@ from linodecli.configuration import _do_get_request
 from linodecli.configuration.helpers import _default_thing_input
 from linodecli.helpers import expand_globs
 from linodecli.plugins import PluginContext, inherit_plugin_args
-from linodecli.plugins.obj.acl import set_acl
-from linodecli.plugins.obj.buckets import create_bucket, delete_bucket
 from linodecli.plugins.obj.config import (
     BASE_URL_TEMPLATE,
     BASE_WEBSITE_TEMPLATE,
@@ -43,28 +41,11 @@ from linodecli.plugins.obj.config import (
 from linodecli.plugins.obj.helpers import (
     ProgressPercentage,
     _borderless_table,
-    _configure_plugin,
     _convert_datetime,
     _denominate,
-    _get_s3_creds,
     _pad_to,
     _progress,
-    get_credentials,
-    regenerate_s3_credentials,
     restricted_int_arg_type,
-)
-from linodecli.plugins.obj.list import list_all_objects, list_objects_or_buckets
-from linodecli.plugins.obj.objects import (
-    delete_object,
-    get_object,
-    upload_object,
-)
-from linodecli.plugins.obj.url import generate_url
-from linodecli.plugins.obj.usage import show_usage
-from linodecli.plugins.obj.website import (
-    disable_static_site,
-    enable_static_site,
-    static_site_info,
 )
 
 try:
