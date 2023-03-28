@@ -71,25 +71,25 @@ def call(args, context):
         sys.exit(1)
 
     # Load the specified cluster's kubeconfig and the current kubeconfig
-    clusterConfig = yaml.safe_load(
+    cluster_config = yaml.safe_load(
         base64.b64decode(kubeconfig["kubeconfig"]).decode()
     )
-    currentConfig = None
+    current_config = None
 
     if os.path.exists(os.path.expanduser(parsed.kubeconfig)):
-        currentConfig = _load_config(os.path.expanduser(parsed.kubeconfig))
+        current_config = _load_config(os.path.expanduser(parsed.kubeconfig))
 
     # If there is no current kubeconfig, dump the cluster config to the specified file location.
     # If there is a current kubeconfig, merge it with the cluster's kubeconfig
-    clusterConfig = (
-        _merge_dict(currentConfig, clusterConfig)
-        if currentConfig is not None
-        else clusterConfig
+    cluster_config = (
+        _merge_dict(current_config, cluster_config)
+        if current_config is not None
+        else cluster_config
     )
     if parsed.dry_run:
-        print(clusterConfig)
+        print(cluster_config)
     else:
-        _dump_config(os.path.expanduser(parsed.kubeconfig), clusterConfig)
+        _dump_config(os.path.expanduser(parsed.kubeconfig), cluster_config)
 
 
 # Fetches the kubeconfig of the lke cluster with the specified label
