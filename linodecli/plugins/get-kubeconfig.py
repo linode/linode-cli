@@ -76,9 +76,10 @@ def call(args, context):
     )
     current_config = None
 
-    if Path(parsed.kubeconfig).expanduser().exists():
-        current_config = _load_config(Path(parsed.kubeconfig).expanduser())
-
+    kubeconfig_path = Path(parsed.kubeconfig).expanduser()
+    if kubeconfig_path.exists():
+        current_config = _load_config(kubeconfig_path)
+        
     # If there is no current kubeconfig, dump the cluster config to the specified file location.
     # If there is a current kubeconfig, merge it with the cluster's kubeconfig
     cluster_config = (
@@ -89,7 +90,7 @@ def call(args, context):
     if parsed.dry_run:
         print(cluster_config)
     else:
-        _dump_config(Path(parsed.kubeconfig).expanduser(), cluster_config)
+        _dump_config(kubeconfig_path, cluster_config)
 
 
 # Fetches the kubeconfig of the lke cluster with the specified label
