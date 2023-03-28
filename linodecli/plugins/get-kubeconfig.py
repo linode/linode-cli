@@ -9,7 +9,7 @@ Usage:
 import argparse
 import base64
 import sys
-from pathlib import Path, PurePath
+from pathlib import Path
 
 import yaml
 
@@ -76,8 +76,8 @@ def call(args, context):
     )
     current_config = None
 
-    if Path.exists(Path.expanduser(Path(parsed.kubeconfig))):
-        current_config = _load_config(Path.expanduser(Path(parsed.kubeconfig)))
+    if Path(parsed.kubeconfig).expanduser().exists():
+        current_config = _load_config(Path(parsed.kubeconfig).expanduser())
 
     # If there is no current kubeconfig, dump the cluster config to the specified file location.
     # If there is a current kubeconfig, merge it with the cluster's kubeconfig
@@ -89,7 +89,7 @@ def call(args, context):
     if parsed.dry_run:
         print(cluster_config)
     else:
-        _dump_config(Path.expanduser(Path(parsed.kubeconfig)), cluster_config)
+        _dump_config(Path(parsed.kubeconfig).expanduser(), cluster_config)
 
 
 # Fetches the kubeconfig of the lke cluster with the specified label
@@ -138,7 +138,7 @@ def _load_config(filepath):
 
 # Dumps data to a yaml file
 def _dump_config(filepath, data):
-    Path.mkdir(PurePath.parent(Path(filepath)), exist_ok=True)
+    Path.mkdir(filepath.parent, exist_ok=True)
     with open(filepath, "w", encoding="utf-8") as file_descriptor:
         yaml.dump(data, file_descriptor)
 
