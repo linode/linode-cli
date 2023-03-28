@@ -79,7 +79,7 @@ def call(args, context):
     kubeconfig_path = Path(parsed.kubeconfig).expanduser()
     if kubeconfig_path.exists():
         current_config = _load_config(kubeconfig_path)
-        
+
     # If there is no current kubeconfig, dump the cluster config to the specified file location.
     # If there is a current kubeconfig, merge it with the cluster's kubeconfig
     cluster_config = (
