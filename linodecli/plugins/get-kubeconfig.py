@@ -8,8 +8,8 @@ Usage:
 
 import argparse
 import base64
-from pathlib import Path
 import sys
+from pathlib import Path, PurePath
 
 import yaml
 
@@ -138,7 +138,7 @@ def _load_config(filepath):
 
 # Dumps data to a yaml file
 def _dump_config(filepath, data):
-    Path.makedirs(Path.dirname(Path(filepath)), exist_ok=True)
+    Path.mkdir(PurePath.parent(Path(filepath)), exist_ok=True)
     with open(filepath, "w", encoding="utf-8") as file_descriptor:
         yaml.dump(data, file_descriptor)
 
