@@ -239,8 +239,7 @@ def upload_object(get_client, args):  # pylint: disable=too-many-locals
     parsed = parser.parse_args(args)
     client = get_client()
 
-    to_upload = []
-    # to_multipart_upload = []
+    to_upload: List[Path] = []
     files = list(parsed.file)
     for f in files:
         # Windows doesn't natively expand globs, so we should implement it here
@@ -248,12 +247,13 @@ def upload_object(get_client, args):  # pylint: disable=too-many-locals
             results = expand_globs(f)
             files.extend(results)
             continue
+
+    for f in files:
         file_path = Path(f).resolve()
         if not file_path.is_file():
-            print(f"No file {file_path}")
-            sys.exit(5)
+            sys.exit(f"No file {file_path}")
 
-        to_upload.append((file_path.name, file_path))
+        to_upload.append(file_path)
 
     chunk_size = 1024 * 1024 * parsed.chunk_size
 
@@ -265,10 +265,10 @@ def upload_object(get_client, args):  # pylint: disable=too-many-locals
     if parsed.acl_public:
         upload_options["ExtraArgs"] = {"ACL": "public-read"}
 
-    for filename, file_path in to_upload:
-        print(f"Uploading {filename}:")
+    for file_path in to_upload:
+        print(f"Uploading {file_path.name}:")
         upload_options["Filename"] = str(file_path.resolve())
-        upload_options["Key"] = filename
+        upload_options["Key"] = file_path.name
         upload_options["Callback"] = ProgressPercentage(
             file_path.stat().st_size, PROGRESS_BAR_WIDTH
         )
