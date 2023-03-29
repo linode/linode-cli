@@ -6,6 +6,7 @@ The Linode Command Line Interface
 .. image:: https://raw.githubusercontent.com/linode/linode-cli/main/demo.gif
 
 Installation
+
 ------------
 
 From pypi::
