@@ -202,11 +202,14 @@ def test_modify_access_control(
 
 
 def test_static_site(
+    keys: Keys,
+    monkeypatch: MonkeyPatch,
     generate_test_file: GetTestFileType,
     static_site_index: str,
     static_site_error: str,
     create_bucket: Callable[[Optional[str]], str],
 ):
+    patch_keys(keys, monkeypatch)
     index_file = generate_test_file(static_site_index, "index.html").resolve()
     error_file = generate_test_file(static_site_error, "error.html").resolve()
     bucket = create_bucket()
@@ -249,3 +252,63 @@ def test_static_site(
     process = exec_test_command(BASE_CMD + ["ws-delete", bucket])
     response = requests.get(ws_url)
     assert response.status_code == 404
+
+
+def test_show_usage(
+    keys: Keys,
+    monkeypatch: MonkeyPatch,
+    generate_test_file: GetTestFileType,
+    create_bucket: Callable[[Optional[str]], str],
+):
+    patch_keys(keys, monkeypatch)
+
+    KB = 1024
+    MB = 1024 * KB
+
+    large_file1 = generate_test_file(size=10 * MB).resolve()
+    large_file2 = generate_test_file(size=20 * MB).resolve()
+
+    bucket1 = create_bucket()
+    bucket2 = create_bucket()
+
+    exec_test_command(BASE_CMD + ["put", str(large_file1), bucket1])
+
+    exec_test_command(
+        BASE_CMD + ["put", str(large_file1), str(large_file2), bucket2]
+    )
+
+    process = exec_test_command(BASE_CMD + ["du"])
+    output = process.stdout.decode()
+    assert "40.0 MB Total" in output
+
+    process = exec_test_command(BASE_CMD + ["du", bucket1])
+    output = process.stdout.decode()
+    assert "10.0 MB" in output
+    assert "1 objects" in output
+
+    process = exec_test_command(BASE_CMD + ["du", bucket2])
+    output = process.stdout.decode()
+    assert "30.0 MB" in output
+    assert "2 objects" in output
+
+
+def test_generate_url(
+    keys: Keys,
+    monkeypatch: MonkeyPatch,
+    generate_test_file: GetTestFileType,
+    create_bucket: Callable[[Optional[str]], str],
+):
+    patch_keys(keys, monkeypatch)
+    bucket = create_bucket()
+    content = "Hello, World!"
+    test_file = generate_test_file(content=content).resolve()
+
+    exec_test_command(BASE_CMD + ["put", str(test_file), bucket])
+
+    process = exec_test_command(
+        BASE_CMD + ["signurl", bucket, test_file.name, "+300"]
+    )
+    url = process.stdout.decode()
+    response = requests.get(url)
+    assert response.text == content
+    assert response.status_code == 200
