@@ -52,6 +52,10 @@ testunit:
 testint:
 	pytest tests/integration/${INTEGRATION_TEST_PATH}
 
+.PHONY: testall
+testall:
+	pytest tests
+
 
 # Alias for unit; integration tests should be explicit
 .PHONY: test

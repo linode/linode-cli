@@ -38,6 +38,10 @@ def domain_records_setup():
             .rstrip()
         )
 
+    except:
+        logging.exception("Failed creating domain in setup")
+
+    try:
         # Create record
         record_id = (
             exec_test_command(
@@ -49,7 +53,7 @@ def domain_records_setup():
                     "--port=23",
                     "--priority=4",
                     "--service=telnet",
-                    "--target=8.8.8.8",
+                    "--target=record-setup",
                     "--weight=4",
                     "--text",
                     "--no-header",
@@ -63,7 +67,7 @@ def domain_records_setup():
         )
 
     except:
-        logging.exception("Failed creating domain in setup")
+        logging.exception("Failed creating record in setup")
 
     yield domain_id, record_id
 
@@ -121,7 +125,7 @@ def test_create_domain_srv_record(domain_records_setup):
             "--port=23",
             "--priority=4",
             "--service=telnet",
-            "--target=8.8.8.8",
+            "--target=target-test-record",
             "--weight=4",
             "--text",
             "--no-header",
@@ -133,7 +137,7 @@ def test_create_domain_srv_record(domain_records_setup):
     output = process.stdout.decode()
 
     assert (
-        re.search("[0-9]+,SRV,_telnet._tcp,8.8.8.8,0,4,4", output),
+        re.search("[0-9]+,SRV,_telnet._tcp,target-test-record+,0,4,4", output),
         "Output does not match the format",
     )
 
@@ -153,7 +157,7 @@ def test_list_srv_record(domain_records_setup):
     output = process.stdout.decode()
 
     assert (
-        re.search("[0-9]+,SRV,_telnet._tcp,8.8.8.8,0,4,4", output),
+        re.search("[0-9]+,SRV,_telnet._tcp,record-setup+,0,4,4", output),
         "Output does not match the format",
     )
 
@@ -168,7 +172,6 @@ def test_view_domain_record(domain_records_setup):
             "records-view",
             domain_id,
             record_id,
-            "--target= 8.8.4.4",
             "--text",
             "--no-header",
             "--delimiter=,",
@@ -177,7 +180,7 @@ def test_view_domain_record(domain_records_setup):
     output = process.stdout.decode()
 
     assert (
-        re.search("[0-9]+,SRV,_telnet._tcp,8.8.8.8,0,4,4", output),
+        re.search("[0-9]+,SRV,_telnet._tcp,record-setup+,0,4,4", output),
         "Output does not match the format",
     )
 
@@ -192,7 +195,7 @@ def test_update_domain_record(domain_records_setup):
             "records-update",
             domain_id,
             record_id,
-            "--target= 8.8.4.4",
+            "--target=record-setup-update",
             "--text",
             "--no-header",
             "--delimiter=,",
@@ -201,7 +204,7 @@ def test_update_domain_record(domain_records_setup):
     output = process.stdout.decode()
 
     assert (
-        re.search("[0-9]+,SRV,_telnet._tcp,8.8.8.8,0,4,4", output),
+        re.search("[0-9]+,SRV,_telnet._tcp,record-setup-update+,0,4,4", output),
         "Output does not match the format",
     )
 
