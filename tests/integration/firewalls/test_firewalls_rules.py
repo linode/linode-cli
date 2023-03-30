@@ -4,7 +4,7 @@ import time
 
 import pytest
 
-from tests.integration.helpers import exec_test_command, delete_target_id
+from tests.integration.helpers import delete_target_id, exec_test_command
 
 BASE_CMD = ["linode-cli", "firewalls", "rules-update"]
 FIREWALL_LABEL = "example-firewall-label"

@@ -5,9 +5,9 @@ import time
 import pytest
 
 from tests.integration.helpers import (
+    delete_target_id,
     exec_failing_test_command,
     exec_test_command,
-    delete_target_id,
 )
 
 BASE_CMD = ["linode-cli", "firewalls"]
