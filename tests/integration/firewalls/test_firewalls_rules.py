@@ -4,7 +4,7 @@ import time
 
 import pytest
 
-from tests.integration.helpers import exec_test_command, remove_all
+from tests.integration.helpers import exec_test_command, delete_target_id
 
 BASE_CMD = ["linode-cli", "firewalls", "rules-update"]
 FIREWALL_LABEL = "example-firewall-label"
@@ -14,7 +14,6 @@ FIREWALL_LABEL = "example-firewall-label"
 def create_firewall():
     # Create one domain for some tests in this suite
     try:
-        remove_all(target="firewalls")
         # Create domain
         firewall_id = (
             exec_test_command(
@@ -43,7 +42,7 @@ def create_firewall():
     yield firewall_id
     # teardown - delete all firewalls
     try:
-        remove_all(target="firewalls")
+        delete_target_id(target="firewalls", id=firewall_id)
     except:
         logging.exception("Failed to delete all firewalls")
 
@@ -162,6 +161,8 @@ def test_swap_rules():
         in result
     )
 
+    delete_target_id(target="firewalls", id=firewall_id)
+
 
 def test_update_inbound_and_outbound_policy(create_firewall):
     firewall_id = create_firewall
@@ -232,6 +233,8 @@ def test_remove_one_rule_via_rules_update():
 
     assert inbound_rule_1.replace('"', "'") in result
     assert inbound_rule_2.replace('"', "'") not in result
+
+    delete_target_id(target="firewalls", id=firewall_id)
 
 
 def test_list_rules(create_firewall):

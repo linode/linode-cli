@@ -7,7 +7,7 @@ import pytest
 from tests.integration.helpers import (
     exec_failing_test_command,
     exec_test_command,
-    remove_all,
+    delete_target_id,
 )
 
 BASE_CMD = ["linode-cli", "firewalls"]
@@ -45,7 +45,7 @@ def firewalls_setup():
     yield firewall_id
     # teardown - delete all firewalls
     try:
-        remove_all(target="firewalls")
+        delete_target_id(target="firewalls", id=firewall_id)
     except:
         logging.exception("Failed to delete all firewalls")
 
@@ -111,6 +111,10 @@ def test_create_firewall_with_minimum_required_args():
     )
 
     assert re.search("[0-9]+," + firewall_label + ",enabled", result)
+
+    res_arr = result.split(",")
+    firewall_id = res_arr[0]
+    delete_target_id(target="firewalls", id=firewall_id)
 
 
 def test_fails_to_create_firewall_without_inbound_policy():
@@ -217,6 +221,10 @@ def test_create_firewall_with_inbound_and_outbound_args():
     )
 
     assert re.search("[0-9]+," + firewall_label + ",enabled", result)
+
+    res_arr = result.split(",")
+    firewall_id = res_arr[0]
+    delete_target_id(target="firewalls", id=firewall_id)
 
 
 def test_update_firewall(firewalls_setup):
