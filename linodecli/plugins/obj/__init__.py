@@ -10,10 +10,11 @@ import platform
 import socket
 import sys
 import time
-from argparse import ArgumentParser, ArgumentTypeError
+from argparse import ArgumentParser
 from contextlib import suppress
 from datetime import datetime
 from math import ceil
+from pathlib import Path
 from typing import List
 
 from terminaltables import SingleTable
@@ -21,6 +22,7 @@ from terminaltables import SingleTable
 from linodecli.cli import CLI
 from linodecli.configuration import _do_get_request
 from linodecli.configuration.helpers import _default_thing_input
+from linodecli.helpers import expand_globs
 from linodecli.plugins import PluginContext, inherit_plugin_args
 from linodecli.plugins.obj.config import (
     BASE_URL_TEMPLATE,
@@ -33,9 +35,11 @@ from linodecli.plugins.obj.config import (
     NO_ACCESS_ERROR,
     NO_SCOPES_ERROR,
     PLUGIN_BASE,
+    PROGRESS_BAR_WIDTH,
     UPLOAD_MAX_FILE_SIZE,
 )
 from linodecli.plugins.obj.helpers import (
+    ProgressPercentage,
     _borderless_table,
     _convert_datetime,
     _denominate,
@@ -45,18 +49,19 @@ from linodecli.plugins.obj.helpers import (
 )
 
 try:
-    import boto
-    from boto.exception import BotoClientError, S3CreateError, S3ResponseError
-    from boto.s3.connection import OrdinaryCallingFormat
-    from boto.s3.key import Key
-    from boto.s3.prefix import Prefix
+    import boto3
+    from boto3.exceptions import S3UploadFailedError
+    from boto3.s3.transfer import MB, TransferConfig
+    from botocore.exceptions import ClientError
 
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
 
 
-def list_objects_or_buckets(get_client, args):
+def list_objects_or_buckets(
+    get_client, args
+):  # pylint: disable=too-many-locals
     """
     Lists buckets or objects
     """
@@ -82,31 +87,35 @@ def list_objects_or_buckets(get_client, args):
         # list objects
         if "/" in parsed.bucket:
             bucket_name, prefix = parsed.bucket.split("/", 1)
+            if not prefix.endswith("/"):
+                prefix += "/"
         else:
             bucket_name = parsed.bucket
             prefix = ""
 
+        data = []
         try:
-            bucket = client.get_bucket(bucket_name)
-        except S3ResponseError:
+            response = client.list_objects_v2(
+                Prefix=prefix, Bucket=bucket_name, Delimiter="/"
+            )
+        except client.exceptions.NoSuchBucket:
             print("No bucket named " + bucket_name)
             sys.exit(2)
 
-        data = []
-        for c in bucket.list(prefix=prefix, delimiter="/"):
-            if isinstance(c, Prefix):
-                size = "DIR"
-            else:
-                size = c.size
+        objects = response.get("Contents", [])
+        sub_directories = response.get("CommonPrefixes", [])
 
-            # pylint: disable-next=redefined-outer-name
-            datetime = (
-                _convert_datetime(c.last_modified)
-                if size != "DIR"
-                else " " * 16
-            )
+        for d in sub_directories:
+            data.append((" " * 16, "DIR", d.get("Prefix")))
+        for obj in objects:
+            key = obj.get("Key")
 
-            data.append([datetime, size, c.name])
+            # This is to remove the dir itself from the results
+            # when the the files list inside a directory (prefix) are desired.
+            if key == prefix:
+                continue
+
+            data.append((obj.get("LastModified"), obj.get("Size"), key))
 
         if data:
             tab = _borderless_table(data)
@@ -115,9 +124,8 @@ def list_objects_or_buckets(get_client, args):
         sys.exit(0)
     else:
         # list buckets
-        buckets = client.get_all_buckets()
-
-        data = [[_convert_datetime(b.creation_date), b.name] for b in buckets]
+        buckets = client.list_buckets().get("Buckets", [])
+        data = [[b.get("CreationDate"), b.get("Name")] for b in buckets]
 
         tab = _borderless_table(data)
         print(tab.table)
@@ -141,7 +149,7 @@ def create_bucket(get_client, args):
     parsed = parser.parse_args(args)
     client = get_client()
 
-    client.create_bucket(parsed.name)
+    client.create_bucket(Bucket=parsed.name)
 
     print(f"Bucket {parsed.name} created")
     sys.exit(0)
@@ -169,21 +177,27 @@ def delete_bucket(get_client, args):
 
     parsed = parser.parse_args(args)
     client = get_client()
+    bucket_name = parsed.name
 
     if parsed.recursive:
-        try:
-            bucket = client.get_bucket(parsed.name)
-        except S3ResponseError:
-            print("No bucket named " + parsed.name)
-            sys.exit(2)
+        objects = [
+            {"Key": obj.get("Key")}
+            for obj in client.list_objects_v2(Bucket=bucket_name).get(
+                "Contents", []
+            )
+            if obj.get("Key")
+        ]
+        client.delete_objects(
+            Bucket=bucket_name,
+            Delete={
+                "Objects": objects,
+                "Quiet": False,
+            },
+        )
 
-        for c in bucket.list():
-            print(f"delete: {parsed.name} {c.key}")
-            bucket.delete_key(c)
+    client.delete_bucket(Bucket=bucket_name)
 
-    client.delete_bucket(parsed.name)
-
-    print("Bucket {parsed.name} removed")
+    print(f"Bucket {parsed.name} removed")
 
     sys.exit(0)
 
@@ -215,129 +229,55 @@ def upload_object(get_client, args):  # pylint: disable=too-many-locals
         default=MULTIPART_UPLOAD_CHUNK_SIZE_DEFAULT,
         help="The size of file chunks when uploading large files, in MB.",
     )
+
+    # TODO:
+    # 1. Allow user specified key (filename on cloud)
+    # 2. As below:
     # parser.add_argument('--recursive', action='store_true',
     #                    help="If set, upload directories recursively.")
 
     parsed = parser.parse_args(args)
     client = get_client()
 
-    to_upload = []
-    to_multipart_upload = []
-    for c in parsed.file:
-        # find the object
-        file_path = os.path.expanduser(c)
-
+    to_upload: List[Path] = []
+    files = list(parsed.file)
+    for f in files:
         # Windows doesn't natively expand globs, so we should implement it here
-        if platform.system() == "Windows" and "*" in file_path:
-            results = glob.glob(file_path, recursive=True)
-            if len(results) < 1:
-                print(f"No file found matching pattern {file_path}")
-                sys.exit(5)
+        if platform.system() == "Windows" and "*" in f:
+            results = expand_globs(f)
+            files.extend(results)
+            continue
 
-            if len(results) > 1:
-                print(
-                    "warn: Found multiple files matching pattern "
-                    f"{file_path}, using {results[0]}"
-                )
+    for f in files:
+        file_path = Path(f).resolve()
+        if not file_path.is_file():
+            sys.exit(f"No file {file_path}")
 
-            file_path = results[0]
+        to_upload.append(file_path)
 
-        if not os.path.isfile(file_path):
-            print("No file {file_path}")
-            sys.exit(5)
-
-        filename = os.path.split(file_path)[-1]
-
-        file_size = os.path.getsize(file_path)
-
-        if file_size >= UPLOAD_MAX_FILE_SIZE:
-            to_multipart_upload.append((filename, file_path, file_size))
-        else:
-            to_upload.append((filename, file_path))
-
-    # upload the files
-    try:
-        bucket = client.get_bucket(parsed.bucket)
-    except S3ResponseError:
-        print("No bucket named " + parsed.bucket)
-        sys.exit(2)
-
-    policy = "public-read" if parsed.acl_public else None
     chunk_size = 1024 * 1024 * parsed.chunk_size
 
-    for filename, file_path in to_upload:
-        k = Key(bucket)
-        k.key = filename
+    upload_options = {
+        "Bucket": parsed.bucket,
+        "Config": TransferConfig(multipart_chunksize=chunk_size * MB),
+    }
 
-        print(filename)
-        k.set_contents_from_filename(
-            file_path, cb=_progress, num_cb=100, policy=policy
-        )
+    if parsed.acl_public:
+        upload_options["ExtraArgs"] = {"ACL": "public-read"}
 
-    for filename, file_path, file_size in to_multipart_upload:
-        _do_multipart_upload(
-            bucket, filename, file_path, file_size, policy, chunk_size
+    for file_path in to_upload:
+        print(f"Uploading {file_path.name}:")
+        upload_options["Filename"] = str(file_path.resolve())
+        upload_options["Key"] = file_path.name
+        upload_options["Callback"] = ProgressPercentage(
+            file_path.stat().st_size, PROGRESS_BAR_WIDTH
         )
+        try:
+            client.upload_file(**upload_options)
+        except S3UploadFailedError as e:
+            sys.exit(e)
 
     print("Done.")
-
-
-def _do_multipart_upload(
-    bucket, filename, file_path, file_size, policy, chunk_size
-):  # pylint: disable=too-many-arguments
-    """
-    Handles the internals of a multipart upload for a large file.
-
-    :param bucket: The bucket to upload the large file to
-    :type bucket: Boto bucket
-    :param filename: The name of the file to upload
-    :type filename: str
-    :param: file_path: That absolute path to the file we're uploading
-    :type file_path: str
-    :param file_size: The size of this file in bytes (used for chunking)
-    :type file_size: int
-    :param policy: The canned ACLs to include with the new key once the upload
-                   completes.  None for no ACLs, or "public-read" to make the
-                   key accessible publicly.
-    :type policy: str
-    :param chunk_size: The size of chunks to upload, in bytes.
-    :type chunk_size: int
-    """
-    upload = bucket.initiate_multipart_upload(filename, policy=policy)
-
-    # convert chunk_size to float so that division works like we want
-    num_chunks = int(math.ceil(file_size / float(chunk_size)))
-
-    print(f"{filename} ({num_chunks} parts)")
-
-    num_tries = 3
-    retry_delay = 2
-
-    try:
-        with open(file_path, "rb") as f:
-            for i in range(num_chunks):
-                print(f" Part {i + 1}")
-                for attempt in range(num_tries):
-                    try:
-                        upload.upload_part_from_file(
-                            f, i + 1, cb=_progress, num_cb=100, size=chunk_size
-                        )
-                    except S3ResponseError:
-                        if attempt < num_tries - 1:
-                            print(
-                                f"  Part failed ({attempt+1} of {num_tries} attempts). "
-                                f"Retrying in {retry_delay} seconds..."
-                            )
-                            time.sleep(retry_delay)
-                            continue
-                        raise
-                    break
-    except Exception:
-        print("Upload failed!  Cleaning up!")
-        upload.cancel_upload()
-        raise
-
-    upload.complete_upload()
 
 
 def get_object(get_client, args):
@@ -370,20 +310,25 @@ def get_object(get_client, args):
     if destination is None:
         destination = parsed.file
 
+    destination = Path(destination).resolve()
+
     # download the file
-    try:
-        bucket = client.get_bucket(parsed.bucket)
-    except S3ResponseError:
-        print("No bucket named " + parsed.bucket)
-        sys.exit(2)
+    bucket = parsed.bucket
+    key = parsed.file
 
-    k = bucket.get_key(parsed.file)
+    response = client.head_object(
+        Bucket=bucket,
+        Key=key,
+    )
 
-    if k is None:
-        print(f"No {parsed.file} in {parsed.bucket}")
-        sys.exit(2)
-
-    k.get_contents_to_filename(destination, cb=_progress, num_cb=100)
+    client.download_file(
+        Bucket=bucket,
+        Key=key,
+        Filename=str(destination),
+        Callback=ProgressPercentage(
+            response.get("ContentLength", 0), PROGRESS_BAR_WIDTH
+        ),
+    )
 
     print("Done.")
 
@@ -403,22 +348,13 @@ def delete_object(get_client, args):
 
     parsed = parser.parse_args(args)
     client = get_client()
+    bucket = parsed.bucket
+    key = parsed.file
 
-    # get the key to delete
-    try:
-        bucket = client.get_bucket(parsed.bucket)
-    except S3ResponseError:
-        print("No bucket named " + parsed.bucket)
-        sys.exit(2)
-
-    k = bucket.get_key(parsed.file)
-
-    if k is None:
-        print(f"No {parsed.file} in {parsed.bucket}")
-        sys.exit(2)
-
-    # delete the key
-    k.delete()
+    client.delete_object(
+        Bucket=bucket,
+        Key=key,
+    )
 
     print(f"{parsed.file} removed from {parsed.bucket}")
 
@@ -447,6 +383,9 @@ def generate_url(get_client, args):
         "an offset.",
     )
 
+    # TODO:
+    # Add docs for date format and unit for 'expiry' parameter.
+
     parsed = parser.parse_args(args)
     client = get_client()
 
@@ -459,20 +398,14 @@ def generate_url(get_client, args):
         expiry = int(parsed.expiry)
         offset = expiry - ceil(now.timestamp())
 
-    # get the key
-    try:
-        bucket = client.get_bucket(parsed.bucket)
-    except S3ResponseError:
-        print("No bucket named " + parsed.bucket)
-        sys.exit(2)
+    bucket = parsed.bucket
+    key = parsed.file
 
-    k = bucket.get_key(parsed.file)
-
-    if k is None:
-        print(f"No {parsed.file} in {parsed.bucket}")
-        sys.exit(2)
-
-    url = k.generate_url(offset)
+    url = client.generate_presigned_url(
+        ClientMethod="get_object",
+        ExpiresIn=offset,
+        Params={"Bucket": bucket, "Key": key},
+    )
 
     print(url)
 
@@ -516,26 +449,24 @@ def set_acl(get_client, args):
     if not parsed.acl_public and not parsed.acl_private:
         print("You must choose an ACL to apply")
         sys.exit(1)
+    acl = "public-read" if parsed.acl_public else "private"
+    bucket = parsed.bucket
 
-    # get the bucket
+    key = parsed.file
+    set_acl_options = {
+        "Bucket": bucket,
+        "ACL": acl,
+    }
+    if key:
+        set_acl_options["Key"] = key
+        set_acl_func = client.put_object_acl
+    else:
+        set_acl_func = client.put_bucket_acl
+
     try:
-        bucket = client.get_bucket(parsed.bucket)
-    except S3ResponseError:
-        print("No bucket named " + parsed.bucket)
-        sys.exit(2)
-
-    act_on = bucket
-
-    if parsed.file:
-        k = bucket.get_key(parsed.file)
-
-        if k is None:
-            print(f"No {parsed.file} in {parsed.bucket}")
-            sys.exit(2)
-
-        act_on = k
-
-    act_on.set_acl("public-read" if parsed.acl_public else "private")
+        set_acl_func(**set_acl_options)
+    except ClientError as e:
+        sys.exit(e)
     print("ACL updated")
 
 
@@ -554,6 +485,7 @@ def enable_static_site(get_client, args):
     parser.add_argument(
         "--ws-index",
         metavar="INDEX",
+        required=True,
         type=str,
         help="The file to serve as the index of the website",
     )
@@ -566,20 +498,33 @@ def enable_static_site(get_client, args):
 
     parsed = parser.parse_args(args)
     client = get_client()
-
-    # get the bucket
-    try:
-        bucket = client.get_bucket(parsed.bucket)
-    except S3ResponseError:
-        print("No bucket named " + parsed.bucket)
-        sys.exit(2)
+    bucket = parsed.bucket
 
     # make the site
-    bucket.set_acl("public-read")
-    bucket.configure_website(parsed.ws_index, parsed.ws_error)
+    print(f"Setting bucket {bucket} access control to be 'public-read'")
+
+    client.put_bucket_acl(
+        Bucket=bucket,
+        ACL="public-read",
+    )
+
+    index_page = parsed.ws_index
+
+    ws_config = {"IndexDocument": {"Suffix": index_page}}
+    if parsed.ws_error:
+        ws_config["ErrorDocument"] = {"Key": parsed.ws_error}
+
+    client.put_bucket_website(
+        Bucket=bucket,
+        WebsiteConfiguration=ws_config,
+    )
+
     print(
         "Static site now available at "
-        f"https://{parsed.bucket}.website-{client.obj_cluster}.linodeobjects.com"
+        f"{BASE_WEBSITE_TEMPLATE.format(cluster=client.cluster, bucket=bucket)}"
+        "\nIf you still can't access the website, please check the "
+        "Access Control List setting of the website related objects (files) "
+        "in your bucket."
     )
 
 
@@ -599,21 +544,19 @@ def static_site_info(get_client, args):
     parsed = parser.parse_args(args)
     client = get_client()
 
-    # get the bucket
-    try:
-        bucket = client.get_bucket(parsed.bucket)
-    except S3ResponseError:
-        print("No bucket named " + parsed.bucket)
-        sys.exit(2)
+    bucket = parsed.bucket
 
-    info = bucket.get_website_configuration()
+    response = client.get_bucket_website(Bucket=bucket)
 
-    index = info["WebsiteConfiguration"]["IndexDocument"]["Suffix"]
-    error = info["WebsiteConfiguration"]["ErrorDocument"]["Key"]
+    index = response.get("IndexDocument", {}).get("Suffix", "Not Configured")
+    error = response.get("ErrorDocument", {}).get("Key", "Not Configured")
 
-    web_template = BASE_WEBSITE_TEMPLATE.format(client.host.split(".")[0])
-    print(f"Bucket {parsed.bucket}: Website configuration")
-    print(f"Website endpoint: {parsed.bucket}.{web_template}")
+    endpoint = BASE_WEBSITE_TEMPLATE.format(
+        cluster=client.cluster, bucket=bucket
+    )
+
+    print(f"Bucket {bucket}: Website configuration")
+    print(f"Website endpoint: {endpoint}")
     print(f"Index document: {index}")
     print(f"Error document: {error}")
 
@@ -637,33 +580,37 @@ def show_usage(get_client, args):
     client = get_client()
 
     if parsed.bucket:
-        try:
-            buckets = [client.get_bucket(parsed.bucket)]
-        except S3ResponseError:
-            print("No bucket named " + parsed.bucket)
-            sys.exit(2)
+        bucket_names = [parsed.bucket]
     else:
-        # all buckets
-        buckets = client.get_all_buckets()
+        try:
+            bucket_names = [
+                b["Name"] for b in client.list_buckets().get("Buckets", [])
+            ]
+        except ClientError as e:
+            sys.exit(e)
 
     grand_total = 0
-    for b in buckets:
-        # find total size of each
-        total = num = 0
-        for obj in b.list():
-            num += 1
-            total += obj.size
+    for b in bucket_names:
+        try:
+            objects = client.list_objects_v2(Bucket=b).get("Contents", [])
+        except ClientError as e:
+            sys.exit(e)
+        total = 0
+        obj_count = 0
+
+        for obj in objects:
+            total += obj.get("Size", 0)
+            obj_count += 1
 
         grand_total += total
-
         total = _denominate(total)
 
         tab = _borderless_table(
-            [[_pad_to(total, length=7), f"{num} objects", b.name]]
+            [[_pad_to(total, length=7), f"{obj_count} objects", b]]
         )
         print(tab.table)
 
-    if len(buckets) > 1:
+    if len(bucket_names) > 1:
         print("--------")
         print(f"{_denominate(grand_total)} Total")
 
@@ -682,21 +629,19 @@ def list_all_objects(get_client, args):
     client = get_client()
 
     # all buckets
-    buckets = client.get_all_buckets()
+    buckets = [b["Name"] for b in client.list_buckets().get("Buckets", [])]
 
     for b in buckets:
         print()
+        objects = client.list_objects_v2(Bucket=b).get("Contents", [])
 
-        for obj in b.list():
-            if isinstance(obj, Prefix):
-                size = "DIR"
-            else:
-                size = obj.size
+        for obj in objects:
+            size = obj.get("Size", 0)
 
             print(
-                f"{_convert_datetime(obj.last_modified) if size != 'DIR' else ' ' * 16} "
+                f"{_convert_datetime(obj['LastModified'])} "
                 f"{_pad_to(size, 9, right_align=True)}   "
-                f"{b.name}/{obj.key}"
+                f"{b}/{obj['Key']}"
             )
 
     sys.exit(0)
@@ -719,15 +664,10 @@ def disable_static_site(get_client, args):
     parsed = parser.parse_args(args)
     client = get_client()
 
-    # get the bucket
-    try:
-        bucket = client.get_bucket(parsed.bucket)
-    except S3ResponseError:
-        print("No bucket named " + parsed.bucket)
-        sys.exit(2)
+    bucket = parsed.bucket
 
-    # make the site
-    bucket.delete_website_configuration()
+    client.delete_bucket_website(Bucket=bucket)
+
     print(f"Website configuration deleted for {parsed.bucket}")
 
 
@@ -847,8 +787,8 @@ def call(
     if not HAS_BOTO:
         # we can't do anything - ask for an install
         print(
-            "This plugin requires the 'boto' module.  Please install it by running "
-            "'pip3 install boto' or 'pip install boto'"
+            "This plugin requires the 'boto3' module.  Please install it by running "
+            "'pip3 install boto3' or 'pip install boto3'"
         )
 
         sys.exit(2)  # requirements not met - we can't go on
@@ -875,9 +815,21 @@ def call(
     if context.client.defaults:
         cluster = cluster or context.client.config.plugin_get_value("cluster")
 
+    def try_get_default_cluster():
+        if not context.client.defaults:
+            print("Error: cluster is required.")
+            sys.exit(1)
+
+        print(
+            "Error: No default cluster is configured.  Either configure the CLI "
+            "or invoke with --cluster to specify a cluster."
+        )
+        _configure_plugin(context.client)
+        return context.client.config.plugin_get_value("cluster")
+
     def get_client():
         """
-        Get the boto client based on the cluster, or ask to configure a
+        Get the boto3 client based on the cluster, or ask to configure a
         default cluster if one is not specified. This is in a method so
         command methods can do this work AFTER displaying help,
         that way help can be shown without specifying a cluster
@@ -885,39 +837,15 @@ def call(
         """
         current_cluster = cluster
         if current_cluster is None:
-            if not context.client.defaults:
-                print("Error: cluster is required.")
-                sys.exit(1)
-
-            print(
-                "Error: No default cluster is configured.  Either configure the CLI "
-                "or invoke with --cluster to specify a cluster."
-            )
-            _configure_plugin(context.client)
-            current_cluster = context.client.config.plugin_get_value("cluster")
+            current_cluster = try_get_default_cluster()
 
         return _get_boto_client(current_cluster, access_key, secret_key)
 
     if parsed.command in COMMAND_MAP:
         try:
             COMMAND_MAP[parsed.command](get_client, args)
-        except S3ResponseError as e:
-            if e.error_code:
-                print(f"Error: {e.error_code}")
-            else:
-                print(e)
-            sys.exit(4)
-        except S3CreateError as e:
-            print(f"Error: {e}")
-            sys.exit(5)
-        except BotoClientError as e:
-            message_parts = e.message.split(":")
-            if len(message_parts) > 0:
-                message = ":".join(message_parts[0:])
-            else:
-                message = e.message
-            print(f"Error: {message}")
-            sys.exit(6)
+        except ClientError as e:
+            sys.exit(f"Error: {e}")
     elif parsed.command == "regenerate-keys":
         regenerate_s3_credentials(context.client)
     elif parsed.command == "configure":
@@ -929,18 +857,19 @@ def call(
 
 def _get_boto_client(cluster, access_key, secret_key):
     """
-    Returns a boto client object that can be used to communicate with the Object
+    Returns a boto3 client object that can be used to communicate with the Object
     Storage cluster.
     """
-    client = boto.connect_s3(
+    client = boto3.client(
+        "s3",
         aws_access_key_id=access_key,
         aws_secret_access_key=secret_key,
-        host=BASE_URL_TEMPLATE.format(cluster),
-        calling_format=OrdinaryCallingFormat(),
+        region_name=cluster,
+        endpoint_url=BASE_URL_TEMPLATE.format(cluster),
     )
 
     # set this for later use
-    client.obj_cluster = cluster
+    client.cluster = cluster
 
     return client
 
