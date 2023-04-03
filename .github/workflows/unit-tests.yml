@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone Repository
-        uses: actions/checkout@5a4ac9002d0be2fb38bd78e4b4dbde5606d7042f # pin@v2
+        uses: actions/checkout@v3
 
       - name: Update system packages
         run: sudo apt-get update -y
@@ -20,7 +20,7 @@ jobs:
           python-version: '3.x'
 
       - name: Install Python wheel
-        run: pip install wheel
+        run: pip install wheel boto3
 
       - name: Update cert
         run: pip install certifi -U
