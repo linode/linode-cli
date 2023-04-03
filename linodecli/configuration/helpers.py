@@ -124,68 +124,69 @@ def _handle_no_default_user(self):
     """
     users = [c for c in self.config.sections() if c != "DEFAULT"]
 
-    if len(users) == 1:
-        # only one user configured - they're the default
-        self.config.set("DEFAULT", "default-user", users[0])
-        self.write_config()
-        return
-
-    if len(users) == 0:
-        # config is new or _really_ old
-        token = self.config.get("DEFAULT", "token")
-
-        if token is not None:
-            # there's a token in the config - configure that user
-            u = _do_get_request(
-                self.base_url, "/profile", token=token, exit_on_error=False
-            )
-
-            if "errors" in u:
-                # this token was bad - reconfigure
-                self.configure()
-                return
-
-            # setup config for this user
-            username = u["username"]
-
-            self.config.set("DEFAULT", "default-user", username)
-            self.config.add_section(username)
-            self.config.set(username, "token", token)
-
-            if self.config.has_option("DEFAULT", "region"):
-                self.config.set(
-                    username, "region", self.config.get("DEFAULT", "region")
-                )
-
-            if self.config.has_option("DEFAULT", "type"):
-                self.config.set(
-                    username, "type", self.config.get("DEFAULT", "type")
-                )
-
-            if self.config.has_option("DEFAULT", "image"):
-                self.config.set(
-                    username, "image", self.config.get("DEFAULT", "image")
-                )
-
-            if self.config.has_option("DEFAULT", "engine"):
-                self.config.set(
-                    username, "engine", self.config.get("DEFAULT", "engine")
-                )
-
-            if self.config.has_option("DEFAULT", "authorized_keys"):
-                self.config.set(
-                    username,
-                    "authorized_keys",
-                    self.config.get("DEFAULT", "authorized_keys"),
-                )
-
+    match len(users):
+        case 1:
+            # only one user configured - they're the default
+            self.config.set("DEFAULT", "default-user", users[0])
             self.write_config()
-        else:
-            # got nothin', reconfigure
-            self.configure()
+            return
 
-        # this should be handled
-        return
+        case 0:
+            # config is new or _really_ old
+            token = self.config.get("DEFAULT", "token")
+
+            if token is not None:
+                # there's a token in the config - configure that user
+                u = _do_get_request(
+                    self.base_url, "/profile", token=token, exit_on_error=False
+                )
+
+                if "errors" in u:
+                    # this token was bad - reconfigure
+                    self.configure()
+                    return
+
+                # setup config for this user
+                username = u["username"]
+
+                self.config.set("DEFAULT", "default-user", username)
+                self.config.add_section(username)
+                self.config.set(username, "token", token)
+
+                if self.config.has_option("DEFAULT", "region"):
+                    self.config.set(
+                        username, "region", self.config.get("DEFAULT", "region")
+                    ),
+
+                if self.config.has_option("DEFAULT", "type"):
+                    self.config.set(
+                        username, "type", self.config.get("DEFAULT", "type")
+                    )
+
+                if self.config.has_option("DEFAULT", "image"):
+                    self.config.set(
+                        username, "image", self.config.get("DEFAULT", "image")
+                    )
+
+                if self.config.has_option("DEFAULT", "engine"):
+                    self.config.set(
+                        username, "engine", self.config.get("DEFAULT", "engine")
+                    )
+
+                if self.config.has_option("DEFAULT", "authorized_keys"):
+                    self.config.set(
+                        username,
+                        "authorized_keys",
+                        self.config.get("DEFAULT", "authorized_keys"),
+                    )
+
+                self.write_config()
+            else:
+                # got nothin', reconfigure
+                self.configure()
+
+            # this should be handled
+            return
 
     # more than one user - prompt for the default
     print("Please choose the active user.  Configured users are:")
