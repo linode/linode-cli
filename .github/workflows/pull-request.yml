@@ -13,7 +13,8 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: '3.x'
-
+      - name: install boto3
+        run: pip3 install boto3
       - name: install dependencies
         run: pip3 install -r requirements-dev.txt -r requirements.txt
 
