@@ -1,4 +1,4 @@
-name: E2E Test Suite
+name: Integration Tests
 on:
   workflow_dispatch: null
   push:
@@ -6,38 +6,36 @@ on:
       - main
       - dev
 jobs:
-  integration_tests:
+  integration-tests:
     name: Run integration tests
     runs-on: ubuntu-latest
     steps:
       - name: Clone Repository
-        uses: actions/checkout@5a4ac9002d0be2fb38bd78e4b4dbde5606d7042f # pin@v2
+        uses: actions/checkout@v3
 
       - name: Update system packages
         run: sudo apt-get update -y
 
-      - name: Install system deps
-        run: sudo apt-get install -y build-essential bats parallel netcat
-
       - name: Setup Python
-        uses: actions/setup-python@75f3110429a8c05be0e1bf360334e4cced2b63fa # pin@v2
+        uses: actions/setup-python@v4
         with:
           python-version: '3.x'
 
       - name: Install Python deps
-        run: pip install wheel
+        run: pip install wheel boto3
 
-      - name: Install the CLI
+      - name: Update cert
+        run: pip install certifi -U
+
+      - name: Install deps
+        run: pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: Install Package
         run: make install
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Download submodules
-        run: git submodule init && git submodule update
-
-      - name: Run the E2E test suite
-        run: echo "y" | ./test/test-runner.sh --allow-delete-resources --from-env --no-parallel
-        # We do not have multiple CLI testing accounts at the moment
+      - name: Run the integration test suite
+        run: make testint
         env:
-          TOKEN_1: ${{ secrets.LINODE_TOKEN }}
-          TOKEN_2: ${{ secrets.LINODE_TOKEN }}
+          LINODE_CLI_TOKEN: ${{ secrets.LINODE_TOKEN }}
