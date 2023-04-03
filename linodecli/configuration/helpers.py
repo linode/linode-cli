@@ -167,6 +167,11 @@ def _handle_no_default_user(self):
                     username, "image", self.config.get("DEFAULT", "image")
                 )
 
+            if self.config.has_option("DEFAULT", "engine"):
+                self.config.set(
+                    username, "engine", self.config.get("DEFAULT", "engine")
+                )
+
             if self.config.has_option("DEFAULT", "authorized_keys"):
                 self.config.set(
                     username,

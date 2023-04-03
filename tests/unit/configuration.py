@@ -32,13 +32,15 @@ type = g6-nanode-1
 image = linode/alpine3.16
 plugin-testplugin-testkey = plugin-test-value
 authorized_users = cli-dev
+engine = mysql/8.0.26
 
 [cli-dev2]
 token = {test_token}2
 region = us-east
 type = g6-nanode-1
 image = linode/alpine3.16
-authorized_users = cli-dev2"""
+authorized_users = cli-dev2
+engine = mysql/8.0.26"""
 
     def _build_test_config(self, config=mock_config_file, base_url=base_url):
         """
@@ -259,6 +261,9 @@ authorized_users = cli-dev2"""
                 f"{self.base_url}/images", json={"data": [{"id": "test-image"}]}
             )
             m.get(
+                f"{self.base_url}/engines", json={"data": [{"id": "test-engine"}]}
+            )
+            m.get(
                 f"{self.base_url}/account/users",
                 json={"data": [{"username": "cli-dev", "ssh_keys": "testkey"}]},
             )
@@ -268,6 +273,7 @@ authorized_users = cli-dev2"""
         self.assertEqual(conf.get_value("token"), "test-token")
         self.assertEqual(conf.get_value("image"), "test-image")
         self.assertEqual(conf.get_value("region"), "test-region")
+        self.assertEqual(conf.get_value("engine"), "test-engine")
         self.assertEqual(conf.get_value("authorized_users"), "cli-dev")
 
     def test_configure_default_terminal(self):
@@ -306,6 +312,9 @@ authorized_users = cli-dev2"""
                 f"{self.base_url}/images", json={"data": [{"id": "test-image"}]}
             )
             m.get(
+                f"{self.base_url}/engines", json={"data": [{"id": "test-engine"}]}
+            )
+            m.get(
                 f"{self.base_url}/account/users",
                 json={"data": [{"username": "cli-dev", "ssh_keys": "testkey"}]},
             )
@@ -314,5 +323,6 @@ authorized_users = cli-dev2"""
         self.assertEqual(conf.get_value("type"), "test-type")
         self.assertEqual(conf.get_value("image"), "test-image")
         self.assertEqual(conf.get_value("region"), "test-region")
+        self.assertEqual(conf.get_value("engine"), "test-engine")
         self.assertEqual(conf.get_value("authorized_users"), "cli-dev")
         self.assertEqual(conf.config.get("DEFAULT", "default-user"), "DEFAULT")

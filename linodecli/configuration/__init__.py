@@ -336,6 +336,9 @@ If you prefer to supply a Personal Access Token, use `linode-cli configure --tok
         images = [
             i["id"] for i in _do_get_request(self.base_url, "/images")["data"]
         ]
+        engines = [
+            e["id"] for e in _do_get_request(self.base_url, "/engines")["data"]
+        ]
 
         is_full_access = _check_full_access(self.base_url, token)
 
@@ -376,6 +379,13 @@ If you prefer to supply a Personal Access Token, use `linode-cli configure --tok
             images,
             "Default Image (Optional): ",
             "Please select a valid Image, or press Enter to skip",
+        )
+
+        config["engine"] = _default_thing_input(
+            "Default Engine to create a new managed database.",
+            engines,
+            "Default Engine (Optional): ",
+            "Please select a valid Database Engine, or press Enter to skip",
         )
 
         if auth_users:
