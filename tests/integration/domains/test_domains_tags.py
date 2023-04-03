@@ -1,26 +1,16 @@
-import logging
 import re
 import time
 
 import pytest
 
 from tests.integration.helpers import (
-    delete_all_domains,
+    delete_target_id,
     delete_tag,
     exec_failing_test_command,
     exec_test_command,
 )
 
 BASE_CMD = ["linode-cli", "domains"]
-
-
-@pytest.fixture(scope="session", autouse=True)
-def domain_tags_setup():
-    yield "setup"
-    try:
-        delete_all_domains()
-    except:
-        logging.exception("Failed to delete all domains")
 
 
 # @pytest.mark.skip(reason="BUG 943")
@@ -91,16 +81,40 @@ def test_create_master_domain_with_tags():
             tag,
         ]
     )
-    output = process.stdout.decode()
+    output = process.stdout.decode().rstrip()
     assert re.search("[0-9]+,[0-9]+-example.com,master,active," + tag, output)
+
+    res_arr = output.split(",")
+    domain_id = res_arr[0]
+    delete_target_id(target="domains", id=domain_id)
 
 
 # @pytest.mark.skip(reason="BUG 943")
 def test_delete_domain_and_tag():
+    timestamp = str(int(time.time()))
+    tag = "zoo"
+
+    domain_id = exec_test_command(
+        BASE_CMD
+        + [
+            "create",
+            "--type",
+            "master",
+            "--domain",
+            timestamp + "-example.com",
+            "--soa_email=" + timestamp + "pthiel@linode.com",
+            "--text",
+            "--no-header",
+            "--delimiter=,",
+            "--format=id",
+            "--tag",
+            tag,
+        ]
+    ).stdout.decode().rstrip()
     # need to check if tag foo is still present while running this test
     result = exec_test_command(["linode-cli", "tags", "list"]).stdout.decode()
-    if "foo" in result:
-        delete_tag("foo")
-        delete_all_domains()
-    else:
-        delete_all_domains()
+
+    if "zoo" in result:
+        delete_tag("zoo")
+        delete_target_id(target="domains", id=domain_id)
+

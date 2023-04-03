@@ -6,7 +6,7 @@ import pytest
 
 from tests.integration.helpers import (
     SUCCESS_STATUS_CODE,
-    delete_all_domains,
+    delete_target_id,
     exec_test_command,
 )
 
@@ -72,7 +72,7 @@ def domain_records_setup():
     yield domain_id, record_id
 
     try:
-        delete_all_domains()
+        delete_target_id(target="domains", id=domain_id)
     except:
         logging.exception("Failed to delete all domains")
 
@@ -87,7 +87,7 @@ def test_create_a_domain():
     output_current = process.stdout.decode()
 
     # Create domain
-    exec_test_command(
+    domain_id = exec_test_command(
         BASE_CMD
         + [
             "create",
@@ -98,8 +98,10 @@ def test_create_a_domain():
             "--soa_email=pthiel@linode.com",
             "--text",
             "--no-header",
+            "--format",
+            "id"
         ]
-    )
+    ).stdout.decode().rstrip()
 
     process = exec_test_command(
         BASE_CMD + ["list", "--format=id", "--text", "--no-header"]
@@ -111,6 +113,8 @@ def test_create_a_domain():
         len(output_after.splitlines()) > len(output_current.splitlines()),
         "the list is not updated with new domain..",
     )
+
+    delete_target_id(target="domains", id=domain_id)
 
 
 def test_create_domain_srv_record(domain_records_setup):
@@ -219,7 +223,3 @@ def test_delete_a_domain_record(domain_records_setup):
 
     # Assert on status code returned from deleting domain
     assert process.returncode == SUCCESS_STATUS_CODE
-
-
-def test_delete_all_domains():
-    delete_all_domains()

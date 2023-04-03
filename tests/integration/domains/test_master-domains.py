@@ -7,7 +7,7 @@ import pytest
 
 from tests.integration.helpers import (
     FAILED_STATUS_CODE,
-    delete_all_domains,
+    delete_target_id,
     exec_test_command,
 )
 
@@ -44,7 +44,7 @@ def setup_master_domains():
         logging.exception("Failed to create master domain in setup")
     yield master_domain_id
     try:
-        delete_all_domains()
+        delete_target_id(target="domains", id=master_domain_id)
     except:
         logging.exception("Failed to delete all domains")
 
@@ -129,7 +129,7 @@ def test_create_master_domain():
             ",",
             "--format=id,domain,type,status,soa_email",
         ]
-    ).stdout.decode()
+    ).stdout.decode().rstrip()
 
     assert re.search(
         "[0-9]+,BC"
@@ -139,6 +139,10 @@ def test_create_master_domain():
         + "@linode.com",
         result,
     )
+
+    res_arr = result.split(",")
+    domain_id = res_arr[0]
+    delete_target_id(target="domains", id=domain_id)
 
 
 def test_update_master_domain_soa_email(setup_master_domains):
@@ -199,7 +203,3 @@ def test_show_domain_detail(setup_master_domains):
 
     assert re.search("[0-9]+,BC[0-9]+-example.com,master,active", result)
 
-
-# This test actually gets covered by the teardown method in @fixture
-def test_delete_all_master_domains():
-    delete_all_domains()

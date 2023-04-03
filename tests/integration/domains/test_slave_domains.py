@@ -8,7 +8,7 @@ import pytest
 from tests.integration.helpers import (
     FAILED_STATUS_CODE,
     SUCCESS_STATUS_CODE,
-    delete_all_domains,
+    delete_target_id,
     exec_test_command,
 )
 
@@ -46,7 +46,7 @@ def slave_domain_setup():
         logging.exception("Failed to create slave domain in setup")
     yield slave_domain_id
     try:
-        delete_all_domains()
+        delete_target_id(target="domains", id=slave_domain_id)
     except:
         logging.exception("Failed to delete all domains")
 
@@ -89,6 +89,10 @@ def test_create_slave_domain():
     assert re.search(
         "[0-9]+," + new_timestamp + "-example.com,slave,active", result
     )
+
+    res_arr = result.split(",")
+    domain_id = res_arr[0]
+    delete_target_id(target="domains", id=domain_id)
 
 
 def test_list_slave_domain():
