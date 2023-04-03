@@ -261,7 +261,8 @@ engine = mysql/8.0.26"""
                 f"{self.base_url}/images", json={"data": [{"id": "test-image"}]}
             )
             m.get(
-                f"{self.base_url}/engines", json={"data": [{"id": "test-engine"}]}
+                f"{self.base_url}/engines",
+                json={"data": [{"id": "test-engine"}]},
             )
             m.get(
                 f"{self.base_url}/account/users",
@@ -312,7 +313,8 @@ engine = mysql/8.0.26"""
                 f"{self.base_url}/images", json={"data": [{"id": "test-image"}]}
             )
             m.get(
-                f"{self.base_url}/engines", json={"data": [{"id": "test-engine"}]}
+                f"{self.base_url}/engines",
+                json={"data": [{"id": "test-engine"}]},
             )
             m.get(
                 f"{self.base_url}/account/users",
