@@ -156,7 +156,7 @@ def _handle_no_default_user(self):
                 if self.config.has_option("DEFAULT", "region"):
                     self.config.set(
                         username, "region", self.config.get("DEFAULT", "region")
-                    ),
+                    )
 
                 if self.config.has_option("DEFAULT", "type"):
                     self.config.set(
