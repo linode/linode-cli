@@ -1,6 +1,5 @@
-# pylint: disable=too-many-lines
 """
-CLI Plugin for handling OBJ
+The object manipulation module of CLI Plugin for handling object storage
 """
 import platform
 import sys

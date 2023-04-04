@@ -1,6 +1,5 @@
-# pylint: disable=too-many-lines
 """
-CLI Plugin for handling OBJ
+The bucket manipulation module of CLI Plugin for handling object storage
 """
 import sys
 from argparse import ArgumentParser
