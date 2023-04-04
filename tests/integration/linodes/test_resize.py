@@ -4,13 +4,13 @@ import os
 import pytest
 
 from tests.integration.helpers import (
+    delete_target_id,
     exec_failing_test_command,
     exec_test_command,
 )
 from tests.integration.linodes.helpers_linodes import (
     BASE_CMD,
     create_linode_and_wait,
-    remove_linodes,
     wait_until,
 )
 
@@ -32,9 +32,9 @@ def setup_resize():
     yield linode_id
     try:
         # clean up
-        remove_linodes()
+        delete_target_id(target="linodes", id=linode_id)
     except:
-        logging.exception("Failed removing all linodes..")
+        logging.exception("Failed removing linode..")
 
 
 def test_resize_fails_to_the_same_plan(setup_resize):

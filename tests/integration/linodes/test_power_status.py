@@ -2,12 +2,11 @@ import logging
 
 import pytest
 
-from tests.integration.helpers import exec_test_command
+from tests.integration.helpers import delete_target_id, exec_test_command
 from tests.integration.linodes.helpers_linodes import (
     BASE_CMD,
     create_linode,
     create_linode_and_wait,
-    remove_linodes,
     wait_until,
 )
 
@@ -22,9 +21,9 @@ def setup_power_status():
     yield linode_id
     try:
         # clean up
-        remove_linodes()
+        delete_target_id(target="linodes", id=linode_id)
     except:
-        logging.exception("Failed removing all linodes..")
+        logging.exception("Failed removing linode..")
 
 
 def test_create_linode_and_boot(setup_power_status):
@@ -49,6 +48,8 @@ def test_reboot_linode():
     assert wait_until(
         linode_id=linode_id, timeout=240, status="running"
     ), "Linode status has not changed to running from provisioning"
+
+    delete_target_id(target="linodes", id=linode_id)
 
 
 def test_shutdown_linode(setup_power_status):

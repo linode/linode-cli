@@ -6,6 +6,7 @@ import time
 import pytest
 
 from tests.integration.helpers import (
+    delete_target_id,
     exec_failing_test_command,
     exec_test_command,
 )
@@ -14,7 +15,6 @@ from tests.integration.linodes.helpers_linodes import (
     DEFAULT_LABEL,
     DEFAULT_RANDOM_PASS,
     DEFAULT_TEST_IMAGE,
-    remove_linodes,
     wait_until,
 )
 
@@ -57,9 +57,10 @@ def setup_linodes():
     yield linode_id
     try:
         # clean up
-        remove_linodes()
+        delete_target_id(target="linodes", id=linode_id)
+
     except:
-        logging.exception("Failed removing all linodes..")
+        logging.exception("Failed removing linode..")
 
 
 def test_update_linode_with_a_image():
@@ -88,15 +89,18 @@ def test_create_linodes_with_a_label():
             ",",
             "--no-headers",
             "--format",
-            "label,region,type,image",
+            "label,region,type,image,id",
             "--no-defaults",
         ]
     ).stdout.decode()
 
-    print(result)
     assert re.search(
         "cli-1,us-east,g6-standard-2," + DEFAULT_TEST_IMAGE, result
     )
+
+    res_arr = result.split(",")
+    linode_id = res_arr[4]
+    delete_target_id(target="linodes", id=linode_id)
 
 
 def test_view_linode_configuration(setup_linodes):
@@ -147,6 +151,10 @@ def test_create_linode_with_min_required_props():
         ]
     ).stdout.decode()
     assert re.search("[0-9]+,us-east,g6-standard-2", result)
+
+    res_arr = result.split(",")
+    linode_id = res_arr[0]
+    delete_target_id(target="linodes", id=linode_id)
 
 
 def test_create_linodes_fails_without_a_root_pass():
@@ -225,6 +233,8 @@ def test_create_linode_without_image_and_not_boot():
     ).stdout.decode()
 
     assert "offline" in result
+
+    delete_target_id(target="linodes", id=linode_id)
 
 
 def test_list_linodes(setup_linodes):

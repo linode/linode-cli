@@ -4,10 +4,10 @@ import time
 import pytest
 
 from tests.integration.helpers import (
+    delete_target_id,
     exec_failing_test_command,
     exec_test_command,
     os,
-    remove_all,
 )
 
 BASE_CMD = ["linode-cli", "volumes"]
@@ -40,19 +40,7 @@ def setup_test_volumes():
         .rstrip()
     )
     yield volume_id
-    remove_all(target="tags")
-    remove_all(target="volumes")
-
-
-def get_volume_id():
-    volume_id = (
-        os.popen(
-            'linode-cli volumes list --text --no-headers --delimiter="," --format="id" | head -n1'
-        )
-        .read()
-        .rstrip()
-    )
-    return volume_id
+    delete_target_id(target="volumes", id=volume_id)
 
 
 def test_fail_to_create_volume_under_10gb():

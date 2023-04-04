@@ -1,10 +1,10 @@
-7import logging
+import logging
 import os
 import re
 
 import pytest
 
-from tests.integration.helpers import exec_test_command
+from tests.integration.helpers import delete_target_id, exec_test_command
 from tests.integration.linodes.helpers_linodes import (
     BASE_CMD,
     DEFAULT_RANDOM_PASS,
@@ -12,7 +12,6 @@ from tests.integration.linodes.helpers_linodes import (
     DEFAULT_TEST_IMAGE,
     create_linode,
     create_linode_and_wait,
-    remove_linodes,
 )
 
 # ##################################################################
@@ -35,9 +34,9 @@ def setup_backup():
     yield linode_id
     # teadown clean up (delete all linodes)
     try:
-        remove_linodes()
+        delete_target_id(target="linodes", id=linode_id)
     except:
-        logging.exception("Fail to remove all linodes..")
+        logging.exception("Fail to remove linode..")
 
 
 def test_create_linode_with_backup_disabled():
@@ -55,6 +54,7 @@ def test_create_linode_with_backup_disabled():
     ).stdout.decode()
 
     assert re.search(new_linode_id + ",False", result)
+    delete_target_id(target="linodes", id=new_linode_id)
 
 
 def test_enable_backups(setup_backup):
@@ -130,6 +130,8 @@ def test_create_backup_with_backup_enabled():
 
     assert re.search(linode_id + ",True", result)
 
+    delete_target_id(target="linodes", id=linode_id)
+
 
 @pytest.mark.skipif(
     os.environ.get("RUN_LONG_TESTS", None) != "TRUE",
@@ -157,6 +159,8 @@ def test_take_snapshot_of_linode():
         + snapshot_label,
         result,
     )
+
+    delete_target_id(target="linodes", id=linode_id)
 
 
 @pytest.mark.skipif(
@@ -204,6 +208,9 @@ def test_view_the_snapshot():
         + new_snapshot_label,
         result,
     )
+
+    delete_target_id(target="linodes", id=linode_id)
+
     # BUG outputs the backup as json, assertion below asserts that outputs the expected.
     # assert(re.search("'status':.*'pending", result))
     # assert(re.search("'finished':.*None", result))
@@ -245,3 +252,5 @@ def test_cancel_backups():
     exec_test_command(
         BASE_CMD + ["backups-cancel", linode_id, "--text", "--no-headers"]
     )
+
+    delete_target_id(target="linodes", id=linode_id)

@@ -114,22 +114,26 @@ def test_create_master_domain_fails_without_soa_email():
 def test_create_master_domain():
     timestamp = str(int(time.time()))
 
-    result = exec_test_command(
-        BASE_CMD
-        + [
-            "create",
-            "--type",
-            "master",
-            "--domain",
-            "BC" + timestamp + "-example.com",
-            "--soa_email=pthiel" + timestamp + "@linode.com",
-            "--text",
-            "--no-header",
-            "--delimiter",
-            ",",
-            "--format=id,domain,type,status,soa_email",
-        ]
-    ).stdout.decode().rstrip()
+    result = (
+        exec_test_command(
+            BASE_CMD
+            + [
+                "create",
+                "--type",
+                "master",
+                "--domain",
+                "BC" + timestamp + "-example.com",
+                "--soa_email=pthiel" + timestamp + "@linode.com",
+                "--text",
+                "--no-header",
+                "--delimiter",
+                ",",
+                "--format=id,domain,type,status,soa_email",
+            ]
+        )
+        .stdout.decode()
+        .rstrip()
+    )
 
     assert re.search(
         "[0-9]+,BC"
@@ -202,4 +206,3 @@ def test_show_domain_detail(setup_master_domains):
     ).stdout.decode()
 
     assert re.search("[0-9]+,BC[0-9]+-example.com,master,active", result)
-

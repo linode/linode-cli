@@ -87,21 +87,25 @@ def test_create_a_domain():
     output_current = process.stdout.decode()
 
     # Create domain
-    domain_id = exec_test_command(
-        BASE_CMD
-        + [
-            "create",
-            "--type",
-            "master",
-            "--domain",
-            timestamp + "example.com",
-            "--soa_email=pthiel@linode.com",
-            "--text",
-            "--no-header",
-            "--format",
-            "id"
-        ]
-    ).stdout.decode().rstrip()
+    domain_id = (
+        exec_test_command(
+            BASE_CMD
+            + [
+                "create",
+                "--type",
+                "master",
+                "--domain",
+                timestamp + "example.com",
+                "--soa_email=pthiel@linode.com",
+                "--text",
+                "--no-header",
+                "--format",
+                "id",
+            ]
+        )
+        .stdout.decode()
+        .rstrip()
+    )
 
     process = exec_test_command(
         BASE_CMD + ["list", "--format=id", "--text", "--no-header"]

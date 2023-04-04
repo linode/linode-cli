@@ -4,11 +4,8 @@ import time
 
 import pytest
 
-from tests.integration.helpers import exec_test_command
-from tests.integration.linodes.helpers_linodes import (
-    create_linode_and_wait,
-    remove_linodes,
-)
+from tests.integration.helpers import delete_target_id, exec_test_command
+from tests.integration.linodes.helpers_linodes import create_linode_and_wait
 
 BASE_CMD = ["linode-cli", "ssh"]
 NUM_OF_RETRIES = 10
@@ -42,7 +39,7 @@ def test_create_a_linode_in_running_state(ssh_key_pair_generator):
     )
 
     yield linode_id
-    remove_linodes()
+    delete_target_id(target="linodes", id=linode_id)
 
 
 def test_display_ssh_plugin_usage_info():
@@ -142,3 +139,5 @@ def test_check_vm_for_ipv4_connectivity(
     ).read()
 
     assert "0% packet loss" in output
+
+    delete_target_id(target="linodes", id=linode_id)
