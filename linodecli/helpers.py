@@ -2,8 +2,10 @@
 Various helper functions shared across multiple CLI components.
 """
 
+import glob
 import os
 import re
+from pathlib import Path
 from urllib.parse import urlparse
 
 API_HOST_OVERRIDE = os.getenv("LINODE_CLI_API_HOST")
@@ -71,3 +73,15 @@ def register_args_shared(parser):
     )
 
     return parser
+
+
+def expand_globs(pattern: str):
+    """
+    Expand glob pattern (for example, '/some/path/*.txt')
+    to be a list of path object.
+    """
+    results = glob.glob(pattern, recursive=True)
+    if len(results) < 1:
+        print(f"No file found matching pattern {pattern}")
+
+    return [Path(x).resolve() for x in results]

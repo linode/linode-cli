@@ -19,7 +19,7 @@ FROM python:3.9-slim-buster
 
 COPY --from=builder /src/dist /dist
 
-RUN pip3 install /dist/*.whl boto==2.49.0
+RUN pip3 install /dist/*.whl boto3
 
 RUN useradd -ms /bin/bash cli
 USER cli:cli

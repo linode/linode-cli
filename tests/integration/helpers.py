@@ -73,6 +73,11 @@ def delete_tag(arg: str):
     assert result.returncode == SUCCESS_STATUS_CODE
 
 
+def delete_target_id(target: str, id: str):
+    result = exec_test_command(["linode-cli", target, "delete", id])
+    assert result.returncode == SUCCESS_STATUS_CODE
+
+
 def remove_lke_clusters():
     cluster_ids = (
         os.popen(
