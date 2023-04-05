@@ -167,9 +167,14 @@ def _handle_no_default_user(self):  # pylint: disable=too-many-branches
                     username, "image", self.config.get("DEFAULT", "image")
                 )
 
-            if self.config.has_option("DEFAULT", "engine"):
+            if self.config.has_option("DEFAULT", "mysql_engine"):
                 self.config.set(
-                    username, "engine", self.config.get("DEFAULT", "engine")
+                    username, "mysql_engine", self.config.get("DEFAULT", "mysql_engine")
+                )
+
+            if self.config.has_option("DEFAULT", "postgresql_engine"):
+                self.config.set(
+                    username, "postgresql_engine", self.config.get("DEFAULT", "postgresql_engine")
                 )
 
             if self.config.has_option("DEFAULT", "authorized_keys"):

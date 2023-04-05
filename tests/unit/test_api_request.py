@@ -54,16 +54,16 @@ class TestAPIRequest:
         assert "> " in output
 
     def test_build_request_body(self, mock_cli, create_operation):
-        create_operation.allowed_defaults = ["region"]
-
+        create_operation.allowed_defaults = ["region", "engine"]
+        create_operation.action = "mysql-create"
         result = api_request._build_request_body(
             mock_cli,
             create_operation,
-            SimpleNamespace(generic_arg="foo", region=None),
+            SimpleNamespace(generic_arg="foo", region=None, engine=None),
         )
-
         assert (
-            json.dumps({"generic_arg": "foo", "region": "us-southeast"})
+            json.dumps(
+                {"generic_arg": "foo", "region": "us-southeast", "engine": "mysql/8.0.26"})
             == result
         )
 
@@ -130,7 +130,8 @@ class TestAPIRequest:
             "linodecli.api_request.requests.post", validate_http_request
         ):
             result = api_request.do_request(
-                mock_cli, create_operation, ["--generic_arg", "foobar", "12345"]
+                mock_cli, create_operation, [
+                    "--generic_arg", "foobar", "12345"]
             )
 
         assert result == mock_response
