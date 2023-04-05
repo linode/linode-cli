@@ -245,10 +245,13 @@ class CLIConfig:
             # different types of database creation use different endpoints,
             # so we need to set the default engine value based on the type
             elif key == "engine":
-                if action == "mysql-create" and self.config.has_option(username, "mysql_engine"):
+                if action == "mysql-create" and self.config.has_option(
+                    username, "mysql_engine"
+                ):
                     value = self.config.get(username, "mysql_engine")
-                elif action == "postgresql-create" and self.config.has_option(username, "postgresql_engine"):
-                    print(self.config.get(username, "postgresql_engine"))
+                elif action == "postgresql-create" and self.config.has_option(
+                    username, "postgresql_engine"
+                ):
                     value = self.config.get(username, "postgresql_engine")
             else:
                 value = ns_dict[key]
@@ -283,7 +286,7 @@ class CLIConfig:
 
     def configure(
         self,
-    ):  # pylint: disable=too-many-branches,too-many-statements
+    ):  # pylint: disable=too-many-branches,too-many-statements,too-many-locals
         """
         This assumes we're running interactively, and prompts the user
         for a series of defaults in order to make future CLI calls
@@ -344,8 +347,9 @@ If you prefer to supply a Personal Access Token, use `linode-cli configure --tok
         images = [
             i["id"] for i in _do_get_request(self.base_url, "/images")["data"]
         ]
-        engines_list = _do_get_request(
-            self.base_url, "/databases/engines")["data"]
+        engines_list = _do_get_request(self.base_url, "/databases/engines")[
+            "data"
+        ]
         mysql_engines = [
             e["id"] for e in engines_list if e["engine"] == "mysql"
         ]

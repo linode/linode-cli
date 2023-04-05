@@ -63,7 +63,12 @@ class TestAPIRequest:
         )
         assert (
             json.dumps(
-                {"generic_arg": "foo", "region": "us-southeast", "engine": "mysql/8.0.26"})
+                {
+                    "generic_arg": "foo",
+                    "region": "us-southeast",
+                    "engine": "mysql/8.0.26",
+                }
+            )
             == result
         )
 
@@ -130,8 +135,7 @@ class TestAPIRequest:
             "linodecli.api_request.requests.post", validate_http_request
         ):
             result = api_request.do_request(
-                mock_cli, create_operation, [
-                    "--generic_arg", "foobar", "12345"]
+                mock_cli, create_operation, ["--generic_arg", "foobar", "12345"]
             )
 
         assert result == mock_response

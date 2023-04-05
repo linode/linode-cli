@@ -122,8 +122,7 @@ mysql_engine = mysql/8.0.26"""
 
         with patch("linodecli.configuration.open", mock_open()):
             conf.set_default_user("cli-dev2")
-        self.assertEqual(conf.config.get(
-            "DEFAULT", "default-user"), "cli-dev2")
+        self.assertEqual(conf.config.get("DEFAULT", "default-user"), "cli-dev2")
 
     def test_get_token(self):
         """
@@ -183,7 +182,9 @@ mysql_engine = mysql/8.0.26"""
         parser.add_argument("--authorized_users")
         parser.add_argument("--plugin-testplugin-testkey")
         parser.add_argument("--engine")
-        ns = parser.parse_args(["--testkey", "testvalue", "--engine", "mysql/new-test-engine"])
+        ns = parser.parse_args(
+            ["--testkey", "testvalue", "--engine", "mysql/new-test-engine"]
+        )
 
         conf.username = "tester"
         conf.config.add_section("tester")
@@ -196,7 +197,7 @@ mysql_engine = mysql/8.0.26"""
             "newkey",
             "authorized_users",
             "plugin-testplugin-testkey",
-            "engine"
+            "engine",
         ]
 
         f = io.StringIO()
@@ -273,13 +274,19 @@ mysql_engine = mysql/8.0.26"""
             )
             m.get(
                 f"{self.base_url}/databases/engines",
-                json={"data": [{"id": "mysql/test-engine", "engine": "mysql"},
-                               {"id": "postgresql/test-engine", "engine": "postgresql"}]},
+                json={
+                    "data": [
+                        {"id": "mysql/test-engine", "engine": "mysql"},
+                        {
+                            "id": "postgresql/test-engine",
+                            "engine": "postgresql",
+                        },
+                    ]
+                },
             )
             m.get(
                 f"{self.base_url}/account/users",
-                json={
-                    "data": [{"username": "cli-dev", "ssh_keys": "testkey"}]},
+                json={"data": [{"username": "cli-dev", "ssh_keys": "testkey"}]},
             )
             conf.configure()
 
@@ -290,7 +297,9 @@ mysql_engine = mysql/8.0.26"""
         self.assertEqual(conf.get_value("authorized_users"), "cli-dev")
         # make sure that we set the default engine value according to type of database
         self.assertEqual(conf.get_value("mysql_engine"), "mysql/test-engine")
-        self.assertEqual(conf.get_value("postgresql_engine"), "postgresql/test-engine")
+        self.assertEqual(
+            conf.get_value("postgresql_engine"), "postgresql/test-engine"
+        )
 
     def test_configure_default_terminal(self):
         """
@@ -329,13 +338,19 @@ mysql_engine = mysql/8.0.26"""
             )
             m.get(
                 f"{self.base_url}/databases/engines",
-                json={"data": [{"id": "mysql/test-engine", "engine": "mysql"},
-                               {"id": "postgresql/test-engine", "engine": "postgresql"}]},
+                json={
+                    "data": [
+                        {"id": "mysql/test-engine", "engine": "mysql"},
+                        {
+                            "id": "postgresql/test-engine",
+                            "engine": "postgresql",
+                        },
+                    ]
+                },
             )
             m.get(
                 f"{self.base_url}/account/users",
-                json={
-                    "data": [{"username": "cli-dev", "ssh_keys": "testkey"}]},
+                json={"data": [{"username": "cli-dev", "ssh_keys": "testkey"}]},
             )
             conf.configure()
 
@@ -346,4 +361,6 @@ mysql_engine = mysql/8.0.26"""
         self.assertEqual(conf.config.get("DEFAULT", "default-user"), "DEFAULT")
         # make sure that we set the default engine value according to type of database
         self.assertEqual(conf.get_value("mysql_engine"), "mysql/test-engine")
-        self.assertEqual(conf.get_value("postgresql_engine"), "postgresql/test-engine")
+        self.assertEqual(
+            conf.get_value("postgresql_engine"), "postgresql/test-engine"
+        )
