@@ -24,6 +24,7 @@ from linodecli.configuration import _do_get_request
 from linodecli.configuration.helpers import _default_thing_input
 from linodecli.helpers import expand_globs
 from linodecli.plugins import PluginContext, inherit_plugin_args
+from linodecli.plugins.obj.buckets import create_bucket, delete_bucket
 from linodecli.plugins.obj.config import (
     BASE_URL_TEMPLATE,
     BASE_WEBSITE_TEMPLATE,
@@ -46,6 +47,11 @@ from linodecli.plugins.obj.helpers import (
     _pad_to,
     _progress,
     restricted_int_arg_type,
+)
+from linodecli.plugins.obj.objects import (
+    delete_object,
+    get_object,
+    upload_object,
 )
 
 try:
@@ -131,232 +137,6 @@ def list_objects_or_buckets(
         print(tab.table)
 
         sys.exit(0)
-
-
-def create_bucket(get_client, args):
-    """
-    Creates a new bucket
-    """
-    parser = inherit_plugin_args(ArgumentParser(PLUGIN_BASE + " mb"))
-
-    parser.add_argument(
-        "name",
-        metavar="NAME",
-        type=str,
-        help="The name of the bucket to create.",
-    )
-
-    parsed = parser.parse_args(args)
-    client = get_client()
-
-    client.create_bucket(Bucket=parsed.name)
-
-    print(f"Bucket {parsed.name} created")
-    sys.exit(0)
-
-
-def delete_bucket(get_client, args):
-    """
-    Deletes a bucket
-    """
-    parser = inherit_plugin_args(ArgumentParser(PLUGIN_BASE + " rb"))
-
-    parser.add_argument(
-        "name",
-        metavar="NAME",
-        type=str,
-        help="The name of the bucket to remove.",
-    )
-    parser.add_argument(
-        "--recursive",
-        action="store_true",
-        help="If given, force removal of non-empty buckets by deleting "
-        "all objects in the bucket before deleting the bucket.  For "
-        "large buckets, this may take a while.",
-    )
-
-    parsed = parser.parse_args(args)
-    client = get_client()
-    bucket_name = parsed.name
-
-    if parsed.recursive:
-        objects = [
-            {"Key": obj.get("Key")}
-            for obj in client.list_objects_v2(Bucket=bucket_name).get(
-                "Contents", []
-            )
-            if obj.get("Key")
-        ]
-        client.delete_objects(
-            Bucket=bucket_name,
-            Delete={
-                "Objects": objects,
-                "Quiet": False,
-            },
-        )
-
-    client.delete_bucket(Bucket=bucket_name)
-
-    print(f"Bucket {parsed.name} removed")
-
-    sys.exit(0)
-
-
-def upload_object(get_client, args):  # pylint: disable=too-many-locals
-    """
-    Uploads an object to object storage
-    """
-    parser = inherit_plugin_args(ArgumentParser(PLUGIN_BASE + " put"))
-
-    parser.add_argument(
-        "file", metavar="FILE", type=str, nargs="+", help="The files to upload."
-    )
-    parser.add_argument(
-        "bucket",
-        metavar="BUCKET",
-        type=str,
-        help="The bucket to put a file in.",
-    )
-    parser.add_argument(
-        "--acl-public",
-        action="store_true",
-        help="If set, the new object can be downloaded without "
-        "authentication.",
-    )
-    parser.add_argument(
-        "--chunk-size",
-        type=restricted_int_arg_type(5120),
-        default=MULTIPART_UPLOAD_CHUNK_SIZE_DEFAULT,
-        help="The size of file chunks when uploading large files, in MB.",
-    )
-
-    # TODO:
-    # 1. Allow user specified key (filename on cloud)
-    # 2. As below:
-    # parser.add_argument('--recursive', action='store_true',
-    #                    help="If set, upload directories recursively.")
-
-    parsed = parser.parse_args(args)
-    client = get_client()
-
-    to_upload: List[Path] = []
-    files = list(parsed.file)
-    for f in files:
-        # Windows doesn't natively expand globs, so we should implement it here
-        if platform.system() == "Windows" and "*" in f:
-            results = expand_globs(f)
-            files.extend(results)
-            continue
-
-    for f in files:
-        file_path = Path(f).resolve()
-        if not file_path.is_file():
-            sys.exit(f"No file {file_path}")
-
-        to_upload.append(file_path)
-
-    chunk_size = 1024 * 1024 * parsed.chunk_size
-
-    upload_options = {
-        "Bucket": parsed.bucket,
-        "Config": TransferConfig(multipart_chunksize=chunk_size * MB),
-    }
-
-    if parsed.acl_public:
-        upload_options["ExtraArgs"] = {"ACL": "public-read"}
-
-    for file_path in to_upload:
-        print(f"Uploading {file_path.name}:")
-        upload_options["Filename"] = str(file_path.resolve())
-        upload_options["Key"] = file_path.name
-        upload_options["Callback"] = ProgressPercentage(
-            file_path.stat().st_size, PROGRESS_BAR_WIDTH
-        )
-        try:
-            client.upload_file(**upload_options)
-        except S3UploadFailedError as e:
-            sys.exit(e)
-
-    print("Done.")
-
-
-def get_object(get_client, args):
-    """
-    Retrieves an uploaded object and writes it to a file
-    """
-    parser = inherit_plugin_args(ArgumentParser(PLUGIN_BASE + " get"))
-
-    parser.add_argument(
-        "bucket", metavar="BUCKET", type=str, help="The bucket the file is in."
-    )
-    parser.add_argument(
-        "file", metavar="OBJECT", type=str, help="The object to retrieve."
-    )
-    parser.add_argument(
-        "destination",
-        metavar="LOCAL_FILE",
-        type=str,
-        nargs="?",
-        help="The destination file. If omitted, uses the object "
-        "name and saves to the current directory.",
-    )
-
-    parsed = parser.parse_args(args)
-    client = get_client()
-
-    # find destination file
-    destination = parsed.destination
-
-    if destination is None:
-        destination = parsed.file
-
-    destination = Path(destination).resolve()
-
-    # download the file
-    bucket = parsed.bucket
-    key = parsed.file
-
-    response = client.head_object(
-        Bucket=bucket,
-        Key=key,
-    )
-
-    client.download_file(
-        Bucket=bucket,
-        Key=key,
-        Filename=str(destination),
-        Callback=ProgressPercentage(
-            response.get("ContentLength", 0), PROGRESS_BAR_WIDTH
-        ),
-    )
-
-    print("Done.")
-
-
-def delete_object(get_client, args):
-    """
-    Removes a file from a bucket
-    """
-    parser = inherit_plugin_args(ArgumentParser(PLUGIN_BASE + " del"))
-
-    parser.add_argument(
-        "bucket", metavar="BUCKET", type=str, help="The bucket to delete from."
-    )
-    parser.add_argument(
-        "file", metavar="OBJECT", type=str, help="The object to remove."
-    )
-
-    parsed = parser.parse_args(args)
-    client = get_client()
-    bucket = parsed.bucket
-    key = parsed.file
-
-    client.delete_object(
-        Bucket=bucket,
-        Key=key,
-    )
-
-    print(f"{parsed.file} removed from {parsed.bucket}")
 
 
 def generate_url(get_client, args):
