@@ -100,7 +100,9 @@ def _build_request_body(ctx, operation, parsed_args) -> Optional[str]:
 
     # Merge defaults into body if applicable
     if ctx.defaults:
-        parsed_args = ctx.config.update(parsed_args, operation.allowed_defaults)
+        parsed_args = ctx.config.update(
+            parsed_args, operation.allowed_defaults, operation.action
+        )
 
     to_json = {k: v for k, v in vars(parsed_args).items() if v is not None}
 

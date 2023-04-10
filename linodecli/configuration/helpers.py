@@ -118,7 +118,7 @@ def _default_thing_input(
     return ret
 
 
-def _handle_no_default_user(self):
+def _handle_no_default_user(self):  # pylint: disable=too-many-branches
     """
     Handle the case that there is no default user in the config
     """
@@ -165,6 +165,20 @@ def _handle_no_default_user(self):
             if self.config.has_option("DEFAULT", "image"):
                 self.config.set(
                     username, "image", self.config.get("DEFAULT", "image")
+                )
+
+            if self.config.has_option("DEFAULT", "mysql_engine"):
+                self.config.set(
+                    username,
+                    "mysql_engine",
+                    self.config.get("DEFAULT", "mysql_engine"),
+                )
+
+            if self.config.has_option("DEFAULT", "postgresql_engine"):
+                self.config.set(
+                    username,
+                    "postgresql_engine",
+                    self.config.get("DEFAULT", "postgresql_engine"),
                 )
 
             if self.config.has_option("DEFAULT", "authorized_keys"):
