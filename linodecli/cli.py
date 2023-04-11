@@ -4,17 +4,14 @@ Responsible for managing spec and routing commands to operations.
 
 import os
 import pickle
-import re
 import sys
 from sys import version_info
 from openapi3 import OpenAPI
 
 from .api_request import do_request
 from .configuration import CLIConfig
-from .helpers import filter_markdown_links
-from .operation import CLIArg, CLIOperation, URLParam
 from .output import OutputHandler, OutputMode
-from .response import ModelAttr, ResponseModel
+from .baked import OpenAPIOperation
 
 METHODS = ("get", "post", "put", "delete")
 
@@ -49,7 +46,7 @@ class CLI:  # pylint: disable=too-many-instance-attributes
         spec = OpenAPI(spec)
         self.spec = spec
         self.ops = {}
-        default_servers = [c.url for c in spec.servers]
+        #default_servers = [c.url for c in spec.servers]
         ext = {
             'skip': 'linode-cli-skip',
             'action': 'linode-cli-action',
@@ -67,6 +64,8 @@ class CLI:  # pylint: disable=too-many-instance-attributes
                 # TODO: handle action aliases
                 if not action:
                     continue
+                if isinstance(action, list):
+                    action = action[0]
                 if command not in self.ops:
                     self.ops[command] = {}
                 self.ops[command][action] = OpenAPIOperation(operation, m, pobj.parameters)
@@ -74,7 +73,7 @@ class CLI:  # pylint: disable=too-many-instance-attributes
         # hide the base_url from the spec away
         self.ops["_base_url"] = self.spec.servers[0].url
         self.ops["_spec_version"] = self.spec.info.version
-        self.ops["_spec" = self.spec
+        self.ops["_spec"] = self.spec
 
         # finish the baking
         data_file = self._get_data_file()

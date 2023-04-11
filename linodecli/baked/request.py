@@ -1,3 +1,5 @@
+from openapi3.general import Reference
+
 class OpenAPIRequestArg:
     """
     A single argument to a request as defined by a Schema in the OpenAPI spec
@@ -74,6 +76,10 @@ def _parse_request_model(schema, prefix=None, list_of_objects=False):
     if schema.properties is not None:
         for k, v in schema.properties.items():
             print("Looking at {} {}".format(k, v))
+            if isinstance(v, Reference):
+                # TODO: fix Reference has no attribute type
+                print("Skipped {} {}".format(k,v))
+                continue
             if v.type == "object":
                 # nested objects receive a prefix and are otherwise parsed normally
                 pref = prefix + "." + k if prefix else k
@@ -134,7 +140,7 @@ class OpenAPIFilteringRequest:
         if not response_model.is_paginated:
             raise ValueError(
                 "Non-paginated schema {} send to OpenAPIFilteringRequest constructor!".format(
-                    schema
+                    response_model.schema
                 )
             )
 
