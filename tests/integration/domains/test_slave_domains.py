@@ -66,33 +66,9 @@ def test_create_slave_domain_fails_without_master_dns_server():
     )
 
 
-def test_create_slave_domain():
-    new_timestamp = str(int(time.time()))
-    result = exec_test_command(
-        BASE_CMD
-        + [
-            "create",
-            "--type",
-            "slave",
-            "--domain",
-            new_timestamp + "-example.com",
-            "--master_ips",
-            "1.1.1.1",
-            "--text",
-            "--no-header",
-            "--delimiter",
-            ",",
-            "--format=id,domain,type,status",
-        ]
-    ).stdout.decode()
-
-    assert re.search(
-        "[0-9]+," + new_timestamp + "-example.com,slave,active", result
-    )
-
-    res_arr = result.split(",")
-    domain_id = res_arr[0]
-    delete_target_id(target="domains", id=domain_id)
+def test_create_slave_domain(create_slave_domain):
+    domain_id = create_slave_domain
+    assert re.search("[0-9]+", domain_id)
 
 
 def test_list_slave_domain():

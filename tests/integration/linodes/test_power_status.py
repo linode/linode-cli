@@ -26,6 +26,15 @@ def setup_power_status():
         logging.exception("Failed removing linode..")
 
 
+@pytest.fixture(scope="session")
+def create_linode_in_running_state():
+    linode_id = create_linode_and_wait()
+
+    yield linode_id
+
+    delete_target_id("linodes", linode_id)
+
+
 def test_create_linode_and_boot(setup_power_status):
     linode_id = setup_power_status
 
@@ -35,9 +44,9 @@ def test_create_linode_and_boot(setup_power_status):
     assert result, "Linode status has not changed to running from provisioning"
 
 
-def test_reboot_linode():
+def test_reboot_linode(create_linode_in_running_state):
     # create linode and wait until it is in "running" state
-    linode_id = create_linode_and_wait()
+    linode_id = create_linode_in_running_state
 
     # reboot linode from "running" status
     exec_test_command(
@@ -48,8 +57,6 @@ def test_reboot_linode():
     assert wait_until(
         linode_id=linode_id, timeout=240, status="running"
     ), "Linode status has not changed to running from provisioning"
-
-    delete_target_id(target="linodes", id=linode_id)
 
 
 def test_shutdown_linode(setup_power_status):

@@ -77,9 +77,7 @@ def domain_records_setup():
         logging.exception("Failed to delete all domains")
 
 
-def test_create_a_domain():
-    timestamp = str(int(time.time()))
-
+def test_create_a_domain(create_master_domain):
     # Current domain list
     process = exec_test_command(
         BASE_CMD + ["list", '--format="id"', "--text", "--no-header"]
@@ -87,25 +85,7 @@ def test_create_a_domain():
     output_current = process.stdout.decode()
 
     # Create domain
-    domain_id = (
-        exec_test_command(
-            BASE_CMD
-            + [
-                "create",
-                "--type",
-                "master",
-                "--domain",
-                timestamp + "example.com",
-                "--soa_email=pthiel@linode.com",
-                "--text",
-                "--no-header",
-                "--format",
-                "id",
-            ]
-        )
-        .stdout.decode()
-        .rstrip()
-    )
+    domain_id = create_master_domain
 
     process = exec_test_command(
         BASE_CMD + ["list", "--format=id", "--text", "--no-header"]
@@ -117,8 +97,6 @@ def test_create_a_domain():
         len(output_after.splitlines()) > len(output_current.splitlines()),
         "the list is not updated with new domain..",
     )
-
-    delete_target_id(target="domains", id=domain_id)
 
 
 def test_create_domain_srv_record(domain_records_setup):

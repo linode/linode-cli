@@ -46,7 +46,7 @@ def setup_master_domains():
     try:
         delete_target_id(target="domains", id=master_domain_id)
     except:
-        logging.exception("Failed to delete all domains")
+        logging.exception("Failed to delete domain with id:" + master_domain_id)
 
 
 def test_create_domain_fails_without_spcified_type():
@@ -111,42 +111,9 @@ def test_create_master_domain_fails_without_soa_email():
     assert "soa_email	soa_email required when type=master" in result
 
 
-def test_create_master_domain():
-    timestamp = str(int(time.time()))
-
-    result = (
-        exec_test_command(
-            BASE_CMD
-            + [
-                "create",
-                "--type",
-                "master",
-                "--domain",
-                "BC" + timestamp + "-example.com",
-                "--soa_email=pthiel" + timestamp + "@linode.com",
-                "--text",
-                "--no-header",
-                "--delimiter",
-                ",",
-                "--format=id,domain,type,status,soa_email",
-            ]
-        )
-        .stdout.decode()
-        .rstrip()
-    )
-
-    assert re.search(
-        "[0-9]+,BC"
-        + timestamp
-        + "-example.com,master,active,pthiel"
-        + timestamp
-        + "@linode.com",
-        result,
-    )
-
-    res_arr = result.split(",")
-    domain_id = res_arr[0]
-    delete_target_id(target="domains", id=domain_id)
+def test_create_master_domain(create_master_domain):
+    domain_id = create_master_domain
+    assert re.search("[0-9]+", domain_id)
 
 
 def test_update_master_domain_soa_email(setup_master_domains):

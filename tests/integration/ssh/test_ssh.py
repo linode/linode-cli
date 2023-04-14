@@ -139,5 +139,3 @@ def test_check_vm_for_ipv4_connectivity(
     ).read()
 
     assert "0% packet loss" in output
-
-    delete_target_id(target="linodes", id=linode_id)

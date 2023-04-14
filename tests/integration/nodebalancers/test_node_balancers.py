@@ -83,7 +83,6 @@ def setup_test_node_balancers():
         .stdout.decode()
         .rstrip()
     )
-    print("LINODE CREAT IS: ", linode_create)
     linode_arr = linode_create.split(",")
     linode_id = linode_arr[0]
     ip_arr = linode_arr[1].split(" ")
@@ -124,6 +123,46 @@ def setup_test_node_balancers():
         "Failed to remove all linodes/nodebalancers in teardown.."
 
 
+@pytest.fixture
+def create_linode_to_add():
+    linode = (
+        exec_test_command(
+            [
+                "linode-cli",
+                "linodes",
+                "create",
+                "--root_pass",
+                "aComplex@Password",
+                "--booted",
+                "true",
+                "--region",
+                "us-east",
+                "--type",
+                "g6-standard-2",
+                "--private_ip",
+                "true",
+                "--image",
+                DEFAULT_TEST_IMAGE,
+                "--text",
+                "--delimiter",
+                ",",
+                "--format",
+                "id,ipv4",
+                "--no-header",
+                "--suppress-warnings",
+            ]
+        )
+        .stdout.decode()
+        .rstrip()
+    )
+
+    yield linode
+
+    linode_arr = linode.split(",")
+    linode_id = linode_arr[0]
+    delete_target_id("linodes", linode_id)
+
+
 def test_fail_to_create_nodebalancer_without_region():
     result = exec_failing_test_command(
         BASE_CMD + ["create", "--text", "--no-headers"]
@@ -132,33 +171,11 @@ def test_fail_to_create_nodebalancer_without_region():
     assert "region	region is required" in result
 
 
-def test_create_nodebalancer_with_default_conf():
-    result = (
-        exec_test_command(
-            BASE_CMD
-            + [
-                "create",
-                "--region",
-                "us-east",
-                "--text",
-                "--delimiter",
-                ",",
-                "--format",
-                "id,label,region,hostname,client_conn_throttle",
-                "--suppress-warnings",
-                "--no-headers",
-            ]
-        )
-        .stdout.decode()
-        .rstrip()
-    )
+def test_create_nodebalancer_with_default_conf(
+    create_nodebalancer_with_default_conf,
+):
+    result = create_nodebalancer_with_default_conf
     assert re.search(nodebalancer_created, result)
-
-    res_arr = result.split(",")
-
-    print("resarr: ", res_arr)
-    nodebalancer_id = res_arr[0]
-    delete_target_id(target="nodebalancers", id=nodebalancer_id)
 
 
 def test_list_nodebalancers_and_status():
@@ -244,39 +261,11 @@ def test_view_configuration_profile(setup_test_node_balancers):
     )
 
 
-def test_add_node_to_conf_profile(setup_test_node_balancers):
-    linode_create = (
-        exec_test_command(
-            [
-                "linode-cli",
-                "linodes",
-                "create",
-                "--root_pass",
-                "aComplex@Password",
-                "--booted",
-                "true",
-                "--region",
-                "us-east",
-                "--type",
-                "g6-standard-2",
-                "--private_ip",
-                "true",
-                "--image",
-                DEFAULT_TEST_IMAGE,
-                "--text",
-                "--delimiter",
-                ",",
-                "--format",
-                "id,ipv4",
-                "--no-header",
-                "--suppress-warnings",
-            ]
-        )
-        .stdout.decode()
-        .rstrip()
-    )
+def test_add_node_to_conf_profile(
+    setup_test_node_balancers, create_linode_to_add
+):
+    linode_create = create_linode_to_add
     linode_arr = linode_create.split(",")
-    linode_id = linode_arr[0]
     ip_arr = linode_arr[1].split(" ")
     node_ip = ip_arr[1]
 
@@ -307,8 +296,6 @@ def test_add_node_to_conf_profile(setup_test_node_balancers):
         "[0-9]+," + node_label + "," + node_ip + ":80,Unknown,100,accept",
         result,
     )
-
-    delete_target_id(target="linodes", id=linode_id)
 
 
 def test_update_node_label(setup_test_node_balancers):
