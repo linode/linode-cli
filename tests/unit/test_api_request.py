@@ -9,7 +9,6 @@ from types import SimpleNamespace
 
 import pytest
 import requests
-
 from mock import Mock, patch
 
 from linodecli import api_request
