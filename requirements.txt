@@ -2,3 +2,4 @@ terminaltables
 requests
 PyYAML
 packaging
+rich
