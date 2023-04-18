@@ -4,6 +4,7 @@ import time
 import pytest
 
 from tests.integration.helpers import (
+    delete_target_id,
     exec_failing_test_command,
     exec_test_command,
 )
@@ -38,7 +39,7 @@ def setup_test_volumes_resize():
         .rstrip()
     )
     yield volume_id
-    exec_test_command(BASE_CMD + ["delete", volume_id])
+    delete_target_id(target="volumes", id=volume_id)
 
 
 def test_resize_fails_to_smaller_volume(setup_test_volumes_resize):
