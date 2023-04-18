@@ -242,9 +242,10 @@ def help_with_ops(ops, config):
     # commands to manage plugins (don't call out to API)
     print("\nCLI Plugin management commands:")
     pm_commands = [["register-plugin", "remove-plugin"]]
-    table = SingleTable(pm_commands)
-    table.inner_heading_row_border = False
-    print(table.table)
+    table = Table(show_header=False)
+    for cmd in pm_commands:
+        table.add_row(*cmd)
+    rprint(table)
 
     # other CLI commands
     print("\nOther CLI commands:")
