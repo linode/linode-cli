@@ -9,7 +9,8 @@ from importlib import import_module
 
 import requests
 import yaml
-from terminaltables import SingleTable
+from rich.table import Table
+from rich import print as rprint
 
 from linodecli import plugins
 
