@@ -265,9 +265,10 @@ def help_with_ops(ops, config):
     if content[i + 3 :]:
         proc.append(content[i + 3 :])
 
-    table = SingleTable(proc)
-    table.inner_heading_row_border = False
-    print(table.table)
+    table = Table(show_header=False)
+    for cmd in proc:
+        table.add_row(*cmd)
+    rprint(table)
 
     # plugins registered to the CLI (do arbitrary things)
     if plugins.available(config):
