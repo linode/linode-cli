@@ -5,7 +5,6 @@ from argparse import ArgumentTypeError
 from datetime import datetime
 
 from rich.table import Table
-from rich import print as rprint
 
 from linodecli.plugins.obj.config import DATE_FORMAT
 
