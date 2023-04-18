@@ -283,10 +283,10 @@ def help_with_ops(ops, config):
         if plugin_content[i + 3 :]:
             plugin_proc.append(plugin_content[i + 3 :])
 
-        plugin_table = SingleTable(plugin_proc)
-        plugin_table.inner_heading_row_border = False
-
-        print(plugin_table.table)
+        plugin_table = Table(show_header=False)
+        for plugin in proc:
+            plugin_table.add_row(*plugin)
+        rprint(plugin_table)
 
     print("\nTo reconfigure, call `linode-cli configure`")
     print(
