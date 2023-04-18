@@ -120,7 +120,7 @@ def _denominate(total):
 # helper functions for output
 def _borderless_table(data):
     """
-    Returns a terminaltables.SingleTable object with no borders and correct padding
+    Returns a rich.Table object with no borders and correct padding
     """
     tab = Table(show_header=False, show_edge=False, padding=(0, 2, 0, 2))
 
