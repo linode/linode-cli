@@ -488,7 +488,7 @@ def print_help(parser: ArgumentParser):
     ]
 
     tab = Table(show_header=False)
-    rprint(tab.table)
+    rprint(tab)
     print()
     print(
         "Additionally, you can regenerate your Object Storage keys using the "
