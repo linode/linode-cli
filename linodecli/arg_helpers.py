@@ -234,9 +234,10 @@ def help_with_ops(ops, config):
     # commands to manage CLI users (don't call out to API)
     print("\nCLI user management commands:")
     um_commands = [["configure", "set-user", "show-users"], ["remove-user"]]
-    table = SingleTable(um_commands)
-    table.inner_heading_row_border = False
-    print(table.table)
+    table = Table(show_header=False)
+    for cmd in um_commands:
+        table.add_row(*cmd)
+    rprint(table)
 
     # commands to manage plugins (don't call out to API)
     print("\nCLI Plugin management commands:")
