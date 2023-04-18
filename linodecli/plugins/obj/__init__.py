@@ -17,7 +17,8 @@ from math import ceil
 from pathlib import Path
 from typing import List
 
-from terminaltables import SingleTable
+from rich.table import Table
+from rich import print as rprint
 
 from linodecli.cli import CLI
 from linodecli.configuration import _do_get_request
@@ -486,9 +487,8 @@ def print_help(parser: ArgumentParser):
         for name, func in sorted(COMMAND_MAP.items())
     ]
 
-    tab = SingleTable(command_help_map)
-    tab.inner_heading_row_border = False
-    print(tab.table)
+    tab = Table(show_header=False)
+    rprint(tab.table)
     print()
     print(
         "Additionally, you can regenerate your Object Storage keys using the "
