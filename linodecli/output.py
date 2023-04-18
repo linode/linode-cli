@@ -7,6 +7,7 @@ from enum import Enum
 from sys import stdout
 
 from rich.table import Table
+from rich.text import Text
 from rich import print as rprint
 
 
@@ -137,6 +138,7 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
 
         tab = Table(*content[0])
         for row in content[1:]:
+            row = [Text.from_ansi(item) for item in row]
             tab.add_row(*row)
 
         if title is not None:
