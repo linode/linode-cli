@@ -284,7 +284,7 @@ def help_with_ops(ops, config):
             plugin_proc.append(plugin_content[i + 3 :])
 
         plugin_table = Table(show_header=False)
-        for plugin in proc:
+        for plugin in plugin_content:
             plugin_table.add_row(*plugin)
         rprint(plugin_table)
 
