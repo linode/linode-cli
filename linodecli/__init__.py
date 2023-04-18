@@ -9,7 +9,6 @@ import sys
 from sys import argv
 
 import pkg_resources
-from terminaltables import SingleTable
 from rich.table import Table
 from rich import print as rprint
 
