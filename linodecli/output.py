@@ -6,7 +6,8 @@ import sys
 from enum import Enum
 from sys import stdout
 
-from terminaltables import SingleTable
+from rich.table import Table
+from rich import print as rprint
 
 
 class OutputMode(Enum):
