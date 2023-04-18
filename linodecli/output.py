@@ -6,6 +6,7 @@ import sys
 from enum import Enum
 from sys import stdout
 
+from terminaltables import SingleTable
 from rich.table import Table
 from rich import print as rprint
 
@@ -135,15 +136,17 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
             ),
         )
 
-        tab = SingleTable(content)
+        tab = Table(*content[0])
+        for row in content[1:]:
+            tab.add_row(*row)
 
         if title is not None:
             tab.title = title
 
         if not self.headers:
-            tab.inner_heading_row_border = False
+            tab.show_header = False
 
-        print(tab.table, file=to)
+        rprint(tab, file=to)
 
     def _delimited_output(self, header, data, columns, to):
         """
