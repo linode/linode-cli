@@ -250,9 +250,10 @@ def help_with_ops(ops, config):
     # other CLI commands
     print("\nOther CLI commands:")
     other_commands = [["completion"]]
-    table = SingleTable(other_commands)
-    table.inner_heading_row_border = False
-    print(table.table)
+    table = Table(show_header=False)
+    for cmd in other_commands:
+        table.add_row(*cmd)
+    rprint(table)
 
     # commands generated from the spec (call the API directly)
     print("\nAvailable commands:")
