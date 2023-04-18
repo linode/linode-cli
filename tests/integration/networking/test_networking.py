@@ -1,4 +1,3 @@
-import logging
 import re
 
 import pytest
@@ -12,11 +11,10 @@ BASE_CMD = ["linode-cli", "networking"]
 @pytest.fixture(scope="session", autouse=True)
 def setup_test_networking():
     linode_id = create_linode_and_wait()
+
     yield linode_id
-    try:
-        delete_target_id(target="linodes", id=linode_id)
-    except:
-        logging.exception("Failed to remove linode in teardown..")
+
+    delete_target_id(target="linodes", id=linode_id)
 
 
 def test_display_ips_for_available_linodes(setup_test_networking):

@@ -1,4 +1,3 @@
-import logging
 import os
 import re
 import time
@@ -12,40 +11,32 @@ BASE_CMD = ["linode-cli", "events"]
 
 @pytest.fixture(scope="session", autouse=True)
 def events_setup():
-    # Create one domain for some tests in this suite
-    try:
-        timestamp = str(int(time.time()))
-        # Create domain
-        domain_id = (
-            exec_test_command(
-                [
-                    "linode-cli",
-                    "domains",
-                    "create",
-                    "--type",
-                    "master",
-                    "--domain",
-                    "A" + timestamp + "example.com",
-                    "--soa_email=developer-test@linode.com",
-                    "--text",
-                    "--no-header",
-                    "--format",
-                    "id",
-                ]
-            )
-            .stdout.decode()
-            .rstrip()
+    timestamp = str(int(time.time()))
+    # Create domain
+    domain_id = (
+        exec_test_command(
+            [
+                "linode-cli",
+                "domains",
+                "create",
+                "--type",
+                "master",
+                "--domain",
+                "A" + timestamp + "example.com",
+                "--soa_email=developer-test@linode.com",
+                "--text",
+                "--no-header",
+                "--format",
+                "id",
+            ]
         )
-
-    except:
-        logging.exception("Failed creating domain in setup")
+        .stdout.decode()
+        .rstrip()
+    )
 
     yield domain_id
 
-    try:
-        delete_target_id(target="domains", id=domain_id)
-    except:
-        logging.exception("Failed to delete all domains")
+    delete_target_id(target="domains", id=domain_id)
 
 
 def test_print_events_usage_information():

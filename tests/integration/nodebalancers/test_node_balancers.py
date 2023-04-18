@@ -116,11 +116,8 @@ def setup_test_node_balancers():
 
     yield nodebalancer_id, config_id, node_id, node_ip
 
-    try:
-        delete_target_id(target="nodebalancers", id=nodebalancer_id)
-        delete_target_id(target="linodes", id=linode_id)
-    except:
-        "Failed to remove all linodes/nodebalancers in teardown.."
+    delete_target_id(target="nodebalancers", id=nodebalancer_id)
+    delete_target_id(target="linodes", id=linode_id)
 
 
 @pytest.fixture

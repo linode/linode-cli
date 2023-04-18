@@ -1,4 +1,3 @@
-import logging
 import os
 import re
 import time
@@ -18,37 +17,32 @@ timestamp = str(int(time.time()))
 
 @pytest.fixture(scope="session", autouse=True)
 def slave_domain_setup():
-    # create one slave domain for some tests in this suite
-    try:
-        # Create domain
-        slave_domain_id = (
-            exec_test_command(
-                BASE_CMD
-                + [
-                    "create",
-                    "--type",
-                    "slave",
-                    "--domain",
-                    timestamp + "-example.com",
-                    "--master_ips",
-                    "1.1.1.1",
-                    "--text",
-                    "--no-header",
-                    "--delimiter",
-                    ",",
-                    "--format=id",
-                ]
-            )
-            .stdout.decode()
-            .rstrip()
+    # Create domain
+    slave_domain_id = (
+        exec_test_command(
+            BASE_CMD
+            + [
+                "create",
+                "--type",
+                "slave",
+                "--domain",
+                timestamp + "-example.com",
+                "--master_ips",
+                "1.1.1.1",
+                "--text",
+                "--no-header",
+                "--delimiter",
+                ",",
+                "--format=id",
+            ]
         )
-    except:
-        logging.exception("Failed to create slave domain in setup")
+        .stdout.decode()
+        .rstrip()
+    )
+
     yield slave_domain_id
-    try:
-        delete_target_id(target="domains", id=slave_domain_id)
-    except:
-        logging.exception("Failed to delete all domains")
+
+    delete_target_id(target="domains", id=slave_domain_id)
 
 
 def test_create_slave_domain_fails_without_master_dns_server():

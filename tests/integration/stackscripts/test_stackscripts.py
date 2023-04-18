@@ -7,19 +7,9 @@ from tests.integration.helpers import (
     exec_failing_test_command,
     exec_test_command,
 )
-from tests.integration.linodes.helpers_linodes import (
-    DEFAULT_RANDOM_PASS,
-    remove_linodes,
-)
+from tests.integration.linodes.helpers_linodes import DEFAULT_RANDOM_PASS
 
 BASE_CMD = ["linode-cli", "stackscripts"]
-
-
-@pytest.fixture(scope="session", autouse=True)
-def setup_test_stackscripts():
-    remove_linodes()
-    yield "setup"
-    delete_stackscript_and_teardown_linode()
 
 
 def get_linode_image_lists():
@@ -49,13 +39,6 @@ def get_private_stackscript():
     )
 
     return private_stackscript.splitlines()
-
-
-def delete_stackscript_and_teardown_linode():
-    private_stackscript = get_private_stackscript()
-    for sc_id in private_stackscript:
-        exec_test_command(BASE_CMD + ["delete", sc_id])
-    remove_linodes()
 
 
 @pytest.fixture(scope="session", autouse=True)

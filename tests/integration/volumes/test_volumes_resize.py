@@ -38,7 +38,9 @@ def setup_test_volumes_resize():
         .stdout.decode()
         .rstrip()
     )
+
     yield volume_id
+
     delete_target_id(target="volumes", id=volume_id)
 
 

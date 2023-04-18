@@ -1,3 +1,4 @@
+import os
 import re
 import time
 
@@ -7,7 +8,6 @@ from tests.integration.helpers import (
     delete_target_id,
     exec_failing_test_command,
     exec_test_command,
-    os,
 )
 
 BASE_CMD = ["linode-cli", "volumes"]
@@ -39,7 +39,9 @@ def setup_test_volumes():
         .stdout.decode()
         .rstrip()
     )
+
     yield volume_id
+
     delete_target_id(target="volumes", id=volume_id)
 
 
