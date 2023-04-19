@@ -1,4 +1,3 @@
-import logging
 import re
 import time
 
@@ -23,48 +22,39 @@ linode_label = DEFAULT_LABEL + timestamp
 
 @pytest.fixture(scope="session", autouse=True)
 def setup_linodes():
-    try:
-        # create one linode with default label for some tests
-        linode_id = (
-            exec_test_command(
-                BASE_CMD
-                + [
-                    "create",
-                    "--type",
-                    "g6-standard-2",
-                    "--region",
-                    "us-east",
-                    "--image",
-                    DEFAULT_TEST_IMAGE,
-                    "--label",
-                    linode_label,
-                    "--root_pass",
-                    DEFAULT_RANDOM_PASS,
-                    "--text",
-                    "--delimiter",
-                    ",",
-                    "--no-headers",
-                    "--format",
-                    "id",
-                    "--no-defaults",
-                    "--format",
-                    "id",
-                ]
-            )
-            .stdout.decode()
-            .rstrip()
+    linode_id = (
+        exec_test_command(
+            BASE_CMD
+            + [
+                "create",
+                "--type",
+                "g6-standard-2",
+                "--region",
+                "us-east",
+                "--image",
+                DEFAULT_TEST_IMAGE,
+                "--label",
+                linode_label,
+                "--root_pass",
+                DEFAULT_RANDOM_PASS,
+                "--text",
+                "--delimiter",
+                ",",
+                "--no-headers",
+                "--format",
+                "id",
+                "--no-defaults",
+                "--format",
+                "id",
+            ]
         )
-    except:
-        logging.exception("Failed to create default linode in setup..")
+        .stdout.decode()
+        .rstrip()
+    )
 
     yield linode_id
 
-    try:
-        # clean up
-        delete_target_id(target="linodes", id=linode_id)
-
-    except:
-        logging.exception("Failed removing linode..")
+    delete_target_id(target="linodes", id=linode_id)
 
 
 def test_update_linode_with_a_image():

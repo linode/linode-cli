@@ -1,4 +1,3 @@
-import logging
 import re
 import time
 
@@ -17,37 +16,30 @@ FIREWALL_LABEL = "example-firewall-label"
 @pytest.fixture(scope="session", autouse=True)
 def firewalls_setup():
     # Create one domain for some tests in this suite
-    try:
-        # Create domain
-        firewall_id = (
-            exec_test_command(
-                BASE_CMD
-                + [
-                    "create",
-                    "--label",
-                    FIREWALL_LABEL,
-                    "--rules.outbound_policy",
-                    "ACCEPT",
-                    "--rules.inbound_policy",
-                    "DROP",
-                    "--text",
-                    "--no-headers",
-                    "--format",
-                    "id",
-                ]
-            )
-            .stdout.decode()
-            .rstrip()
+    firewall_id = (
+        exec_test_command(
+            BASE_CMD
+            + [
+                "create",
+                "--label",
+                FIREWALL_LABEL,
+                "--rules.outbound_policy",
+                "ACCEPT",
+                "--rules.inbound_policy",
+                "DROP",
+                "--text",
+                "--no-headers",
+                "--format",
+                "id",
+            ]
         )
-    except:
-        logging.exception("Failed creating domain in setup")
+        .stdout.decode()
+        .rstrip()
+    )
 
     yield firewall_id
     # teardown - delete all firewalls
-    try:
-        delete_target_id(target="firewalls", id=firewall_id)
-    except:
-        logging.exception("Failed to delete all firewalls")
+    delete_target_id(target="firewalls", id=firewall_id)
 
 
 def test_view_firewall(firewalls_setup):

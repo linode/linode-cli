@@ -1,4 +1,3 @@
-import logging
 import os
 import re
 import time
@@ -17,36 +16,31 @@ BASE_CMD = ["linode-cli", "domains"]
 @pytest.fixture(scope="session", autouse=True)
 def setup_master_domains():
     timestamp = str(int(time.time()))
-    # create one master domain for some tests in this suite
-    try:
-        # Create domain
-        master_domain_id = (
-            exec_test_command(
-                BASE_CMD
-                + [
-                    "create",
-                    "--type",
-                    "master",
-                    "--domain",
-                    "BC" + timestamp + "-example.com",
-                    "--soa_email=pthiel" + timestamp + "@linode.com",
-                    "--text",
-                    "--no-header",
-                    "--delimiter",
-                    ",",
-                    "--format=id",
-                ]
-            )
-            .stdout.decode()
-            .rstrip()
+    # Create domain
+    master_domain_id = (
+        exec_test_command(
+            BASE_CMD
+            + [
+                "create",
+                "--type",
+                "master",
+                "--domain",
+                "BC" + timestamp + "-example.com",
+                "--soa_email=pthiel" + timestamp + "@linode.com",
+                "--text",
+                "--no-header",
+                "--delimiter",
+                ",",
+                "--format=id",
+            ]
         )
-    except:
-        logging.exception("Failed to create master domain in setup")
+        .stdout.decode()
+        .rstrip()
+    )
+
     yield master_domain_id
-    try:
-        delete_target_id(target="domains", id=master_domain_id)
-    except:
-        logging.exception("Failed to delete domain with id:" + master_domain_id)
+
+    delete_target_id(target="domains", id=master_domain_id)
 
 
 def test_create_domain_fails_without_spcified_type():

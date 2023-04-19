@@ -1,4 +1,3 @@
-import logging
 import re
 import time
 
@@ -15,66 +14,54 @@ BASE_CMD = ["linode-cli", "domains"]
 
 @pytest.fixture(scope="session", autouse=True)
 def domain_records_setup():
-    # Create one domain for some tests in this suite
-    try:
-        timestamp = str(int(time.time()))
-        # Create domain
-        domain_id = (
-            exec_test_command(
-                BASE_CMD
-                + [
-                    "create",
-                    "--type",
-                    "master",
-                    "--domain",
-                    timestamp + "example.com",
-                    "--soa_email=pthiel@linode.com",
-                    "--text",
-                    "--no-header",
-                    "--format=id",
-                ]
-            )
-            .stdout.decode()
-            .rstrip()
+    timestamp = str(int(time.time()))
+    # Create domain
+    domain_id = (
+        exec_test_command(
+            BASE_CMD
+            + [
+                "create",
+                "--type",
+                "master",
+                "--domain",
+                timestamp + "example.com",
+                "--soa_email=pthiel@linode.com",
+                "--text",
+                "--no-header",
+                "--format=id",
+            ]
         )
+        .stdout.decode()
+        .rstrip()
+    )
 
-    except:
-        logging.exception("Failed creating domain in setup")
-
-    try:
-        # Create record
-        record_id = (
-            exec_test_command(
-                BASE_CMD
-                + [
-                    "records-create",
-                    "--protocol=tcp",
-                    "--type=SRV",
-                    "--port=23",
-                    "--priority=4",
-                    "--service=telnet",
-                    "--target=record-setup",
-                    "--weight=4",
-                    "--text",
-                    "--no-header",
-                    "--delimiter=,",
-                    "--format=id",
-                    domain_id,
-                ]
-            )
-            .stdout.decode()
-            .rstrip()
+    # Create record
+    record_id = (
+        exec_test_command(
+            BASE_CMD
+            + [
+                "records-create",
+                "--protocol=tcp",
+                "--type=SRV",
+                "--port=23",
+                "--priority=4",
+                "--service=telnet",
+                "--target=record-setup",
+                "--weight=4",
+                "--text",
+                "--no-header",
+                "--delimiter=,",
+                "--format=id",
+                domain_id,
+            ]
         )
-
-    except:
-        logging.exception("Failed creating record in setup")
+        .stdout.decode()
+        .rstrip()
+    )
 
     yield domain_id, record_id
 
-    try:
-        delete_target_id(target="domains", id=domain_id)
-    except:
-        logging.exception("Failed to delete all domains")
+    delete_target_id(target="domains", id=domain_id)
 
 
 def test_create_a_domain(create_master_domain):

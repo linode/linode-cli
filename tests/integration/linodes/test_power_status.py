@@ -1,5 +1,3 @@
-import logging
-
 import pytest
 
 from tests.integration.helpers import delete_target_id, exec_test_command
@@ -13,17 +11,11 @@ from tests.integration.linodes.helpers_linodes import (
 
 @pytest.fixture(scope="session", autouse=True)
 def setup_power_status():
-    # create linode
-    try:
-        linode_id = create_linode()
-    except:
-        logging.exception("Failed in creating linode in setup..")
+    linode_id = create_linode()
+
     yield linode_id
-    try:
-        # clean up
-        delete_target_id(target="linodes", id=linode_id)
-    except:
-        logging.exception("Failed removing linode..")
+
+    delete_target_id(target="linodes", id=linode_id)
 
 
 @pytest.fixture(scope="session")

@@ -1,4 +1,3 @@
-import logging
 import os
 
 import pytest
@@ -18,23 +17,18 @@ from tests.integration.linodes.helpers_linodes import (
 @pytest.fixture(scope="session", autouse=True)
 def setup_resize():
     # create linode
-    try:
-        plan = (
-            os.popen(
-                'linode-cli linodes types --format="id" --text --no-headers | sed -n 2p'
-            )
-            .read()
-            .rstrip()
+    plan = (
+        os.popen(
+            'linode-cli linodes types --format="id" --text --no-headers | sed -n 2p'
         )
-        linode_id = create_linode_and_wait(test_plan=plan)
-    except:
-        logging.exception("Failed in creating linode in setup..")
+        .read()
+        .rstrip()
+    )
+    linode_id = create_linode_and_wait(test_plan=plan)
+
     yield linode_id
-    try:
-        # clean up
-        delete_target_id(target="linodes", id=linode_id)
-    except:
-        logging.exception("Failed removing linode..")
+
+    delete_target_id(target="linodes", id=linode_id)
 
 
 def test_resize_fails_to_the_same_plan(setup_resize):
