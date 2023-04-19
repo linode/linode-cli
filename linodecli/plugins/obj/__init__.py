@@ -126,7 +126,7 @@ def list_objects_or_buckets(
 
         if data:
             tab = _borderless_table(data)
-            print(tab.table)
+            rprint(tab)
 
         sys.exit(0)
     else:
@@ -135,7 +135,7 @@ def list_objects_or_buckets(
         data = [[b.get("CreationDate"), b.get("Name")] for b in buckets]
 
         tab = _borderless_table(data)
-        print(tab.table)
+        rprint(tab)
 
         sys.exit(0)
 
@@ -389,7 +389,7 @@ def show_usage(get_client, args):
         tab = _borderless_table(
             [[_pad_to(total, length=7), f"{obj_count} objects", b]]
         )
-        print(tab.table)
+        rprint(tab)
 
     if len(bucket_names) > 1:
         print("--------")
