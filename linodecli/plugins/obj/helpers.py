@@ -123,7 +123,7 @@ def _borderless_table(data):
     """
     Returns a rich.Table object with no borders and correct padding
     """
-    tab = Table(show_header=False, show_edge=False, padding=(0, 2, 0, 2))
+    tab = Table.grid(padding=(0, 2, 0, 2))
     for row in data:
         row = [Text.from_ansi(str(item)) for item in row]
         tab.add_row(*row)
