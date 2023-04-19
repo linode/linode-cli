@@ -1,3 +1,6 @@
+"""
+Request details for a CLI Operation
+"""
 from openapi3.general import Reference
 
 class OpenAPIRequestArg:
@@ -75,10 +78,9 @@ def _parse_request_model(schema, prefix=None, list_of_objects=False):
 
     if schema.properties is not None:
         for k, v in schema.properties.items():
-            print("Looking at {} {}".format(k, v))
             if isinstance(v, Reference):
                 # TODO: fix Reference has no attribute type
-                print("Skipped {} {}".format(k,v))
+                print(f"Skipped {k} {v}")
                 continue
             if v.type == "object":
                 # nested objects receive a prefix and are otherwise parsed normally
@@ -113,6 +115,7 @@ class OpenAPIRequest:
                         accepts.
         :type request: openapi3.MediaType
         """
+        self.required = request.schema.required
         schema_override = request.extensions.get("linode-cli-use-schema")
         if schema_override and False: # TODO - schema overrides are dicts right now
             self.attrs = _parse_request_model(schema_override)
@@ -139,9 +142,8 @@ class OpenAPIFilteringRequest:
         # enforce the above requirements for parameters to this constructor
         if not response_model.is_paginated:
             raise ValueError(
-                "Non-paginated schema {} send to OpenAPIFilteringRequest constructor!".format(
-                    response_model.schema
-                )
+                f"Non-paginated schema {response_model.schema} send to "
+                "OpenAPIFilteringRequest constructor!"
             )
 
         # actually parse out what we can filter by

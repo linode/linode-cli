@@ -1,3 +1,6 @@
+"""
+CLI Operation logic
+"""
 import re
 import json
 import glob
@@ -116,7 +119,7 @@ class OpenAPIOperationParameter:
         self.type = parameter.schema.type
 
     def __repr__(self):
-        return "<OpenAPIOperationParameter {}>".format(self.name)
+        return f"<OpenAPIOperationParameter {self.name}>"
 
 class OpenAPIOperation:
     """
@@ -124,7 +127,7 @@ class OpenAPIOperation:
     This is the class that should be pickled when building the CLI.
     """
 
-    def __init__(self, operation, method, params):
+    def __init__(self, command, operation, method, params):
         """
         Wraps an openapi3.Operation object and handles pulling out values relevant
         to the Linode CLI.
@@ -133,39 +136,8 @@ class OpenAPIOperation:
            where the OpenAPI3 objects can be accessed safely (as they are not
            usable when unpickled!)
         """
-        self.method = method
-
-        server = operation.servers[0].url if operation.servers else operation._root.servers[0].url
-        self.url = server + operation.path[-2]
-
-        self.summary = operation.summary
-        self.description = operation.description.split(".")[0]
-        self.responses = {}
         self.request = None
-        self.params = [
-            OpenAPIOperationParameter(c) for c in params
-        ]
-        # TODO: fix
-        self.command = None
-        self.action = None
-
-        # required_fields = request_schema.required
-        # allowed_defaults = method_spec.extensions[ext['defaults']] or None
-
-        # use_servers = (
-        #     [c.url for c in spec.servers]
-        #     if hasattr(method_spec, 'servers')
-        #     else default_servers
-        # )
-
-        # docs_url = None
-        # tags = method_spec.tags
-        # if tags is not None and len(tags) > 0 and len(summary) > 0:
-        #     tag_path = self._flatten_url_path(tags[0])
-        #     summary_path = self._flatten_url_path(summary)
-        #     docs_url = f"https://www.linode.com/docs/api/{tag_path}/#{summary_path}"
-
-        self.response_model = None
+        self.responses = {}
 
         if ('200' in operation.responses
             and 'application/json' in operation.responses['200'].content):
@@ -175,13 +147,47 @@ class OpenAPIOperation:
         if method in ('post', 'put') and operation.requestBody:
             if 'application/json' in operation.requestBody.content:
                 self.request = OpenAPIRequest(operation.requestBody.content['application/json'])
+                self.required_fields = self.request.required
         elif method in ('get',):
             # for get requests, self.request is all filterable fields of the response model
             if self.response_model and self.response_model.is_paginated:
                 self.request = OpenAPIFilteringRequest(self.response_model)
 
+        self.method = method
+        self.command = command
+
+        alias = None
+        action = operation.extensions.get('linode-cli-action', operation.operationId)
+        if isinstance(action, list):
+            alias = action[1:]
+            action = action[0]
+
+        self.action = action
+        if alias:
+            self.alias = alias
+
+        self.summary = operation.summary
+        self.description = operation.description.split(".")[0]
+        self.params = [OpenAPIOperationParameter(c) for c in params]
+        if hasattr(operation.extensions, 'linode-cli-allowed-defaults'):
+            self.allowed_defaults = operation.extensions['linode-cli-allowed-defaults']
+
+        server = operation.servers[0].url if operation.servers else operation._root.servers[0].url
+        self.url = server + operation.path[-2]
+
+        docs_url = None
+        tags = operation.tags
+        if tags is not None and len(tags) > 0 and len(operation.summary) > 0:
+            tag_path = self._flatten_url_path(tags[0])
+            summary_path = self._flatten_url_path(operation.summary)
+            docs_url = f"https://www.linode.com/docs/api/{tag_path}/#{summary_path}"
+        self.docs_url = docs_url
+
     @property
     def args(self):
+        """
+        Return a list of attributes from the request schema
+        """
         return self.request.attrs if self.request else []
 
     @staticmethod

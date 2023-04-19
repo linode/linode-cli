@@ -46,7 +46,6 @@ class CLI:  # pylint: disable=too-many-instance-attributes
         spec = OpenAPI(spec)
         self.spec = spec
         self.ops = {}
-        #default_servers = [c.url for c in spec.servers]
         ext = {
             'skip': 'linode-cli-skip',
             'action': 'linode-cli-action',
@@ -54,21 +53,21 @@ class CLI:  # pylint: disable=too-many-instance-attributes
             'defaults': 'linode-cli-allowed-defaults',
         }
 
-        for path, pobj in spec.paths.items():
-            command = pobj.extensions.get(ext['command'], 'default')
+        for _, path in spec.paths.items():
+            command = path.extensions.get(ext['command'], 'default')
             for m in METHODS:
-                operation = getattr(pobj, m)
+                operation = getattr(path, m)
                 if operation is None or ext['skip'] in operation.extensions:
                     continue
                 action = operation.extensions.get(ext['action'], operation.operationId)
-                # TODO: handle action aliases
                 if not action:
                     continue
                 if isinstance(action, list):
                     action = action[0]
                 if command not in self.ops:
                     self.ops[command] = {}
-                self.ops[command][action] = OpenAPIOperation(operation, m, pobj.parameters)
+                self.ops[command][action] = OpenAPIOperation(
+                        command, operation, m, path.parameters)
 
         # hide the base_url from the spec away
         self.ops["_base_url"] = self.spec.servers[0].url

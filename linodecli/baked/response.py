@@ -71,6 +71,10 @@ class OpenAPIResponseAttr:
         """
         return self.name
 
+    def render_value(self, model, colorize=True):
+        # TODO
+        return "value"
+
 
 def _parse_response_model(schema, prefix=None):
     """
@@ -126,3 +130,7 @@ class OpenAPIResponse:
             self.attrs = _parse_response_model(response.schema)
         self.rows = response.schema.extensions.get("linode-cli-rows")
         self.nested_list = response.extensions.get("linode-cli-nested-list")
+
+    def fix_json(self, json):
+        #TODO
+        return json
