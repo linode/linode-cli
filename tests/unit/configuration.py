@@ -32,13 +32,15 @@ type = g6-nanode-1
 image = linode/alpine3.16
 plugin-testplugin-testkey = plugin-test-value
 authorized_users = cli-dev
+mysql_engine = mysql/8.0.26
 
 [cli-dev2]
 token = {test_token}2
 region = us-east
 type = g6-nanode-1
 image = linode/alpine3.16
-authorized_users = cli-dev2"""
+authorized_users = cli-dev2
+mysql_engine = mysql/8.0.26"""
 
     def _build_test_config(self, config=mock_config_file, base_url=base_url):
         """
@@ -179,7 +181,10 @@ authorized_users = cli-dev2"""
         parser.add_argument("--testkey")
         parser.add_argument("--authorized_users")
         parser.add_argument("--plugin-testplugin-testkey")
-        ns = parser.parse_args(["--testkey", "testvalue"])
+        parser.add_argument("--engine")
+        ns = parser.parse_args(
+            ["--testkey", "testvalue", "--engine", "mysql/new-test-engine"]
+        )
 
         conf.username = "tester"
         conf.config.add_section("tester")
@@ -187,11 +192,13 @@ authorized_users = cli-dev2"""
         conf.config.set("tester", "newkey", "newvalue")
         conf.config.set("tester", "authorized_users", "tester")
         conf.config.set("tester", "plugin-testplugin-testkey", "plugin-value")
-        allowed_defaults = {
+        conf.config.set("tester", "mysql_engine", "mysql/default-test-engine")
+        allowed_defaults = [
             "newkey",
             "authorized_users",
             "plugin-testplugin-testkey",
-        }
+            "engine",
+        ]
 
         f = io.StringIO()
         with contextlib.redirect_stdout(f):
@@ -210,6 +217,13 @@ authorized_users = cli-dev2"""
         sys.argv.remove("--suppress-warnings")
 
         self.assertFalse("--no-defaults" in f.getvalue())
+
+        # test that update default engine value correctly when creating database
+        create_db_action = "mysql-create"
+        f = io.StringIO()
+        with contextlib.redirect_stdout(f):
+            result = vars(conf.update(ns, allowed_defaults, create_db_action))
+        self.assertEqual(result.get("engine"), "mysql/new-test-engine")
 
     def test_write_config(self):
         """
@@ -259,6 +273,18 @@ authorized_users = cli-dev2"""
                 f"{self.base_url}/images", json={"data": [{"id": "test-image"}]}
             )
             m.get(
+                f"{self.base_url}/databases/engines",
+                json={
+                    "data": [
+                        {"id": "mysql/test-engine", "engine": "mysql"},
+                        {
+                            "id": "postgresql/test-engine",
+                            "engine": "postgresql",
+                        },
+                    ]
+                },
+            )
+            m.get(
                 f"{self.base_url}/account/users",
                 json={"data": [{"username": "cli-dev", "ssh_keys": "testkey"}]},
             )
@@ -269,6 +295,11 @@ authorized_users = cli-dev2"""
         self.assertEqual(conf.get_value("image"), "test-image")
         self.assertEqual(conf.get_value("region"), "test-region")
         self.assertEqual(conf.get_value("authorized_users"), "cli-dev")
+        # make sure that we set the default engine value according to type of database
+        self.assertEqual(conf.get_value("mysql_engine"), "mysql/test-engine")
+        self.assertEqual(
+            conf.get_value("postgresql_engine"), "postgresql/test-engine"
+        )
 
     def test_configure_default_terminal(self):
         """
@@ -306,6 +337,18 @@ authorized_users = cli-dev2"""
                 f"{self.base_url}/images", json={"data": [{"id": "test-image"}]}
             )
             m.get(
+                f"{self.base_url}/databases/engines",
+                json={
+                    "data": [
+                        {"id": "mysql/test-engine", "engine": "mysql"},
+                        {
+                            "id": "postgresql/test-engine",
+                            "engine": "postgresql",
+                        },
+                    ]
+                },
+            )
+            m.get(
                 f"{self.base_url}/account/users",
                 json={"data": [{"username": "cli-dev", "ssh_keys": "testkey"}]},
             )
@@ -316,3 +359,8 @@ authorized_users = cli-dev2"""
         self.assertEqual(conf.get_value("region"), "test-region")
         self.assertEqual(conf.get_value("authorized_users"), "cli-dev")
         self.assertEqual(conf.config.get("DEFAULT", "default-user"), "DEFAULT")
+        # make sure that we set the default engine value according to type of database
+        self.assertEqual(conf.get_value("mysql_engine"), "mysql/test-engine")
+        self.assertEqual(
+            conf.get_value("postgresql_engine"), "postgresql/test-engine"
+        )

@@ -1,7 +1,6 @@
 import logging
 import subprocess
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Callable, List, Optional
 
 import pytest
@@ -147,17 +146,14 @@ def test_obj_single_file_single_bucket(
     assert str(file_size) in output
     assert file_path.name in output
 
-    downloaded_file_path = Path.cwd() / f"downloaded_{file_path.name}"
+    downloaded_file_path = file_path.parent / f"downloaded_{file_path.name}"
     process = exec_test_command(
         BASE_CMD
-        + ["get", bucket_name, file_path.name, downloaded_file_path.name]
+        + ["get", bucket_name, file_path.name, str(downloaded_file_path)]
     )
     output = process.stdout.decode()
     with open(downloaded_file_path) as f2, open(file_path) as f1:
         assert f1.read() == f2.read()
-
-    downloaded_file_path.unlink()
-    file_path.unlink()
 
 
 def test_multi_files_multi_bucket(
@@ -178,8 +174,6 @@ def test_multi_files_multi_bucket(
             output = process.stdout.decode()
             assert "100.0%" in output
             assert "Done" in output
-    for file in file_paths:
-        file.unlink()
 
 
 def test_modify_access_control(

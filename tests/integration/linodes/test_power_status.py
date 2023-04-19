@@ -1,30 +1,30 @@
-import logging
-
 import pytest
 
-from tests.integration.helpers import exec_test_command
+from tests.integration.helpers import delete_target_id, exec_test_command
 from tests.integration.linodes.helpers_linodes import (
     BASE_CMD,
     create_linode,
     create_linode_and_wait,
-    remove_linodes,
     wait_until,
 )
 
 
 @pytest.fixture(scope="session", autouse=True)
 def setup_power_status():
-    # create linode
-    try:
-        linode_id = create_linode()
-    except:
-        logging.exception("Failed in creating linode in setup..")
+    linode_id = create_linode()
+
     yield linode_id
-    try:
-        # clean up
-        remove_linodes()
-    except:
-        logging.exception("Failed removing all linodes..")
+
+    delete_target_id(target="linodes", id=linode_id)
+
+
+@pytest.fixture(scope="session")
+def create_linode_in_running_state():
+    linode_id = create_linode_and_wait()
+
+    yield linode_id
+
+    delete_target_id("linodes", linode_id)
 
 
 def test_create_linode_and_boot(setup_power_status):
@@ -36,9 +36,9 @@ def test_create_linode_and_boot(setup_power_status):
     assert result, "Linode status has not changed to running from provisioning"
 
 
-def test_reboot_linode():
+def test_reboot_linode(create_linode_in_running_state):
     # create linode and wait until it is in "running" state
-    linode_id = create_linode_and_wait()
+    linode_id = create_linode_in_running_state
 
     # reboot linode from "running" status
     exec_test_command(

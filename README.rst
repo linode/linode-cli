@@ -180,8 +180,8 @@ Suppressing Defaults
 """"""""""""""""""""
 
 If you configured default values for ``image``, ``authorized_users``, ``region``,
-and Linode ``type``, they will be sent for all requests that accept them if you
-do not specify a different value.  If you want to send a request *without* these
+database ``engine``, and Linode ``type``, they will be sent for all requests that accept them
+if you do not specify a different value.  If you want to send a request *without* these
 arguments, you must invoke the CLI with the ``--no-defaults`` option.
 
 For example, to create a Linode with no ``image`` after a default Image has been
@@ -474,7 +474,7 @@ added to Linode's OpenAPI spec:
 |x-linode-cli-skip            | path        | If present and truthy, this method will not be available in the CLI.                      |
 +-----------------------------+-------------+-------------------------------------------------------------------------------------------+
 +x-linode-cli-allowed-defaults| requestBody | Tells the CLI what configured defaults apply to this request. Valid defaults are "region",|
-+                             |             | "image", "authorized_users", and "type".                                                  |
++                             |             | "image", "authorized_users", "engine", and "type".                                        |
 +-----------------------------+-------------+-------------------------------------------------------------------------------------------+
 +x-linode-cli-nested-list     | content-type| Tells the CLI to flatten a single object into multiple table rows based on the keys       |
 |                             |             | included in this value.  Values should be comma-delimited JSON paths, and must all be     |

@@ -1,13 +1,9 @@
-import logging
 import re
 
 import pytest
 
-from tests.integration.helpers import exec_test_command
-from tests.integration.linodes.helpers_linodes import (
-    create_linode_and_wait,
-    remove_linodes,
-)
+from tests.integration.helpers import delete_target_id, exec_test_command
+from tests.integration.linodes.helpers_linodes import create_linode_and_wait
 
 BASE_CMD = ["linode-cli", "networking"]
 
@@ -15,11 +11,10 @@ BASE_CMD = ["linode-cli", "networking"]
 @pytest.fixture(scope="session", autouse=True)
 def setup_test_networking():
     linode_id = create_linode_and_wait()
+
     yield linode_id
-    try:
-        remove_linodes()
-    except:
-        logging.exception("Failed to remove all linodes in teardown..")
+
+    delete_target_id(target="linodes", id=linode_id)
 
 
 def test_display_ips_for_available_linodes(setup_test_networking):
@@ -95,11 +90,3 @@ def test_allocate_additional_private_ipv4_address(setup_test_networking):
     assert re.search(
         "ipv4,False,.*,[0-9][0-9][0-9][0-9][0-9][0-9][0-9]*", result
     )
-
-
-def test_list_empty_output_for_linode_account_without_linodes():
-    remove_linodes()
-    result = exec_test_command(
-        BASE_CMD + ["ips-list", "--text", "--no-headers"]
-    ).stdout.decode()
-    assert "" == result
