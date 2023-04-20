@@ -3,6 +3,7 @@ import io
 
 from rich.table import Table
 from rich import print as rprint
+from rich import box
 
 from linodecli import ModelAttr, OutputMode, ResponseModel
 
