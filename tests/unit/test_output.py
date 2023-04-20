@@ -129,7 +129,7 @@ class TestOutputHandler:
         )
 
         mock_table = io.StringIO()
-        tab = Table("h1", "h2")
+        tab = Table("h1", "h2", header_style="", box=box.SQUARE)
         for row in [["foo", "bar"], ["oof", "rab"]]:
             tab.add_row(*row)
         tab.title = "cool table"
@@ -153,7 +153,7 @@ class TestOutputHandler:
         )
 
         mock_table = io.StringIO()
-        tab = Table("h1")
+        tab = Table("h1", header_style="", box=box.SQUARE)
         for row in [["foo"], ["bar"]]:
             tab.add_row(*row)
         tab.title = "cool table"
@@ -285,7 +285,7 @@ class TestOutputHandler:
         data[0]["cool"] = test_str_truncated
 
         mock_table = io.StringIO()
-        tab = Table("h1")
+        tab = Table("h1", header_style="", box=box.SQUARE)
         tab.add_row(test_str_truncated)
         tab.title = "cool table"
         rprint(tab, file=mock_table)
