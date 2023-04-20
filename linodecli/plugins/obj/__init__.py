@@ -121,7 +121,13 @@ def list_objects_or_buckets(
             if key == prefix:
                 continue
 
-            data.append((_convert_datetime(obj.get("LastModified")), obj.get("Size"), key))
+            data.append(
+                (
+                    _convert_datetime(obj.get("LastModified")),
+                    obj.get("Size"),
+                    key,
+                )
+            )
 
         if data:
             tab = _borderless_table(data)
@@ -131,7 +137,10 @@ def list_objects_or_buckets(
     else:
         # list buckets
         buckets = client.list_buckets().get("Buckets", [])
-        data = [[_convert_datetime(b.get("CreationDate")), b.get("Name")] for b in buckets]
+        data = [
+            [_convert_datetime(b.get("CreationDate")), b.get("Name")]
+            for b in buckets
+        ]
 
         tab = _borderless_table(data)
         print(tab.table)
