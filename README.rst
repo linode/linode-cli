@@ -1,6 +1,7 @@
 linode-cli
 ==========
 
+
 The Linode Command Line Interface
 
 .. image:: https://raw.githubusercontent.com/linode/linode-cli/main/demo.gif
