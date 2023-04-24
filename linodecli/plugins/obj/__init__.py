@@ -488,6 +488,8 @@ def print_help(parser: ArgumentParser):
     ]
 
     tab = Table(show_header=False)
+    for row in command_help_map:
+        tab.add_row(*row)
     rprint(tab)
     print()
     print(
