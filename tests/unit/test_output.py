@@ -1,9 +1,9 @@
 import contextlib
 import io
 
-from rich.table import Table
-from rich import print as rprint
 from rich import box
+from rich import print as rprint
+from rich.table import Table
 
 from linodecli import ModelAttr, OutputMode, ResponseModel
 
