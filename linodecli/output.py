@@ -6,11 +6,10 @@ import sys
 from enum import Enum
 from sys import stdout
 
+from rich import box
+from rich import print as rprint
 from rich.table import Table
 from rich.text import Text
-from rich import print as rprint
-from rich import box
-
 
 
 class OutputMode(Enum):
