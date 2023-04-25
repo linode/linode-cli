@@ -9,20 +9,10 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event.issue.pull_request }}
     steps:
-      - name: Generate App Installation Token
-        id: generate_token
-        uses: tibdex/github-app-token@v1
-        with:
-          app_id: ${{ secrets.DX_ACCTEST_APP_ID }}
-          private_key: ${{ secrets.DX_ACCTEST_PRIV_KEY }}
-
       - name: Slash Command Dispatch
-        uses: peter-evans/slash-command-dispatch@v1
-        env:
-          TOKEN: ${{ steps.generate_token.outputs.token }}
+        uses: peter-evans/slash-command-dispatch@v3
         with:
-          token: ${{ env.TOKEN }}
-          reaction-token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           issue-type: pull-request
           commands: acctest
           named-args: true
