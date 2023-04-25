@@ -9,7 +9,8 @@ import sys
 from sys import argv
 
 import pkg_resources
-from terminaltables import SingleTable
+from rich import print as rprint
+from rich.table import Table
 
 from linodecli import plugins
 
@@ -234,8 +235,10 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
             for action, op in cli.ops[parsed.command].items()
         ]
 
-        table = SingleTable([["action", "summary"]] + content)
-        print(table.table)
+        table = Table("action", "summary")
+        for row in content:
+            table.add_row(*row)
+        rprint(table)
         sys.exit(0)
 
     if parsed.command is not None and parsed.action is not None:

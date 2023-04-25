@@ -1,7 +1,9 @@
 import contextlib
 import io
 
-from terminaltables import SingleTable
+from rich import box
+from rich import print as rprint
+from rich.table import Table
 
 from linodecli import ModelAttr, OutputMode, ResponseModel
 
@@ -128,9 +130,11 @@ class TestOutputHandler:
         )
 
         mock_table = io.StringIO()
-        tab = SingleTable([["h1", "h2"], ["foo", "bar"], ["oof", "rab"]])
+        tab = Table("h1", "h2", header_style="", box=box.SQUARE)
+        for row in [["foo", "bar"], ["oof", "rab"]]:
+            tab.add_row(*row)
         tab.title = "cool table"
-        print(tab.table, file=mock_table)
+        rprint(tab, file=mock_table)
 
         assert output.getvalue() == mock_table.getvalue()
 
@@ -150,9 +154,11 @@ class TestOutputHandler:
         )
 
         mock_table = io.StringIO()
-        tab = SingleTable([["h1"], ["foo"], ["bar"]])
+        tab = Table("h1", header_style="", box=box.SQUARE)
+        for row in [["foo"], ["bar"]]:
+            tab.add_row(*row)
         tab.title = "cool table"
-        print(tab.table, file=mock_table)
+        rprint(tab, file=mock_table)
 
         assert output.getvalue() == mock_table.getvalue()
 
@@ -280,9 +286,10 @@ class TestOutputHandler:
         data[0]["cool"] = test_str_truncated
 
         mock_table = io.StringIO()
-        tab = SingleTable([["h1"], [test_str_truncated]])
+        tab = Table("h1", header_style="", box=box.SQUARE)
+        tab.add_row(test_str_truncated)
         tab.title = "cool table"
-        print(tab.table, file=mock_table)
+        rprint(tab, file=mock_table)
 
         assert output.getvalue() == mock_table.getvalue()
 
