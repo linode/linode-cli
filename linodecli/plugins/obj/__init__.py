@@ -17,8 +17,8 @@ from math import ceil
 from pathlib import Path
 from typing import List
 
-from rich.table import Table
 from rich import print as rprint
+from rich.table import Table
 
 from linodecli.cli import CLI
 from linodecli.configuration import _do_get_request
