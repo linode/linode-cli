@@ -9,8 +9,8 @@ import sys
 from sys import argv
 
 import pkg_resources
-from rich.table import Table
 from rich import print as rprint
+from rich.table import Table
 
 from linodecli import plugins
 
