@@ -10,9 +10,9 @@ import termios
 from ipaddress import IPv4Address, ip_address
 from typing import Callable
 
-from rich.table import Table
 from rich import box
 from rich import print as rprint
+from rich.table import Table
 
 from linodecli.plugins import inherit_plugin_args
 
