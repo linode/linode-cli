@@ -37,9 +37,7 @@ class CLI:  # pylint: disable=too-many-instance-attributes
         self.config = CLIConfig(self.base_url, skip_config=skip_config)
         self.load_baked()
 
-    def bake(
-        self, spec
-    ):  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
+    def bake(self, spec):
         """
         Generates ops and bakes them to a pickle
         """

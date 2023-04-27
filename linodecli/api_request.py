@@ -18,6 +18,7 @@ def do_request(
     Makes a request to an operation's URL and returns the resulting JSON, or
     prints and error if a non-200 comes back
     """
+    # TODO: Revisit using pre-built calls from OpenAPI
     method = getattr(requests, operation.method)
     headers = {
         "Authorization": f"Bearer {ctx.config.get_token()}",

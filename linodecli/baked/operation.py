@@ -164,7 +164,7 @@ class OpenAPIOperation:
 
         self.action = action
         if alias:
-            self.alias = alias
+            self.action_aliases = alias
 
         self.summary = operation.summary
         self.description = operation.description.split(".")[0]
@@ -225,7 +225,7 @@ class OpenAPIOperation:
         )
         for param in self.params:
             parser.add_argument(
-                param.name, metavar=param.name, type=TYPES[param.param_type]
+                param.name, metavar=param.name, type=TYPES[param.type]
             )
 
         if self.method == "get":
@@ -250,7 +250,7 @@ class OpenAPIOperation:
         elif self.method in ("post", "put"):
             # build args for body JSON
             for arg in self.args:
-                if arg.arg_type == "array":
+                if arg.item_type == "array":
                     # special handling for input arrays
                     parser.add_argument(
                         "--" + arg.path,
@@ -263,12 +263,12 @@ class OpenAPIOperation:
                         "--" + arg.path,
                         metavar=arg.name,
                         action="append",
-                        type=TYPES[arg.arg_type],
+                        type=TYPES[arg.item_type],
                     )
                     list_items.append((arg.path, arg.list_item))
                 else:
                     if (
-                        arg.arg_type == "string"
+                        arg.item_type == "string"
                         and arg.arg_format == "password"
                     ):
                         # special case - password input
@@ -277,7 +277,7 @@ class OpenAPIOperation:
                             nargs="?",
                             action=PasswordPromptAction,
                         )
-                    elif arg.arg_type == "string" and arg.arg_format in (
+                    elif arg.item_type == "string" and arg.arg_format in (
                         "file",
                         "ssl-cert",
                         "ssl-key",
@@ -286,13 +286,13 @@ class OpenAPIOperation:
                             "--" + arg.path,
                             metavar=arg.name,
                             action=OptionalFromFileAction,
-                            type=TYPES[arg.arg_type],
+                            type=TYPES[arg.item_type],
                         )
                     else:
                         parser.add_argument(
                             "--" + arg.path,
                             metavar=arg.name,
-                            type=TYPES[arg.arg_type],
+                            type=TYPES[arg.item_type],
                         )
 
         parsed = parser.parse_args(args)

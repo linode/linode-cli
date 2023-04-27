@@ -1,3 +1,5 @@
+from .colors import colorize_string
+
 def _is_paginated(response):
     """
     Returns True if this operation has a paginated response
@@ -9,7 +11,6 @@ def _is_paginated(response):
         len(response.schema.properties) == 4 and
         all([c in response.schema.properties for c in ('pages', 'page', 'results', 'data')])
     )
-
 
 class OpenAPIResponseAttr:
     """
@@ -71,9 +72,40 @@ class OpenAPIResponseAttr:
         """
         return self.name
 
+    def _get_value(self, model):
+        """
+        Walk through json paths to find value
+        """
+        value = model
+        for part in self.name.split("."):
+            if value is None or value == {}:
+                return None
+            value = value[part]
+        return value
+
     def render_value(self, model, colorize=True):
-        # TODO
-        return "value"
+        """
+        Given the model returned from the API, returns the correctly- rendered
+        version of it.  This can transform text based on various rules
+        configured in the spec using custom tags.  Currently supported tags:
+
+        x-linode-cli-color
+          A list of key-value pairs that represent the value, and its ideal color.
+          The key "default_" is used to colorize anything that is not included.
+          If omitted, no color is applied.
+        """
+        value = self._get_value(model)
+        if isinstance(value, list):
+            value = ", ".join([str(c) for c in value])
+        if colorize and self.color_map is not None:
+            # Add color
+            value = str(value)
+            color = self.color_map.get(value) or self.color_map["default_"]
+            value = colorize_string(value, color)
+        if value is None:
+            # Prints the word None if you don't change it
+            value = ""
+        return value
 
 
 def _parse_response_model(schema, prefix=None):
@@ -101,7 +133,6 @@ def _parse_response_model(schema, prefix=None):
                 )
 
     return attrs
-
 
 class OpenAPIResponse:
     """
@@ -132,5 +163,56 @@ class OpenAPIResponse:
         self.nested_list = response.extensions.get("linode-cli-nested-list")
 
     def fix_json(self, json):
-        #TODO
-        return json
+        """
+        Formats JSON from the API into a list of rows
+        """
+        if "pages" in json:
+            return json["data"]
+        if self.rows:
+            return self._fix_json_rows(json)
+        if self.nested_list:
+            return self._fix_nested_list(json)
+        return [json]
+
+    def _fix_json_rows(self, json):
+        """
+        Formats rows from openapi extension
+        """
+        result = []
+        for c in self.rows:
+            cur = json
+            for part in c.split("."):
+                cur = cur.get(part)
+            if not cur:
+                # shouldn't happen
+                continue
+            if isinstance(cur, list):
+                result += cur
+            else:
+                result.append(cur)
+        return result
+
+    def _fix_nested_list(self, json):
+        """
+        Formats nested_list from openapi extension
+        """
+        if "pages" in json:
+            json = json["data"]
+
+        nested_lists = [c.strip() for c in self.nested_list.split(",")]
+        result = []
+        for nested_list in nested_lists:
+            path_parts = nested_list.split(".")
+            if not isinstance(json, list):
+                json = [json]
+            for cur in json:
+                nlist_path = cur
+                for p in path_parts:
+                    nlist_path = nlist_path.get(p)
+                nlist = nlist_path
+                for item in nlist:
+                    cobj = {k: v for k, v in cur.items() if k != path_parts[0]}
+                    cobj["_split"] = path_parts[-1]
+                    cobj[path_parts[0]] = item
+                    result.append(cobj)
+        return result
