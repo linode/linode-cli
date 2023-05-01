@@ -9,9 +9,9 @@ import platform
 from getpass import getpass
 from os import environ, path
 
-from .overrides import OUTPUT_OVERRIDES
-
 from linodecli.helpers import handle_url_overrides
+
+from .overrides import OUTPUT_OVERRIDES
 
 
 def parse_boolean(value):
@@ -348,7 +348,9 @@ class CLIOperation:  # pylint: disable=too-many-instance-attributes
         if self.response_model is None:
             return
 
-        override = OUTPUT_OVERRIDES.get((self.command, self.action, handler.mode))
+        override = OUTPUT_OVERRIDES.get(
+            (self.command, self.action, handler.mode)
+        )
         if override is not None and not override(self, handler, json):
             return
 

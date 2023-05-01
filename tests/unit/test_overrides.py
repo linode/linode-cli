@@ -1,12 +1,7 @@
 import contextlib
 import io
-import json
-from types import SimpleNamespace
-from unittest.mock import Mock, patch
 
-import requests
-
-from linodecli import api_request, OutputMode
+from linodecli import OutputMode
 
 
 class TestOverrides:
@@ -23,13 +18,11 @@ class TestOverrides:
 
         with contextlib.redirect_stdout(stdout_buf):
             list_operation.process_response_json(
-                {
-                    "zone_file": [
-                        "line 1",
-                        "line 2"
-                    ]
-                },
-                mock_cli.output_handler
+                {"zone_file": ["line 1", "line 2"]}, mock_cli.output_handler
             )
 
         assert stdout_buf.getvalue() == "line 1\nline 2\n"
+
+        # Change the action to bypass the override
+        list_operation.action = "zone-notfile"
+        mock_cli.output_handler.mode = OutputMode.delimited

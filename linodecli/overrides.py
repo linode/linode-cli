@@ -22,8 +22,8 @@ def output_override(command: str, action: str, output_mode: OutputMode):
     If the returned bool is False, the original output functionality will be skipped.
     Otherwise, the original output functionality will continue as normal.
     """
+
     def inner(func):
-        global OUTPUT_OVERRIDES
         OUTPUT_OVERRIDES[(command, action, output_mode)] = func
 
     return inner
@@ -31,6 +31,7 @@ def output_override(command: str, action: str, output_mode: OutputMode):
 
 @output_override("domains", "zone-file", OutputMode.delimited)
 def handle_domains_zone_file(operation, output_handler, json_data) -> bool:
+    # pylint: disable=unused-argument
     """
     Fix for output of 'linode-cli domains zone-file --text {id}'.
     """
