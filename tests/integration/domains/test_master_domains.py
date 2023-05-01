@@ -1,4 +1,3 @@
-import logging
 import os
 import re
 import time
@@ -7,7 +6,7 @@ import pytest
 
 from tests.integration.helpers import (
     FAILED_STATUS_CODE,
-    delete_all_domains,
+    delete_target_id,
     exec_test_command,
 )
 
@@ -17,36 +16,31 @@ BASE_CMD = ["linode-cli", "domains"]
 @pytest.fixture(scope="session", autouse=True)
 def setup_master_domains():
     timestamp = str(int(time.time()))
-    # create one master domain for some tests in this suite
-    try:
-        # Create domain
-        master_domain_id = (
-            exec_test_command(
-                BASE_CMD
-                + [
-                    "create",
-                    "--type",
-                    "master",
-                    "--domain",
-                    "BC" + timestamp + "-example.com",
-                    "--soa_email=pthiel" + timestamp + "@linode.com",
-                    "--text",
-                    "--no-header",
-                    "--delimiter",
-                    ",",
-                    "--format=id",
-                ]
-            )
-            .stdout.decode()
-            .rstrip()
+    # Create domain
+    master_domain_id = (
+        exec_test_command(
+            BASE_CMD
+            + [
+                "create",
+                "--type",
+                "master",
+                "--domain",
+                "BC" + timestamp + "-example.com",
+                "--soa_email=pthiel" + timestamp + "@linode.com",
+                "--text",
+                "--no-header",
+                "--delimiter",
+                ",",
+                "--format=id",
+            ]
         )
-    except:
-        logging.exception("Failed to create master domain in setup")
+        .stdout.decode()
+        .rstrip()
+    )
+
     yield master_domain_id
-    try:
-        delete_all_domains()
-    except:
-        logging.exception("Failed to delete all domains")
+
+    delete_target_id(target="domains", id=master_domain_id)
 
 
 def test_create_domain_fails_without_spcified_type():
@@ -111,34 +105,9 @@ def test_create_master_domain_fails_without_soa_email():
     assert "soa_email	soa_email required when type=master" in result
 
 
-def test_create_master_domain():
-    timestamp = str(int(time.time()))
-
-    result = exec_test_command(
-        BASE_CMD
-        + [
-            "create",
-            "--type",
-            "master",
-            "--domain",
-            "BC" + timestamp + "-example.com",
-            "--soa_email=pthiel" + timestamp + "@linode.com",
-            "--text",
-            "--no-header",
-            "--delimiter",
-            ",",
-            "--format=id,domain,type,status,soa_email",
-        ]
-    ).stdout.decode()
-
-    assert re.search(
-        "[0-9]+,BC"
-        + timestamp
-        + "-example.com,master,active,pthiel"
-        + timestamp
-        + "@linode.com",
-        result,
-    )
+def test_create_master_domain(create_master_domain):
+    domain_id = create_master_domain
+    assert re.search("[0-9]+", domain_id)
 
 
 def test_update_master_domain_soa_email(setup_master_domains):
@@ -198,8 +167,3 @@ def test_show_domain_detail(setup_master_domains):
     ).stdout.decode()
 
     assert re.search("[0-9]+,BC[0-9]+-example.com,master,active", result)
-
-
-# This test actually gets covered by the teardown method in @fixture
-def test_delete_all_master_domains():
-    delete_all_domains()

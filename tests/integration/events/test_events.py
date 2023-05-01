@@ -1,67 +1,42 @@
-import logging
 import os
 import re
 import time
 
 import pytest
 
-from tests.integration.helpers import delete_all_domains, exec_test_command
+from tests.integration.helpers import delete_target_id, exec_test_command
 
 BASE_CMD = ["linode-cli", "events"]
 
 
 @pytest.fixture(scope="session", autouse=True)
 def events_setup():
-    # Create one domain for some tests in this suite
-    try:
-        timestamp = str(int(time.time()))
-        # Create domain
-        domain_id = (
-            exec_test_command(
-                [
-                    "linode-cli",
-                    "domains",
-                    "create",
-                    "--type",
-                    "master",
-                    "--domain",
-                    "A" + timestamp + "example.com",
-                    "--soa_email=developer-test@linode.com",
-                    "--text",
-                    "--no-header",
-                    "--format",
-                    "id",
-                ]
-            )
-            .stdout.decode()
-            .rstrip()
+    timestamp = str(int(time.time()))
+    # Create domain
+    domain_id = (
+        exec_test_command(
+            [
+                "linode-cli",
+                "domains",
+                "create",
+                "--type",
+                "master",
+                "--domain",
+                "A" + timestamp + "example.com",
+                "--soa_email=developer-test@linode.com",
+                "--text",
+                "--no-header",
+                "--format",
+                "id",
+            ]
         )
-
-    except:
-        logging.exception("Failed creating domain in setup")
+        .stdout.decode()
+        .rstrip()
+    )
 
     yield domain_id
 
-    try:
-        delete_all_domains()
-    except:
-        logging.exception("Failed to delete all domains")
-
-
-def get_domain_id():
-    process = exec_test_command(
-        [
-            "linode-cli",
-            "domains",
-            "list",
-            "--format=id",
-            "--text",
-            "--no-header",
-        ]
-    )
-    output = process.stdout.decode()
-    domain_id_arr = output.splitlines()
-    return domain_id_arr[0]
+    delete_target_id(target="domains", id=domain_id)
 
 
 def test_print_events_usage_information():

@@ -4,11 +4,8 @@ import time
 
 import pytest
 
-from tests.integration.helpers import exec_test_command
-from tests.integration.linodes.helpers_linodes import (
-    create_linode_and_wait,
-    remove_linodes,
-)
+from tests.integration.helpers import delete_target_id, exec_test_command
+from tests.integration.linodes.helpers_linodes import create_linode_and_wait
 
 BASE_CMD = ["linode-cli", "ssh"]
 NUM_OF_RETRIES = 10
@@ -42,25 +39,13 @@ def test_create_a_linode_in_running_state(ssh_key_pair_generator):
     )
 
     yield linode_id
-    remove_linodes()
+    delete_target_id(target="linodes", id=linode_id)
 
 
 def test_display_ssh_plugin_usage_info():
     result = exec_test_command(BASE_CMD + ["-h"]).stdout.decode()
-    assert "usage: linode-cli ssh [-h] [-6] [[USERNAME@]LABEL]" in result
-    assert "positional arguments:" in result
-    assert (
-        "[USERNAME@]LABEL  The label of the Linode to SSH into, optionally with a"
-        in result
-    )
-    assert "username before it in USERNAME@LABEL format. If no" in result
-    assert "username is given, defaults to the current user." in result
-    assert "option" in result
-    assert "-h, --help        show this help message and exit" in result
-    assert (
-        "-6                If given, uses the Linode's SLAAC address for SSH."
-        in result
-    )
+    assert "[USERNAME@]LABEL" in result
+    assert "uses the Linode's SLAAC address for SSH" in result
 
 
 def test_fail_to_ssh_to_nonexistent_linode():

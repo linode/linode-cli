@@ -4,6 +4,7 @@ import logging
 import os
 import subprocess
 import tempfile
+import time
 from collections import defaultdict
 from itertools import count
 from pathlib import Path
@@ -13,7 +14,21 @@ from typing import Callable, Optional
 import pytest
 
 from linodecli import ENV_TOKEN_NAME
-from tests.integration.helpers import get_random_text
+from tests.integration.helpers import (
+    delete_target_id,
+    exec_test_command,
+    get_random_text,
+)
+from tests.integration.linodes.helpers_linodes import (
+    DEFAULT_RANDOM_PASS,
+    DEFAULT_REGION,
+    DEFAULT_TEST_IMAGE,
+    create_linode_and_wait,
+)
+
+DOMAIN_BASE_CMD = ["linode-cli", "domains"]
+LINODE_BASE_CMD = ["linode-cli", "linodes"]
+NODEBALANCER_BASE_CMD = ["linode-cli", "nodebalancers"]
 
 
 @pytest.fixture(scope="session")
@@ -102,3 +117,288 @@ def generate_test_files(
         return file_paths
 
     return _generate_test_files
+
+
+# test helper specific to Domains test suite
+@pytest.fixture
+def create_master_domain():
+    timestamp = str(int(time.time()))
+
+    domain_id = (
+        exec_test_command(
+            DOMAIN_BASE_CMD
+            + [
+                "create",
+                "--type",
+                "master",
+                "--domain",
+                timestamp + "example.com",
+                "--soa_email",
+                "pthiel_test@linode.com",
+                "--text",
+                "--no-header",
+                "--format",
+                "id",
+            ]
+        )
+        .stdout.decode()
+        .rstrip()
+    )
+
+    yield domain_id
+
+    delete_target_id("domains", id=domain_id)
+
+
+@pytest.fixture
+def create_slave_domain():
+    timestamp = str(int(time.time()))
+
+    domain_id = (
+        exec_test_command(
+            DOMAIN_BASE_CMD
+            + [
+                "create",
+                "--type",
+                "slave",
+                "--domain",
+                timestamp + "-example.com",
+                "--master_ips",
+                "1.1.1.1",
+                "--text",
+                "--no-header",
+                "--delimiter",
+                ",",
+                "--format=id",
+            ]
+        )
+        .stdout.decode()
+        .rstrip()
+    )
+
+    yield domain_id
+
+    delete_target_id("domains", domain_id)
+
+
+# Test helpers specific to Linodes test suite
+@pytest.fixture
+def create_linode_with_label():
+    result = (
+        exec_test_command(
+            LINODE_BASE_CMD
+            + [
+                "create",
+                "--type",
+                "g6-standard-2",
+                "--region",
+                "us-east",
+                "--image",
+                DEFAULT_TEST_IMAGE,
+                "--label",
+                "cli-1",
+                "--root_pass",
+                DEFAULT_RANDOM_PASS,
+                "--text",
+                "--delimiter",
+                ",",
+                "--no-headers",
+                "--format",
+                "label,region,type,image,id",
+                "--no-defaults",
+            ]
+        )
+        .stdout.decode()
+        .rstrip()
+    )
+
+    yield result
+
+    res_arr = result.split(",")
+    linode_id = res_arr[4]
+    delete_target_id(target="linodes", id=linode_id)
+
+
+@pytest.fixture
+def create_linode_min_req():
+    result = (
+        exec_test_command(
+            LINODE_BASE_CMD
+            + [
+                "create",
+                "--type",
+                "g6-standard-2",
+                "--region",
+                "us-east",
+                "--root_pass",
+                DEFAULT_RANDOM_PASS,
+                "--no-defaults",
+                "--text",
+                "--delimiter",
+                ",",
+                "--no-headers",
+                "--format",
+                "id,region,type",
+            ]
+        )
+        .stdout.decode()
+        .rstrip()
+    )
+
+    yield result
+
+    res_arr = result.split(",")
+    linode_id = res_arr[0]
+    delete_target_id(target="linodes", id=linode_id)
+
+
+@pytest.fixture
+def create_linode_wo_image():
+    linode_type = (
+        os.popen(
+            "linode-cli linodes types --text --no-headers --format=id | xargs | awk '{ print $1 }'"
+        )
+        .read()
+        .rstrip()
+    )
+    linode_region = (
+        os.popen(
+            "linode-cli regions list --format=id  --text --no-headers | xargs | awk '{ print $1 }'"
+        )
+        .read()
+        .rstrip()
+    )
+
+    exec_test_command(
+        LINODE_BASE_CMD
+        + [
+            "create",
+            "--no-defaults",
+            "--label",
+            "cli-2",
+            "--type",
+            linode_type,
+            "--region",
+            linode_region,
+            "--root_pass",
+            DEFAULT_RANDOM_PASS,
+        ]
+    ).stdout.decode()
+
+    linode_id = (
+        exec_test_command(
+            LINODE_BASE_CMD
+            + [
+                "list",
+                "--label",
+                "cli-2",
+                "--text",
+                "--no-headers",
+                "--format",
+                "id",
+            ]
+        )
+        .stdout.decode()
+        .rstrip()
+    )
+
+    yield linode_id
+
+    delete_target_id(target="linodes", id=linode_id)
+
+
+@pytest.fixture
+def create_linode_backup_enabled():
+    linode_type = (
+        os.popen(
+            "linode-cli linodes types --text --no-headers --format='id' | xargs | awk '{ print $1 }'"
+        )
+        .read()
+        .rstrip()
+    )
+
+    # create linode with backups enabled
+    linode_id = (
+        exec_test_command(
+            [
+                "linode-cli",
+                "linodes",
+                "create",
+                "--backups_enabled",
+                "true",
+                "--type",
+                linode_type,
+                "--region",
+                DEFAULT_REGION,
+                "--image",
+                DEFAULT_TEST_IMAGE,
+                "--root_pass",
+                DEFAULT_RANDOM_PASS,
+                "--text",
+                "--no-headers",
+                "--format=id",
+            ]
+        )
+        .stdout.decode()
+        .rstrip()
+    )
+
+    yield linode_id
+
+    delete_target_id("linodes", linode_id)
+
+
+@pytest.fixture
+def take_snapshot_of_linode():
+    timestamp = str(time.time())
+    # get linode id after creation and wait for "running" status
+    linode_id = create_linode_and_wait()
+    new_snapshot_label = "test_snapshot" + timestamp
+
+    result = exec_test_command(
+        LINODE_BASE_CMD
+        + [
+            "snapshot",
+            linode_id,
+            "--label",
+            new_snapshot_label,
+            "--text",
+            "--delimiter",
+            ",",
+            "--no-headers",
+        ]
+    ).stdout.decode()
+
+    yield linode_id, new_snapshot_label
+
+    delete_target_id("linodes", linode_id)
+
+
+# Test helpers specific to Nodebalancers test suite
+@pytest.fixture
+def create_nodebalancer_with_default_conf():
+    result = (
+        exec_test_command(
+            NODEBALANCER_BASE_CMD
+            + [
+                "create",
+                "--region",
+                "us-east",
+                "--text",
+                "--delimiter",
+                ",",
+                "--format",
+                "id,label,region,hostname,client_conn_throttle",
+                "--suppress-warnings",
+                "--no-headers",
+            ]
+        )
+        .stdout.decode()
+        .rstrip()
+    )
+
+    yield result
+
+    res_arr = result.split(",")
+    nodebalancer_id = res_arr[0]
+    delete_target_id(target="nodebalancers", id=nodebalancer_id)

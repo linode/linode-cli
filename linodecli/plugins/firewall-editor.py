@@ -10,7 +10,9 @@ import termios
 from ipaddress import IPv4Address, ip_address
 from typing import Callable
 
-from terminaltables import PorcelainTable
+from rich import box
+from rich import print as rprint
+from rich.table import Table
 
 from linodecli.plugins import inherit_plugin_args
 
@@ -272,9 +274,11 @@ def print_rules_table(rules):
             ]
         )
 
-    tab = PorcelainTable([header] + rows)
-    tab.inner_heading_row_border = True
-    print(tab.table)
+    tab = Table(*header, box=box.ASCII, show_edge=False)
+    for row in rows:
+        row = [str(r) for r in row]
+        tab.add_row(*row)
+    rprint(tab)
 
 
 def draw_rules(rules):

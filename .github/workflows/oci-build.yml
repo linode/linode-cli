@@ -9,10 +9,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone Repository
-        uses: actions/checkout@e2f20e631ae6d7dd3b768f56a5d2af784dd54791 # pin@v2
+        uses: actions/checkout@v3
 
       - name: setup python 3
-        uses: actions/setup-python@75f3110429a8c05be0e1bf360334e4cced2b63fa # pin@v2
+        uses: actions/setup-python@v4
         with:
           python-version: '3.x'
 

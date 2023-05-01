@@ -4,7 +4,8 @@ The helper functions for the object storage plugin.
 from argparse import ArgumentTypeError
 from datetime import datetime
 
-from terminaltables import SingleTable
+from rich.table import Table
+from rich.text import Text
 
 from linodecli.plugins.obj.config import DATE_FORMAT
 
@@ -120,13 +121,11 @@ def _denominate(total):
 # helper functions for output
 def _borderless_table(data):
     """
-    Returns a terminaltables.SingleTable object with no borders and correct padding
+    Returns a rich.Table object with no borders and correct padding
     """
-    tab = SingleTable(data)
-    tab.inner_heading_row_border = False
-    tab.inner_column_border = False
-    tab.outer_border = False
-    tab.padding_left = 0
-    tab.padding_right = 2
+    tab = Table.grid(padding=(0, 2, 0, 2))
+    for row in data:
+        row = [Text.from_ansi(str(item)) for item in row]
+        tab.add_row(*row)
 
     return tab
