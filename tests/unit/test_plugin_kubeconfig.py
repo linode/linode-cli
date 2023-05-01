@@ -56,11 +56,11 @@ dictionary: {"foo": "bar"}
 def test_print_help():
     stdout_buf = io.StringIO()
 
-    try:
+    with pytest.raises(SystemExit) as err:
         with contextlib.redirect_stdout(stdout_buf):
             plugin.call(["--help"], None)
-    except SystemExit as err:
-        assert err.code == 0
+
+    assert err.value.code == 0
 
     assert "Path to kubeconfig file." in stdout_buf.getvalue()
     assert "Label for desired cluster." in stdout_buf.getvalue()
@@ -70,14 +70,14 @@ def test_print_help():
 def test_no_label_no_id(mock_cli):
     stderr_buf = io.StringIO()
 
-    try:
+    with pytest.raises(SystemExit) as err:
         with contextlib.redirect_stderr(stderr_buf):
             plugin.call(
                 [],
                 PluginContext("REALTOKEN", mock_cli),
             )
-    except SystemExit as err:
-        assert err.code == 1
+
+    assert err.value.code == 1
 
     assert "Either --label or --id must be used." in stderr_buf.getvalue()
 
@@ -87,14 +87,14 @@ def test_nonexisting_label(mock_cli):
     stderr_buf = io.StringIO()
     mock_cli.call_operation = mock_call_operation
 
-    try:
+    with pytest.raises(SystemExit) as err:
         with contextlib.redirect_stderr(stderr_buf):
             plugin.call(
                 ["--label", "empty_data"],
                 PluginContext("REALTOKEN", mock_cli),
             )
-    except SystemExit as err:
-        assert err.code == 1
+
+    assert err.value.code == 1
 
     assert (
         "Cluster with label empty_data does not exist." in stderr_buf.getvalue()
@@ -105,14 +105,14 @@ def test_nonexisting_label(mock_cli):
 def test_nonexisting_id(mock_cli):
     stderr_buf = io.StringIO()
 
-    try:
+    with pytest.raises(SystemExit) as err:
         with contextlib.redirect_stderr(stderr_buf):
             plugin.call(
                 ["--id", "12345"],
                 PluginContext("REALTOKEN", mock_cli),
             )
-    except SystemExit as err:
-        assert err.code == 1
+
+    assert err.value.code == 1
 
     assert "Error retrieving kubeconfig:" in stderr_buf.getvalue()
 
@@ -124,7 +124,7 @@ def test_improper_file(mock_cli, fake_empty_file):
 
     file_path = fake_empty_file
 
-    try:
+    with pytest.raises(SystemExit) as err:
         with contextlib.redirect_stderr(stderr_buf):
             plugin.call(
                 [
@@ -135,8 +135,8 @@ def test_improper_file(mock_cli, fake_empty_file):
                 ],
                 PluginContext("REALTOKEN", mock_cli),
             )
-    except SystemExit as err:
-        assert err.code == 1
+
+    assert err.value.code == 1
 
     assert "Could not load file at" in stderr_buf.getvalue()
 
