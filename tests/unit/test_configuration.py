@@ -7,15 +7,15 @@ import contextlib
 import io
 import os
 import sys
-import unittest
-from unittest.mock import call, mock_open, patch
 
+import pytest
 import requests_mock
+from mock import call, mock_open, patch
 
 from linodecli import configuration
 
 
-class ConfigurationTests(unittest.TestCase):
+class TestConfiguration:
     """
     Unit tests for linodecli.configuration
     """
@@ -60,10 +60,10 @@ mysql_engine = mysql/8.0.26"""
         """
         conf = self._build_test_config()
 
-        self.assertEqual(conf.default_username(), "cli-dev")
+        assert conf.default_username() == "cli-dev"
 
         conf.config.remove_option("DEFAULT", "default-user")
-        self.assertEqual(conf.default_username(), "")
+        assert conf.default_username() == ""
 
     def test_set_user(self):
         """
@@ -72,13 +72,16 @@ mysql_engine = mysql/8.0.26"""
         conf = self._build_test_config()
 
         f = io.StringIO()
-        with self.assertRaises(SystemExit) as cm, contextlib.redirect_stdout(f):
-            conf.set_user("bad_user")
-        self.assertEqual(cm.exception.code, 1)
-        self.assertTrue("not configured" in f.getvalue())
+
+        try:
+            with contextlib.redirect_stdout(f):
+                conf.set_user("bad_user")
+        except SystemExit as err:
+            assert err.code == 1
+            assert "not configured" in f.getvalue()
 
         conf.set_user("cli-dev2")
-        self.assertEqual(conf.username, "cli-dev2")
+        assert conf.username == "cli-dev2"
 
     def test_remove_user(self):
         """
@@ -87,14 +90,17 @@ mysql_engine = mysql/8.0.26"""
         conf = self._build_test_config()
 
         f = io.StringIO()
-        with self.assertRaises(SystemExit) as cm, contextlib.redirect_stdout(f):
-            conf.remove_user("cli-dev")
-        self.assertEqual(cm.exception.code, 1)
-        self.assertTrue("default user!" in f.getvalue())
+
+        try:
+            with contextlib.redirect_stdout(f):
+                conf.remove_user("cli-dev")
+        except SystemExit as err:
+            assert err.code == 1
+            assert "default user!" in f.getvalue()
 
         with patch("linodecli.configuration.open", mock_open()):
             conf.remove_user("cli-dev2")
-        self.assertFalse(conf.config.has_section("cli-dev2"))
+        assert conf.config.has_section("cli-dev2") is False
 
     def test_print_users(self):
         """
@@ -103,10 +109,13 @@ mysql_engine = mysql/8.0.26"""
         conf = self._build_test_config()
 
         f = io.StringIO()
-        with self.assertRaises(SystemExit) as cm, contextlib.redirect_stdout(f):
-            conf.print_users()
-        self.assertEqual(cm.exception.code, 0)
-        self.assertTrue("*  cli-dev" in f.getvalue())
+
+        try:
+            with contextlib.redirect_stdout(f):
+                conf.print_users()
+        except SystemExit as err:
+            assert err.code == 0
+            assert "*  cli-dev" in f.getvalue()
 
     def test_set_default_user(self):
         """
@@ -115,14 +124,16 @@ mysql_engine = mysql/8.0.26"""
         conf = self._build_test_config()
 
         f = io.StringIO()
-        with self.assertRaises(SystemExit) as cm, contextlib.redirect_stdout(f):
-            conf.set_default_user("bad_user")
-        self.assertEqual(cm.exception.code, 1)
-        self.assertTrue("not configured!" in f.getvalue())
+        try:
+            with contextlib.redirect_stdout(f):
+                conf.set_default_user("bad_user")
+        except SystemExit as err:
+            assert err.code == 1
+            assert "not configured" in f.getvalue()
 
         with patch("linodecli.configuration.open", mock_open()):
             conf.set_default_user("cli-dev2")
-        self.assertEqual(conf.config.get("DEFAULT", "default-user"), "cli-dev2")
+        assert conf.config.get("DEFAULT", "default-user") == "cli-dev2"
 
     def test_get_token(self):
         """
@@ -130,45 +141,45 @@ mysql_engine = mysql/8.0.26"""
         """
         conf = self._build_test_config()
         conf.used_env_token = False
-        self.assertEqual(conf.get_token(), self.test_token)
+        assert conf.get_token() == self.test_token
 
     def test_get_value(self):
         """
         Test CLIConfig.get_value({key})
         """
         conf = self._build_test_config()
-        self.assertEqual(conf.get_value("notakey"), None)
-        self.assertEqual(conf.get_value("region"), "us-east")
+        assert conf.get_value("notakey") == None
+        assert conf.get_value("region") == "us-east"
 
     def test_plugin_set_value(self):
         """
         Test CLIConfig.plugin_set_value({key}, {value})
         """
         conf = self._build_test_config()
-        with self.assertRaises(RuntimeError):
+        with pytest.raises(RuntimeError):
             conf.plugin_set_value("anykey", "anyvalue")
 
         conf.running_plugin = "testplugin"
 
         conf.plugin_set_value("testkey", "newvalue")
         actual = conf.config.get("cli-dev", "plugin-testplugin-testkey")
-        self.assertEqual(actual, "newvalue")
+        assert actual == "newvalue"
 
     def test_plugin_get_value(self):
         """
         Test CLIConfig.plugin_get_value({key})
         """
         conf = self._build_test_config()
-        with self.assertRaises(RuntimeError):
+        with pytest.raises(RuntimeError):
             conf.plugin_get_value("anykey")
 
         conf.running_plugin = "testplugin"
 
         actual = conf.plugin_get_value("badkey")
-        self.assertEqual(actual, None)
+        assert actual == None
 
         actual = conf.plugin_get_value("testkey")
-        self.assertEqual(actual, "plugin-test-value")
+        assert actual == "plugin-test-value"
 
     def test_update(self):
         """
@@ -204,11 +215,11 @@ mysql_engine = mysql/8.0.26"""
         with contextlib.redirect_stdout(f):
             result = vars(conf.update(ns, allowed_defaults))
 
-        self.assertTrue("--no-defaults" in f.getvalue())
-        self.assertEqual(result.get("newkey"), "newvalue")
-        self.assertEqual(result.get("testkey"), "testvalue")
-        self.assertTrue(isinstance(result.get("authorized_users"), list))
-        self.assertFalse(result.get("plugin-testplugin-testkey"))
+        assert "--no-defaults" in f.getvalue()
+        assert result.get("newkey") == "newvalue"
+        assert result.get("testkey") == "testvalue"
+        assert isinstance(result.get("authorized_users"), list)
+        assert result.get("plugin-testplugin-testkey") is None
 
         f = io.StringIO()
         sys.argv.append("--suppress-warnings")
@@ -216,14 +227,14 @@ mysql_engine = mysql/8.0.26"""
             result = vars(conf.update(ns, None))
         sys.argv.remove("--suppress-warnings")
 
-        self.assertFalse("--no-defaults" in f.getvalue())
+        assert "--no-defaults" not in f.getvalue()
 
         # test that update default engine value correctly when creating database
         create_db_action = "mysql-create"
         f = io.StringIO()
         with contextlib.redirect_stdout(f):
             result = vars(conf.update(ns, allowed_defaults, create_db_action))
-        self.assertEqual(result.get("engine"), "mysql/new-test-engine")
+        assert result.get("engine") == "mysql/new-test-engine"
 
     def test_write_config(self):
         """
@@ -235,7 +246,7 @@ mysql_engine = mysql/8.0.26"""
         m = mock_open()
         with patch("builtins.open", m):
             conf.write_config()
-        self.assertIn(call("type = newvalue\n"), m().write.call_args_list)
+        assert call("type = newvalue\n") in m().write.call_args_list
 
     def test_configure_no_default_terminal(self):
         """
@@ -290,16 +301,14 @@ mysql_engine = mysql/8.0.26"""
             )
             conf.configure()
 
-        self.assertEqual(conf.get_value("type"), "test-type")
-        self.assertEqual(conf.get_value("token"), "test-token")
-        self.assertEqual(conf.get_value("image"), "test-image")
-        self.assertEqual(conf.get_value("region"), "test-region")
-        self.assertEqual(conf.get_value("authorized_users"), "cli-dev")
+        assert conf.get_value("type") == "test-type"
+        assert conf.get_value("token") == "test-token"
+        assert conf.get_value("image") == "test-image"
+        assert conf.get_value("region") == "test-region"
+        assert conf.get_value("authorized_users") == "cli-dev"
         # make sure that we set the default engine value according to type of database
-        self.assertEqual(conf.get_value("mysql_engine"), "mysql/test-engine")
-        self.assertEqual(
-            conf.get_value("postgresql_engine"), "postgresql/test-engine"
-        )
+        assert conf.get_value("mysql_engine") == "mysql/test-engine"
+        assert conf.get_value("postgresql_engine") == "postgresql/test-engine"
 
     def test_configure_default_terminal(self):
         """
@@ -354,13 +363,11 @@ mysql_engine = mysql/8.0.26"""
             )
             conf.configure()
 
-        self.assertEqual(conf.get_value("type"), "test-type")
-        self.assertEqual(conf.get_value("image"), "test-image")
-        self.assertEqual(conf.get_value("region"), "test-region")
-        self.assertEqual(conf.get_value("authorized_users"), "cli-dev")
-        self.assertEqual(conf.config.get("DEFAULT", "default-user"), "DEFAULT")
+        assert conf.get_value("type") == "test-type"
+        assert conf.get_value("image") == "test-image"
+        assert conf.get_value("region") == "test-region"
+        assert conf.get_value("authorized_users") == "cli-dev"
+        assert conf.config.get("DEFAULT", "default-user") == "DEFAULT"
         # make sure that we set the default engine value according to type of database
-        self.assertEqual(conf.get_value("mysql_engine"), "mysql/test-engine")
-        self.assertEqual(
-            conf.get_value("postgresql_engine"), "postgresql/test-engine"
-        )
+        assert conf.get_value("mysql_engine") == "mysql/test-engine"
+        assert conf.get_value("postgresql_engine") == "postgresql/test-engine"
