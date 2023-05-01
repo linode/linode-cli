@@ -1,5 +1,4 @@
 import configparser
-import sys
 
 import pytest
 
