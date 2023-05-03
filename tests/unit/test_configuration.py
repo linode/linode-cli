@@ -73,10 +73,11 @@ mysql_engine = mysql/8.0.26"""
 
         f = io.StringIO()
 
-        with pytest.raises(SystemExit):
+        with pytest.raises(SystemExit) as err:
             with contextlib.redirect_stdout(f):
                 conf.set_user("bad_user")
 
+        assert err.value.code == 1
         assert "not configured" in f.getvalue()
 
         conf.set_user("cli-dev2")
@@ -90,11 +91,12 @@ mysql_engine = mysql/8.0.26"""
 
         f = io.StringIO()
 
-        with pytest.raises(SystemExit):
+        with pytest.raises(SystemExit) as err:
             with contextlib.redirect_stdout(f):
                 conf.remove_user("cli-dev")
 
         assert "default user!" in f.getvalue()
+        assert err.value.code == 1
 
         with patch("linodecli.configuration.open", mock_open()):
             conf.remove_user("cli-dev2")
@@ -108,10 +110,11 @@ mysql_engine = mysql/8.0.26"""
 
         f = io.StringIO()
 
-        with pytest.raises(SystemExit):
+        with pytest.raises(SystemExit) as err:
             with contextlib.redirect_stdout(f):
                 conf.print_users()
 
+        assert err.value.code == 0
         assert "*  cli-dev" in f.getvalue()
 
     def test_set_default_user(self):
@@ -121,10 +124,11 @@ mysql_engine = mysql/8.0.26"""
         conf = self._build_test_config()
 
         f = io.StringIO()
-        with pytest.raises(SystemExit):
+        with pytest.raises(SystemExit) as err:
             with contextlib.redirect_stdout(f):
                 conf.set_default_user("bad_user")
 
+        assert err.value.code == 1
         assert "not configured" in f.getvalue()
 
         with patch("linodecli.configuration.open", mock_open()):
