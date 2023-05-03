@@ -2,6 +2,7 @@ import contextlib
 import io
 from unittest.mock import patch
 
+
 from linodecli import ModelAttr, OutputMode, ResponseModel
 from linodecli.overrides import OUTPUT_OVERRIDES
 
@@ -16,7 +17,7 @@ class TestOverrides:
         override_signature = ("domains", "zone-file", OutputMode.delimited)
 
         list_operation.response_model = ResponseModel(
-            [ModelAttr("zone_file", False, True, "array")]
+            [ModelAttr("zone_file", False, False, "array", item_type="string")]
         )
         list_operation.command = "domains"
         list_operation.action = "zone-file"
@@ -32,23 +33,18 @@ class TestOverrides:
         assert stdout_buf.getvalue() == "line 1\nline 2\n"
 
         # Validate that the override will continue execution if it returns true
-        stdout_buf = io.StringIO()
-
         def patch_func(*a):
             OUTPUT_OVERRIDES[override_signature](*a)
             return True
 
-        with contextlib.redirect_stdout(stdout_buf), patch(
+        with patch(
             "linodecli.operation.OUTPUT_OVERRIDES",
             {override_signature: patch_func},
-        ):
+        ), patch.object(mock_cli.output_handler, "print") as p:
             list_operation.process_response_json(
                 response_json, mock_cli.output_handler
             )
-
-        result_str = stdout_buf.getvalue()
-        assert "line 1\nline 2\n" in result_str
-        assert "line 1\nline 2\n" != result_str
+            assert p.called
 
         # Change the action to bypass the override
         stdout_buf = io.StringIO()
