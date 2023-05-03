@@ -6,9 +6,9 @@ import contextlib
 import io
 import json
 from types import SimpleNamespace
-from unittest.mock import Mock, patch
 
 import requests
+from mock import Mock, patch
 
 from linodecli import api_request
 

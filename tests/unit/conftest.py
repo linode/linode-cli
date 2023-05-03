@@ -1,5 +1,4 @@
 import configparser
-import sys
 
 import pytest
 
@@ -41,7 +40,7 @@ def mock_cli(
     # We need this to suppress warnings for operations that don't
     # have access to the cli.suppress_warnings attribute.
     # e.g. operation defaults
-    sys.argv.append("--suppress-warnings")
+    # sys.argv.append("--suppress-warnings")
 
     return result
 

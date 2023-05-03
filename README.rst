@@ -38,6 +38,19 @@ Using an existing config file::
 
     docker run --rm -it -v $HOME/.config/linode-cli:/home/cli/.config/linode-cli linode/cli:latest linodes list
 
+GitHub Actions
+^^^^^^^^^^^^^^
+
+The Linode CLI can be automatically installed and authenticated in a GitHub actions environment using
+the `Setup Linode CLI`_ GitHub Action::
+
+     - name: Install the Linode CLI
+       uses: linode/action-linode-cli@v1
+       with:
+         token: ${{ secrets.LINODE_TOKEN }}
+
+.. _Setup Linode CLI: https://github.com/marketplace/actions/setup-linode-cli
+
 Upgrading
 ---------
 

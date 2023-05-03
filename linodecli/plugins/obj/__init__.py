@@ -17,7 +17,8 @@ from math import ceil
 from pathlib import Path
 from typing import List
 
-from terminaltables import SingleTable
+from rich import print as rprint
+from rich.table import Table
 
 from linodecli.cli import CLI
 from linodecli.configuration import _do_get_request
@@ -121,20 +122,29 @@ def list_objects_or_buckets(
             if key == prefix:
                 continue
 
-            data.append((obj.get("LastModified"), obj.get("Size"), key))
+            data.append(
+                (
+                    _convert_datetime(obj.get("LastModified")),
+                    obj.get("Size"),
+                    key,
+                )
+            )
 
         if data:
             tab = _borderless_table(data)
-            print(tab.table)
+            rprint(tab)
 
         sys.exit(0)
     else:
         # list buckets
         buckets = client.list_buckets().get("Buckets", [])
-        data = [[b.get("CreationDate"), b.get("Name")] for b in buckets]
+        data = [
+            [_convert_datetime(b.get("CreationDate")), b.get("Name")]
+            for b in buckets
+        ]
 
         tab = _borderless_table(data)
-        print(tab.table)
+        rprint(tab)
 
         sys.exit(0)
 
@@ -388,7 +398,7 @@ def show_usage(get_client, args):
         tab = _borderless_table(
             [[_pad_to(total, length=7), f"{obj_count} objects", b]]
         )
-        print(tab.table)
+        rprint(tab)
 
     if len(bucket_names) > 1:
         print("--------")
@@ -486,9 +496,10 @@ def print_help(parser: ArgumentParser):
         for name, func in sorted(COMMAND_MAP.items())
     ]
 
-    tab = SingleTable(command_help_map)
-    tab.inner_heading_row_border = False
-    print(tab.table)
+    tab = Table(show_header=False)
+    for row in command_help_map:
+        tab.add_row(*row)
+    rprint(tab)
     print()
     print(
         "Additionally, you can regenerate your Object Storage keys using the "
