@@ -3,7 +3,7 @@
 Unit tests for linodecli.completion
 """
 
-from mock import mock_open, patch
+from unittest.mock import mock_open, patch
 
 from linodecli import completion
 

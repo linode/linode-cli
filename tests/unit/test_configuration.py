@@ -7,10 +7,10 @@ import contextlib
 import io
 import os
 import sys
+from unittest.mock import call, mock_open, patch
 
 import pytest
 import requests_mock
-from mock import call, mock_open, patch
 
 from linodecli import configuration
 
@@ -73,12 +73,12 @@ mysql_engine = mysql/8.0.26"""
 
         f = io.StringIO()
 
-        try:
+        with pytest.raises(SystemExit) as err:
             with contextlib.redirect_stdout(f):
                 conf.set_user("bad_user")
-        except SystemExit as err:
-            assert err.code == 1
-            assert "not configured" in f.getvalue()
+
+        assert err.value.code == 1
+        assert "not configured" in f.getvalue()
 
         conf.set_user("cli-dev2")
         assert conf.username == "cli-dev2"
@@ -91,12 +91,12 @@ mysql_engine = mysql/8.0.26"""
 
         f = io.StringIO()
 
-        try:
+        with pytest.raises(SystemExit) as err:
             with contextlib.redirect_stdout(f):
                 conf.remove_user("cli-dev")
-        except SystemExit as err:
-            assert err.code == 1
-            assert "default user!" in f.getvalue()
+
+        assert "default user!" in f.getvalue()
+        assert err.value.code == 1
 
         with patch("linodecli.configuration.open", mock_open()):
             conf.remove_user("cli-dev2")
@@ -110,12 +110,12 @@ mysql_engine = mysql/8.0.26"""
 
         f = io.StringIO()
 
-        try:
+        with pytest.raises(SystemExit) as err:
             with contextlib.redirect_stdout(f):
                 conf.print_users()
-        except SystemExit as err:
-            assert err.code == 0
-            assert "*  cli-dev" in f.getvalue()
+
+        assert err.value.code == 0
+        assert "*  cli-dev" in f.getvalue()
 
     def test_set_default_user(self):
         """
@@ -124,12 +124,12 @@ mysql_engine = mysql/8.0.26"""
         conf = self._build_test_config()
 
         f = io.StringIO()
-        try:
+        with pytest.raises(SystemExit) as err:
             with contextlib.redirect_stdout(f):
                 conf.set_default_user("bad_user")
-        except SystemExit as err:
-            assert err.code == 1
-            assert "not configured" in f.getvalue()
+
+        assert err.value.code == 1
+        assert "not configured" in f.getvalue()
 
         with patch("linodecli.configuration.open", mock_open()):
             conf.set_default_user("cli-dev2")
