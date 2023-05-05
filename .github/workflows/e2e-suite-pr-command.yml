@@ -10,7 +10,7 @@ jobs:
     if: ${{ github.event.issue.pull_request }}
     steps:
       - name: Slash Command Dispatch
-        uses: peter-evans/slash-command-dispatch@v3
+        uses: peter-evans/slash-command-dispatch@v1.2.0
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           issue-type: pull-request
