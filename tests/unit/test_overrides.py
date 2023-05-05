@@ -2,7 +2,6 @@ import contextlib
 import io
 from unittest.mock import patch
 
-
 from linodecli import ModelAttr, OutputMode, ResponseModel
 from linodecli.overrides import OUTPUT_OVERRIDES
 
