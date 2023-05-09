@@ -5,11 +5,14 @@ import json
 import sys
 from enum import Enum
 from sys import stdout
+from typing import IO, List, Optional, Union
 
 from rich import box
 from rich import print as rprint
 from rich.table import Table
 from rich.text import Text
+
+from linodecli.response import ResponseModel
 
 
 class OutputMode(Enum):
@@ -52,7 +55,12 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
         self.has_warned = False
 
     def print(
-        self, response_model, data, title=None, to=stdout, columns=None
+        self,
+        response_model: ResponseModel,
+        data: List[Union[str, dict]],
+        title: Optional[str] = None,
+        to: IO[str] = stdout,
+        columns: Optional[List[str]] = None,
     ):  # pylint: disable=too-many-arguments
         """
         :param response_model: The Model corresponding to this response
@@ -60,11 +68,11 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
         :param data: The data to display
         :type data: list[str] or list[dict]
         :param title: The title to display on a table
-        :type title: str or None
+        :type title: Optional[str]
         :param to: Where to print output to
         :type to: stdout, stderr or file
         :param columns: The columns to display
-        :type columns: list[str]
+        :type columns: Optional[List[str]]
         """
 
         # We need to use lambdas here since we don't want unused function params
