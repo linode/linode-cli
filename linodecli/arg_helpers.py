@@ -88,8 +88,18 @@ def register_args(parser):
     parser.add_argument(
         "--all",
         action="store_true",
-        help="If set, displays all possible columns instead of "
-        "the default columns. This may not work well on some terminals.",
+        help=(
+            "Deprecated flag. An alias of '--all-columns', "
+            "scheduled to be removed in a future version."
+        ),
+    )
+    parser.add_argument(
+        "--all-columns",
+        action="store_true",
+        help=(
+            "If set, displays all possible columns instead of "
+            "the default columns. This may not work well on some terminals."
+        ),
     )
     parser.add_argument(
         "--format",

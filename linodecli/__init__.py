@@ -77,8 +77,16 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
         cli.output_handler.columns = "*"
     if parsed.no_headers:
         cli.output_handler.headers = False
-    if parsed.all:
+    if parsed.all_columns or parsed.all:
+        if parsed.all:
+            print(
+                "WARNING: '--all' is a deprecated flag, "
+                "and will be removed in a future version. "
+                "Please consider use '--all-columns' instead."
+            )
         cli.output_handler.columns = "*"
+    if parsed.all_rows:
+        cli.pagination = False
     elif parsed.format:
         cli.output_handler.columns = parsed.format
 

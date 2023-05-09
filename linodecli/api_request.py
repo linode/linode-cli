@@ -9,10 +9,17 @@ from typing import Optional
 
 import requests
 from packaging import version
+from requests import Response
 
 
 def do_request(
-    ctx, operation, args, filter_header=None, skip_error_handling=False
+    ctx,
+    operation,
+    args,
+    filter_header=None,
+    skip_error_handling=False,
+) -> (
+    Response
 ):  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
     """
     Makes a request to an operation's URL and returns the resulting JSON, or
