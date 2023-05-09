@@ -54,6 +54,11 @@ from linodecli.plugins.obj.objects import (
     get_object,
     upload_object,
 )
+from linodecli.plugins.obj.website import (
+    disable_static_site,
+    enable_static_site,
+    static_site_info,
+)
 
 try:
     import boto3
@@ -260,97 +265,6 @@ def set_acl(get_client, args):
     print("ACL updated")
 
 
-def enable_static_site(get_client, args):
-    """
-    Turns a bucket into a static website
-    """
-    parser = inherit_plugin_args(ArgumentParser(PLUGIN_BASE + " ws-create"))
-
-    parser.add_argument(
-        "bucket",
-        metavar="BUCKET",
-        type=str,
-        help="The bucket to turn into a static site",
-    )
-    parser.add_argument(
-        "--ws-index",
-        metavar="INDEX",
-        required=True,
-        type=str,
-        help="The file to serve as the index of the website",
-    )
-    parser.add_argument(
-        "--ws-error",
-        metavar="ERROR",
-        type=str,
-        help="The file to serve as the error page of the website",
-    )
-
-    parsed = parser.parse_args(args)
-    client = get_client()
-    bucket = parsed.bucket
-
-    # make the site
-    print(f"Setting bucket {bucket} access control to be 'public-read'")
-
-    client.put_bucket_acl(
-        Bucket=bucket,
-        ACL="public-read",
-    )
-
-    index_page = parsed.ws_index
-
-    ws_config = {"IndexDocument": {"Suffix": index_page}}
-    if parsed.ws_error:
-        ws_config["ErrorDocument"] = {"Key": parsed.ws_error}
-
-    client.put_bucket_website(
-        Bucket=bucket,
-        WebsiteConfiguration=ws_config,
-    )
-
-    print(
-        "Static site now available at "
-        f"{BASE_WEBSITE_TEMPLATE.format(cluster=client.cluster, bucket=bucket)}"
-        "\nIf you still can't access the website, please check the "
-        "Access Control List setting of the website related objects (files) "
-        "in your bucket."
-    )
-
-
-def static_site_info(get_client, args):
-    """
-    Returns info about a configured static site
-    """
-    parser = inherit_plugin_args(ArgumentParser(PLUGIN_BASE + " ws-info"))
-
-    parser.add_argument(
-        "bucket",
-        metavar="BUCKET",
-        type=str,
-        help="The bucket to return static site information on.",
-    )
-
-    parsed = parser.parse_args(args)
-    client = get_client()
-
-    bucket = parsed.bucket
-
-    response = client.get_bucket_website(Bucket=bucket)
-
-    index = response.get("IndexDocument", {}).get("Suffix", "Not Configured")
-    error = response.get("ErrorDocument", {}).get("Key", "Not Configured")
-
-    endpoint = BASE_WEBSITE_TEMPLATE.format(
-        cluster=client.cluster, bucket=bucket
-    )
-
-    print(f"Bucket {bucket}: Website configuration")
-    print(f"Website endpoint: {endpoint}")
-    print(f"Index document: {index}")
-    print(f"Error document: {error}")
-
-
 def show_usage(get_client, args):
     """
     Shows space used by all buckets in this cluster, and total space
@@ -435,30 +349,6 @@ def list_all_objects(get_client, args):
             )
 
     sys.exit(0)
-
-
-def disable_static_site(get_client, args):
-    """
-    Disables static site for a bucket
-    """
-    parser = inherit_plugin_args(ArgumentParser(PLUGIN_BASE + " du"))
-
-    parser.add_argument(
-        "bucket",
-        metavar="BUCKET",
-        type=str,
-        nargs="?",
-        help="The bucket to disable static site for.",
-    )
-
-    parsed = parser.parse_args(args)
-    client = get_client()
-
-    bucket = parsed.bucket
-
-    client.delete_bucket_website(Bucket=bucket)
-
-    print(f"Website configuration deleted for {parsed.bucket}")
 
 
 COMMAND_MAP = {
