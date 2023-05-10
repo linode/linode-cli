@@ -179,6 +179,16 @@ you can execute the following::
 
     linode-cli linodes create --region us-east --type g6-nanode-1 --tags tag1 --tags tag2
 
+Lists consisting of nested structures can also be expressed through the command line.
+For example, to create a Linode with a public interface on ``eth0`` and a VLAN interface
+on ``eth1`` you can execute the following::
+
+    linode-cli linodes create \
+        --region us-east --type g6-nanode-1 --image linode/ubuntu22.04 \
+        --root_pass "myr00tp4ss123" \
+        --interfaces.purpose public \
+        --interfaces.purpose vlan --interfaces.label my-vlan
+
 Specifying Nested Arguments
 """""""""""""""""""""""""""
 

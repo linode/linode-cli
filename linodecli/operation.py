@@ -100,6 +100,52 @@ class OptionalFromFileAction(argparse.Action):
             raise argparse.ArgumentTypeError("Expected a string")
 
 
+class ListArgumentAction(argparse.Action):
+    """
+    This action is intended to be used only with list arguments.
+    Its purpose is to aggregate adjacent object fields and produce consistent
+    lists in the output namespace.
+    """
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        if getattr(namespace, self.dest) is None:
+            setattr(namespace, self.dest, [])
+
+        dest_list = getattr(namespace, self.dest)
+        dest_length = len(dest_list)
+
+        # A list of adjacent fields
+        adjacent_keys = [
+            k
+            for k, v in namespace.__dict__.items()
+            if k.split(".")[:-1] == self.dest.split(".")[:-1]
+        ]
+
+        # Let's populate adjacent fields ahead of time
+        for k in adjacent_keys:
+            if getattr(namespace, k) is None:
+                setattr(namespace, k, [])
+
+        adjacent_items = {k: getattr(namespace, k) for k in adjacent_keys}
+
+        # Find the deepest field so we can know if
+        # we're starting a new object.
+        deepest_field = max(adjacent_items.values(), key=lambda x: len(x))
+        deepest_length = len(deepest_field)
+
+        # If we're creating a new list object, append
+        # None to every non-populated field.
+        if dest_length >= deepest_length:
+            for k, item in adjacent_items.items():
+                if k == self.dest:
+                    continue
+
+                if len(item) < dest_length:
+                    item.append(None)
+
+        dest_list.append(values)
+
+
 TYPES = {
     "string": str,
     "integer": int,
@@ -244,7 +290,7 @@ class CLIOperation:  # pylint: disable=too-many-instance-attributes
                     parser.add_argument(
                         "--" + arg.path,
                         metavar=arg.name,
-                        action="append",
+                        action=ListArgumentAction,
                         type=TYPES[arg.arg_type],
                     )
                     list_items.append((arg.path, arg.list_item))
