@@ -515,7 +515,6 @@ class CLI:  # pylint: disable=too-many-instance-attributes
         Receive all pages of a resource from multiple
         API responses then merge into one page.
         """
-        print(operation, args)
         self.page_size = 500
         self.page = 1
         result = do_request(self, operation, args).json()
