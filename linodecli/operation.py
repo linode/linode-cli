@@ -130,8 +130,7 @@ class ListArgumentAction(argparse.Action):
 
         # Find the deepest field so we can know if
         # we're starting a new object.
-        deepest_field = max(adjacent_items.values(), key=lambda x: len(x))
-        deepest_length = len(deepest_field)
+        deepest_length = max(len(x) for x in adjacent_items.values())
 
         # If we're creating a new list object, append
         # None to every non-populated field.
