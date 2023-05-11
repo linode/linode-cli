@@ -15,7 +15,7 @@ class TestOperation:
 
         for arg_name in ["foo", "bar", "aaa"]:
             parser.add_argument(
-                f"--{arg_name}",
+                f"--foo.{arg_name}",
                 metavar=arg_name,
                 action=operation.ListArgumentAction,
                 type=str,
@@ -23,23 +23,23 @@ class TestOperation:
 
         result = parser.parse_args(
             [
-                "--foo",
+                "--foo.foo",
                 "cool",
-                "--bar",
+                "--foo.bar",
                 "wow",
-                "--aaa",
+                "--foo.aaa",
                 "computer",
-                "--foo",
+                "--foo.foo",
                 "test",
-                "--bar",
+                "--foo.bar",
                 "wow",
-                "--aaa",
+                "--foo.aaa",
                 "akamai",
             ]
         )
-        assert result.foo == ["cool", "test"]
-        assert result.bar == ["wow", "wow"]
-        assert result.aaa == ["computer", "akamai"]
+        assert getattr(result, "foo.foo") == ["cool", "test"]
+        assert getattr(result, "foo.bar") == ["wow", "wow"]
+        assert getattr(result, "foo.aaa") == ["computer", "akamai"]
 
     def test_list_arg_action_missing_attr(self):
         """
@@ -53,7 +53,7 @@ class TestOperation:
 
         for arg_name in ["foo", "bar", "aaa"]:
             parser.add_argument(
-                f"--{arg_name}",
+                f"--foo.{arg_name}",
                 metavar=arg_name,
                 action=operation.ListArgumentAction,
                 type=str,
@@ -61,20 +61,20 @@ class TestOperation:
 
         result = parser.parse_args(
             [
-                "--foo",
+                "--foo.foo",
                 "cool",
-                "--aaa",
+                "--foo.aaa",
                 "computer",
-                "--foo",
+                "--foo.foo",
                 "test",
-                "--bar",
+                "--foo.bar",
                 "wow",
-                "--foo",
+                "--foo.foo",
                 "linode",
-                "--aaa",
+                "--foo.aaa",
                 "akamai",
             ]
         )
-        assert result.foo == ["cool", "test", "linode"]
-        assert result.bar == [None, "wow"]
-        assert result.aaa == ["computer", None, "akamai"]
+        assert getattr(result, "foo.foo") == ["cool", "test", "linode"]
+        assert getattr(result, "foo.bar") == [None, "wow"]
+        assert getattr(result, "foo.aaa") == ["computer", None, "akamai"]

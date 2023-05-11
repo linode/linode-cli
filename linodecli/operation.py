@@ -113,12 +113,19 @@ class ListArgumentAction(argparse.Action):
 
         dest_list = getattr(namespace, self.dest)
         dest_length = len(dest_list)
+        dest_parent = self.dest.split(".")[:-1]
+
+        # If this isn't a nested structure,
+        # append and return early
+        if len(dest_parent) < 1:
+            dest_list.append(values)
+            return
 
         # A list of adjacent fields
         adjacent_keys = [
             k
             for k, v in namespace.__dict__.items()
-            if k.split(".")[:-1] == self.dest.split(".")[:-1]
+            if k.split(".")[:-1] == dest_parent
         ]
 
         # Let's populate adjacent fields ahead of time
