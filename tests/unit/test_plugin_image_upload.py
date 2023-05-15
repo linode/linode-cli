@@ -1,6 +1,7 @@
 import importlib
 from unittest.mock import patch
 
+import pytest
 from pytest import CaptureFixture
 
 from linodecli.plugins import PluginContext
@@ -10,26 +11,26 @@ plugin = importlib.import_module("linodecli.plugins.image-upload")
 
 
 def test_print_help(capsys: CaptureFixture):
-    try:
+    with pytest.raises(SystemExit) as err:
         plugin.call(["--help"], None)
-    except SystemExit as err:
-        assert err.code == 0
 
     captured_text = capsys.readouterr().out
+
+    assert err.value.code == 0
     assert "The image file to upload" in captured_text
     assert "The region to upload the image to" in captured_text
 
 
 def test_no_file(mock_cli, capsys: CaptureFixture):
-    try:
+    with pytest.raises(SystemExit) as err:
         plugin.call(
             ["--label", "cool", "blah.txt"],
             PluginContext("REALTOKEN", mock_cli),
         )
-    except SystemExit as err:
-        assert err.code == 2
 
     captured_text = capsys.readouterr().out
+
+    assert err.value.code == 2
     assert "No file at blah.txt" in captured_text
 
 
@@ -39,12 +40,12 @@ def test_file_too_large(mock_cli, capsys: CaptureFixture):
     args = ["--label", "cool", "blah.txt"]
     ctx = PluginContext("REALTOKEN", mock_cli)
 
-    try:
+    with pytest.raises(SystemExit) as err:
         plugin.call(args, ctx)
-    except SystemExit as err:
-        assert err.code == 2
 
     captured_text = capsys.readouterr().out
+
+    assert err.value.code == 2
     assert "File blah.txt is too large" in captured_text
 
 
@@ -57,12 +58,12 @@ def test_unauthorized(mock_cli, capsys: CaptureFixture):
 
     ctx = PluginContext("REALTOKEN", mock_cli)
 
-    try:
+    with pytest.raises(SystemExit) as err:
         plugin.call(args, ctx)
-    except SystemExit as err:
-        assert err.code == 3
 
     captured_text = capsys.readouterr().out
+
+    assert err.value.code == 3
     assert "Your token was not authorized to use this endpoint" in captured_text
 
 
@@ -75,12 +76,12 @@ def test_non_beta(mock_cli, capsys: CaptureFixture):
 
     ctx = PluginContext("REALTOKEN", mock_cli)
 
-    try:
+    with pytest.raises(SystemExit) as err:
         plugin.call(args, ctx)
-    except SystemExit as err:
-        assert err.code == 4
 
     captured_text = capsys.readouterr().out
+
+    assert err.value.code == 4
     assert (
         "It looks like you are not in the Machine Images Beta" in captured_text
     )
@@ -95,12 +96,12 @@ def test_non_beta(mock_cli, capsys: CaptureFixture):
 
     ctx = PluginContext("REALTOKEN", mock_cli)
 
-    try:
+    with pytest.raises(SystemExit) as err:
         plugin.call(args, ctx)
-    except SystemExit as err:
-        assert err.code == 4
 
     captured_text = capsys.readouterr().out
+
+    assert err.value.code == 4
     assert (
         "It looks like you are not in the Machine Images Beta" in captured_text
     )
@@ -114,12 +115,12 @@ def test_failed_upload(mock_cli, capsys: CaptureFixture):
 
     ctx = PluginContext("REALTOKEN", mock_cli)
 
-    try:
+    with pytest.raises(SystemExit) as err:
         plugin.call(args, ctx)
-    except SystemExit as err:
-        assert err.code == 3
 
     captured_text = capsys.readouterr().out
+
+    assert err.value.code == 3
     assert (
         "Upload failed with status 500; response was it borked :("
         in captured_text

@@ -1,6 +1,7 @@
 import argparse
 from unittest.mock import patch
 
+import pytest
 from pytest import CaptureFixture
 
 import linodecli.plugins.ssh as plugin
@@ -8,10 +9,10 @@ from linodecli.plugins import PluginContext
 
 
 def test_print_help(capsys: CaptureFixture):
-    try:
+    with pytest.raises(SystemExit) as err:
         plugin.call(["--help"], None)
-    except SystemExit as err:
-        assert err.code == 0
+
+    assert err.value.code == 0
 
     captured_text = capsys.readouterr().out
     assert "[USERNAME@]LABEL" in captured_text
@@ -20,10 +21,10 @@ def test_print_help(capsys: CaptureFixture):
 
 @patch("linodecli.plugins.ssh.platform", "win32")
 def test_windows_error(capsys: CaptureFixture):
-    try:
+    with pytest.raises(SystemExit) as err:
         plugin.call(["test@test"], None)
-    except SystemExit as err:
-        assert err.code == 1
+
+    assert err.value.code == 1
 
     captured_text = capsys.readouterr().out
     assert "This plugin is not currently supported in Windows." in captured_text
@@ -39,12 +40,12 @@ def test_target_not_running(mock_cli, capsys: CaptureFixture):
 
     mock_cli.call_operation = mock_call_operation
 
-    try:
+    with pytest.raises(SystemExit) as err:
         plugin.call(
             [f"test@{test_label}"], PluginContext("FAKETOKEN", mock_cli)
         )
-    except SystemExit as err:
-        assert err.code == 2
+
+    assert err.value.code == 2
 
     captured_text = capsys.readouterr().out
     assert (
@@ -121,12 +122,12 @@ def test_find_with_bad_label(mock_cli, capsys: CaptureFixture):
 
     mock_cli.call_operation = mock_call_operation
 
-    try:
+    with pytest.raises(SystemExit) as err:
         plugin.find_linode_with_label(
             PluginContext("FAKETOKEN", mock_cli), test_label
         )
-    except SystemExit as err:
-        assert err.code == 1
+
+    assert err.value.code == 1
 
     captured_text = capsys.readouterr().out
 
@@ -145,12 +146,12 @@ def test_find_api_error(mock_cli, capsys: CaptureFixture):
 
     mock_cli.call_operation = mock_call_operation
 
-    try:
+    with pytest.raises(SystemExit) as err:
         plugin.find_linode_with_label(
             PluginContext("FAKETOKEN", mock_cli), test_label
         )
-    except SystemExit as err:
-        assert err.code == 2
+
+    assert err.value.code == 2
 
     captured_text = capsys.readouterr().out
 

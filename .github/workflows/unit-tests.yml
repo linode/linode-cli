@@ -20,7 +20,7 @@ jobs:
           python-version: '3.x'
 
       - name: Install Python wheel
-        run: pip install wheel boto3 mock
+        run: pip install wheel boto3
 
       - name: Update cert
         run: pip install certifi -U
