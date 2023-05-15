@@ -138,6 +138,7 @@ class OpenAPIOperation:
         """
         self.request = None
         self.responses = {}
+        self.allowed_defaults = None
 
         if ('200' in operation.responses
             and 'application/json' in operation.responses['200'].content):
@@ -148,6 +149,7 @@ class OpenAPIOperation:
             if 'application/json' in operation.requestBody.content:
                 self.request = OpenAPIRequest(operation.requestBody.content['application/json'])
                 self.required_fields = self.request.required
+                self.allowed_defaults = operation.requestBody.extensions.get("linode-cli-allowed-defaults")
         elif method in ('get',):
             # for get requests, self.request is all filterable fields of the response model
             if self.response_model and self.response_model.is_paginated:
@@ -163,14 +165,13 @@ class OpenAPIOperation:
             action = action[0]
 
         self.action = action
+        self.action_aliases = {}
         if alias:
             self.action_aliases = alias
 
         self.summary = operation.summary
         self.description = operation.description.split(".")[0]
         self.params = [OpenAPIOperationParameter(c) for c in params]
-        if hasattr(operation.extensions, 'linode-cli-allowed-defaults'):
-            self.allowed_defaults = operation.extensions['linode-cli-allowed-defaults']
 
         server = operation.servers[0].url if operation.servers else operation._root.servers[0].url
         self.url = server + operation.path[-2]
@@ -250,26 +251,26 @@ class OpenAPIOperation:
         elif self.method in ("post", "put"):
             # build args for body JSON
             for arg in self.args:
-                if arg.item_type == "array":
+                if arg.datatype == "array":
                     # special handling for input arrays
-                    parser.add_argument(
-                        "--" + arg.path,
-                        metavar=arg.name,
-                        action="append",
-                        type=TYPES[arg.arg_item_type],
-                    )
-                elif arg.list_item is not None:
                     parser.add_argument(
                         "--" + arg.path,
                         metavar=arg.name,
                         action="append",
                         type=TYPES[arg.item_type],
                     )
-                    list_items.append((arg.path, arg.list_item))
+                elif arg.item_type is not None:
+                    parser.add_argument(
+                        "--" + arg.path,
+                        metavar=arg.name,
+                        action="append",
+                        type=TYPES[arg.datatype],
+                    )
+                    list_items.append((arg.path, arg.item_type))
                 else:
                     if (
-                        arg.item_type == "string"
-                        and arg.arg_format == "password"
+                        arg.datatype == "string"
+                        and arg.format == "password"
                     ):
                         # special case - password input
                         parser.add_argument(
@@ -277,7 +278,7 @@ class OpenAPIOperation:
                             nargs="?",
                             action=PasswordPromptAction,
                         )
-                    elif arg.item_type == "string" and arg.arg_format in (
+                    elif arg.datatype == "string" and arg.format in (
                         "file",
                         "ssl-cert",
                         "ssl-key",
@@ -286,13 +287,13 @@ class OpenAPIOperation:
                             "--" + arg.path,
                             metavar=arg.name,
                             action=OptionalFromFileAction,
-                            type=TYPES[arg.item_type],
+                            type=TYPES[arg.datatype],
                         )
                     else:
                         parser.add_argument(
                             "--" + arg.path,
                             metavar=arg.name,
-                            type=TYPES[arg.item_type],
+                            type=TYPES[arg.datatype],
                         )
 
         parsed = parser.parse_args(args)

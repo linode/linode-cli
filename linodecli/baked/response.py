@@ -61,7 +61,6 @@ class OpenAPIResponseAttr:
         #: The type for items in this attribute, if this attribute is a list
         self.item_type = None
         if schema.type == "array":
-            print("My name is {} and my path is {}".format(name, schema.path))
             self.item_type = schema.items.type
 
     @property

@@ -80,6 +80,8 @@ def _parse_request_model(schema, prefix=None, list_of_objects=False):
         for k, v in schema.properties.items():
             if isinstance(v, Reference):
                 # TODO: fix Reference has no attribute type
+                # Reference needs to resolve to the component then pass back in as a schema
+                print(f"!!!!!!!!!!!!!!!!!!! {v.ref}")
                 print(f"Skipped {k} {v}")
                 continue
             if v.type == "object":

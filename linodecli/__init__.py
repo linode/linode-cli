@@ -25,9 +25,7 @@ from .cli import CLI
 from .completion import bake_completions, get_completions
 from .configuration import ENV_TOKEN_NAME
 from .helpers import handle_url_overrides
-from .operation import CLIArg, CLIOperation, URLParam
 from .output import OutputMode
-from .response import ModelAttr, ResponseModel
 
 # this might not be installed at the time of building
 try:
