@@ -138,6 +138,7 @@ class OpenAPIOperation:
         """
         self.request = None
         self.responses = {}
+        self.response_model = None
         self.allowed_defaults = None
 
         if ('200' in operation.responses
@@ -204,6 +205,9 @@ class OpenAPIOperation:
         Processes the response as JSON and prints
         """
         if self.response_model is None:
+            return
+
+        if self.response_model.attrs == []:
             return
 
         json = self.response_model.fix_json(json)
