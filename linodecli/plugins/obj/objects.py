@@ -25,7 +25,7 @@ from linodecli.plugins.obj.helpers import (
 
 def upload_object(
     get_client, args, **kwargs
-):  # pylint: disable=too-many-locals
+):  # pylint: disable=too-many-locals,unused-argument
     """
     Uploads an object to object storage
     """
@@ -105,7 +105,9 @@ def upload_object(
 
 # We can't parse suppress_warnings from the parser
 # because it is handled at the top-level of this plugin.
-def get_object(get_client, args, suppress_warnings=False, **kwargs):
+def get_object(
+    get_client, args, suppress_warnings=False, **kwargs
+):  # pylint: disable=unused-argument
     """
     Retrieves an uploaded object and writes it to a file
     """
@@ -178,7 +180,9 @@ def get_object(get_client, args, suppress_warnings=False, **kwargs):
     print("Done.")
 
 
-def delete_object(get_client, args, **kwargs):
+def delete_object(
+    get_client, args, **kwargs
+):  # pylint: disable=unused-argument
     """
     Removes a file from a bucket
     """

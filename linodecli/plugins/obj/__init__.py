@@ -73,7 +73,7 @@ except ImportError:
 
 def list_objects_or_buckets(
     get_client, args, **kwargs
-):  # pylint: disable=too-many-locals
+):  # pylint: disable=too-many-locals,unused-argument
     """
     Lists buckets or objects
     """
@@ -154,7 +154,7 @@ def list_objects_or_buckets(
         sys.exit(0)
 
 
-def generate_url(get_client, args, **kwargs):
+def generate_url(get_client, args, **kwargs):  # pylint: disable=unused-argument
     """
     Generates a URL to an object
     """
@@ -205,7 +205,7 @@ def generate_url(get_client, args, **kwargs):
     print(url)
 
 
-def set_acl(get_client, args, **kwargs):
+def set_acl(get_client, args, **kwargs):  # pylint: disable=unused-argument
     """
     Modify Access Control List for a Bucket or Objects
     """
@@ -265,7 +265,7 @@ def set_acl(get_client, args, **kwargs):
     print("ACL updated")
 
 
-def show_usage(get_client, args, **kwargs):
+def show_usage(get_client, args, **kwargs):  # pylint: disable=unused-argument
     """
     Shows space used by all buckets in this cluster, and total space
     """
@@ -321,7 +321,9 @@ def show_usage(get_client, args, **kwargs):
     sys.exit(0)
 
 
-def list_all_objects(get_client, args, **kwargs):
+def list_all_objects(
+    get_client, args, **kwargs
+):  # pylint: disable=unused-argument
     """
     Lists all objects in all buckets
     """
