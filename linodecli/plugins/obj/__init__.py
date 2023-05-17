@@ -445,18 +445,20 @@ def get_credentials(cli: CLI):
     return access_key, secret_key
 
 
-def regenerate_s3_credentials(cli: CLI):
+def regenerate_s3_credentials(cli: CLI, suppress_warnings=False):
     """
     Force regenerate object storage access key and secret key.
     """
     print("Regenerating Object Storage keys..")
     _get_s3_creds(cli, force=True)
     print("Done.")
-    print(
-        "Warning: Your old Object Storage keys _were not_ automatically expired!  If you want "
-        "to expire them, see `linode-cli object-storage keys-list` and "
-        "`linode-cli object-storage keys-delete [KEYID]`."
-    )
+
+    if not suppress_warnings:
+        print(
+            "WARNING: Your old Object Storage keys _were not_ automatically expired!  If you want "
+            "to expire them, see `linode-cli object-storage keys-list` and "
+            "`linode-cli object-storage keys-delete [KEYID]`."
+        )
 
 
 def call(
@@ -530,7 +532,9 @@ def call(
         except ClientError as e:
             sys.exit(f"Error: {e}")
     elif parsed.command == "regenerate-keys":
-        regenerate_s3_credentials(context.client)
+        regenerate_s3_credentials(
+            context.client, suppress_warnings=parsed.suppress_warnings
+        )
     elif parsed.command == "configure":
         _configure_plugin(context.client)
     else:
