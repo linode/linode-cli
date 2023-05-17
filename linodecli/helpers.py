@@ -72,6 +72,13 @@ def register_args_shared(parser):
         "be configured.",
     )
 
+    parser.add_argument(
+        "--suppress-warnings",
+        action="store_true",
+        help="Suppress warnings that are intended for human users. "
+        "This is useful for scripting the CLI's behavior.",
+    )
+
     return parser
 
 

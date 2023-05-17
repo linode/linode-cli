@@ -72,7 +72,7 @@ except ImportError:
 
 
 def list_objects_or_buckets(
-    get_client, args
+    get_client, args, **kwargs
 ):  # pylint: disable=too-many-locals
     """
     Lists buckets or objects
@@ -154,7 +154,7 @@ def list_objects_or_buckets(
         sys.exit(0)
 
 
-def generate_url(get_client, args):
+def generate_url(get_client, args, **kwargs):
     """
     Generates a URL to an object
     """
@@ -205,7 +205,7 @@ def generate_url(get_client, args):
     print(url)
 
 
-def set_acl(get_client, args):
+def set_acl(get_client, args, **kwargs):
     """
     Modify Access Control List for a Bucket or Objects
     """
@@ -265,7 +265,7 @@ def set_acl(get_client, args):
     print("ACL updated")
 
 
-def show_usage(get_client, args):
+def show_usage(get_client, args, **kwargs):
     """
     Shows space used by all buckets in this cluster, and total space
     """
@@ -321,7 +321,7 @@ def show_usage(get_client, args):
     sys.exit(0)
 
 
-def list_all_objects(get_client, args):
+def list_all_objects(get_client, args, **kwargs):
     """
     Lists all objects in all buckets
     """
@@ -524,7 +524,9 @@ def call(
 
     if parsed.command in COMMAND_MAP:
         try:
-            COMMAND_MAP[parsed.command](get_client, args)
+            COMMAND_MAP[parsed.command](
+                get_client, args, suppress_warnings=parsed.suppress_warnings
+            )
         except ClientError as e:
             sys.exit(f"Error: {e}")
     elif parsed.command == "regenerate-keys":

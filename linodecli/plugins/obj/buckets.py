@@ -8,7 +8,7 @@ from linodecli.plugins import inherit_plugin_args
 from linodecli.plugins.obj.config import PLUGIN_BASE
 
 
-def create_bucket(get_client, args):
+def create_bucket(get_client, args, **kwargs):
     """
     Creates a new bucket
     """
@@ -30,7 +30,7 @@ def create_bucket(get_client, args):
     sys.exit(0)
 
 
-def delete_bucket(get_client, args):
+def delete_bucket(get_client, args, **kwargs):
     """
     Deletes a bucket
     """

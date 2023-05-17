@@ -23,7 +23,9 @@ from linodecli.plugins.obj.helpers import (
 )
 
 
-def upload_object(get_client, args):  # pylint: disable=too-many-locals
+def upload_object(
+    get_client, args, **kwargs
+):  # pylint: disable=too-many-locals
     """
     Uploads an object to object storage
     """
@@ -101,7 +103,9 @@ def upload_object(get_client, args):  # pylint: disable=too-many-locals
     print("Done.")
 
 
-def get_object(get_client, args):
+# We can't parse suppress_warnings from the parser
+# because it is handled at the top-level of this plugin.
+def get_object(get_client, args, suppress_warnings=False, **kwargs):
     """
     Retrieves an uploaded object and writes it to a file
     """
@@ -137,6 +141,26 @@ def get_object(get_client, args):
     bucket = parsed.bucket
     key = parsed.file
 
+    # Keys should always be relative
+    if key.startswith("/"):
+        if parsed.destination is None and not suppress_warnings:
+            print(
+                f'WARNING: This file will be saved to the absolute path "{key}".\n'
+                "If you would like to store this file in a relative path, use the LOCAL_FILE "
+                "parameter or remove the trailing slash character from the object name.",
+                file=sys.stderr,
+            )
+        key = key[1:]
+
+    destination_parent = destination.parent
+
+    # In the future we should allow the automatic creation of parent directories
+    if not destination_parent.exists():
+        print(
+            f"ERROR: Output directory {destination_parent} does not exist locally."
+        )
+        sys.exit(1)
+
     response = client.head_object(
         Bucket=bucket,
         Key=key,
@@ -154,7 +178,7 @@ def get_object(get_client, args):
     print("Done.")
 
 
-def delete_object(get_client, args):
+def delete_object(get_client, args, **kwargs):
     """
     Removes a file from a bucket
     """
