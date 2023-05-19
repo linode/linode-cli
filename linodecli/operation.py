@@ -124,7 +124,7 @@ class ListArgumentAction(argparse.Action):
         # A list of adjacent fields
         adjacent_keys = [
             k
-            for k, v in namespace.__dict__.items()
+            for k in vars(namespace).keys()
             if k.split(".")[:-1] == dest_parent
         ]
 
