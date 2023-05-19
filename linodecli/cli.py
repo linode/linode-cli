@@ -485,6 +485,7 @@ class CLI:  # pylint: disable=too-many-instance-attributes
     @staticmethod
     def merge_results_data(results: Iterable[dict]):
         """Merge multiple json response into one"""
+
         iterator = iter(results)
         merged_result = next(iterator, None)
         if not merged_result:
@@ -515,6 +516,7 @@ class CLI:  # pylint: disable=too-many-instance-attributes
         Receive all pages of a resource from multiple
         API responses then merge into one page.
         """
+
         self.page_size = 500
         self.page = 1
         result = do_request(self, operation, args).json()
