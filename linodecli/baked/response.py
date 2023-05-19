@@ -124,8 +124,8 @@ def _parse_response_model(schema, prefix=None):
     if schema.properties is not None:
         for k, v in schema.properties.items():
             if v.type == "object":
-                prefix = prefix + "." + k if prefix else k
-                attrs += _parse_response_model(v, prefix=prefix)
+                pref = prefix + "." + k if prefix else k
+                attrs += _parse_response_model(v, prefix=pref)
             else:
                 attrs.append(
                     OpenAPIResponseAttr(k, v, prefix=prefix)

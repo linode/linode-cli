@@ -206,12 +206,9 @@ class OpenAPIOperation:
         """
         if self.response_model is None:
             return
-
         if self.response_model.attrs == []:
             return
-
         json = self.response_model.fix_json(json)
-
         handler.print(self.response_model, json)
 
     def parse_args(
