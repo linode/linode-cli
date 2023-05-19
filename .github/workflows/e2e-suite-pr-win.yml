@@ -42,7 +42,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - run: make INTEGRATION_TEST_PATH="${{ github.event.client_payload.slash_command.tests }}" testint
-        if: ${{ steps.validate-tests.outputs.match == '' }}
         env:
           LINODE_CLI_TOKEN: ${{ secrets.LINODE_TOKEN }}
 
