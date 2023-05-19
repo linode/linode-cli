@@ -28,12 +28,6 @@ jobs:
         with:
           ref: ${{ github.event.client_payload.slash_command.sha }}
 
-      - name: Update system packages
-        run: sudo apt-get update -y
-
-      - name: Install system deps
-        run: sudo apt-get install -y build-essential
-
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
