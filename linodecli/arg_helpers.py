@@ -115,12 +115,6 @@ def register_args(parser):
         "are configured on initial setup or with linode-cli configure",
     )
     parser.add_argument(
-        "--suppress-warnings",
-        action="store_true",
-        help="Suppress warnings that are intended for human users. "
-        "This is useful for scripting the CLI's behavior.",
-    )
-    parser.add_argument(
         "--no-truncation",
         action="store_true",
         default=False,

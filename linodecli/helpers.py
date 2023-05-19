@@ -72,6 +72,13 @@ def register_args_shared(parser: ArgumentParser):
         help="The username to execute this command as.  This user must "
         "be configured.",
     )
+    
+    parser.add_argument(
+        "--suppress-warnings",
+        action="store_true",
+        help="Suppress warnings that are intended for human users. "
+        "This is useful for scripting the CLI's behavior.",
+    )
 
     parser.add_argument(
         "--all-rows",
