@@ -12,7 +12,6 @@ jobs:
     if:
       github.event_name == 'repository_dispatch' &&
       github.event.client_payload.slash_command.sha != '' &&
-      github.event.client_payload.pull_request.head.sha == github.event.client_payload.slash_command.sha
 
     steps:
       - uses: actions-ecosystem/action-regex-match@v2
