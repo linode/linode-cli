@@ -77,14 +77,6 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
         cli.output_handler.columns = "*"
     if parsed.no_headers:
         cli.output_handler.headers = False
-    if parsed.all_columns or parsed.all:
-        if parsed.all:
-            print(
-                "WARNING: '--all' is a deprecated flag, "
-                "and will be removed in a future version. "
-                "Please consider use '--all-columns' instead."
-            )
-        cli.output_handler.columns = "*"
     if parsed.all_rows:
         cli.pagination = False
     elif parsed.format:
@@ -92,6 +84,15 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
 
     cli.defaults = not parsed.no_defaults
     cli.suppress_warnings = parsed.suppress_warnings
+
+    if parsed.all_columns or parsed.all:
+        if parsed.all and not cli.suppress_warnings:
+            print(
+                "WARNING: '--all' is a deprecated flag, "
+                "and will be removed in a future version. "
+                "Please consider use '--all-columns' instead."
+            )
+        cli.output_handler.columns = "*"
 
     cli.page = parsed.page
     cli.page_size = parsed.page_size
