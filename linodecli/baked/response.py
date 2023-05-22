@@ -63,6 +63,7 @@ class OpenAPIResponseAttr:
         if schema.type == "array":
             self.item_type = schema.items.type
 
+
     @property
     def path(self):
         """
@@ -104,6 +105,19 @@ class OpenAPIResponseAttr:
         if value is None:
             # Prints the word None if you don't change it
             value = ""
+        return value
+
+    def get_string(self, model):
+        """
+        Returns a raw value from a model, cleaning up Nones and other values
+        """
+        value = self._get_value(model)
+        if value is None:
+            value = ""
+        elif isinstance(value, list):
+            value = " ".join([str(c) for c in value])
+        else:
+            value = str(value)
         return value
 
 
