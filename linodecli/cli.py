@@ -94,6 +94,9 @@ class CLI:  # pylint: disable=too-many-instance-attributes
                 if "_spec_version" in self.ops:
                     self.spec_version = self.ops["_spec_version"]
                     del self.ops["_spec_version"]
+                if "_spec" in self.ops:
+                    self.spec = self.ops["_spec"]
+                    del self.ops["_spec"]
         else:
             print(
                 "No spec baked.  Please bake by calling this script as follows:"
