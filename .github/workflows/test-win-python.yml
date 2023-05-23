@@ -1,0 +1,21 @@
+name: Python package
+
+on: [push]
+
+jobs:
+  install-dev:
+    strategy:
+      matrix:
+        os: [windows-latest]
+
+    name: Verify dev env
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+      - run: "py -m pip install --upgrade pip"
+      - run: "python3 -m pip install -e .[dev]"
+      - run: "python3 -c 'import structlog; print(structlog.__version__)'"
