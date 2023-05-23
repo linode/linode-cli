@@ -5,6 +5,7 @@ Various helper functions shared across multiple CLI components.
 import glob
 import os
 import re
+from argparse import ArgumentParser
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -55,7 +56,7 @@ def filter_markdown_links(text):
     return result
 
 
-def register_args_shared(parser):
+def register_args_shared(parser: ArgumentParser):
     """
     Adds certain arguments to the given ArgumentParser that may be shared across
     the CLI and plugins.
@@ -77,6 +78,12 @@ def register_args_shared(parser):
         action="store_true",
         help="Suppress warnings that are intended for human users. "
         "This is useful for scripting the CLI's behavior.",
+    )
+
+    parser.add_argument(
+        "--all-rows",
+        action="store_true",
+        help="Output all possible rows in the results with pagination",
     )
 
     return parser

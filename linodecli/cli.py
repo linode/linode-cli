@@ -2,11 +2,13 @@
 Responsible for managing spec and routing commands to operations.
 """
 
+import itertools
 import os
 import pickle
 import re
 import sys
 from sys import version_info
+from typing import Iterable, List
 
 from .api_request import do_request
 from .configuration import CLIConfig
@@ -27,6 +29,7 @@ class CLI:  # pylint: disable=too-many-instance-attributes
         self.ops = {}
         self.spec = {}
         self.defaults = True  # whether to use default values for arguments
+        self.pagination = True
         self.page = 1
         self.page_size = 100
         self.debug_request = False
@@ -479,6 +482,60 @@ class CLI:  # pylint: disable=too-many-instance-attributes
         new_tag = re.sub(r"[^a-z ]", "", new_tag).replace(" ", "-")
         return new_tag
 
+    @staticmethod
+    def merge_results_data(results: Iterable[dict]):
+        """Merge multiple json response into one"""
+
+        iterator = iter(results)
+        merged_result = next(iterator, None)
+        if not merged_result:
+            return None
+
+        if "pages" in merged_result:
+            merged_result["pages"] = 1
+        if "page" in merged_result:
+            merged_result["page"] = 1
+        if "data" in merged_result:
+            merged_result["data"] += list(
+                itertools.chain.from_iterable(r["data"] for r in iterator)
+            )
+        return merged_result
+
+    def _get_all_pages_results_generator(
+        self,
+        operation: CLIOperation,
+        args: List[str],
+        pages_needed: Iterable[int],
+    ):
+        for p in pages_needed:
+            self.page = p
+            yield do_request(self, operation, args).json()
+
+    def get_all_pages(self, operation: CLIOperation, args: List[str]):
+        """
+        Receive all pages of a resource from multiple
+        API responses then merge into one page.
+        """
+
+        self.page_size = 500
+        self.page = 1
+        result = do_request(self, operation, args).json()
+
+        total_pages = result.get("pages")
+
+        if total_pages and total_pages > 1:
+            pages_needed = range(2, total_pages + 1)
+
+            result = self.merge_results_data(
+                itertools.chain(
+                    (result,),
+                    self._get_all_pages_results_generator(
+                        operation, args, pages_needed
+                    ),
+                )
+            )
+        return result
+
     def handle_command(self, command, action, args):
         """
         Given a command, action, and remaining kwargs, finds and executes the
@@ -502,17 +559,20 @@ class CLI:  # pylint: disable=too-many-instance-attributes
             print(e, file=sys.stderr)
             sys.exit(1)
 
-        result = do_request(self, operation, args)
+        if not self.pagination:
+            result = self.get_all_pages(operation, args)
+        else:
+            result = do_request(self, operation, args).json()
 
-        operation.process_response_json(result.json(), self.output_handler)
+        operation.process_response_json(result, self.output_handler)
 
         if (
             self.output_handler.mode == OutputMode.table
-            and "pages" in result.json()
-            and result.json()["pages"] > 1
+            and "pages" in result
+            and result["pages"] > 1
         ):
             print(
-                f"Page {result.json()['page']} of {result.json()['pages']}. "
+                f"Page {result['page']} of {result['pages']}. "
                 "Call with --page [PAGE] to load a different page."
             )
 
