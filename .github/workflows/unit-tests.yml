@@ -25,9 +25,6 @@ jobs:
       - name: Update cert
         run: pip install certifi -U
 
-      - name: Uninstall numpy
-        run: pip uninstall numpy
-
       - name: Install deps
         run: pip install -r requirements.txt -r requirements-dev.txt
 
