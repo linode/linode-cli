@@ -1,21 +1,33 @@
-name: Python package
+name: Run Unit test on windows
 
 on: [push]
 
 jobs:
-  install-dev:
-    strategy:
-      matrix:
-        os: [windows-latest]
-
-    name: Verify dev env
-    runs-on: ${{ matrix.os }}
-
+  unit-tests:
+    name: Run unit tests on Windows
+    runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - name: Clone Repository
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
-      - run: "py -m pip install --upgrade pip"
-      - run: "python3 -m pip install -e .[dev]"
-      - run: "python3 -c 'import structlog; print(structlog.__version__)'"
+          python-version: '3.10'
+
+      - name: Install Python wheel
+        run: pip install wheel boto3
+
+      - name: Update cert
+        run: pip install certifi -U
+
+      - name: Install deps
+        run: pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: Install Package
+        run: make install
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run the unit test suite
+        run: make test
