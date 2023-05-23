@@ -10,7 +10,7 @@ override SPEC = $(shell ./resolve_spec_url ${SPEC_VERSION})
 endif
 
 install: check-prerequisites requirements build
-	pip3 install --force dist/*.whl
+	pip3 install linode-cli
 
 .PHONY: build
 build: clean
