@@ -24,8 +24,13 @@ jobs:
       - name: Install deps
         run: pip install -r requirements.txt -r requirements-dev.txt
 
+      - name: Path fix
+        run: pip install gelatin
+
       - name: Install Package
-        run: make install
+        shell: pwsh
+        run: | 
+          make install
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
