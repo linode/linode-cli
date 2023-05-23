@@ -24,9 +24,6 @@ jobs:
       - name: Install deps
         run: pip install -r requirements.txt -r requirements-dev.txt
 
-      - name: Install path dependencies for windows
-        run: pip install "path-to-my-package"
-
       - name: Install Package
         run: make install
         env:
