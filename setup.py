@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import subprocess
+import sys
 from os import path
 
 from setuptools import setup, find_packages
@@ -30,7 +31,7 @@ def get_version():
     """
     Uses the version file to calculate this package's version
     """
-    return subprocess.check_output(["./version"]).decode("utf-8").rstrip()
+    return subprocess.check_output([sys.executable, "./version"]).decode("utf-8").rstrip()
 
 
 def get_baked_version():
