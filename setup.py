@@ -92,5 +92,5 @@ setup(
     },
     data_files=get_baked_files(),
     python_requires=">=3.7",
-    include_package_data=True,
+    #include_package_data=True,
 )
