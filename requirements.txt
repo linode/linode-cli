@@ -3,3 +3,4 @@ openapi3
 requests
 PyYAML
 packaging
+urllib3<2
