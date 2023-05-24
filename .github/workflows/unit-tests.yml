@@ -1,11 +1,11 @@
-name: Unit Tests
+name: Unit Tests on Ubuntu
 on:
   workflow_dispatch: null
   push:
   pull_request:
 jobs:
   unit-tests:
-    name: Run unit tests
+    name: Run unit tests on Ubuntu
     runs-on: ubuntu-latest
     steps:
       - name: Clone Repository

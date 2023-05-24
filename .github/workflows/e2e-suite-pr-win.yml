@@ -3,7 +3,7 @@ on:
   repository_dispatch:
     types: [wintest-command]
 
-name: PR E2E Tests (Windows)
+name: PR E2E Tests on Windows
 
 jobs:
   # Maintainer has commented /wintest on a pull request
@@ -12,6 +12,7 @@ jobs:
     if:
       github.event_name == 'repository_dispatch' &&
       github.event.client_payload.slash_command.sha != '' &&
+      github.event.client_payload.pull_request.head.sha == github.event.client_payload.slash_command.sha
 
     steps:
       - uses: actions-ecosystem/action-regex-match@v2

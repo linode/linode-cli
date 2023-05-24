@@ -3,7 +3,7 @@ on:
   repository_dispatch:
     types: [acctest-command]
 
-name: PR E2E Tests
+name: PR E2E Tests on Ubuntu
 
 jobs:
   # Maintainer has commented /acctest on a pull request
