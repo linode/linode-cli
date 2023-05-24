@@ -2,6 +2,7 @@
 import pathlib
 import subprocess
 from setuptools import setup, find_packages
+from os import path
 
 here = pathlib.Path().absolute()
 
@@ -57,7 +58,7 @@ def bake_version(v):
 #
 # NOTE: baked_version is deleted when running `make build` and `make install`,
 # so it should always be recreated during the build process.
-if here.is_file("baked_version"):
+if path.isfile("baked_version"):
     version = get_baked_version()
 else:
     # Otherwise, retrieve and bake the version as normal
