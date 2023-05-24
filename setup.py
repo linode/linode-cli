@@ -2,6 +2,7 @@
 import pathlib
 import subprocess
 import sys
+import platform
 
 from setuptools import setup, find_packages
 from os import path
@@ -22,8 +23,12 @@ def get_baked_files():
     """
     data_files = []
 
-    if path.isfile("linode-cli.sh"):
-        data_files.append(("/etc/bash_completion.d", ["linode-cli.sh"]))
+    if platform.system() != 'Windows':
+        if path.isfile("linode-cli.sh"):
+            data_files.append(("/etc/bash_completion.d", ["linode-cli.sh"]))
+    else:
+        if path.isfile("linode-cli.sh"):
+            data_files.append(["linode-cli.sh"])
 
     return data_files
 
