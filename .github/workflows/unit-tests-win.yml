@@ -1,6 +1,9 @@
-name: Run Unit test on windows
+name: Run Unit test on Windows
 
-on: [push]
+on:
+  workflow_dispatch: null
+  push:
+  pull_request:
 
 jobs:
   unit-tests:
