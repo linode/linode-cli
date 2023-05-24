@@ -314,6 +314,8 @@ def action_help(cli, command, action):
     if op.args:
         print("Arguments:")
         for arg in sorted(op.args, key=lambda s: not s.required):
+            if arg.read_only:
+                continue
             is_required = (
                 "(required) "
                 if op.method in {"post", "put"} and arg.required

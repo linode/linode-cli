@@ -34,6 +34,9 @@ class OpenAPIRequestArg:
         #: If this argument is required for requests
         self.required = required
 
+        #: If this argument is Read Only
+        self.read_only = schema.readOnly
+
         #: The format of data this argument accepts; typically ignored, but can be
         #: either "json" to signal that we should not parse further spec here and just
         #: accept arbitrary json, or "file" to signal to the CLI to attempt to resolve

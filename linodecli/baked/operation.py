@@ -252,6 +252,8 @@ class OpenAPIOperation:
         elif self.method in ("post", "put"):
             # build args for body JSON
             for arg in self.args:
+                if arg.read_only:
+                    continue
                 if arg.datatype == "array":
                     # special handling for input arrays
                     parser.add_argument(
