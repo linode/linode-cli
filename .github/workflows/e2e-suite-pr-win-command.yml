@@ -6,7 +6,7 @@ on:
 
 jobs:
   wintest-command:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     if: ${{ github.event.issue.pull_request }}
     steps:
       - name: Slash Command Dispatch
