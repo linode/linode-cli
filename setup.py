@@ -28,7 +28,7 @@ def get_baked_files():
             data_files.append(("/etc/bash_completion.d", ["linode-cli.sh"]))
     else:
         if path.isfile("linode-cli.sh"):
-            data_files.append(["linode-cli.sh"])
+            data_files.append(("C:\Program Files\Git\mingw64\share\git\completion", ["linode-cli.sh"]))
 
     return data_files
 
