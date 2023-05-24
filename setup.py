@@ -1,15 +1,13 @@
 #!/usr/bin/env python3
+import pathlib
 import subprocess
-import sys
-from os import path
-
 from setuptools import setup, find_packages
 
-here = path.abspath(path.dirname(__file__))
+here = pathlib.Path().absolute()
 
 
 # get the long description from the README.rst
-with open(path.join(here, "README.rst"), encoding="utf-8") as f:
+with open(here / "README.rst", encoding="utf-8") as f:
     long_description = f.read()
 
 
@@ -21,7 +19,7 @@ def get_baked_files():
     """
     data_files = []
 
-    if path.isfile("linode-cli.sh"):
+    if here.is_file("linode-cli.sh"):
         data_files.append(("/etc/bash_completion.d", ["linode-cli.sh"]))
 
     return data_files
@@ -31,7 +29,7 @@ def get_version():
     """
     Uses the version file to calculate this package's version
     """
-    return subprocess.check_output([sys.executable, "./version"]).decode("utf-8").rstrip()
+    return subprocess.check_output(["./version"]).decode("utf-8").rstrip()
 
 
 def get_baked_version():
@@ -59,7 +57,7 @@ def bake_version(v):
 #
 # NOTE: baked_version is deleted when running `make build` and `make install`,
 # so it should always be recreated during the build process.
-if path.isfile("baked_version"):
+if here.is_file("baked_version"):
     version = get_baked_version()
 else:
     # Otherwise, retrieve and bake the version as normal
