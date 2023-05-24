@@ -22,7 +22,7 @@ def get_baked_files():
     """
     data_files = []
 
-    if here.is_file("linode-cli.sh"):
+    if path.is_file("linode-cli.sh"):
         data_files.append(("/etc/bash_completion.d", ["linode-cli.sh"]))
 
     return data_files
