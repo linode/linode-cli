@@ -1,4 +1,5 @@
 import configparser
+import platform
 
 import pytest
 
@@ -171,3 +172,8 @@ def mocked_config():
             pass
 
     return Config()
+
+
+@pytest.fixture
+def get_platform_os_type():
+    return platform.system()
