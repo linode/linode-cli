@@ -1,13 +1,37 @@
 """
 The helper functions for the object storage plugin.
 """
-
 from argparse import ArgumentTypeError
 from datetime import datetime
 
-from terminaltables import SingleTable
+from rich.table import Table
+from rich.text import Text
 
-from linodecli.plugins.obj.config import DATE_FORMAT, INCOMING_DATE_FORMAT
+from linodecli.plugins.obj.config import DATE_FORMAT
+
+
+class ProgressPercentage:  # pylint: disable=too-few-public-methods
+    """
+    Progress bar class for boto3 file upload/download
+    """
+
+    def __init__(self, file_size: int, bar_width: int):
+        self.size = file_size
+        self.uploaded = 0
+        self.bar_width = bar_width
+
+    def __call__(self, bytes_amount: int):
+        if bytes_amount == 0:
+            return
+        if not self.size:
+            return
+        self.uploaded += bytes_amount
+        percentage = self.bar_width * (self.uploaded / self.size)
+        progress = int(percentage)
+        progress_bar = ("#" * progress) + ("-" * (self.bar_width - progress))
+        print(f"\r |{progress_bar}| {percentage:.1f}%", end="\r")
+        if self.uploaded == self.size:
+            print()
 
 
 def _progress(cur: float, total: float):
@@ -50,11 +74,12 @@ def restricted_int_arg_type(
     return restricted_int
 
 
-def _convert_datetime(dt: str):
+def _convert_datetime(dt: datetime):
     """
     Given a string in INCOMING_DATE_FORMAT, returns a string in DATE_FORMAT
     """
-    return datetime.strptime(dt, INCOMING_DATE_FORMAT).strftime(DATE_FORMAT)
+
+    return dt.strftime(DATE_FORMAT)
 
 
 def _pad_to(
@@ -96,13 +121,11 @@ def _denominate(total):
 # helper functions for output
 def _borderless_table(data):
     """
-    Returns a terminaltables.SingleTable object with no borders and correct padding
+    Returns a rich.Table object with no borders and correct padding
     """
-    tab = SingleTable(data)
-    tab.inner_heading_row_border = False
-    tab.inner_column_border = False
-    tab.outer_border = False
-    tab.padding_left = 0
-    tab.padding_right = 2
+    tab = Table.grid(padding=(0, 2, 0, 2))
+    for row in data:
+        row = [Text.from_ansi(str(item)) for item in row]
+        tab.add_row(*row)
 
     return tab

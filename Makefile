@@ -46,11 +46,14 @@ clean:
 testunit: export LINODE_CLI_TEST_MODE = 1
 testunit:
 	pytest tests/unit
-	python -m unittest tests/unit/*.py
 
 .PHONY: testint
 testint:
 	pytest tests/integration/${INTEGRATION_TEST_PATH}
+
+.PHONY: testall
+testall:
+	pytest tests
 
 
 # Alias for unit; integration tests should be explicit

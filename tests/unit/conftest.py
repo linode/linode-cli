@@ -1,5 +1,4 @@
 import configparser
-import sys
 
 import pytest
 
@@ -16,6 +15,7 @@ region = us-southeast
 image = linode/ubuntu21.10
 token = notafaketoken
 type = g6-nanode-1
+mysql_engine = mysql/8.0.26
 """
 
 
@@ -40,7 +40,7 @@ def mock_cli(
     # We need this to suppress warnings for operations that don't
     # have access to the cli.suppress_warnings attribute.
     # e.g. operation defaults
-    sys.argv.append("--suppress-warnings")
+    # sys.argv.append("--suppress-warnings")
 
     return result
 

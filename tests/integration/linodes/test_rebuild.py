@@ -1,9 +1,9 @@
-import logging
 import os
 
 import pytest
 
 from tests.integration.helpers import (
+    delete_target_id,
     exec_failing_test_command,
     exec_test_command,
 )
@@ -11,24 +11,17 @@ from tests.integration.linodes.helpers_linodes import (
     BASE_CMD,
     DEFAULT_RANDOM_PASS,
     create_linode_and_wait,
-    remove_linodes,
     wait_until,
 )
 
 
 @pytest.fixture(scope="session", autouse=True)
 def setup_rebuild():
-    # create linode
-    try:
-        linode_id = create_linode_and_wait()
-    except:
-        logging.exception("Failed in creating linode in setup..")
+    linode_id = create_linode_and_wait()
+
     yield linode_id
-    try:
-        # clean up
-        remove_linodes()
-    except:
-        logging.exception("Failed removing all linodes..")
+
+    delete_target_id(target="linodes", id=linode_id)
 
 
 def test_rebuild_fails_without_image(setup_rebuild):

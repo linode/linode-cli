@@ -3,13 +3,12 @@
 Unit tests for linodecli.completion
 """
 
-import unittest
 from unittest.mock import mock_open, patch
 
 from linodecli import completion
 
 
-class CompletionTests(unittest.TestCase):
+class TestCompletion:
     """
     Unit tests for linodecli.completion
     """
@@ -48,37 +47,38 @@ complete -F _linode_cli linode-cli
 complete -F _linode_cli linode
 complete -F _linode_cli lin"""
 
-    def test_fish_completion(self):
+    def test_fish_completion(self, mocker):
         """
         Test if the fish completion renders correctly
         """
         actual = completion.get_fish_completions(self.ops)
-        self.assertEqual(actual, self.fish_expected)
+        assert actual == self.fish_expected
 
-    def test_bash_completion(self):
+    def test_bash_completion(self, mocker):
         """
         Test if the bash completion renders correctly
         """
+        # mocker = mocker.patch('linodecli-completion.get_bash_completions', return_value=self.bash_expected)
         actual = completion.get_bash_completions(self.ops)
-        self.assertEqual(actual, self.bash_expected)
+        assert actual == self.bash_expected
 
     def test_get_completions(self):
         """
         Test get_completions for arg parse
         """
         actual = completion.get_completions(self.ops, False, "bash")
-        self.assertEqual(actual, self.bash_expected)
+        assert actual == self.bash_expected
 
         actual = completion.get_completions(self.ops, False, "fish")
-        self.assertEqual(actual, self.fish_expected)
+        assert actual == self.fish_expected
 
         actual = completion.get_completions(self.ops, False, "notrealshell")
-        self.assertIn("invoke", actual)
+        assert "invoke" in actual
 
         actual = completion.get_completions(self.ops, True, "")
-        self.assertIn("[SHELL]", actual)
+        assert "[SHELL]" in actual
 
-    def test_bake_completions(self):
+    def test_bake_completions(self, mocker):
         """
         Test bake_completions write to file
         """
@@ -90,8 +90,8 @@ complete -F _linode_cli lin"""
 
             completion.bake_completions(new_ops)
 
-            self.assertNotIn("_base_url", new_ops)
-            self.assertNotIn("_spec_version", new_ops)
+            assert "_base_url" not in new_ops
+            assert "_spec_version" not in new_ops
 
         m.assert_called_with("linode-cli.sh", "w", encoding="utf-8")
         m.return_value.write.assert_called_once_with(self.bash_expected)

@@ -2,18 +2,52 @@
 This module is responsible for handling HTTP requests to the Linode API.
 """
 
+import itertools
 import json
 import sys
 from sys import version_info
-from typing import Optional
+from typing import Optional, Iterable, List
 
 import requests
 from packaging import version
+from requests import Response
+from .baked.operation import OpenAPIOperation
 from .helpers import handle_url_overrides
 
 
+def get_all_pages(ctx, operation: OpenAPIOperation, args: List[str]):
+    """
+    Receive all pages of a resource from multiple
+    API responses then merge into one page.
+    """
+
+    ctx.page_size = 500
+    ctx.page = 1
+    result = do_request(ctx, operation, args).json()
+
+    total_pages = result.get("pages")
+
+    if total_pages and total_pages > 1:
+        pages_needed = range(2, total_pages + 1)
+
+        result = _merge_results_data(
+            itertools.chain(
+                (result,),
+                _get_all_pages_results_generator(
+                    ctx, operation, args, pages_needed
+                ),
+            )
+        )
+    return result
+
 def do_request(
-    ctx, operation, args, filter_header=None, skip_error_handling=False
+    ctx,
+    operation,
+    args,
+    filter_header=None,
+    skip_error_handling=False,
+) -> (
+    Response
 ):  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
     """
     Makes a request to an operation's URL and returns the resulting JSON, or
@@ -59,6 +93,34 @@ def do_request(
 
     return result
 
+@staticmethod
+def _merge_results_data(results: Iterable[dict]):
+    """Merge multiple json response into one"""
+
+    iterator = iter(results)
+    merged_result = next(iterator, None)
+    if not merged_result:
+        return None
+
+    if "pages" in merged_result:
+        merged_result["pages"] = 1
+    if "page" in merged_result:
+        merged_result["page"] = 1
+    if "data" in merged_result:
+        merged_result["data"] += list(
+            itertools.chain.from_iterable(r["data"] for r in iterator)
+        )
+    return merged_result
+
+def _get_all_pages_results_generator(
+    ctx,
+    operation: OpenAPIOperation,
+    args: List[str],
+    pages_needed: Iterable[int],
+):
+    for p in pages_needed:
+        ctx.page = p
+        yield do_request(ctx, operation, args).json()
 
 def _build_filter_header(
     operation, parsed_args, filter_header=None
@@ -102,7 +164,9 @@ def _build_request_body(ctx, operation, parsed_args) -> Optional[str]:
 
     # Merge defaults into body if applicable
     if ctx.defaults:
-        parsed_args = ctx.config.update(parsed_args, operation.allowed_defaults)
+        parsed_args = ctx.config.update(
+            parsed_args, operation.allowed_defaults, operation.action
+        )
 
     to_json = {k: v for k, v in vars(parsed_args).items() if v is not None}
 
@@ -220,7 +284,7 @@ def _attempt_warn_old_version(ctx, result):
 
         if new_version_exists:
             print(
-                f"!!!!!!!!!!!!!!!!!!!The API responded with version {spec_version}, which is newer than "
+                f"!!!!!!!!!!!!!!The API responded with version {spec_version}, which is newer than "
                 f"the CLI's version of {ctx.spec_version}.  Please update the CLI to get "
                 "access to the newest features.  You can update with a "
                 "simple `pip3 install --upgrade linode-cli`",

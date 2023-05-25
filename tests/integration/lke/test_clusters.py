@@ -1,5 +1,3 @@
-import logging
-
 import pytest
 
 from tests.integration.helpers import exec_test_command, os, remove_lke_clusters
@@ -11,10 +9,7 @@ BASE_CMD = ["linode-cli", "lke"]
 def setup_test_clusters():
     yield "setup"
     # just clean up method required for this test suite
-    try:
-        remove_lke_clusters()
-    except:
-        logging.exception("Failed the remove lke cluster..")
+    remove_lke_clusters()
 
 
 def test_deploy_an_lke_cluster():

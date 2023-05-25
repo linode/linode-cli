@@ -8,7 +8,7 @@ import sys
 from sys import version_info
 from openapi3 import OpenAPI
 
-from .api_request import do_request
+from .api_request import do_request, get_all_pages
 from .configuration import CLIConfig
 from .output import OutputHandler, OutputMode
 from .baked import OpenAPIOperation
@@ -25,6 +25,7 @@ class CLI:  # pylint: disable=too-many-instance-attributes
         self.ops = {}
         self.spec = {}
         self.defaults = True  # whether to use default values for arguments
+        self.pagination = True
         self.page = 1
         self.page_size = 100
         self.debug_request = False
@@ -111,6 +112,7 @@ class CLI:  # pylint: disable=too-many-instance-attributes
         """
         return f"data-{version_info[0]}"
 
+
     def handle_command(self, command, action, args):
         """
         Given a command, action, and remaining kwargs, finds and executes the
@@ -134,17 +136,20 @@ class CLI:  # pylint: disable=too-many-instance-attributes
             print(e, file=sys.stderr)
             sys.exit(1)
 
-        result = do_request(self, operation, args)
+        if not self.pagination:
+            result = get_all_pages(self, operation, args)
+        else:
+            result = do_request(self, operation, args).json()
 
-        operation.process_response_json(result.json(), self.output_handler)
+        operation.process_response_json(result, self.output_handler)
 
         if (
             self.output_handler.mode == OutputMode.table
-            and "pages" in result.json()
-            and result.json()["pages"] > 1
+            and "pages" in result
+            and result["pages"] > 1
         ):
             print(
-                f"Page {result.json()['page']} of {result.json()['pages']}. "
+                f"Page {result['page']} of {result['pages']}. "
                 "Call with --page [PAGE] to load a different page."
             )
 

@@ -9,7 +9,8 @@ import sys
 from sys import argv
 
 import pkg_resources
-from terminaltables import SingleTable
+from rich import print as rprint
+from rich.table import Table
 
 from linodecli import plugins
 
@@ -74,13 +75,22 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
         cli.output_handler.columns = "*"
     if parsed.no_headers:
         cli.output_handler.headers = False
-    if parsed.all:
-        cli.output_handler.columns = "*"
+    if parsed.all_rows:
+        cli.pagination = False
     elif parsed.format:
         cli.output_handler.columns = parsed.format
 
     cli.defaults = not parsed.no_defaults
     cli.suppress_warnings = parsed.suppress_warnings
+
+    if parsed.all_columns or parsed.all:
+        if parsed.all and not cli.suppress_warnings:
+            print(
+                "WARNING: '--all' is a deprecated flag, "
+                "and will be removed in a future version. "
+                "Please consider use '--all-columns' instead."
+            )
+        cli.output_handler.columns = "*"
 
     cli.page = parsed.page
     cli.page_size = parsed.page_size
@@ -232,8 +242,10 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
             for action, op in cli.ops[parsed.command].items()
         ]
 
-        table = SingleTable([["action", "summary"]] + content)
-        print(table.table)
+        table = Table("action", "summary")
+        for row in content:
+            table.add_row(*row)
+        rprint(table)
         sys.exit(0)
 
     if parsed.command is not None and parsed.action is not None:

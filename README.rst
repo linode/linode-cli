@@ -38,6 +38,19 @@ Using an existing config file::
 
     docker run --rm -it -v $HOME/.config/linode-cli:/home/cli/.config/linode-cli linode/cli:latest linodes list
 
+GitHub Actions
+^^^^^^^^^^^^^^
+
+The Linode CLI can be automatically installed and authenticated in a GitHub actions environment using
+the `Setup Linode CLI`_ GitHub Action::
+
+     - name: Install the Linode CLI
+       uses: linode/action-linode-cli@v1
+       with:
+         token: ${{ secrets.LINODE_TOKEN }}
+
+.. _Setup Linode CLI: https://github.com/marketplace/actions/setup-linode-cli
+
 Upgrading
 ---------
 
@@ -166,6 +179,16 @@ you can execute the following::
 
     linode-cli linodes create --region us-east --type g6-nanode-1 --tags tag1 --tags tag2
 
+Lists consisting of nested structures can also be expressed through the command line.
+For example, to create a Linode with a public interface on ``eth0`` and a VLAN interface
+on ``eth1`` you can execute the following::
+
+    linode-cli linodes create \
+        --region us-east --type g6-nanode-1 --image linode/ubuntu22.04 \
+        --root_pass "myr00tp4ss123" \
+        --interfaces.purpose public \
+        --interfaces.purpose vlan --interfaces.label my-vlan
+
 Specifying Nested Arguments
 """""""""""""""""""""""""""
 
@@ -180,8 +203,8 @@ Suppressing Defaults
 """"""""""""""""""""
 
 If you configured default values for ``image``, ``authorized_users``, ``region``,
-and Linode ``type``, they will be sent for all requests that accept them if you
-do not specify a different value.  If you want to send a request *without* these
+database ``engine``, and Linode ``type``, they will be sent for all requests that accept them
+if you do not specify a different value.  If you want to send a request *without* these
 arguments, you must invoke the CLI with the ``--no-defaults`` option.
 
 For example, to create a Linode with no ``image`` after a default Image has been
@@ -474,7 +497,7 @@ added to Linode's OpenAPI spec:
 |x-linode-cli-skip            | path        | If present and truthy, this method will not be available in the CLI.                      |
 +-----------------------------+-------------+-------------------------------------------------------------------------------------------+
 +x-linode-cli-allowed-defaults| requestBody | Tells the CLI what configured defaults apply to this request. Valid defaults are "region",|
-+                             |             | "image", "authorized_users", and "type".                                                  |
++                             |             | "image", "authorized_users", "engine", and "type".                                        |
 +-----------------------------+-------------+-------------------------------------------------------------------------------------------+
 +x-linode-cli-nested-list     | content-type| Tells the CLI to flatten a single object into multiple table rows based on the keys       |
 |                             |             | included in this value.  Values should be comma-delimited JSON paths, and must all be     |

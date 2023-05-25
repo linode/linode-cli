@@ -9,7 +9,8 @@ from importlib import import_module
 
 import requests
 import yaml
-from terminaltables import SingleTable
+from rich import print as rprint
+from rich.table import Table
 
 from linodecli import plugins
 
@@ -87,8 +88,18 @@ def register_args(parser):
     parser.add_argument(
         "--all",
         action="store_true",
-        help="If set, displays all possible columns instead of "
-        "the default columns. This may not work well on some terminals.",
+        help=(
+            "Deprecated flag. An alias of '--all-columns', "
+            "scheduled to be removed in a future version."
+        ),
+    )
+    parser.add_argument(
+        "--all-columns",
+        action="store_true",
+        help=(
+            "If set, displays all possible columns instead of "
+            "the default columns. This may not work well on some terminals."
+        ),
     )
     parser.add_argument(
         "--format",
@@ -102,12 +113,6 @@ def register_args(parser):
         action="store_true",
         help="Suppress default values for arguments.  Default values "
         "are configured on initial setup or with linode-cli configure",
-    )
-    parser.add_argument(
-        "--suppress-warnings",
-        action="store_true",
-        help="Suppress warnings that are intended for human users. "
-        "This is useful for scripting the CLI's behavior.",
     )
     parser.add_argument(
         "--no-truncation",
@@ -233,23 +238,26 @@ def help_with_ops(ops, config):
     # commands to manage CLI users (don't call out to API)
     print("\nCLI user management commands:")
     um_commands = [["configure", "set-user", "show-users"], ["remove-user"]]
-    table = SingleTable(um_commands)
-    table.inner_heading_row_border = False
-    print(table.table)
+    table = Table(show_header=False)
+    for cmd in um_commands:
+        table.add_row(*cmd)
+    rprint(table)
 
     # commands to manage plugins (don't call out to API)
     print("\nCLI Plugin management commands:")
     pm_commands = [["register-plugin", "remove-plugin"]]
-    table = SingleTable(pm_commands)
-    table.inner_heading_row_border = False
-    print(table.table)
+    table = Table(show_header=False)
+    for cmd in pm_commands:
+        table.add_row(*cmd)
+    rprint(table)
 
     # other CLI commands
     print("\nOther CLI commands:")
     other_commands = [["completion"]]
-    table = SingleTable(other_commands)
-    table.inner_heading_row_border = False
-    print(table.table)
+    table = Table(show_header=False)
+    for cmd in other_commands:
+        table.add_row(*cmd)
+    rprint(table)
 
     # commands generated from the spec (call the API directly)
     print("\nAvailable commands:")
@@ -261,9 +269,10 @@ def help_with_ops(ops, config):
     if content[i + 3 :]:
         proc.append(content[i + 3 :])
 
-    table = SingleTable(proc)
-    table.inner_heading_row_border = False
-    print(table.table)
+    table = Table(show_header=False)
+    for cmd in proc:
+        table.add_row(*cmd)
+    rprint(table)
 
     # plugins registered to the CLI (do arbitrary things)
     if plugins.available(config):
@@ -278,10 +287,10 @@ def help_with_ops(ops, config):
         if plugin_content[i + 3 :]:
             plugin_proc.append(plugin_content[i + 3 :])
 
-        plugin_table = SingleTable(plugin_proc)
-        plugin_table.inner_heading_row_border = False
-
-        print(plugin_table.table)
+        plugin_table = Table(show_header=False)
+        for plugin in plugin_proc:
+            plugin_table.add_row(*plugin)
+        rprint(plugin_table)
 
     print("\nTo reconfigure, call `linode-cli configure`")
     print(

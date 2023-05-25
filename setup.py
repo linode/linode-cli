@@ -79,6 +79,9 @@ setup(
     packages=find_packages(include=['linodecli*']),
     license="BSD 3-Clause License",
     install_requires=requirements,
+    extras_require={
+        "obj": ["boto3"],
+    },
     entry_points={
         "console_scripts": [
             "linode-cli = linodecli:main",
