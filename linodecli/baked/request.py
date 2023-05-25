@@ -41,7 +41,7 @@ class OpenAPIRequestArg:
         #: either "json" to signal that we should not parse further spec here and just
         #: accept arbitrary json, or "file" to signal to the CLI to attempt to resolve
         #: the string passed in by the end user as a file path and send the entire file
-        self.format = schema.extensions.get("x-linode-cli-format") or schema.format or None
+        self.format = schema.extensions.get("linode-cli-format") or schema.format or None
 
         #: The type accepted for this argument. This will ultimately determine what
         #: we accept in the ArgumentParser
@@ -82,10 +82,8 @@ def _parse_request_model(schema, prefix=None, list_of_objects=False):
     if schema.properties is not None:
         for k, v in schema.properties.items():
             if isinstance(v, Reference):
-                # TODO: fix Reference has no attribute type
-                # Reference needs to resolve to the component then pass back in as a schema
-                print(f"!!!!!!!!!!!!!!!!!!! {v.ref}")
-                print(f"Skipped {k} {v}")
+                # TODO: can probably remove this at some point,
+                # reference's used to show up in this loop but shouldn't anymore
                 continue
             if v.type == "object":
                 # nested objects receive a prefix and are otherwise parsed normally

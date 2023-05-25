@@ -9,6 +9,7 @@ from typing import Optional
 
 import requests
 from packaging import version
+from .helpers import handle_url_overrides
 
 
 def do_request(
@@ -91,7 +92,7 @@ def _build_request_url(ctx, operation, parsed_args) -> str:
     if operation.method == "get":
         result += f"?page={ctx.page}&page_size={ctx.page_size}"
 
-    return result
+    return handle_url_overrides(result)
 
 
 def _build_request_body(ctx, operation, parsed_args) -> Optional[str]:

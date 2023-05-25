@@ -44,6 +44,9 @@ class OpenAPIResponseAttr:
         #: No response model fields are required. This is only used for filterable attributes.
         self.required = False
 
+        #: If this argument is Read Only
+        self.read_only = schema.readOnly
+
         #: If this attribute should be displayed by default, and where in the output table
         #: it should be displayed
         self.display = schema.extensions.get("linode-cli-display") or 0
