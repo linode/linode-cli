@@ -6,12 +6,13 @@ import os
 import pickle
 import sys
 from sys import version_info
+
 from openapi3 import OpenAPI
 
 from .api_request import do_request, get_all_pages
+from .baked import OpenAPIOperation
 from .configuration import CLIConfig
 from .output import OutputHandler, OutputMode
-from .baked import OpenAPIOperation
 
 METHODS = ("get", "post", "put", "delete")
 
@@ -46,19 +47,21 @@ class CLI:  # pylint: disable=too-many-instance-attributes
         self.spec = spec
         self.ops = {}
         ext = {
-            'skip': 'linode-cli-skip',
-            'action': 'linode-cli-action',
-            'command': 'linode-cli-command',
-            'defaults': 'linode-cli-allowed-defaults',
+            "skip": "linode-cli-skip",
+            "action": "linode-cli-action",
+            "command": "linode-cli-command",
+            "defaults": "linode-cli-allowed-defaults",
         }
 
         for _, path in spec.paths.items():
-            command = path.extensions.get(ext['command'], 'default')
+            command = path.extensions.get(ext["command"], "default")
             for m in METHODS:
                 operation = getattr(path, m)
-                if operation is None or ext['skip'] in operation.extensions:
+                if operation is None or ext["skip"] in operation.extensions:
                     continue
-                action = operation.extensions.get(ext['action'], operation.operationId)
+                action = operation.extensions.get(
+                    ext["action"], operation.operationId
+                )
                 if not action:
                     continue
                 if isinstance(action, list):
@@ -66,7 +69,8 @@ class CLI:  # pylint: disable=too-many-instance-attributes
                 if command not in self.ops:
                     self.ops[command] = {}
                 self.ops[command][action] = OpenAPIOperation(
-                        command, operation, m, path.parameters)
+                    command, operation, m, path.parameters
+                )
 
         # hide the base_url from the spec away
         self.ops["_base_url"] = self.spec.servers[0].url
@@ -111,7 +115,6 @@ class CLI:  # pylint: disable=too-many-instance-attributes
         part based on python version.
         """
         return f"data-{version_info[0]}"
-
 
     def handle_command(self, command, action, args):
         """

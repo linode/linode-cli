@@ -1,16 +1,17 @@
 """
 CLI Operation logic
 """
-import re
-import json
-import glob
 import argparse
+import glob
+import json
 import platform
+import re
 from getpass import getpass
 from os import environ, path
 
+from linodecli.baked.request import OpenAPIFilteringRequest, OpenAPIRequest
 from linodecli.baked.response import OpenAPIResponse
-from linodecli.baked.request import OpenAPIRequest, OpenAPIFilteringRequest
+from linodecli.overrides import OUTPUT_OVERRIDES
 
 
 def parse_boolean(value):
@@ -37,6 +38,7 @@ def parse_dict(value):
     except Exception as e:
         raise argparse.ArgumentTypeError("Expected a JSON string") from e
 
+
 TYPES = {
     "string": str,
     "integer": int,
@@ -45,6 +47,59 @@ TYPES = {
     "object": parse_dict,
     "number": float,
 }
+
+
+class ListArgumentAction(argparse.Action):
+    """
+    This action is intended to be used only with list arguments.
+    Its purpose is to aggregate adjacent object fields and produce consistent
+    lists in the output namespace.
+    """
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        if getattr(namespace, self.dest) is None:
+            setattr(namespace, self.dest, [])
+
+        dest_list = getattr(namespace, self.dest)
+        dest_length = len(dest_list)
+        dest_parent = self.dest.split(".")[:-1]
+
+        # If this isn't a nested structure,
+        # append and return early
+        if len(dest_parent) < 1:
+            dest_list.append(values)
+            return
+
+        # A list of adjacent fields
+        adjacent_keys = [
+            k
+            for k in vars(namespace).keys()
+            if k.split(".")[:-1] == dest_parent
+        ]
+
+        # Let's populate adjacent fields ahead of time
+        for k in adjacent_keys:
+            if getattr(namespace, k) is None:
+                setattr(namespace, k, [])
+
+        adjacent_items = {k: getattr(namespace, k) for k in adjacent_keys}
+
+        # Find the deepest field so we can know if
+        # we're starting a new object.
+        deepest_length = max(len(x) for x in adjacent_items.values())
+
+        # If we're creating a new list object, append
+        # None to every non-populated field.
+        if dest_length >= deepest_length:
+            for k, item in adjacent_items.items():
+                if k == self.dest:
+                    continue
+
+                if len(item) < dest_length:
+                    item.append(None)
+
+        dest_list.append(values)
+
 
 class PasswordPromptAction(argparse.Action):
     """
@@ -106,10 +161,12 @@ class OptionalFromFileAction(argparse.Action):
         else:
             raise argparse.ArgumentTypeError("Expected a string")
 
+
 class OpenAPIOperationParameter:
     """
     A parameter is a variable element of the URL path, generally an ID or slug
     """
+
     def __init__(self, parameter):
         """
         :param parameter: The Parameter object this is parsing values from
@@ -120,6 +177,7 @@ class OpenAPIOperationParameter:
 
     def __repr__(self):
         return f"<OpenAPIOperationParameter {self.name}>"
+
 
 class OpenAPIOperation:
     """
@@ -141,17 +199,24 @@ class OpenAPIOperation:
         self.response_model = None
         self.allowed_defaults = None
 
-        if ('200' in operation.responses
-            and 'application/json' in operation.responses['200'].content):
+        if (
+            "200" in operation.responses
+            and "application/json" in operation.responses["200"].content
+        ):
             self.response_model = OpenAPIResponse(
-                    operation.responses['200'].content['application/json'])
+                operation.responses["200"].content["application/json"]
+            )
 
-        if method in ('post', 'put') and operation.requestBody:
-            if 'application/json' in operation.requestBody.content:
-                self.request = OpenAPIRequest(operation.requestBody.content['application/json'])
+        if method in ("post", "put") and operation.requestBody:
+            if "application/json" in operation.requestBody.content:
+                self.request = OpenAPIRequest(
+                    operation.requestBody.content["application/json"]
+                )
                 self.required_fields = self.request.required
-                self.allowed_defaults = operation.requestBody.extensions.get("linode-cli-allowed-defaults")
-        elif method in ('get',):
+                self.allowed_defaults = operation.requestBody.extensions.get(
+                    "linode-cli-allowed-defaults"
+                )
+        elif method in ("get",):
             # for get requests, self.request is all filterable fields of the response model
             if self.response_model and self.response_model.is_paginated:
                 self.request = OpenAPIFilteringRequest(self.response_model)
@@ -160,7 +225,9 @@ class OpenAPIOperation:
         self.command = command
 
         alias = None
-        action = operation.extensions.get('linode-cli-action', operation.operationId)
+        action = operation.extensions.get(
+            "linode-cli-action", operation.operationId
+        )
         if isinstance(action, list):
             alias = action[1:]
             action = action[0]
@@ -174,7 +241,11 @@ class OpenAPIOperation:
         self.description = operation.description.split(".")[0]
         self.params = [OpenAPIOperationParameter(c) for c in params]
 
-        server = operation.servers[0].url if operation.servers else operation._root.servers[0].url
+        server = (
+            operation.servers[0].url
+            if operation.servers
+            else operation._root.servers[0].url
+        )
         self.url = server + operation.path[-2]
 
         docs_url = None
@@ -182,7 +253,9 @@ class OpenAPIOperation:
         if tags is not None and len(tags) > 0 and len(operation.summary) > 0:
             tag_path = self._flatten_url_path(tags[0])
             summary_path = self._flatten_url_path(operation.summary)
-            docs_url = f"https://www.linode.com/docs/api/{tag_path}/#{summary_path}"
+            docs_url = (
+                f"https://www.linode.com/docs/api/{tag_path}/#{summary_path}"
+            )
         self.docs_url = docs_url
 
     @property
@@ -208,6 +281,13 @@ class OpenAPIOperation:
             return
         if self.response_model.attrs == []:
             return
+
+        override = OUTPUT_OVERRIDES.get(
+            (self.command, self.action, handler.mode)
+        )
+        if override is not None and not override(self, handler, json):
+            return
+
         json = self.response_model.fix_json(json)
         handler.print(self.response_model, json)
 
@@ -262,19 +342,16 @@ class OpenAPIOperation:
                         action="append",
                         type=TYPES[arg.item_type],
                     )
-                elif arg.item_type is not None:
+                elif arg.list_item:
                     parser.add_argument(
                         "--" + arg.path,
                         metavar=arg.name,
-                        action="append",
+                        action=ListArgumentAction,
                         type=TYPES[arg.datatype],
                     )
-                    list_items.append((arg.path, arg.item_type))
+                    list_items.append((arg.path, arg.prefix))
                 else:
-                    if (
-                        arg.datatype == "string"
-                        and arg.format == "password"
-                    ):
+                    if arg.datatype == "string" and arg.format == "password":
                         # special case - password input
                         parser.add_argument(
                             "--" + arg.path,

@@ -3,11 +3,13 @@ Request details for a CLI Operation
 """
 from openapi3.general import Reference
 
+
 class OpenAPIRequestArg:
     """
     A single argument to a request as defined by a Schema in the OpenAPI spec
     """
-    def __init__(self, name, schema, required, prefix=None):
+
+    def __init__(self, name, schema, required, prefix=None, list_item=False):
         """
         Parses a single Schema node into a argument the CLI can use when making
         requests.
@@ -29,7 +31,9 @@ class OpenAPIRequestArg:
         self.path = prefix + "." + name if prefix else name
 
         #: The description of this argument, for help display
-        self.description = schema.description.split(".")[0] if schema.description else ""
+        self.description = (
+            schema.description.split(".")[0] if schema.description else ""
+        )
 
         #: If this argument is required for requests
         self.required = required
@@ -41,14 +45,24 @@ class OpenAPIRequestArg:
         #: either "json" to signal that we should not parse further spec here and just
         #: accept arbitrary json, or "file" to signal to the CLI to attempt to resolve
         #: the string passed in by the end user as a file path and send the entire file
-        self.format = schema.extensions.get("linode-cli-format") or schema.format or None
+        self.format = (
+            schema.extensions.get("linode-cli-format") or schema.format or None
+        )
 
         #: The type accepted for this argument. This will ultimately determine what
         #: we accept in the ArgumentParser
-        self.datatype = "object" if self.format == "json" else schema.type or "string"
+        self.datatype = (
+            "object" if self.format == "json" else schema.type or "string"
+        )
 
         #: The type of item accepted in this list; if None, this is not a list
         self.item_type = None
+
+        #: Whether the argument is a field in a nested list.
+        self.list_item = list_item
+
+        #: The path of the path element in the schema.
+        self.prefix = prefix
 
         # handle the type for list values if this is an array
         if self.datatype == "array" and schema.items:
@@ -93,7 +107,9 @@ def _parse_request_model(schema, prefix=None, list_of_objects=False):
                 # handle lists of objects as a special case, where each property
                 # of the object in the list is its own argument
                 pref = prefix + "." + k if prefix else k
-                args += _parse_request_model(v.items, prefix=pref, list_of_objects=True)
+                args += _parse_request_model(
+                    v.items, prefix=pref, list_of_objects=True
+                )
             else:
                 # required fields are defined in the schema above the property, so
                 # we have to check here if required fields are defined/if this key
@@ -101,7 +117,11 @@ def _parse_request_model(schema, prefix=None, list_of_objects=False):
                 required = False
                 if schema.required:
                     required = k in schema.required
-                args.append(OpenAPIRequestArg(k, v, required, prefix=prefix))
+                args.append(
+                    OpenAPIRequestArg(
+                        k, v, required, prefix=prefix, list_item=list_of_objects
+                    )
+                )
 
     return args
 
@@ -111,6 +131,7 @@ class OpenAPIRequest:
     This class represent the request object we send in to an API endpoint based
     on the MediaType object of a requestBody portion of an OpenAPI Operation
     """
+
     def __init__(self, request):
         """
         :param request: The request's MediaType object in the OpenAPI spec,
@@ -120,7 +141,9 @@ class OpenAPIRequest:
         """
         self.required = request.schema.required
         schema_override = request.extensions.get("linode-cli-use-schema")
-        if schema_override and False: # TODO - schema overrides are dicts right now
+        if (
+            schema_override and False
+        ):  # TODO - schema overrides are dicts right now
             self.attrs = _parse_request_model(schema_override)
         else:
             self.attrs = _parse_request_model(request.schema)
@@ -133,6 +156,7 @@ class OpenAPIFilteringRequest:
     for 200 Response from an endpoint.  This only applies to paginated collection
     endpoints where filters are accepted.
     """
+
     def __init__(self, response_model):
         """
         :param response_model: The parsed response model whose properties may be

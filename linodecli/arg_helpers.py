@@ -328,7 +328,9 @@ def action_help(cli, command, action):
         return
     if op.args:
         print("Arguments:")
-        for arg in sorted(op.args, key=lambda s: not s.required and not s.read_only):
+        for arg in sorted(
+            op.args, key=lambda s: not s.required and not s.read_only
+        ):
             is_required = (
                 "(required) "
                 if op.method in {"post", "put"} and arg.required

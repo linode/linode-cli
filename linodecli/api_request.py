@@ -6,11 +6,12 @@ import itertools
 import json
 import sys
 from sys import version_info
-from typing import Optional, Iterable, List
+from typing import Iterable, List, Optional
 
 import requests
 from packaging import version
 from requests import Response
+
 from .baked.operation import OpenAPIOperation
 from .helpers import handle_url_overrides
 
@@ -39,6 +40,7 @@ def get_all_pages(ctx, operation: OpenAPIOperation, args: List[str]):
             )
         )
     return result
+
 
 def do_request(
     ctx,
@@ -93,6 +95,7 @@ def do_request(
 
     return result
 
+
 @staticmethod
 def _merge_results_data(results: Iterable[dict]):
     """Merge multiple json response into one"""
@@ -112,6 +115,7 @@ def _merge_results_data(results: Iterable[dict]):
         )
     return merged_result
 
+
 def _get_all_pages_results_generator(
     ctx,
     operation: OpenAPIOperation,
@@ -121,6 +125,7 @@ def _get_all_pages_results_generator(
     for p in pages_needed:
         ctx.page = p
         yield do_request(ctx, operation, args).json()
+
 
 def _build_filter_header(
     operation, parsed_args, filter_header=None

@@ -1,5 +1,6 @@
 from .colors import colorize_string
 
+
 def _is_paginated(response):
     """
     Returns True if this operation has a paginated response
@@ -7,10 +8,16 @@ def _is_paginated(response):
     :type response: openapi3.Response
     """
     return (
-        response.schema.properties is not None and
-        len(response.schema.properties) == 4 and
-        all([c in response.schema.properties for c in ('pages', 'page', 'results', 'data')])
+        response.schema.properties is not None
+        and len(response.schema.properties) == 4
+        and all(
+            [
+                c in response.schema.properties
+                for c in ("pages", "page", "results", "data")
+            ]
+        )
     )
+
 
 class OpenAPIResponseAttr:
     """
@@ -18,6 +25,7 @@ class OpenAPIResponseAttr:
     This class is given the schema node from the spec and parses out its own information
     from it.
     """
+
     def __init__(self, name, schema, prefix=None):
         """
         :param name: The key that held this schema in the properties list, representing
@@ -39,7 +47,9 @@ class OpenAPIResponseAttr:
         self.filterable = schema.extensions.get("linode-filterable")
 
         #: The description of this argument, for help display.  Only used for filterable attributes.
-        self.description = schema.description.split(".")[0] if schema.description else ""
+        self.description = (
+            schema.description.split(".")[0] if schema.description else ""
+        )
 
         #: No response model fields are required. This is only used for filterable attributes.
         self.required = False
@@ -65,7 +75,6 @@ class OpenAPIResponseAttr:
         self.item_type = None
         if schema.type == "array":
             self.item_type = schema.items.type
-
 
     @property
     def path(self):
@@ -144,17 +153,17 @@ def _parse_response_model(schema, prefix=None):
                 pref = prefix + "." + k if prefix else k
                 attrs += _parse_response_model(v, prefix=pref)
             else:
-                attrs.append(
-                    OpenAPIResponseAttr(k, v, prefix=prefix)
-                )
+                attrs.append(OpenAPIResponseAttr(k, v, prefix=prefix))
 
     return attrs
+
 
 class OpenAPIResponse:
     """
     This object represents a single Response as defined by a MediaType in the
     responses section of an OpenAPI Operation
     """
+
     def __init__(self, response):
         """
         :param response: The response's MediaType object in the OpenAPI spec,
@@ -164,15 +173,19 @@ class OpenAPIResponse:
         self.is_paginated = _is_paginated(response)
 
         schema_override = response.extensions.get("linode-cli-use-schema")
-        #TODO: To alleviate the below, we may consider changing how the x-linode-cli-use-schema
-        #TODO: works; maybe instead of defining a freeform schema, it must be a ref pointing to
-        #TODO: a schema in #/components/schemas?
-        if schema_override and False: # TODO - schema overrides are dicts right now
+        # TODO: To alleviate the below, we may consider changing how the x-linode-cli-use-schema
+        # TODO: works; maybe instead of defining a freeform schema, it must be a ref pointing to
+        # TODO: a schema in #/components/schemas?
+        if (
+            schema_override and False
+        ):  # TODO - schema overrides are dicts right now
             self.attrs = _parse_response_model(schema_override)
         elif self.is_paginated:
             # for paginated responses, the model we're parsing is the item in the paginated
             # response, not the pagination envelope
-            self.attrs = _parse_response_model(response.schema.properties['data'].items)
+            self.attrs = _parse_response_model(
+                response.schema.properties["data"].items
+            )
         else:
             self.attrs = _parse_response_model(response.schema)
         self.rows = response.schema.extensions.get("linode-cli-rows")
