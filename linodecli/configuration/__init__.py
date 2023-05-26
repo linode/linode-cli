@@ -240,6 +240,7 @@ class CLIConfig:
             # these don't get included in the updated namespace
             if key.startswith("plugin-"):
                 continue
+            value = None
             if self.config.has_option(username, key):
                 value = self.config.get(username, key)
             # different types of database creation use different endpoints,
@@ -255,8 +256,10 @@ class CLIConfig:
                     value = self.config.get(username, "postgresql_engine")
             else:
                 value = ns_dict[key]
+
             if not value:
                 continue
+
             if key == "authorized_users":
                 ns_dict[key] = [value]
                 warn_dict[key] = [value]
