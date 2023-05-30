@@ -1,6 +1,34 @@
+from __future__ import annotations
+
 import copy
+import math
+import re
+from typing import TYPE_CHECKING
 
 import pytest
+import requests
+from pytest import MonkeyPatch
+
+if TYPE_CHECKING:
+    from linodecli import CLI, CLIOperation
+
+
+class MockResponse:
+    def __init__(
+        self, page: int, pages: int, results: int, status_code: int = 200
+    ):
+        self.page = page
+        self.pages = pages
+        self.results = results
+        self.status_code = status_code
+
+    def json(self):
+        return {
+            "data": ["test_data" for _ in range(500)],
+            "page": self.page,
+            "pages": self.pages,
+            "results": self.results,
+        }
 
 
 class TestCLI:
@@ -8,7 +36,7 @@ class TestCLI:
     Unit tests for linodecli.cli
     """
 
-    def test_find_operation(self, mock_cli, list_operation):
+    def test_find_operation(self, mock_cli: CLI, list_operation: CLIOperation):
         target_operation = list_operation
         target_operation.command = "foo"
         target_operation.action = "list"
@@ -35,3 +63,26 @@ class TestCLI:
         with pytest.raises(ValueError, match=r"No action *"):
             mock_cli.find_operation("foo", "cool")
             mock_cli.find_operation("cool", "cool")
+
+
+def test_get_all_pages(
+    mock_cli: CLI, list_operation: CLIOperation, monkeypatch: MonkeyPatch
+):
+    TOTAL_DATA = 2000
+
+    def mock_get(url: str, *args, **kwargs):
+        # assume page_size is always 500
+        page = int(re.search(r"\?page=(.*?)&page_size", url).group(1))
+        pages = math.ceil(TOTAL_DATA / 500)
+        if page > pages:
+            page = pages
+        return MockResponse(page, pages, pages * 500)
+
+    monkeypatch.setattr(requests, "get", mock_get)
+
+    merged_result = mock_cli.get_all_pages(list_operation, [])
+
+    assert len(merged_result["data"]) == TOTAL_DATA
+    assert merged_result["page"] == 1
+    assert merged_result["pages"] == 1
+    assert merged_result["results"] == TOTAL_DATA

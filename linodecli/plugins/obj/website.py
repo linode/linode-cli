@@ -8,7 +8,9 @@ from linodecli.plugins import inherit_plugin_args
 from linodecli.plugins.obj.config import BASE_WEBSITE_TEMPLATE, PLUGIN_BASE
 
 
-def enable_static_site(get_client, args):
+def enable_static_site(
+    get_client, args, **kwargs
+):  # pylint: disable=unused-argument
     """
     Turns a bucket into a static website
     """
@@ -66,7 +68,9 @@ def enable_static_site(get_client, args):
     )
 
 
-def static_site_info(get_client, args):
+def static_site_info(
+    get_client, args, **kwargs
+):  # pylint: disable=unused-argument
     """
     Returns info about a configured static site
     """
@@ -99,7 +103,9 @@ def static_site_info(get_client, args):
     print(f"Error document: {error}")
 
 
-def disable_static_site(get_client, args):
+def disable_static_site(
+    get_client, args, **kwargs
+):  # pylint: disable=unused-argument
     """
     Disables static site for a bucket
     """
