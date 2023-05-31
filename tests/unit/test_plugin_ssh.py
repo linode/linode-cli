@@ -32,9 +32,7 @@ def test_windows_error(capsys: CaptureFixture):
     assert "This plugin is not currently supported in Windows." in captured_text
 
 
-def test_target_not_running(
-    mock_cli, capsys: CaptureFixture, platform_os_type
-):
+def test_target_not_running(mock_cli, capsys: CaptureFixture, platform_os_type):
     if platform_os_type == "Windows":
         pytest.skip("This test does not run on Windows")
     test_label = "totally-real-label"
