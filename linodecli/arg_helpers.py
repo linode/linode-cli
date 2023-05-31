@@ -88,8 +88,18 @@ def register_args(parser):
     parser.add_argument(
         "--all",
         action="store_true",
-        help="If set, displays all possible columns instead of "
-        "the default columns. This may not work well on some terminals.",
+        help=(
+            "Deprecated flag. An alias of '--all-columns', "
+            "scheduled to be removed in a future version."
+        ),
+    )
+    parser.add_argument(
+        "--all-columns",
+        action="store_true",
+        help=(
+            "If set, displays all possible columns instead of "
+            "the default columns. This may not work well on some terminals."
+        ),
     )
     parser.add_argument(
         "--format",
@@ -103,12 +113,6 @@ def register_args(parser):
         action="store_true",
         help="Suppress default values for arguments.  Default values "
         "are configured on initial setup or with linode-cli configure",
-    )
-    parser.add_argument(
-        "--suppress-warnings",
-        action="store_true",
-        help="Suppress warnings that are intended for human users. "
-        "This is useful for scripting the CLI's behavior.",
     )
     parser.add_argument(
         "--no-truncation",
