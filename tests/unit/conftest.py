@@ -175,5 +175,5 @@ def mocked_config():
 
 
 @pytest.fixture
-def get_platform_os_type():
+def platform_os_type():
     return platform.system()

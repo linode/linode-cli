@@ -24,8 +24,8 @@ POLL_INTERVAL = 5
 
 
 @pytest.fixture
-def target_instance(ssh_key_pair_generator, get_platform_os_type):
-    if get_platform_os_type == "Windows":
+def target_instance(ssh_key_pair_generator, platform_os_type):
+    if platform_os_type == "Windows":
         pytest.skip("This pluggin is not supported on Windows")
     instance_label = f"cli-test-{get_random_text(length=6)}"
 

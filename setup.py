@@ -24,10 +24,8 @@ def get_baked_files():
     data_files = []
 
     completion_dir = "/etc/bash_completion.d"
-    if platform.system() == "Windows":
-        completion_dir = "C:\Program Files\Git\mingw64\share\git\completion"
 
-    if path.isfile("linode-cli.sh"):
+    if path.isfile("linode-cli.sh") and platform.system() != "Windows":
         data_files.append((completion_dir, ["linode-cli.sh"]))
 
     return data_files

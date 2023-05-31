@@ -8,8 +8,8 @@ import linodecli.plugins.ssh as plugin
 from linodecli.plugins import PluginContext
 
 
-def test_print_help(capsys: CaptureFixture, get_platform_os_type):
-    if get_platform_os_type == "Windows":
+def test_print_help(capsys: CaptureFixture, platform_os_type):
+    if platform_os_type == "Windows":
         pytest.skip("This test does not run on Windows")
     with pytest.raises(SystemExit) as err:
         plugin.call(["--help"], None)
@@ -33,9 +33,9 @@ def test_windows_error(capsys: CaptureFixture):
 
 
 def test_target_not_running(
-    mock_cli, capsys: CaptureFixture, get_platform_os_type
+    mock_cli, capsys: CaptureFixture, platform_os_type
 ):
-    if get_platform_os_type == "Windows":
+    if platform_os_type == "Windows":
         pytest.skip("This test does not run on Windows")
     test_label = "totally-real-label"
 
@@ -59,8 +59,8 @@ def test_target_not_running(
     )
 
 
-def test_target_success(mock_cli, capsys: CaptureFixture, get_platform_os_type):
-    if get_platform_os_type == "Windows":
+def test_target_success(mock_cli, capsys: CaptureFixture, platform_os_type):
+    if platform_os_type == "Windows":
         pytest.skip("This test does not run on Windows")
     test_label = "totally-real-label"
     test_user = "test"
