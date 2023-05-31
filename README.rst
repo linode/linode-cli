@@ -422,45 +422,37 @@ Testing
 with the account. It is only recommended to run these tests if you are an advanced
 user.
 
-Installation
-^^^^^^^^^^^^
-
-The CLI uses the Bash Automated Testing System (BATS) for testing. To install run the following:
-
-**OSX users**::
-
-   brew install bats-core
-
-**Installing Bats from source**
-
-Check out a copy of the Bats repository. Then, either add the Bats bin directory to your
-$PATH, or run the provided install.sh command with the location to the prefix in which you
-want to install Bats. For example, to install Bats into /usr/local::
-
-   git clone https://github.com/bats-core/bats-core.git
-   cd bats-core
-   ./install.sh /usr/local
-
 Running the Tests
 ^^^^^^^^^^^^^^^^^
 
-Running the tests is simple. The only requirements are that you have a .linode-cli in your user folder containing your test user token::
+Running the tests locally is simple. The only requirements are that you export Linode API token as LINODE_CLI_TOKEN::
 
-   ./test/test-runner.sh
+   export LINODE_CLI_TOKEN="your_token"
 
-**Running Tests via Docker**
 
-The openapi spec must first be saved to the base of the linode-cli project:
 
-   curl -o ./openapi.yaml https://www.linode.com/docs/api/openapi.yaml
+More information on Managing Linode API tokens can be found here - https://www.linode.com/docs/products/tools/api/guides/manage-api-tokens/
 
-Run the following command to build the tests container:
+In order to run the full integration test, run::
 
-   docker build -f Dockerfile-bats -t linode-cli-tests .
+    make testint
 
-Run the following command to run the test
+To run specific test package, use environment variable `PKG_NAME` with `testint` command::
 
-   docker run -e TOKEN_1=$INSERT_YOUR_TOKEN_HERE -e TOKEN_2=$INSERT_YOUR_TOKEN_HERE --rm linode-cli-tests
+   make PKG_NAME="cli" testint
+
+Note: `PKG_NAME` corresponds to folder name inside `tests/integration`. e.g. cli, domains, etc.
+
+
+To run specific test suite/file in a specific test package, use environment variables `PKG_NAME`, `TEST_SUITE` with `testint` command::
+
+   make PKG_NAME="cli" TEST_SUITE="test_help.py" testint
+
+Lastly, to run specific test case, use environment variables `PKG_NAME`, `TEST_SUITE`, `TEST_CASE` with `testint` command::
+
+   make PKG_NAME="cli" TEST_SUITE="test_help.py" TEST_CASE=test_help_page_for_non_aliased_actions testint
+
+
 
 Contributing
 ------------

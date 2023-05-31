@@ -1,8 +1,22 @@
 #
 # Makefile for more convenient building of the Linode CLI and its baked content
 #
+PKG_PATH =
+TEST_SUITE_PATH =
+TEST_CASE_COMMAND =
 
-INTEGRATION_TEST_PATH :=
+ifdef PKG_NAME
+PKG_PATH=/$(PKG_NAME)
+endif
+
+ifdef TEST_SUITE
+TEST_SUITE_PATH = /$(TEST_SUITE)
+endif
+
+ifdef TEST_CASE
+TEST_CASE_COMMAND = -k $(TEST_CASE)
+endif
+
 
 SPEC_VERSION ?= latest
 ifndef SPEC
@@ -49,12 +63,11 @@ testunit:
 
 .PHONY: testint
 testint:
-	pytest tests/integration/${INTEGRATION_TEST_PATH}
+	pytest tests/integration$(PKG_PATH)$(TEST_SUITE_PATH) $(TEST_CASE_COMMAND)
 
 .PHONY: testall
 testall:
 	pytest tests
-
 
 # Alias for unit; integration tests should be explicit
 .PHONY: test
