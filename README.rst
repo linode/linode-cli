@@ -437,21 +437,15 @@ In order to run the full integration test, run::
 
     make testint
 
-To run specific test package, use environment variable `PKG_NAME` with `testint` command::
+To run specific test package, use environment variable `INTEGRATION_TEST_PATH` with `testint` command::
 
-   make MOD_NAME="cli" testint
-
-Note: `MOD_NAME` corresponds to folder name inside `tests/integration`. e.g. cli, domains, etc.
+   make INTEGRATION_TEST_PATH="cli" testint
 
 
-To run specific test suite/file in a specific test package, use environment variables `PKG_NAME`, `TEST_SUITE` with `testint` command::
 
-   make PKG_NAME="cli" TEST_SUITE="test_help.py" testint
+Lastly, to run specific test case, use environment variables `TEST_CASE` with `testint` command::
 
-Lastly, to run specific test case, use environment variables `PKG_NAME`, `TEST_SUITE`, `TEST_CASE` with `testint` command::
-
-   make PKG_NAME="cli" TEST_SUITE="test_help.py" TEST_CASE=test_help_page_for_non_aliased_actions testint
-
+   make TEST_CASE=test_help_page_for_non_aliased_actions testint
 
 
 Contributing
