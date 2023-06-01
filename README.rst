@@ -439,9 +439,9 @@ In order to run the full integration test, run::
 
 To run specific test package, use environment variable `PKG_NAME` with `testint` command::
 
-   make PKG_NAME="cli" testint
+   make MOD_NAME="cli" testint
 
-Note: `PKG_NAME` corresponds to folder name inside `tests/integration`. e.g. cli, domains, etc.
+Note: `MOD_NAME` corresponds to folder name inside `tests/integration`. e.g. cli, domains, etc.
 
 
 To run specific test suite/file in a specific test package, use environment variables `PKG_NAME`, `TEST_SUITE` with `testint` command::
