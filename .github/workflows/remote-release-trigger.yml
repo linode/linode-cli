@@ -27,15 +27,38 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Get the next minor version
-        id: semvers
-        uses: WyriHaximus/github-action-next-semvers@d079934efaf011a4cf8912d4637097fe35d32b93 # pin@v1
+      - name: Calculate the desired release version
+        id: calculate_version
+        uses: actions/github-script@v6
+        env:
+          SPEC_VERSION: ${{ github.event.client_payload.spec_version }}
+          PREVIOUS_CLI_VERSION: ${{ steps.previoustag.outputs.tag }}
         with:
+          result-encoding: string
           version: ${{ steps.previoustag.outputs.tag }}
+          script: |
+            let spec_version_segments = process.env.SPEC_VERSION.replace("v", "").split(".");
+            let cli_version_segments = process.env.PREVIOUS_CLI_VERSION.replace("v", "").split(".");
+            
+            // Default to a patch version bump
+            let bump_idx = 2;
+            
+            // This is a minor version bump
+            if (spec_version_segments[2] == "0") {
+                bump_idx = 1;
+                
+                // The patch number should revert to 0
+                cli_version_segments[2] = "0"
+            }
+            
+            // Bump the version
+            cli_version_segments[bump_idx] = (parseInt(cli_version_segments[bump_idx]) + 1).toString()
+            
+            return "v" + cli_version_segments.join(".")
 
       - uses: rickstaa/action-create-tag@84c90e6ba79b47b5147dcb11ff25d6a0e06238ba # pin@v1
         with:
-          tag: ${{ steps.semvers.outputs.v_minor }}
+          tag: ${{ steps.calculate_version.outputs.result }}
 
       - name: Release
         uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844 # pin@v1
@@ -43,4 +66,4 @@ jobs:
           target_commitish: 'main'
           token: ${{ steps.generate_token.outputs.token }}
           body: Built from Linode OpenAPI spec ${{ github.event.client_payload.spec_version }}
-          tag_name: ${{ steps.semvers.outputs.v_minor }}
+          tag_name: ${{ steps.calculate_version.outputs.result }}
