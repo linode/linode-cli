@@ -13,7 +13,11 @@ SSH_SLEEP_PERIOD = 50
 
 
 @pytest.fixture(scope="session", autouse=True)
-def test_create_a_linode_in_running_state(ssh_key_pair_generator):
+def test_create_a_linode_in_running_state(
+    ssh_key_pair_generator, platform_os_type
+):
+    if platform_os_type == "Windows":
+        pytest.skip("This test does not run on Windows")
     pubkey_file, privkey_file = ssh_key_pair_generator
 
     with open(pubkey_file, "r") as f:

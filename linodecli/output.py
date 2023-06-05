@@ -139,22 +139,20 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
         content = self._build_output_content(
             data,
             columns,
-            header=header,
             value_transform=lambda attr, v: self._attempt_truncate_value(
                 attr.render_value(v)
             ),
         )
 
-        tab = Table(*content[0], header_style="", box=box.SQUARE)
-        for row in content[1:]:
+        tab = Table(
+            *header, header_style="", box=box.SQUARE, show_header=self.headers
+        )
+        for row in content:
             row = [Text.from_ansi(item) for item in row]
             tab.add_row(*row)
 
         if title is not None:
             tab.title = title
-
-        if not self.headers:
-            tab.show_header = False
 
         rprint(tab, file=to)
 

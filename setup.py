@@ -1,14 +1,17 @@
 #!/usr/bin/env python3
+import pathlib
 import subprocess
-from os import path
+import sys
+import platform
 
 from setuptools import setup, find_packages
+from os import path
 
-here = path.abspath(path.dirname(__file__))
+here = pathlib.Path().absolute()
 
 
 # get the long description from the README.rst
-with open(path.join(here, "README.rst"), encoding="utf-8") as f:
+with open(here / "README.rst", encoding="utf-8") as f:
     long_description = f.read()
 
 
@@ -20,8 +23,10 @@ def get_baked_files():
     """
     data_files = []
 
-    if path.isfile("linode-cli.sh"):
-        data_files.append(("/etc/bash_completion.d", ["linode-cli.sh"]))
+    completion_dir = "/etc/bash_completion.d"
+
+    if path.isfile("linode-cli.sh") and platform.system() != "Windows":
+        data_files.append((completion_dir, ["linode-cli.sh"]))
 
     return data_files
 
@@ -30,7 +35,7 @@ def get_version():
     """
     Uses the version file to calculate this package's version
     """
-    return subprocess.check_output(["./version"]).decode("utf-8").rstrip()
+    return subprocess.check_output([sys.executable, "./version"]).decode("utf-8").rstrip()
 
 
 def get_baked_version():
