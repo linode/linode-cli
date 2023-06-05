@@ -173,13 +173,14 @@ class OpenAPIResponse:
         self.is_paginated = _is_paginated(response)
 
         schema_override = response.extensions.get("linode-cli-use-schema")
-        # TODO: To alleviate the below, we may consider changing how the x-linode-cli-use-schema
-        # TODO: works; maybe instead of defining a freeform schema, it must be a ref pointing to
-        # TODO: a schema in #/components/schemas?
-        if (
-            schema_override and False
-        ):  # TODO - schema overrides are dicts right now
-            self.attrs = _parse_response_model(schema_override)
+        if schema_override:
+            print(schema_override)
+            override = type(response)(
+                response.path, {"schema": schema_override}, response._root
+            )
+            override._resolve_references()
+            self.attrs = _parse_response_model(override.schema)
+            print(self.attrs)
         elif self.is_paginated:
             # for paginated responses, the model we're parsing is the item in the paginated
             # response, not the pagination envelope
@@ -195,12 +196,13 @@ class OpenAPIResponse:
         """
         Formats JSON from the API into a list of rows
         """
-        if "pages" in json:
-            return json["data"]
         if self.rows:
             return self._fix_json_rows(json)
         if self.nested_list:
             return self._fix_nested_list(json)
+        # Needs to go last to handle custom schemas
+        if "pages" in json:
+            return json["data"]
         return [json]
 
     def _fix_json_rows(self, json):

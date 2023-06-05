@@ -141,10 +141,12 @@ class OpenAPIRequest:
         """
         self.required = request.schema.required
         schema_override = request.extensions.get("linode-cli-use-schema")
-        if (
-            schema_override and False
-        ):  # TODO - schema overrides are dicts right now
-            self.attrs = _parse_request_model(schema_override)
+        if schema_override:
+            override = type(request)(
+                request.path, {"schema": schema_override}, request._root
+            )
+            override._resolve_references()
+            self.attrs = _parse_request_model(override.schema)
         else:
             self.attrs = _parse_request_model(request.schema)
 
