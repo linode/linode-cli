@@ -174,13 +174,11 @@ class OpenAPIResponse:
 
         schema_override = response.extensions.get("linode-cli-use-schema")
         if schema_override:
-            print(schema_override)
             override = type(response)(
                 response.path, {"schema": schema_override}, response._root
             )
             override._resolve_references()
             self.attrs = _parse_response_model(override.schema)
-            print(self.attrs)
         elif self.is_paginated:
             # for paginated responses, the model we're parsing is the item in the paginated
             # response, not the pagination envelope

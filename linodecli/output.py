@@ -112,7 +112,6 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
                 )
                 if attr.display
             ]
-            print(columns)
         elif self.columns == "*":
             columns = list(response_model.attrs)
         else:
