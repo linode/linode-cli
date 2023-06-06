@@ -14,13 +14,16 @@ def setup_test_clusters():
 def test_deploy_an_lke_cluster():
     lke_version = (
         exec_test_command(
-            BASE_CMD +
-            [
+            BASE_CMD
+            + [
                 "versions-list",
                 "--text",
                 "--no-headers",
             ]
-        ).stdout.decode().rstrip().splitlines()[0]
+        )
+        .stdout.decode()
+        .rstrip()
+        .splitlines()[0]
     )
 
     result = exec_test_command(

@@ -71,11 +71,19 @@ def test_rebuild_fails_with_invalid_image(setup_rebuild):
 def test_rebuild_a_linode(setup_rebuild):
     linode_id = setup_rebuild
     rebuild_image = (
-        exec_test_command([
-            "linode-cli", "images", "list", "--text", "--no-headers" "--format", "id"]
+        exec_test_command(
+            [
+                "linode-cli",
+                "images",
+                "list",
+                "--text",
+                "--no-headers" "--format",
+                "id",
+            ]
         )
         .stdout.decode()
-        .rstrip().splitlines()[4]
+        .rstrip()
+        .splitlines()[4]
     )
 
     # trigger rebuild

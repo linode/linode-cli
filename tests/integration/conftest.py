@@ -20,8 +20,8 @@ from tests.integration.helpers import (
     get_random_text,
 )
 from tests.integration.linodes.helpers_linodes import (
-    DEFAULT_RANDOM_PASS,
     DEFAULT_LINODE_TYPE,
+    DEFAULT_RANDOM_PASS,
     DEFAULT_REGION,
     DEFAULT_TEST_IMAGE,
     create_linode_and_wait,

@@ -20,7 +20,7 @@ DEFAULT_TEST_IMAGE = (
             "id",
             "--no-headers",
             "--is_public",
-            "True"
+            "True",
         ]
     )
     .stdout.decode()

@@ -79,7 +79,9 @@ def test_create_stackscript():
     ).stdout.decode()
 
     assert re.search(
-        "[0-9]+,.*," + DEF_LABEL + ",linode/debian9,False,[0-9]+-[0-9]+-[0-9]+T[0-9]+:[0-9]+:[0-9]+,[0-9]+-[0-9]+-[0-9]+T[0-9]+:[0-9]+:[0-9]+",
+        "[0-9]+,.*,"
+        + DEF_LABEL
+        + ",linode/debian9,False,[0-9]+-[0-9]+-[0-9]+T[0-9]+:[0-9]+:[0-9]+,[0-9]+-[0-9]+-[0-9]+T[0-9]+:[0-9]+:[0-9]+",
         result,
     )
 
@@ -142,7 +144,9 @@ def test_view_private_stackscript():
     ).stdout.decode()
 
     assert re.search(
-        "[0-9]+,.*," + DEF_LABEL + ",linode/debian9,False,[0-9]+-[0-9]+-[0-9]+T[0-9]+:[0-9]+:[0-9]+,[0-9]+-[0-9]+-[0-9]+T[0-9]+:[0-9]+:[0-9]+",
+        "[0-9]+,.*,"
+        + DEF_LABEL
+        + ",linode/debian9,False,[0-9]+-[0-9]+-[0-9]+T[0-9]+:[0-9]+:[0-9]+,[0-9]+-[0-9]+-[0-9]+T[0-9]+:[0-9]+:[0-9]+",
         result,
     )
 
@@ -150,22 +154,30 @@ def test_view_private_stackscript():
 def test_update_stackscript_compatible_image():
     images = get_linode_image_lists()
     private_stackscript = get_private_stackscript()
-    result = exec_test_command(
-        BASE_CMD
-        + [
-            "update",
-            "--images",
-            images[0],
-            private_stackscript[0],
-            "--text",
-            "--no-headers",
-            "--delimiter",
-            ",",
-        ]
-    ).stdout.decode().rstrip()
+    result = (
+        exec_test_command(
+            BASE_CMD
+            + [
+                "update",
+                "--images",
+                images[0],
+                private_stackscript[0],
+                "--text",
+                "--no-headers",
+                "--delimiter",
+                ",",
+            ]
+        )
+        .stdout.decode()
+        .rstrip()
+    )
 
     assert re.search(
-        "[0-9]+,.*,stack_script_[0-9]+," + images[0] + ",False,[0-9]+-[0-9]+-[0-9]+T[0-9]+:[0-9]+:[0-9]+,[0-9]+-[0-9]+-[0-9]+T[0-9]+:[0-9]+:[0-9]+", result)
+        "[0-9]+,.*,stack_script_[0-9]+,"
+        + images[0]
+        + ",False,[0-9]+-[0-9]+-[0-9]+T[0-9]+:[0-9]+:[0-9]+,[0-9]+-[0-9]+-[0-9]+T[0-9]+:[0-9]+:[0-9]+",
+        result,
+    )
 
 
 @pytest.fixture(scope="session")

@@ -19,6 +19,7 @@ def test_print_help(capsys: CaptureFixture):
     assert "[USERNAME@]LABEL" in captured_text
     assert "uses the Linode's SLAAC address for SSH" in captured_text
 
+
 @pytest.mark.skipif(
     sys.platform.startswith("win"), reason="Test N/A on Windows"
 )

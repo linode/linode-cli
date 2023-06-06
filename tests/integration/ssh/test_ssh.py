@@ -17,25 +17,27 @@ SSH_SLEEP_PERIOD = 50
     sys.platform.startswith("win"), reason="Test N/A on Windows"
 )
 @pytest.fixture(scope="session", autouse=True)
-def test_create_a_linode_in_running_state(
-    ssh_key_pair_generator
-):
+def test_create_a_linode_in_running_state(ssh_key_pair_generator):
     pubkey_file, privkey_file = ssh_key_pair_generator
 
     with open(pubkey_file, "r") as f:
         pubkey = f.read().rstrip()
 
-    res = exec_test_command(
-        [
-            "linode-cli",
-            "images",
-            "list",
-            "--format",
-            "id",
-            "--text",
-            "--no-headers",
-        ]
-    ).stdout.decode().rstrip()
+    res = (
+        exec_test_command(
+            [
+                "linode-cli",
+                "images",
+                "list",
+                "--format",
+                "id",
+                "--text",
+                "--no-headers",
+            ]
+        )
+        .stdout.decode()
+        .rstrip()
+    )
 
     alpine_image = re.findall("linode/alpine[^\s]+", res)[0]
 

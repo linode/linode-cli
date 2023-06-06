@@ -1,4 +1,3 @@
-import os
 import re
 import time
 
@@ -60,7 +59,22 @@ def test_list_events():
 
 
 def test_view_events():
-    event_id = exec_test_command(['linode-cli', 'events', 'list', '--format', 'id', '--no-headers', '--text']).stdout.decode().rstrip().split()[0]
+    event_id = (
+        exec_test_command(
+            [
+                "linode-cli",
+                "events",
+                "list",
+                "--format",
+                "id",
+                "--no-headers",
+                "--text",
+            ]
+        )
+        .stdout.decode()
+        .rstrip()
+        .split()[0]
+    )
 
     result = exec_test_command(
         BASE_CMD
@@ -70,7 +84,22 @@ def test_view_events():
 
 
 def test_mark_event_seen():
-    event_id = exec_test_command(['linode-cli', 'events', 'list', '--format', 'id', '--no-headers', '--text']).stdout.decode().rstrip().split()[0]
+    event_id = (
+        exec_test_command(
+            [
+                "linode-cli",
+                "events",
+                "list",
+                "--format",
+                "id",
+                "--no-headers",
+                "--text",
+            ]
+        )
+        .stdout.decode()
+        .rstrip()
+        .split()[0]
+    )
 
     # mark event as seen
     exec_test_command(
@@ -87,7 +116,22 @@ def test_mark_event_seen():
 
 
 def test_mark_event_read():
-    event_id = exec_test_command(['linode-cli', 'events', 'list', '--format', 'id', '--no-headers', '--text']).stdout.decode().rstrip().split()[0]
+    event_id = (
+        exec_test_command(
+            [
+                "linode-cli",
+                "events",
+                "list",
+                "--format",
+                "id",
+                "--no-headers",
+                "--text",
+            ]
+        )
+        .stdout.decode()
+        .rstrip()
+        .split()[0]
+    )
 
     # mark event as read
     exec_test_command(
@@ -104,7 +148,22 @@ def test_mark_event_read():
 
 
 def test_filter_events_by_entity_id():
-    event_id = exec_test_command(['linode-cli', 'events', 'list', '--format', 'id', '--no-headers', '--text']).stdout.decode().rstrip().split()[0]
+    event_id = (
+        exec_test_command(
+            [
+                "linode-cli",
+                "events",
+                "list",
+                "--format",
+                "id",
+                "--no-headers",
+                "--text",
+            ]
+        )
+        .stdout.decode()
+        .rstrip()
+        .split()[0]
+    )
 
     result = exec_test_command(
         BASE_CMD

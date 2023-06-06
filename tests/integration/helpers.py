@@ -1,4 +1,3 @@
-import os
 import random
 import subprocess
 import time
@@ -80,9 +79,20 @@ def delete_target_id(target: str, id: str):
 
 def remove_lke_clusters():
     cluster_ids = (
-        exec_test_command([
-            "linode-cli", "--text", "--no-headers", "lke", "clusters-list", "--format", "id"]
-        ).stdout.decode().rstrip().splitlines()
+        exec_test_command(
+            [
+                "linode-cli",
+                "--text",
+                "--no-headers",
+                "lke",
+                "clusters-list",
+                "--format",
+                "id",
+            ]
+        )
+        .stdout.decode()
+        .rstrip()
+        .splitlines()
     )
     for id in cluster_ids:
         exec_test_command(["linode-cli", "lke", "cluster-delete", id])
@@ -97,17 +107,36 @@ def remove_all(target: str):
     entity_ids = ""
     if target == "stackscripts":
         entity_ids = (
-            exec_test_command([
-                "linode-cli", "--is_public=false", "--text" ,"--no-headers", target, "list", "--format", "id"]
+            exec_test_command(
+                [
+                    "linode-cli",
+                    "--is_public=false",
+                    "--text",
+                    "--no-headers",
+                    target,
+                    "list",
+                    "--format",
+                    "id",
+                ]
             )
-            .stdout.decode().splitlines()
+            .stdout.decode()
+            .splitlines()
         )
     else:
         entity_ids = (
-            exec_test_command([
-                "linode-cli", "--text", "--no-headers", target, "list", "--format", "id"]
+            exec_test_command(
+                [
+                    "linode-cli",
+                    "--text",
+                    "--no-headers",
+                    target,
+                    "list",
+                    "--format",
+                    "id",
+                ]
             )
-            .stdout.decode().splitlines()
+            .stdout.decode()
+            .splitlines()
         )
 
     for id in entity_ids:
