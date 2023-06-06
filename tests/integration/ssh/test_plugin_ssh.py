@@ -1,6 +1,6 @@
 import json
 import subprocess
-import sys
+from sys import platform
 from typing import Any, Dict, List, Optional
 
 import pytest
@@ -25,7 +25,7 @@ POLL_INTERVAL = 5
 
 
 @pytest.mark.skipif(
-    sys.platform.startswith("win"), reason="Test N/A on Windows"
+    platform == "win32", reason="Test N/A on Windows"
 )
 @pytest.fixture
 def target_instance(ssh_key_pair_generator):
@@ -72,6 +72,9 @@ def exec_test_command(args: List[str], timeout=None):
     return process
 
 
+@pytest.mark.skipif(
+    platform == "win32", reason="Test N/A on Windows"
+)
 def test_help():
     process = exec_test_command(BASE_CMD + ["--help"])
     output = process.stdout.decode()
@@ -81,6 +84,9 @@ def test_help():
     assert "uses the Linode's SLAAC address for SSH" in output
 
 
+@pytest.mark.skipif(
+    platform == "win32", reason="Test N/A on Windows"
+)
 def test_ssh_instance_provisioning(target_instance: Dict[str, Any]):
     process = exec_test_command(BASE_CMD + ["root@" + target_instance["label"]])
     assert process.returncode == 2
@@ -89,6 +95,9 @@ def test_ssh_instance_provisioning(target_instance: Dict[str, Any]):
     assert "is not running" in output
 
 
+@pytest.mark.skipif(
+    platform == "win32", reason="Test N/A on Windows"
+)
 def test_ssh_instance_ready(
     ssh_key_pair_generator, target_instance: Dict[str, Any]
 ):

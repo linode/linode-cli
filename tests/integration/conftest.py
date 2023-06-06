@@ -153,7 +153,7 @@ def create_master_domain():
 
 @pytest.fixture
 def create_slave_domain():
-    timestamp = str(int(time.time()))
+    timestamp = str(int(time.time()) + randint(10, 1000))
 
     domain_id = (
         exec_test_command(
