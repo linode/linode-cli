@@ -9,6 +9,9 @@ import linodecli.plugins.ssh as plugin
 from linodecli.plugins import PluginContext
 
 
+@pytest.mark.skipif(
+    sys.platform.startswith("win"), reason="Test N/A on Windows"
+)
 def test_print_help(capsys: CaptureFixture):
     with pytest.raises(SystemExit) as err:
         plugin.call(["--help"], None)
@@ -20,9 +23,6 @@ def test_print_help(capsys: CaptureFixture):
     assert "uses the Linode's SLAAC address for SSH" in captured_text
 
 
-@pytest.mark.skipif(
-    sys.platform.startswith("win"), reason="Test N/A on Windows"
-)
 @patch("linodecli.plugins.ssh.platform", "win32")
 def test_windows_error(capsys: CaptureFixture):
     with pytest.raises(SystemExit) as err:
