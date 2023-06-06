@@ -1,5 +1,6 @@
 import json
 import subprocess
+import sys
 from typing import Any, Dict, List, Optional
 
 import pytest
@@ -23,10 +24,11 @@ SSH_WAIT_TIMEOUT_SECONDS = 80
 POLL_INTERVAL = 5
 
 
+@pytest.mark.skipif(
+    sys.platform.startswith("win"), reason="Test N/A on Windows"
+)
 @pytest.fixture
-def target_instance(ssh_key_pair_generator, platform_os_type):
-    if platform_os_type == "Windows":
-        pytest.skip("This pluggin is not supported on Windows")
+def target_instance(ssh_key_pair_generator):
     instance_label = f"cli-test-{get_random_text(length=6)}"
 
     pubkey_file, privkey_file = ssh_key_pair_generator

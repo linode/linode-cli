@@ -1,5 +1,6 @@
 import os
 import re
+import sys
 import time
 
 import pytest
@@ -12,30 +13,47 @@ NUM_OF_RETRIES = 10
 SSH_SLEEP_PERIOD = 50
 
 
+@pytest.mark.skipif(
+    sys.platform.startswith("win"), reason="Test N/A on Windows"
+)
 @pytest.fixture(scope="session", autouse=True)
 def test_create_a_linode_in_running_state(
-    ssh_key_pair_generator, platform_os_type
+    ssh_key_pair_generator
 ):
-    if platform_os_type == "Windows":
-        pytest.skip("This test does not run on Windows")
     pubkey_file, privkey_file = ssh_key_pair_generator
 
     with open(pubkey_file, "r") as f:
         pubkey = f.read().rstrip()
 
-    alpine_image = (
-        os.popen(
-            "linode-cli images list --format id --text --no-headers | grep 'alpine' | xargs | awk '{ print $1 }'"
-        )
-        .read()
-        .rstrip()
-    )
+    res = exec_test_command(
+        [
+            "linode-cli",
+            "images",
+            "list",
+            "--format",
+            "id",
+            "--text",
+            "--no-headers",
+        ]
+    ).stdout.decode().rstrip()
+
+    alpine_image = re.findall("linode/alpine[^\s]+", res)[0]
+
     plan = (
-        os.popen(
-            "linode-cli linodes types --text --no-headers --format=id | xargs | awk '{ print $1 }'"
+        exec_test_command(
+            [
+                "linode-cli",
+                "linodes",
+                "types",
+                "--format",
+                "id",
+                "--text",
+                "--no-headers",
+            ]
         )
-        .read()
+        .stdout.decode()
         .rstrip()
+        .splitlines()[0]
     )
 
     linode_id = create_linode_and_wait(

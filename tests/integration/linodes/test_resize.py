@@ -16,13 +16,21 @@ from tests.integration.linodes.helpers_linodes import (
 
 @pytest.fixture(scope="session", autouse=True)
 def setup_resize():
-    # create linode
     plan = (
-        os.popen(
-            'linode-cli linodes types --format="id" --text --no-headers | sed -n 2p'
+        exec_test_command(
+            [
+                "linode-cli",
+                "linodes",
+                "types",
+                "--format",
+                "id",
+                "--text",
+                "--no-headers",
+            ]
         )
-        .read()
+        .stdout.decode()
         .rstrip()
+        .splitlines()[1]
     )
     linode_id = create_linode_and_wait(test_plan=plan)
 
@@ -34,23 +42,27 @@ def setup_resize():
 def test_resize_fails_to_the_same_plan(setup_resize):
     linode_id = setup_resize
     linode_plan = (
-        os.popen(
-            "linode-cli linodes view "
-            + linode_id
-            + ' --format="type" --text --no-headers'
+        exec_test_command(
+            [
+                "linode-cli",
+                "linodes",
+                "view",
+                linode_id,
+                "--format",
+                "type",
+                "--text",
+                "--no-headers",
+            ]
         )
-        .read()
+        .stdout.decode()
         .rstrip()
     )
-
-    print("linode id is", linode_id, " plan is", linode_plan)
 
     result = exec_failing_test_command(
         BASE_CMD
         + ["resize", "--type", linode_plan, "--text", "--no-headers", linode_id]
     ).stderr.decode()
 
-    print("result is:", result)
     assert "Request failed: 400" in result
     assert "Linode is already running this service plan." in result
 
@@ -58,11 +70,20 @@ def test_resize_fails_to_the_same_plan(setup_resize):
 def test_resize_fails_to_smaller_plan(setup_resize):
     linode_id = setup_resize
     smaller_plan = (
-        os.popen(
-            'linode-cli linodes types --format="id" --text --no-headers | sed -n 1p'
+        exec_test_command(
+            [
+                "linode-cli",
+                "linodes",
+                "types",
+                "--format",
+                "id",
+                "--text",
+                "--no-headers",
+            ]
         )
-        .read()
+        .stdout.decode()
         .rstrip()
+        .splitlines()[0]
     )
 
     result = exec_failing_test_command(
@@ -111,11 +132,20 @@ def test_resize_fail_to_invalid_plan(setup_resize):
 def test_resize_to_next_size_plan(setup_resize):
     linode_id = setup_resize
     larger_plan = (
-        os.popen(
-            'linode-cli linodes types --format="id" --text --no-headers | sed -n 3p'
+        exec_test_command(
+            [
+                "linode-cli",
+                "linodes",
+                "types",
+                "--format",
+                "id",
+                "--text",
+                "--no-headers",
+            ]
         )
-        .read()
+        .stdout.decode()
         .rstrip()
+        .splitlines()[2]
     )
 
     exec_test_command(

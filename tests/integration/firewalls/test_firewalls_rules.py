@@ -6,7 +6,7 @@ import pytest
 from tests.integration.helpers import delete_target_id, exec_test_command
 
 BASE_CMD = ["linode-cli", "firewalls", "rules-update"]
-FIREWALL_LABEL = "example-firewall-label"
+FIREWALL_LABEL = "label-fw-test" + str(int(time.time()))
 
 
 @pytest.fixture(scope="session", autouse=True)

@@ -1,6 +1,6 @@
 import pytest
 
-from tests.integration.helpers import exec_test_command, os, remove_lke_clusters
+from tests.integration.helpers import exec_test_command, remove_lke_clusters
 
 BASE_CMD = ["linode-cli", "lke"]
 
@@ -8,15 +8,19 @@ BASE_CMD = ["linode-cli", "lke"]
 @pytest.fixture(scope="session", autouse=True)
 def setup_test_clusters():
     yield "setup"
-    # just clean up method required for this test suite
     remove_lke_clusters()
 
 
 def test_deploy_an_lke_cluster():
     lke_version = (
-        os.popen("linode-cli lke versions-list --text --no-headers | head -1")
-        .read()
-        .rstrip()
+        exec_test_command(
+            BASE_CMD +
+            [
+                "versions-list",
+                "--text",
+                "--no-headers",
+            ]
+        ).stdout.decode().rstrip().splitlines()[0]
     )
 
     result = exec_test_command(

@@ -21,6 +21,7 @@ from tests.integration.helpers import (
 )
 from tests.integration.linodes.helpers_linodes import (
     DEFAULT_RANDOM_PASS,
+    DEFAULT_LINODE_TYPE,
     DEFAULT_REGION,
     DEFAULT_TEST_IMAGE,
     create_linode_and_wait,
@@ -254,21 +255,6 @@ def create_linode_min_req():
 
 @pytest.fixture
 def create_linode_wo_image():
-    linode_type = (
-        os.popen(
-            "linode-cli linodes types --text --no-headers --format=id | xargs | awk '{ print $1 }'"
-        )
-        .read()
-        .rstrip()
-    )
-    linode_region = (
-        os.popen(
-            "linode-cli regions list --format=id  --text --no-headers | xargs | awk '{ print $1 }'"
-        )
-        .read()
-        .rstrip()
-    )
-
     exec_test_command(
         LINODE_BASE_CMD
         + [
@@ -277,9 +263,9 @@ def create_linode_wo_image():
             "--label",
             "cli-2",
             "--type",
-            linode_type,
+            DEFAULT_LINODE_TYPE,
             "--region",
-            linode_region,
+            DEFAULT_REGION,
             "--root_pass",
             DEFAULT_RANDOM_PASS,
         ]
@@ -309,14 +295,6 @@ def create_linode_wo_image():
 
 @pytest.fixture
 def create_linode_backup_enabled():
-    linode_type = (
-        os.popen(
-            "linode-cli linodes types --text --no-headers --format='id' | xargs | awk '{ print $1 }'"
-        )
-        .read()
-        .rstrip()
-    )
-
     # create linode with backups enabled
     linode_id = (
         exec_test_command(
@@ -327,7 +305,7 @@ def create_linode_backup_enabled():
                 "--backups_enabled",
                 "true",
                 "--type",
-                linode_type,
+                DEFAULT_LINODE_TYPE,
                 "--region",
                 DEFAULT_REGION,
                 "--image",

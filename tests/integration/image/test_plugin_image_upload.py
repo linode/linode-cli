@@ -1,3 +1,4 @@
+import re
 import json
 import os
 import subprocess
@@ -74,9 +75,11 @@ def test_file_upload(
     output = process.stdout.decode()
 
     assert process.returncode == 0
-    assert label in output
-    assert description in output
-    assert "pending_upload" in output
+
+    # Assertions now using keywords due to some chars getting cut off from lack of terminal space
+    assert re.search("cli-test", output)
+    assert re.search("test", output)
+    assert re.search("pending", output)
 
     # Get the new image from the API
     process = exec_test_command(
@@ -86,7 +89,7 @@ def test_file_upload(
 
     image = json.loads(process.stdout.decode())
 
-    assert image[0]["label"] in output
+    assert image[0]["label"] == label
 
     # Delete the image
     process = exec_test_command(["linode-cli", "images", "rm", image[0]["id"]])

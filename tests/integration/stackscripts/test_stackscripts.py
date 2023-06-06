@@ -1,5 +1,5 @@
-import os
 import re
+import time
 
 import pytest
 
@@ -10,14 +10,31 @@ from tests.integration.helpers import (
 from tests.integration.linodes.helpers_linodes import DEFAULT_RANDOM_PASS
 
 BASE_CMD = ["linode-cli", "stackscripts"]
+DEF_LABEL = "stack_script_" + str(int(time.time()))
 
 
 def get_linode_image_lists():
-    images = os.popen(
-        'LINODE_CLI_TOKEN=$LINODE_CLI_TOKEN linode-cli images list --format id --text --no-headers | egrep "linode\/.*"'
-    ).read()
+    all_images = (
+        (
+            exec_test_command(
+                [
+                    "linode-cli",
+                    "images",
+                    "list",
+                    "--format",
+                    "id",
+                    "--text",
+                    "--no-headers",
+                ]
+            )
+        )
+        .stdout.decode()
+        .rstrip()
+    )
 
-    return images.splitlines()
+    images = re.findall("linode/[^\s]+", all_images)
+
+    return images
 
 
 def get_private_stackscript():
@@ -52,7 +69,7 @@ def test_create_stackscript():
             "--image",
             "linode/debian9",
             "--label",
-            "testfoo",
+            DEF_LABEL,
             "--is_public=false",
             "--text",
             "--no-headers",
@@ -62,7 +79,7 @@ def test_create_stackscript():
     ).stdout.decode()
 
     assert re.search(
-        "[0-9]+,.*,testfoo,linode/debian9,False,[0-9]+-[0-9]+-[0-9]+T[0-9]+:[0-9]+:[0-9]+,[0-9]+-[0-9]+-[0-9]+T[0-9]+:[0-9]+:[0-9]+",
+        "[0-9]+,.*," + DEF_LABEL + ",linode/debian9,False,[0-9]+-[0-9]+-[0-9]+T[0-9]+:[0-9]+:[0-9]+,[0-9]+-[0-9]+-[0-9]+T[0-9]+:[0-9]+:[0-9]+",
         result,
     )
 
@@ -125,7 +142,7 @@ def test_view_private_stackscript():
     ).stdout.decode()
 
     assert re.search(
-        "[0-9]+,.*,testfoo,linode/debian9,False,[0-9]+-[0-9]+-[0-9]+T[0-9]+:[0-9]+:[0-9]+,[0-9]+-[0-9]+-[0-9]+T[0-9]+:[0-9]+:[0-9]+",
+        "[0-9]+,.*," + DEF_LABEL + ",linode/debian9,False,[0-9]+-[0-9]+-[0-9]+T[0-9]+:[0-9]+:[0-9]+,[0-9]+-[0-9]+-[0-9]+T[0-9]+:[0-9]+:[0-9]+",
         result,
     )
 
@@ -145,14 +162,10 @@ def test_update_stackscript_compatible_image():
             "--delimiter",
             ",",
         ]
-    ).stdout.decode()
+    ).stdout.decode().rstrip()
 
     assert re.search(
-        "[0-9]+,.*,testfoo,"
-        + images[0]
-        + ",False,[0-9]+-[0-9]+-[0-9]+T[0-9]+:[0-9]+:[0-9]+,[0-9]+-[0-9]+-[0-9]+T[0-9]+:[0-9]+:[0-9]+",
-        result,
-    )
+        "[0-9]+,.*,stack_script_[0-9]+," + images[0] + ",False,[0-9]+-[0-9]+-[0-9]+T[0-9]+:[0-9]+:[0-9]+,[0-9]+-[0-9]+-[0-9]+T[0-9]+:[0-9]+:[0-9]+", result)
 
 
 @pytest.fixture(scope="session")
