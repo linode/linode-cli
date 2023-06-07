@@ -3,8 +3,8 @@ import os
 import re
 import subprocess
 import tempfile
-from typing import List
 from sys import platform
+from typing import List
 
 import pytest
 
