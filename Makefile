@@ -54,7 +54,7 @@ testunit:
 
 .PHONY: testint
 testint:
-	pytest tests/integration/${INTEGRATION_TEST_PATH} ${TEST_CASE_COMMAND}
+	pytest tests/integration/${INTEGRATION_TEST_PATH} ${TEST_CASE_COMMAND} --disable-warnings
 
 .PHONY: testall
 testall:

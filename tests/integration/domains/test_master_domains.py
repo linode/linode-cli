@@ -1,20 +1,18 @@
-import os
 import re
 import time
 
 import pytest
 
 from tests.integration.helpers import (
-    FAILED_STATUS_CODE,
     delete_target_id,
+    exec_failing_test_command,
     exec_test_command,
-    exec_failing_test_command
 )
 
 BASE_CMD = ["linode-cli", "domains"]
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture
 def setup_master_domains():
     timestamp = str(int(time.time()))
     # Create domain
@@ -50,7 +48,18 @@ def test_create_domain_fails_without_spcified_type():
     # get debug output from linode-cli to a temporary file..
     # not all output from the linode-cli goes to stdout, stderr
 
-    result = exec_failing_test_command(BASE_CMD+["create", "--domain", "example.bc-" + timestamp + ".com", "--soa_email", "pthiel@linode.com", "--text", "--no-headers"]).stderr.decode()
+    result = exec_failing_test_command(
+        BASE_CMD
+        + [
+            "create",
+            "--domain",
+            "example.bc-" + timestamp + ".com",
+            "--soa_email",
+            "pthiel@linode.com",
+            "--text",
+            "--no-headers",
+        ]
+    ).stderr.decode()
 
     assert "Request failed: 400" in result
     assert "type is required" in result
@@ -58,7 +67,18 @@ def test_create_domain_fails_without_spcified_type():
 
 def test_create_master_domain_fails_without_soa_email():
     timestamp = str(int(time.time()))
-    result = exec_failing_test_command(BASE_CMD+["create", "--type", "master", "--domain", "example.bc-" + timestamp + ".com", "--text", "--no-headers"]).stderr.decode()
+    result = exec_failing_test_command(
+        BASE_CMD
+        + [
+            "create",
+            "--type",
+            "master",
+            "--domain",
+            "example.bc-" + timestamp + ".com",
+            "--text",
+            "--no-headers",
+        ]
+    ).stderr.decode()
 
     assert "Request failed: 400" in result
     assert "soa_email	soa_email required when type=master" in result

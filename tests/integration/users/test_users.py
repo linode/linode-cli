@@ -8,7 +8,7 @@ BASE_CMD = ["linode-cli", "users"]
 unique_user = "test-user-" + str(int(time.time()))
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="package", autouse=True)
 def setup_test_users():
     yield "setup"
     remove_users()
@@ -18,7 +18,7 @@ def remove_users():
     exec_test_command(BASE_CMD + ["delete", unique_user])
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def test_create_user():
     exec_test_command(
         BASE_CMD

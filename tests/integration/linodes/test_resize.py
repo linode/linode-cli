@@ -14,7 +14,7 @@ from tests.integration.linodes.helpers_linodes import (
 )
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="session")
 def setup_resize():
     plan = (
         exec_test_command(

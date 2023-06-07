@@ -185,6 +185,8 @@ def create_slave_domain():
 # Test helpers specific to Linodes test suite
 @pytest.fixture
 def create_linode_with_label():
+    timestamp = str(int(time.time()) + randint(10, 1000))
+    label = "cli" + timestamp
     result = (
         exec_test_command(
             LINODE_BASE_CMD
@@ -197,7 +199,7 @@ def create_linode_with_label():
                 "--image",
                 DEFAULT_TEST_IMAGE,
                 "--label",
-                "cli-1",
+                label,
                 "--root_pass",
                 DEFAULT_RANDOM_PASS,
                 "--text",
@@ -255,33 +257,25 @@ def create_linode_min_req():
 
 @pytest.fixture
 def create_linode_wo_image():
-    exec_test_command(
-        LINODE_BASE_CMD
-        + [
-            "create",
-            "--no-defaults",
-            "--label",
-            "cli-2",
-            "--type",
-            DEFAULT_LINODE_TYPE,
-            "--region",
-            DEFAULT_REGION,
-            "--root_pass",
-            DEFAULT_RANDOM_PASS,
-        ]
-    ).stdout.decode()
-
+    label = "cli" + str(int(time.time()) + randint(10, 1000))
     linode_id = (
         exec_test_command(
             LINODE_BASE_CMD
             + [
-                "list",
+                "create",
+                "--no-defaults",
                 "--label",
-                "cli-2",
-                "--text",
-                "--no-headers",
+                label,
+                "--type",
+                DEFAULT_LINODE_TYPE,
+                "--region",
+                DEFAULT_REGION,
+                "--root_pass",
+                DEFAULT_RANDOM_PASS,
                 "--format",
                 "id",
+                "--no-headers",
+                "--text",
             ]
         )
         .stdout.decode()

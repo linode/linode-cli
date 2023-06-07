@@ -15,7 +15,7 @@ from tests.integration.linodes.helpers_linodes import (
 )
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture
 def setup_rebuild():
     linode_id = create_linode_and_wait()
 

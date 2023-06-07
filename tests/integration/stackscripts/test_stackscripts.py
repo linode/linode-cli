@@ -4,6 +4,7 @@ import time
 import pytest
 
 from tests.integration.helpers import (
+    delete_target_id,
     exec_failing_test_command,
     exec_test_command,
 )
@@ -37,29 +38,8 @@ def get_linode_image_lists():
     return images
 
 
-def get_private_stackscript():
-    private_stackscript = (
-        exec_test_command(
-            BASE_CMD
-            + [
-                "list",
-                "--is_public",
-                "false",
-                "--text",
-                "--no-headers",
-                "--format",
-                "id",
-            ]
-        )
-        .stdout.decode()
-        .rstrip()
-    )
-
-    return private_stackscript.splitlines()
-
-
-@pytest.fixture(scope="session", autouse=True)
-def test_create_stackscript():
+@pytest.fixture(scope="package", autouse=True)
+def create_stackscript():
     result = exec_test_command(
         BASE_CMD
         + [
@@ -85,6 +65,12 @@ def test_create_stackscript():
         result,
     )
 
+    stackscript_id = result.split(",")[0]
+
+    yield stackscript_id
+
+    delete_target_id(target="stackscripts", id=stackscript_id)
+
 
 def test_list_stackscripts():
     result = exec_test_command(BASE_CMD + ["list", "--text"]).stdout.decode()
@@ -108,7 +94,7 @@ def test_list_stackscripts():
     assert re.search("[0-9]+,([A-z]|[0-9])+,True", output[0])
 
 
-def test_create_stackscrip_fails_without_image():
+def test_create_stackscript_fails_without_image():
     result = exec_failing_test_command(
         BASE_CMD
         + [
@@ -151,9 +137,9 @@ def test_view_private_stackscript():
     )
 
 
-def test_update_stackscript_compatible_image():
+def test_update_stackscript_compatible_image(create_stackscript):
     images = get_linode_image_lists()
-    private_stackscript = get_private_stackscript()
+    private_stackscript = create_stackscript
     result = (
         exec_test_command(
             BASE_CMD
@@ -161,7 +147,7 @@ def test_update_stackscript_compatible_image():
                 "update",
                 "--images",
                 images[0],
-                private_stackscript[0],
+                private_stackscript,
                 "--text",
                 "--no-headers",
                 "--delimiter",
@@ -180,10 +166,11 @@ def test_update_stackscript_compatible_image():
     )
 
 
-@pytest.fixture(scope="session")
-def test_update_stackscript_to_be_compatible_with_multiple_images():
+def test_update_stackscript_to_be_compatible_with_multiple_images(
+    create_stackscript,
+):
     images = get_linode_image_lists()
-    private_stackscript = get_private_stackscript()
+    private_stackscript = create_stackscript
 
     result = exec_test_command(
         BASE_CMD
@@ -193,7 +180,7 @@ def test_update_stackscript_to_be_compatible_with_multiple_images():
             images[0],
             "--images",
             images[1],
-            private_stackscript[0],
+            private_stackscript,
             "--text",
             "--no-headers",
             "--delimiter",
@@ -204,8 +191,10 @@ def test_update_stackscript_to_be_compatible_with_multiple_images():
     assert images[1] in result
 
 
-def test_fail_to_deploy_stackscript_to_linode_from_incompatible_image():
-    private_stackscript = get_private_stackscript()
+def test_fail_to_deploy_stackscript_to_linode_from_incompatible_image(
+    create_stackscript,
+):
+    private_stackscript = create_stackscript
     linode_plan = "g6-standard-1"
     linode_region = "us-east"
 
@@ -215,7 +204,7 @@ def test_fail_to_deploy_stackscript_to_linode_from_incompatible_image():
             "linodes",
             "create",
             "--stackscript_id",
-            private_stackscript[0],
+            private_stackscript,
             "--type",
             linode_plan,
             "--image",
@@ -233,11 +222,8 @@ def test_fail_to_deploy_stackscript_to_linode_from_incompatible_image():
     assert "Request failed: 400" in result
 
 
-@pytest.mark.usefixtures(
-    "test_update_stackscript_to_be_compatible_with_multiple_images"
-)
-def test_deploy_linode_from_stackscript():
-    private_stackscript = get_private_stackscript()
+def test_deploy_linode_from_stackscript(create_stackscript):
+    private_stackscript = create_stackscript
     images = get_linode_image_lists()
     linode_plan = "g6-standard-1"
     linode_region = "us-east"
@@ -248,7 +234,7 @@ def test_deploy_linode_from_stackscript():
             "linodes",
             "create",
             "--stackscript_id",
-            private_stackscript[0],
+            private_stackscript,
             "--type",
             linode_plan,
             "--image",
@@ -269,3 +255,7 @@ def test_deploy_linode_from_stackscript():
     assert re.search(
         "[0-9]+," + linode_region + "," + linode_plan + "," + images[0], result
     )
+
+    linode_id = result.split(",")[0]
+
+    delete_target_id("linodes", linode_id)

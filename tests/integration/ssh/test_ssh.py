@@ -1,7 +1,7 @@
 import os
 import re
-from sys import platform
 import time
+from sys import platform
 
 import pytest
 
@@ -13,10 +13,8 @@ NUM_OF_RETRIES = 10
 SSH_SLEEP_PERIOD = 50
 
 
-@pytest.mark.skipif(
-    platform == "win32", reason="Test N/A on Windows"
-)
-@pytest.fixture(scope="session", autouse=True)
+@pytest.mark.skipif(platform == "win32", reason="Test N/A on Windows")
+@pytest.fixture(scope="package")
 def test_create_a_linode_in_running_state(ssh_key_pair_generator):
     pubkey_file, privkey_file = ssh_key_pair_generator
 
@@ -66,18 +64,14 @@ def test_create_a_linode_in_running_state(ssh_key_pair_generator):
     delete_target_id(target="linodes", id=linode_id)
 
 
-@pytest.mark.skipif(
-    platform == "win32", reason="Test N/A on Windows"
-)
+@pytest.mark.skipif(platform == "win32", reason="Test N/A on Windows")
 def test_display_ssh_plugin_usage_info():
     result = exec_test_command(BASE_CMD + ["-h"]).stdout.decode()
     assert "[USERNAME@]LABEL" in result
     assert "uses the Linode's SLAAC address for SSH" in result
 
 
-@pytest.mark.skipif(
-    platform == "win32", reason="Test N/A on Windows"
-)
+@pytest.mark.skipif(platform == "win32", reason="Test N/A on Windows")
 def test_fail_to_ssh_to_nonexistent_linode():
     os.system("linode-cli ssh root@aasdkjlf 2>&1 | tee /tmp/output_file.txt")
 
@@ -86,9 +80,7 @@ def test_fail_to_ssh_to_nonexistent_linode():
     assert "No Linode found for label aasdkjlf" in result
 
 
-@pytest.mark.skipif(
-    platform == "win32", reason="Test N/A on Windows"
-)
+@pytest.mark.skipif(platform == "win32", reason="Test N/A on Windows")
 def test_ssh_to_linode_and_get_kernel_version(
     test_create_a_linode_in_running_state, ssh_key_pair_generator
 ):
@@ -126,9 +118,7 @@ def test_ssh_to_linode_and_get_kernel_version(
     assert re.search("[0-9]\.[0-9]*\.[0-9]*-.*-virt", output)
 
 
-@pytest.mark.skipif(
-    platform == "win32", reason="Test N/A on Windows"
-)
+@pytest.mark.skipif(platform == "win32", reason="Test N/A on Windows")
 def test_check_vm_for_ipv4_connectivity(
     test_create_a_linode_in_running_state, ssh_key_pair_generator
 ):

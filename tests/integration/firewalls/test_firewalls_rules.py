@@ -9,7 +9,7 @@ BASE_CMD = ["linode-cli", "firewalls", "rules-update"]
 FIREWALL_LABEL = "label-fw-test" + str(int(time.time()))
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture
 def create_firewall():
     firewall_id = (
         exec_test_command(

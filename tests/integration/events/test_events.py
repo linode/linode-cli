@@ -8,7 +8,7 @@ from tests.integration.helpers import delete_target_id, exec_test_command
 BASE_CMD = ["linode-cli", "events"]
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture
 def events_setup():
     timestamp = str(int(time.time()))
     # Create domain

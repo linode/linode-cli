@@ -14,7 +14,7 @@ timestamp = str(int(time.time()))
 VOLUME_CREATION_WAIT = 5
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="package")
 def setup_test_volumes_resize():
     volume_id = (
         exec_test_command(

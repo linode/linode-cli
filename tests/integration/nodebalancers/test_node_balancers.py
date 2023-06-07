@@ -13,7 +13,7 @@ BASE_CMD = ["linode-cli", "nodebalancers"]
 nodebalancer_created = "[0-9]+,balancer[0-9]+,us-east,[0-9]+-[0-9]+-[0-9]+-[0-9]+.ip.linodeusercontent.com,0"
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture
 def setup_test_node_balancers():
     # create a default nodebalancer
     nodebalancer_id = (
@@ -350,7 +350,7 @@ def test_update_node_port(setup_test_node_balancers):
         ]
     ).stdout.decode()
 
-    assert ("[0-9]+,.," + new_address + ",Unknown,100,accept", result)
+    assert "[0-9]+,.," + new_address + ",Unknown,100,accept", result
 
 
 def test_fail_to_update_node_to_public_ipv4_address(setup_test_node_balancers):
@@ -390,8 +390,6 @@ def test_remove_node_from_configuration_profile(setup_test_node_balancers):
     )
 
 
-# Test below this needs to be ran last and in order
-@pytest.fixture(scope="session")
 def test_update_the_port_of_a_configuration_profile(setup_test_node_balancers):
     nodebalancer_id = setup_test_node_balancers[0]
     config_id = setup_test_node_balancers[1]
@@ -418,7 +416,6 @@ def test_update_the_port_of_a_configuration_profile(setup_test_node_balancers):
     )
 
 
-@pytest.fixture(scope="session")
 def test_add_additional_configuration_profile(setup_test_node_balancers):
     nodebalancer_id = setup_test_node_balancers[0]
 
@@ -437,16 +434,26 @@ def test_add_additional_configuration_profile(setup_test_node_balancers):
     ).stdout.decode()
 
     assert re.search(
-        "[0-9]+,81,http,roundrobin,none,True,recommended,,", result
+        "^[0-9](.*),81,http,roundrobin,none,True,recommended,,", result
     )
 
 
-@pytest.mark.usefixtures(
-    "test_add_additional_configuration_profile",
-    "test_update_the_port_of_a_configuration_profile",
-)
 def test_list_multiple_configuration_profile(setup_test_node_balancers):
     nodebalancer_id = setup_test_node_balancers[0]
+
+    result = exec_test_command(
+        BASE_CMD
+        + [
+            "config-create",
+            nodebalancer_id,
+            "--text",
+            "--no-headers",
+            "--delimiter",
+            ",",
+            "--port",
+            "82",
+        ]
+    )
 
     result = exec_test_command(
         BASE_CMD
@@ -461,8 +468,8 @@ def test_list_multiple_configuration_profile(setup_test_node_balancers):
     ).stdout.decode()
 
     assert re.search(
-        "[0-9]+,81,http,roundrobin,none,True,recommended,,", result
+        "[0-9]+,8[0-1],http,roundrobin,none,True,recommended,,", result
     )
     assert re.search(
-        "[0-9]+,10700,tcp,roundrobin,none,True,recommended,,", result
+        "[0-9]+,82,http,roundrobin,none,True,recommended,,", result
     )
