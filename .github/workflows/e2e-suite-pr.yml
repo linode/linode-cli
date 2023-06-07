@@ -116,7 +116,7 @@ jobs:
 
       - run: make INTEGRATION_TEST_PATH="${{ github.event.client_payload.slash_command.tests }}" TEST_CASE="${{ github.event.client_payload.slash_command.testcase }}" testint
         env:
-          LINODE_CLI_TOKEN: ${{ secrets.LINODE_TOKEN }}
+          LINODE_CLI_TOKEN: ${{ secrets.LINODE_TOKEN_2 }}
 
       - uses: actions/github-script@v5
         id: update-check-run

@@ -10,10 +10,10 @@ from tests.integration.helpers import (
 )
 
 BASE_CMD = ["linode-cli", "firewalls"]
-FIREWALL_LABEL = "example-firewall-label"
+FIREWALL_LABEL = "label-fw-test" + str(int(time.time()))
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture
 def firewalls_setup():
     # Create one domain for some tests in this suite
     firewall_id = (
@@ -220,9 +220,10 @@ def test_create_firewall_with_inbound_and_outbound_args():
 
 
 def test_update_firewall(firewalls_setup):
+    timestamp = str(int(time.time()))
     firewall_id = firewalls_setup
-    updated_tag = "updated-tag"
-    updated_label = "updated-label"
+    updated_tag = "updated-tag" + timestamp
+    updated_label = "updated-" + timestamp
 
     result = (
         exec_test_command(

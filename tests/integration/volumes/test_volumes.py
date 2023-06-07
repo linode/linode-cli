@@ -15,7 +15,7 @@ timestamp = str(int(time.time()))
 unique_tag = str(int(time.time())) + "-tag"
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="package")
 def setup_test_volumes():
     volume_id = (
         exec_test_command(
