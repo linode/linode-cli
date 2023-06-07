@@ -13,7 +13,7 @@ BASE_CMD = ["linode-cli", "nodebalancers"]
 nodebalancer_created = "[0-9]+,balancer[0-9]+,us-east,[0-9]+-[0-9]+-[0-9]+-[0-9]+.ip.linodeusercontent.com,0"
 
 
-@pytest.fixture
+@pytest.fixture(scope="package")
 def setup_test_node_balancers():
     # create a default nodebalancer
     nodebalancer_id = (
@@ -175,7 +175,7 @@ def test_create_nodebalancer_with_default_conf(
     assert re.search(nodebalancer_created, result)
 
 
-def test_list_nodebalancers_and_status():
+def test_list_nodebalancers_and_status(setup_test_node_balancers):
     result = exec_test_command(
         BASE_CMD
         + [
@@ -451,7 +451,7 @@ def test_list_multiple_configuration_profile(setup_test_node_balancers):
             "--delimiter",
             ",",
             "--port",
-            "82",
+            "83",
         ]
     )
 
@@ -471,5 +471,5 @@ def test_list_multiple_configuration_profile(setup_test_node_balancers):
         "[0-9]+,8[0-1],http,roundrobin,none,True,recommended,,", result
     )
     assert re.search(
-        "[0-9]+,82,http,roundrobin,none,True,recommended,,", result
+        "[0-9]+,83,http,roundrobin,none,True,recommended,,", result
     )
