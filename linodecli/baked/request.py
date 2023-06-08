@@ -9,7 +9,9 @@ class OpenAPIRequestArg:
     A single argument to a request as defined by a Schema in the OpenAPI spec
     """
 
-    def __init__(self, name, schema, required, prefix=None, list_item=False): # pylint: disable=too-many-arguments
+    def __init__(
+        self, name, schema, required, prefix=None, list_item=False
+    ):  # pylint: disable=too-many-arguments
         """
         Parses a single Schema node into a argument the CLI can use when making
         requests.

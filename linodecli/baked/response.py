@@ -3,6 +3,7 @@ Converting the processed OpenAPI Responses into something the CLI can work with
 """
 from .colors import colorize_string
 
+
 def _is_paginated(response):
     """
     Returns True if this operation has a paginated response

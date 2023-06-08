@@ -22,7 +22,7 @@ def get_version(ref="HEAD"):
     describe = get_version_env()
 
     if describe is None:
-        describe = call('git describe {} --tags'.format(ref))
+        describe = call("git describe {} --tags".format(ref))
 
     # Strip the `v` prefix if specified
     if describe.startswith("v"):
