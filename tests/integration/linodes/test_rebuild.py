@@ -15,7 +15,7 @@ from tests.integration.linodes.helpers_linodes import (
 )
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture
 def setup_rebuild():
     linode_id = create_linode_and_wait()
 
@@ -71,11 +71,19 @@ def test_rebuild_fails_with_invalid_image(setup_rebuild):
 def test_rebuild_a_linode(setup_rebuild):
     linode_id = setup_rebuild
     rebuild_image = (
-        os.popen(
-            "linode-cli images list --text --no-headers --format=id | sed -n 3p"
+        exec_test_command(
+            [
+                "linode-cli",
+                "images",
+                "list",
+                "--text",
+                "--no-headers" "--format",
+                "id",
+            ]
         )
-        .read()
+        .stdout.decode()
         .rstrip()
+        .splitlines()[4]
     )
 
     # trigger rebuild
