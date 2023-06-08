@@ -96,7 +96,7 @@ class TestAPIRequest:
     def test_do_request_get(self, mock_cli, list_operation):
         mock_response = Mock(status_code=200, reason="OK")
 
-        def validate_http_request(url, headers=None, data=None):
+        def validate_http_request(url, headers=None, data=None, **kwargs):
             assert url == "http://localhost/foo/bar?page=1&page_size=100"
             assert headers["X-Filter"] == json.dumps(
                 {"filterable_result": "cool"}
@@ -116,7 +116,7 @@ class TestAPIRequest:
     def test_do_request_post(self, mock_cli, create_operation):
         mock_response = Mock(status_code=200, reason="OK")
 
-        def validate_http_request(url, headers=None, data=None):
+        def validate_http_request(url, headers=None, data=None, **kwargs):
             assert url == "http://localhost/foo/bar"
             assert data == json.dumps(
                 {

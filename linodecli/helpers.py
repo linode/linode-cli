@@ -13,6 +13,11 @@ API_HOST_OVERRIDE = os.getenv("LINODE_CLI_API_HOST")
 API_VERSION_OVERRIDE = os.getenv("LINODE_CLI_API_VERSION")
 API_SCHEME_OVERRIDE = os.getenv("LINODE_CLI_API_SCHEME")
 
+# A user-specified path to the CA file for use in API requests.
+# This field defaults to True to enable default verification if
+# no path is specified.
+API_CA_PATH = os.getenv("LINODE_CLI_CA", True)
+
 
 def handle_url_overrides(url):
     """

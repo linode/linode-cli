@@ -9,6 +9,7 @@ from importlib import import_module
 
 import requests
 import yaml
+from rich import box
 from rich import print as rprint
 from rich.table import Table
 
@@ -235,6 +236,27 @@ def help_with_ops(ops, config):
     """
     Prints help output with options from the API spec
     """
+
+    # Environment variables overrides
+    print("\nEnvironment variables:")
+    env_variables = {
+        "LINODE_CLI_TOKEN": "A Linode Personal Access Token for the CLI to make requests with. "
+        "If specified, the configuration step will be skipped.",
+        "LINODE_CLI_CA": "The path to a custom CA file to verify API requests against.",
+        "LINODE_CLI_API_HOST": "Overrides the target host for API requests. (e.g. 'api.linode.com')",
+        "LINODE_CLI_API_VERSION": "Overrides the target Linode API version for API requests. (e.g. 'v4beta')",
+        "LINODE_CLI_API_SCHEME": "Overrides the target scheme used for API requests. (e.g. 'https')",
+    }
+
+    table = Table(show_header=True, header_style="", box=box.SQUARE)
+    table.add_column("Name")
+    table.add_column("Description")
+
+    for k, v in env_variables.items():
+        table.add_row(k, v)
+
+    rprint(table)
+
     # commands to manage CLI users (don't call out to API)
     print("\nCLI user management commands:")
     um_commands = [["configure", "set-user", "show-users"], ["remove-user"]]

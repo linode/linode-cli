@@ -11,6 +11,8 @@ from pathlib import Path
 
 import requests
 
+from linodecli.helpers import API_CA_PATH
+
 TOKEN_GENERATION_URL = "https://cloud.linode.com/profile/tokens"
 # This is used for web-based configuration
 OAUTH_CLIENT_ID = "5823b4627e45411d18e9"
@@ -76,7 +78,9 @@ def _do_request(
         headers["Authorization"] = f"Bearer {token}"
         headers["Content-type"] = "application/json"
 
-    result = method(base_url + url, headers=headers, json=body)
+    result = method(
+        base_url + url, headers=headers, json=body, verify=API_CA_PATH
+    )
 
     _handle_response_status(
         result, exit_on_error=exit_on_error, status_validator=status_validator
@@ -92,7 +96,10 @@ def _check_full_access(base_url, token):
     }
 
     result = requests.get(
-        base_url + "/profile/grants", headers=headers, timeout=120
+        base_url + "/profile/grants",
+        headers=headers,
+        timeout=120,
+        verify=API_CA_PATH,
     )
 
     _handle_response_status(result, exit_on_error=True)
