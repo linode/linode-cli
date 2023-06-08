@@ -1,5 +1,7 @@
+"""
+Converting the processed OpenAPI Responses into something the CLI can work with
+"""
 from .colors import colorize_string
-
 
 def _is_paginated(response):
     """
@@ -11,10 +13,8 @@ def _is_paginated(response):
         response.schema.properties is not None
         and len(response.schema.properties) == 4
         and all(
-            [
-                c in response.schema.properties
-                for c in ("pages", "page", "results", "data")
-            ]
+            c in response.schema.properties
+            for c in ("pages", "page", "results", "data")
         )
     )
 
