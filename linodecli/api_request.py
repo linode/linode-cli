@@ -96,7 +96,6 @@ def do_request(
     return result
 
 
-@staticmethod
 def _merge_results_data(results: Iterable[dict]):
     """Merge multiple json response into one"""
 
