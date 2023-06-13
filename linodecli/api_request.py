@@ -288,7 +288,7 @@ def _attempt_warn_old_version(ctx, result):
 
         if new_version_exists:
             print(
-                f"!!!!!!!!!!!!!!The API responded with version {spec_version}, which is newer than "
+                f"The API responded with version {spec_version}, which is newer than "
                 f"the CLI's version of {ctx.spec_version}.  Please update the CLI to get "
                 "access to the newest features.  You can update with a "
                 "simple `pip3 install --upgrade linode-cli`",

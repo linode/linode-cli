@@ -41,9 +41,6 @@ class OpenAPIResponseAttr:
         #: The name of this attribute, which is the full json path to it within the schema
         self.name = name if prefix is None else prefix + "." + name
 
-        #: TODO: Not sure what this is for
-        self.value = None
-
         #: If this attribute is filterable in GET requests
         self.filterable = schema.extensions.get("linode-filterable")
 
@@ -88,6 +85,8 @@ class OpenAPIResponseAttr:
     def _get_value(self, model):
         """
         Walk through json paths to find value
+
+        :param model: adjusted JSON data from response
         """
         value = model
         for part in self.name.split("."):

@@ -97,10 +97,6 @@ def _parse_request_model(schema, prefix=None, list_of_objects=False):
 
     if schema.properties is not None:
         for k, v in schema.properties.items():
-            if isinstance(v, Reference):
-                # TODO: can probably remove this at some point,
-                # reference's used to show up in this loop but shouldn't anymore
-                continue
             if v.type == "object":
                 # nested objects receive a prefix and are otherwise parsed normally
                 pref = prefix + "." + k if prefix else k
