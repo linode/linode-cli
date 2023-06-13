@@ -1,8 +1,6 @@
 """
 Request details for a CLI Operation
 """
-from openapi3.general import Reference
-
 
 class OpenAPIRequestArg:
     """
