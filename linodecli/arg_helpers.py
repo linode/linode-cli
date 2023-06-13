@@ -243,7 +243,8 @@ def help_with_ops(ops, config):
     env_variables = {
         "LINODE_CLI_TOKEN": "A Linode Personal Access Token for the CLI to make requests with. "
         "If specified, the configuration step will be skipped.",
-        "LINODE_CLI_CA": "The path to a custom Certificate Authority file to verify API requests against.",
+        "LINODE_CLI_CA": "The path to a custom Certificate Authority file to verify "
+        "API requests against.",
         "LINODE_CLI_API_HOST": "Overrides the target host for API requests. "
         "(e.g. 'api.linode.com')",
         "LINODE_CLI_API_VERSION": "Overrides the target Linode API version for API requests. "
