@@ -127,13 +127,16 @@ def _default_thing_input(
         if exists and choice_idx == 1:
             return None
 
+        # We need to shift the index to account for the "No Default" option
+        choice_idx -= idx_offset
+
         # Validate index
-        if choice_idx > idx_offset + len(things) or choice_idx < 1:
+        if choice_idx >= len(things) or choice_idx < 0:
             print(error)
             continue
 
         # Choice was valid; return
-        return things[choice_idx - idx_offset]
+        return things[choice_idx]
 
 
 def _config_get_with_default(
