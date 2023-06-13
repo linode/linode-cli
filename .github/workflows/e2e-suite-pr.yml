@@ -83,7 +83,7 @@ jobs:
 
       - uses: actions/github-script@v6
         id: update-check-run
-        if: ${{ always() }}
+        if: ${{ inputs.pull_request_number != '' && fromJson(steps.commit-hash.outputs.data).repository.pullRequest.headRef.target.oid == inputs.sha }}
         env:
           number: ${{ inputs.pull_request_number }}
           job: ${{ github.job }}
