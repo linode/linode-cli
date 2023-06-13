@@ -100,7 +100,7 @@ def _default_thing_input(
 
     # If there is a current value, users should have the option to clear it
     if exists:
-        print(f" 1 - No Default")
+        print(" 1 - No Default")
 
     for ind, thing in enumerate(things):
         print(f" {ind + idx_offset} - {thing}")
