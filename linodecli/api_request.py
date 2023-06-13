@@ -20,6 +20,8 @@ def get_all_pages(ctx, operation: OpenAPIOperation, args: List[str]):
     """
     Receive all pages of a resource from multiple
     API responses then merge into one page.
+
+    :param ctx: The main CLI object
     """
 
     ctx.page_size = 500
@@ -34,7 +36,7 @@ def get_all_pages(ctx, operation: OpenAPIOperation, args: List[str]):
         result = _merge_results_data(
             itertools.chain(
                 (result,),
-                _get_all_pages_results_generator(
+                _generate_all_pages_results(
                     ctx, operation, args, pages_needed
                 ),
             )
@@ -54,6 +56,8 @@ def do_request(
     """
     Makes a request to an operation's URL and returns the resulting JSON, or
     prints and error if a non-200 comes back
+
+    :param ctx: The main CLI object
     """
     # TODO: Revisit using pre-built calls from OpenAPI
     method = getattr(requests, operation.method)
@@ -115,12 +119,15 @@ def _merge_results_data(results: Iterable[dict]):
     return merged_result
 
 
-def _get_all_pages_results_generator(
+def _generate_all_pages_results(
     ctx,
     operation: OpenAPIOperation,
     args: List[str],
     pages_needed: Iterable[int],
 ):
+    """
+    :param ctx: The main CLI object
+    """
     for p in pages_needed:
         ctx.page = p
         yield do_request(ctx, operation, args).json()
