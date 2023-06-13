@@ -16,11 +16,11 @@ from tests.integration.linodes.helpers_linodes import (
     wait_until,
 )
 
-timestamp = str(time.time())
+timestamp = str(int(time.time()))
 linode_label = DEFAULT_LABEL + timestamp
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="package", autouse=True)
 def setup_linodes():
     linode_id = (
         exec_test_command(
@@ -67,7 +67,7 @@ def test_create_linodes_with_a_label(create_linode_with_label):
     result = create_linode_with_label
 
     assert re.search(
-        "cli-1,us-east,g6-standard-2," + DEFAULT_TEST_IMAGE, result
+        "^cli(.*),us-east,g6-standard-2," + DEFAULT_TEST_IMAGE, result
     )
 
 

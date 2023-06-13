@@ -1,22 +1,35 @@
+import time
+from random import randint
+
 import pytest
 
-from tests.integration.helpers import exec_test_command, os, remove_lke_clusters
+from tests.integration.helpers import exec_test_command, remove_lke_clusters
 
 BASE_CMD = ["linode-cli", "lke"]
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(autouse=True)
 def setup_test_clusters():
     yield "setup"
-    # just clean up method required for this test suite
     remove_lke_clusters()
 
 
 def test_deploy_an_lke_cluster():
+    timestamp = str(int(time.time()) + randint(10, 1000))
+    label = "cluster_test" + timestamp
+
     lke_version = (
-        os.popen("linode-cli lke versions-list --text --no-headers | head -1")
-        .read()
+        exec_test_command(
+            BASE_CMD
+            + [
+                "versions-list",
+                "--text",
+                "--no-headers",
+            ]
+        )
+        .stdout.decode()
         .rstrip()
+        .splitlines()[0]
     )
 
     result = exec_test_command(
@@ -26,7 +39,7 @@ def test_deploy_an_lke_cluster():
             "--region",
             "us-east",
             "--label",
-            "cli-test-1",
+            label,
             "--node_pools.type",
             "g6-standard-1",
             "--node_pools.count",
@@ -45,4 +58,9 @@ def test_deploy_an_lke_cluster():
         ]
     ).stdout.decode()
 
-    assert "cli-test-1,us-east," + lke_version in result
+    assert label + ",us-east," + lke_version in result
+
+    # Sleep needed here for proper deletion of linodes that are related to lke cluster
+    time.sleep(15)
+
+    remove_lke_clusters()

@@ -11,11 +11,6 @@ BASE_CMD = ["linode-cli", "tags"]
 unique_tag = str(int(time.time())) + "-tag"
 
 
-@pytest.fixture(scope="session", autouse=True)
-def setup_test_tags():
-    yield "setup"
-
-
 def test_display_tags():
     exec_test_command(BASE_CMD + ["list"])
 

@@ -12,7 +12,7 @@ from tests.integration.helpers import (
 BASE_CMD = ["linode-cli", "domains"]
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture
 def domain_records_setup():
     timestamp = str(int(time.time()))
     # Create domain

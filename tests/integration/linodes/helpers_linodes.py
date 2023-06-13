@@ -1,4 +1,3 @@
-import os
 import time
 
 from tests.integration.helpers import exec_test_command
@@ -9,38 +8,46 @@ DEFAULT_RANDOM_PASS = (
     .rstrip()
 )
 DEFAULT_REGION = "us-east"
+
 DEFAULT_TEST_IMAGE = (
-    os.popen(
-        'linode-cli images list --format id --text --no-header | egrep "linode\/.*" | head -n 1'
+    exec_test_command(
+        [
+            "linode-cli",
+            "images",
+            "list",
+            "--text",
+            "--format",
+            "id",
+            "--no-headers",
+            "--is_public",
+            "True",
+        ]
     )
-    .read()
+    .stdout.decode()
     .rstrip()
+    .splitlines()[0]
 )
+
 DEFAULT_LINODE_TYPE = (
-    os.popen(
-        "linode-cli linodes types --text --no-headers --format='id' | xargs | awk '{ print $1 }'"
+    exec_test_command(
+        [
+            "linode-cli",
+            "linodes",
+            "types",
+            "--text",
+            "--no-headers",
+            "--format",
+            "id",
+        ]
     )
-    .read()
+    .stdout.decode()
     .rstrip()
+    .splitlines()[0]
 )
+
 DEFAULT_LABEL = "cli-default"
+
 BASE_CMD = ["linode-cli", "linodes"]
-
-
-def generate_random_ssh_key():
-    key_path = "/tmp/cli-e2e-key"
-    os.popen("ssh-keygen -q -t rsa -N ' ' -f " + key_path)
-    time.sleep(1)
-    private_ssh_key = (
-        exec_test_command(["cat", key_path]).stdout.decode().rstrip()
-    )
-    public_ssh_key = (
-        exec_test_command(["cat", key_path + ".pub"]).stdout.decode().rstrip()
-    )
-
-    private_keypath = key_path
-    public_keypath = key_path + ".pub"
-    return private_ssh_key, public_ssh_key, private_keypath, public_keypath
 
 
 def wait_until(linode_id: "str", timeout, status: "str", period=5):
@@ -66,20 +73,6 @@ def wait_until(linode_id: "str", timeout, status: "str", period=5):
 
 def create_linode():
     region = "us-east"
-    linode_type = (
-        os.popen(
-            "linode-cli linodes types --text --no-headers --format='id' | xargs | awk '{ print $1 }'"
-        )
-        .read()
-        .rstrip()
-    )
-    test_image = (
-        os.popen(
-            'linode-cli images list --format id --text --no-header | egrep "linode\/.*" | head -n 1'
-        )
-        .read()
-        .rstrip()
-    )
 
     # create linode
     linode_id = (
@@ -89,11 +82,11 @@ def create_linode():
                 "linodes",
                 "create",
                 "--type",
-                linode_type,
+                DEFAULT_LINODE_TYPE,
                 "--region",
                 region,
                 "--image",
-                test_image,
+                DEFAULT_TEST_IMAGE,
                 "--root_pass",
                 DEFAULT_RANDOM_PASS,
                 "--format=id",
@@ -110,23 +103,38 @@ def create_linode():
 
 def shutdown_linodes():
     linode_ids = (
-        os.popen(
-            'linode-cli --text --no-headers linodes list --format "id" | grep -v "linuke-keep" | awk "{ print $1 }" | xargs'
+        exec_test_command(
+            [
+                BASE_CMD,
+                "linodes",
+                "list",
+                "--format",
+                "id",
+            ]
         )
-        .read()
-        .split()
+        .stdout.decode()
+        .rstrip()
+        .splitlines()
     )
+
     for id in linode_ids:
         exec_test_command(["linode-cli", "linodes", "shutdown", id])
 
 
 def remove_linodes():
     linode_ids = (
-        os.popen(
-            'linode-cli --text --no-headers linodes list --format "id" | grep -v "linuke-keep" | awk "{ print $1 }" | xargs'
+        exec_test_command(
+            [
+                BASE_CMD,
+                "linodes",
+                "list",
+                "--format",
+                "id",
+            ]
         )
-        .read()
-        .split()
+        .stdout.decode()
+        .rstrip()
+        .splitlines()
     )
 
     for id in linode_ids:

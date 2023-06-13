@@ -1,4 +1,5 @@
 import argparse
+import sys
 from unittest.mock import patch
 
 import pytest
@@ -8,9 +9,10 @@ import linodecli.plugins.ssh as plugin
 from linodecli.plugins import PluginContext
 
 
-def test_print_help(capsys: CaptureFixture, platform_os_type):
-    if platform_os_type == "Windows":
-        pytest.skip("This test does not run on Windows")
+@pytest.mark.skipif(
+    sys.platform.startswith("win"), reason="Test N/A on Windows"
+)
+def test_print_help(capsys: CaptureFixture):
     with pytest.raises(SystemExit) as err:
         plugin.call(["--help"], None)
 
@@ -32,9 +34,10 @@ def test_windows_error(capsys: CaptureFixture):
     assert "This plugin is not currently supported in Windows." in captured_text
 
 
-def test_target_not_running(mock_cli, capsys: CaptureFixture, platform_os_type):
-    if platform_os_type == "Windows":
-        pytest.skip("This test does not run on Windows")
+@pytest.mark.skipif(
+    sys.platform.startswith("win"), reason="Test N/A on Windows"
+)
+def test_target_not_running(mock_cli, capsys: CaptureFixture):
     test_label = "totally-real-label"
 
     def mock_call_operation(*a, filters=None):
@@ -57,9 +60,10 @@ def test_target_not_running(mock_cli, capsys: CaptureFixture, platform_os_type):
     )
 
 
-def test_target_success(mock_cli, capsys: CaptureFixture, platform_os_type):
-    if platform_os_type == "Windows":
-        pytest.skip("This test does not run on Windows")
+@pytest.mark.skipif(
+    sys.platform.startswith("win"), reason="Test N/A on Windows"
+)
+def test_target_success(mock_cli, capsys: CaptureFixture):
     test_label = "totally-real-label"
     test_user = "test"
     test_ip = "123.123.123.123"
