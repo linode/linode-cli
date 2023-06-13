@@ -11,6 +11,8 @@ import requests
 from packaging import version
 from requests import Response
 
+from linodecli.helpers import API_CA_PATH
+
 
 def do_request(
     ctx,
@@ -51,7 +53,7 @@ def do_request(
     if ctx.debug_request:
         _print_request_debug_info(method, url, headers, body)
 
-    result = method(url, headers=headers, data=body)
+    result = method(url, headers=headers, data=body, verify=API_CA_PATH)
 
     # Print response debug info is requested
     if ctx.debug_request:
