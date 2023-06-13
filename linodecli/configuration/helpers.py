@@ -5,6 +5,7 @@ General helper functions for configuraiton
 import configparser
 import os
 import webbrowser
+from typing import Any, Optional
 
 from .auth import _do_get_request
 
@@ -84,7 +85,7 @@ however no known-working browsers were found."""
 
 
 def _default_thing_input(
-    ask, things, prompt, error, optional=True
+    ask, things, prompt, error, optional=True, current_value=None
 ):  # pylint: disable=too-many-arguments
     """
     Requests the user choose from a list of things with the given prompt and
@@ -92,30 +93,61 @@ def _default_thing_input(
     enter to not configure this option.
     """
     print(f"\n{ask}  Choices are:")
+
+    exists = current_value is not None
+
+    idx_offset = int(exists) + 1
+
+    # If there is a current value, users should have the option to clear it
+    if exists:
+        print(f" 1 - No Default")
+
     for ind, thing in enumerate(things):
-        print(f" {ind + 1} - {thing}")
+        print(f" {ind + idx_offset} - {thing}")
     print()
 
-    ret = ""
     while True:
-        choice = input(prompt)
+        choice_idx = input(prompt)
 
-        if choice:
-            try:
-                choice = int(choice)
-                choice = things[choice - 1]
-            except:
-                pass
-
-            if choice in list(things):
-                ret = choice
-                break
-            print(error)
-        else:
+        if not choice_idx:
+            # The user wants to skip this config option
             if optional:
-                break
+                return current_value
+
             print(error)
-    return ret
+            continue
+
+        try:
+            choice_idx = int(choice_idx)
+        except:
+            # Re-prompt if invalid value
+            continue
+
+        # The user wants to drop this default
+        if exists and choice_idx == 1:
+            return None
+
+        # Validate index
+        if choice_idx > idx_offset + len(things) or choice_idx < 1:
+            print(error)
+            continue
+
+        # Choice was valid; return
+        return things[choice_idx - idx_offset]
+
+
+def _config_get_with_default(
+    config: configparser.ConfigParser,
+    user: str,
+    field: str,
+    default: Any = None,
+) -> Optional[Any]:
+    """
+    Gets a ConfigParser value and returns a default value if the key isn't found.
+    """
+    return (
+        config.get(user, field) if config.has_option(user, field) else default
+    )
 
 
 def _handle_no_default_user(self):  # pylint: disable=too-many-branches
