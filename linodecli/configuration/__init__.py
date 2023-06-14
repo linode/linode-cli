@@ -424,7 +424,7 @@ If you prefer to supply a Personal Access Token, use `linode-cli configure --tok
             "Default Engine (Optional): ",
             "Please select a valid PostgreSQL Database Engine, or press Enter to skip",
             current_value=_config_get_with_default(
-                self.config, username, "postgres_engine"
+                self.config, username, "postgresql_engine"
             ),
         )
 
