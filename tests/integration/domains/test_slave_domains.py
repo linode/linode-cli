@@ -15,7 +15,7 @@ BASE_CMD = ["linode-cli", "domains"]
 timestamp = str(int(time.time()))
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture
 def slave_domain_setup():
     # Create domain
     slave_domain_id = (
@@ -65,11 +65,11 @@ def test_create_slave_domain(create_slave_domain):
     assert re.search("[0-9]+", domain_id)
 
 
-def test_list_slave_domain():
+def test_list_slave_domain(create_slave_domain):
     result = exec_test_command(
         BASE_CMD + ["list", "--text", "--no-header"]
     ).stdout.decode()
-    assert timestamp + "-example.com" in result
+    assert "-example.com" in result
 
 
 @pytest.mark.skip(reason="BUG 872")

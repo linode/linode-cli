@@ -72,8 +72,8 @@ except ImportError:
 
 
 def list_objects_or_buckets(
-    get_client, args
-):  # pylint: disable=too-many-locals
+    get_client, args, **kwargs
+):  # pylint: disable=too-many-locals,unused-argument
     """
     Lists buckets or objects
     """
@@ -154,7 +154,7 @@ def list_objects_or_buckets(
         sys.exit(0)
 
 
-def generate_url(get_client, args):
+def generate_url(get_client, args, **kwargs):  # pylint: disable=unused-argument
     """
     Generates a URL to an object
     """
@@ -205,7 +205,7 @@ def generate_url(get_client, args):
     print(url)
 
 
-def set_acl(get_client, args):
+def set_acl(get_client, args, **kwargs):  # pylint: disable=unused-argument
     """
     Modify Access Control List for a Bucket or Objects
     """
@@ -265,7 +265,7 @@ def set_acl(get_client, args):
     print("ACL updated")
 
 
-def show_usage(get_client, args):
+def show_usage(get_client, args, **kwargs):  # pylint: disable=unused-argument
     """
     Shows space used by all buckets in this cluster, and total space
     """
@@ -321,7 +321,9 @@ def show_usage(get_client, args):
     sys.exit(0)
 
 
-def list_all_objects(get_client, args):
+def list_all_objects(
+    get_client, args, **kwargs
+):  # pylint: disable=unused-argument
     """
     Lists all objects in all buckets
     """
@@ -445,18 +447,20 @@ def get_credentials(cli: CLI):
     return access_key, secret_key
 
 
-def regenerate_s3_credentials(cli: CLI):
+def regenerate_s3_credentials(cli: CLI, suppress_warnings=False):
     """
     Force regenerate object storage access key and secret key.
     """
     print("Regenerating Object Storage keys..")
     _get_s3_creds(cli, force=True)
     print("Done.")
-    print(
-        "Warning: Your old Object Storage keys _were not_ automatically expired!  If you want "
-        "to expire them, see `linode-cli object-storage keys-list` and "
-        "`linode-cli object-storage keys-delete [KEYID]`."
-    )
+
+    if not suppress_warnings:
+        print(
+            "WARNING: Your old Object Storage keys _were not_ automatically expired!  If you want "
+            "to expire them, see `linode-cli object-storage keys-list` and "
+            "`linode-cli object-storage keys-delete [KEYID]`."
+        )
 
 
 def call(
@@ -524,11 +528,15 @@ def call(
 
     if parsed.command in COMMAND_MAP:
         try:
-            COMMAND_MAP[parsed.command](get_client, args)
+            COMMAND_MAP[parsed.command](
+                get_client, args, suppress_warnings=parsed.suppress_warnings
+            )
         except ClientError as e:
             sys.exit(f"Error: {e}")
     elif parsed.command == "regenerate-keys":
-        regenerate_s3_credentials(context.client)
+        regenerate_s3_credentials(
+            context.client, suppress_warnings=parsed.suppress_warnings
+        )
     elif parsed.command == "configure":
         _configure_plugin(context.client)
     else:

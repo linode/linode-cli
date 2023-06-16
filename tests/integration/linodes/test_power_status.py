@@ -9,7 +9,7 @@ from tests.integration.linodes.helpers_linodes import (
 )
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture
 def setup_power_status():
     linode_id = create_linode()
 
@@ -18,7 +18,7 @@ def setup_power_status():
     delete_target_id(target="linodes", id=linode_id)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def create_linode_in_running_state():
     linode_id = create_linode_and_wait()
 

@@ -8,7 +8,7 @@ from tests.integration.linodes.helpers_linodes import create_linode_and_wait
 BASE_CMD = ["linode-cli", "networking"]
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="package")
 def setup_test_networking():
     linode_id = create_linode_and_wait()
 

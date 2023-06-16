@@ -13,6 +13,7 @@ import pytest
 import requests_mock
 
 from linodecli import configuration
+from linodecli.configuration import _default_thing_input
 
 
 class TestConfiguration:
@@ -371,3 +372,152 @@ mysql_engine = mysql/8.0.26"""
         # make sure that we set the default engine value according to type of database
         assert conf.get_value("mysql_engine") == "mysql/test-engine"
         assert conf.get_value("postgresql_engine") == "postgresql/test-engine"
+
+    def test_default_thing_input_no_current(self, monkeypatch):
+        stdout_buf = io.StringIO()
+        monkeypatch.setattr("sys.stdin", io.StringIO("1\n"))
+
+        with contextlib.redirect_stdout(stdout_buf):
+            result = _default_thing_input(
+                "foo\n", ["foo", "bar"], "prompt text", "error text"
+            )
+
+        output_lines = stdout_buf.getvalue().splitlines()
+
+        assert output_lines == [
+            "",
+            "foo",
+            "  Choices are:",
+            " 1 - foo",
+            " 2 - bar",
+            "",
+            "prompt text",
+        ]
+
+        assert result == "foo"
+
+    def test_default_thing_input_skip(self, monkeypatch):
+        stdout_buf = io.StringIO()
+        monkeypatch.setattr("sys.stdin", io.StringIO("\n"))
+
+        with contextlib.redirect_stdout(stdout_buf):
+            result = _default_thing_input(
+                "foo\n",
+                ["foo", "bar"],
+                "prompt text",
+                "error text",
+                current_value="foo",
+            )
+
+        output_lines = stdout_buf.getvalue().splitlines()
+
+        print(output_lines)
+
+        assert output_lines == [
+            "",
+            "foo",
+            "  Choices are:",
+            " 1 - No Default",
+            " 2 - foo",
+            " 3 - bar",
+            "",
+            "prompt text",
+        ]
+
+        assert result == "foo"
+
+    def test_default_thing_input_no_default(self, monkeypatch):
+        stdout_buf = io.StringIO()
+        monkeypatch.setattr("sys.stdin", io.StringIO("1\n"))
+
+        with contextlib.redirect_stdout(stdout_buf):
+            result = _default_thing_input(
+                "foo\n",
+                ["foo", "bar"],
+                "prompt text",
+                "error text",
+                current_value="foo",
+            )
+
+        output_lines = stdout_buf.getvalue().splitlines()
+
+        print(output_lines)
+
+        assert output_lines == [
+            "",
+            "foo",
+            "  Choices are:",
+            " 1 - No Default",
+            " 2 - foo",
+            " 3 - bar",
+            "",
+            "prompt text",
+        ]
+
+        assert result is None
+
+    def test_default_thing_input_valid(self, monkeypatch):
+        stdout_buf = io.StringIO()
+        monkeypatch.setattr("sys.stdin", io.StringIO("3\n"))
+
+        with contextlib.redirect_stdout(stdout_buf):
+            result = _default_thing_input(
+                "foo\n",
+                ["foo", "bar"],
+                "prompt text",
+                "error text",
+                current_value="foo",
+            )
+
+        output_lines = stdout_buf.getvalue().splitlines()
+
+        print(output_lines)
+
+        assert output_lines == [
+            "",
+            "foo",
+            "  Choices are:",
+            " 1 - No Default",
+            " 2 - foo",
+            " 3 - bar",
+            "",
+            "prompt text",
+        ]
+
+        assert result == "bar"
+
+    def test_default_thing_input_valid_no_current(self, monkeypatch):
+        stdout_buf = io.StringIO()
+        monkeypatch.setattr("sys.stdin", io.StringIO("3\n1\n"))
+
+        with contextlib.redirect_stdout(stdout_buf):
+            result = _default_thing_input(
+                "foo\n",
+                ["foo", "bar"],
+                "prompt text",
+                "error text",
+            )
+
+        output = stdout_buf.getvalue()
+
+        assert "error text" in output
+
+        assert result == "foo"
+
+    def test_default_thing_input_out_of_range(self, monkeypatch):
+        stdout_buf = io.StringIO()
+        monkeypatch.setattr("sys.stdin", io.StringIO("4\n2\n"))
+
+        with contextlib.redirect_stdout(stdout_buf):
+            result = _default_thing_input(
+                "foo\n",
+                ["foo", "bar"],
+                "prompt text",
+                "error text",
+                current_value="foo",
+            )
+
+        output = stdout_buf.getvalue()
+        assert "error text" in output
+
+        assert result == "foo"

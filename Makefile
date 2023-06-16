@@ -1,8 +1,13 @@
 #
 # Makefile for more convenient building of the Linode CLI and its baked content
 #
-
 INTEGRATION_TEST_PATH :=
+TEST_CASE_COMMAND :=
+
+ifdef TEST_CASE
+TEST_CASE_COMMAND = -k $(TEST_CASE)
+endif
+
 
 SPEC_VERSION ?= latest
 ifndef SPEC
@@ -49,12 +54,11 @@ testunit:
 
 .PHONY: testint
 testint:
-	pytest tests/integration/${INTEGRATION_TEST_PATH}
+	pytest tests/integration/${INTEGRATION_TEST_PATH} ${TEST_CASE_COMMAND} --disable-warnings
 
 .PHONY: testall
 testall:
 	pytest tests
-
 
 # Alias for unit; integration tests should be explicit
 .PHONY: test

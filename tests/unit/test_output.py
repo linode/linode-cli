@@ -162,6 +162,32 @@ class TestOutputHandler:
 
         assert output.getvalue() == mock_table.getvalue()
 
+    def test_table_output_models_no_headers(self, mock_cli):
+        mock_cli.output_handler.headers = False
+
+        output = io.StringIO()
+        header = ["h1"]
+        data = [
+            {
+                "cool": "foo",
+            },
+            {"cool": "bar"},
+        ]
+        columns = [ModelAttr("cool", True, True, "string")]
+
+        mock_cli.output_handler._table_output(
+            header, data, columns, "cool table", output
+        )
+
+        mock_table = io.StringIO()
+        tab = Table(header_style="", show_header=False, box=box.SQUARE)
+        for row in [["foo"], ["bar"]]:
+            tab.add_row(*row)
+        tab.title = "cool table"
+        rprint(tab, file=mock_table)
+
+        assert output.getvalue() == mock_table.getvalue()
+
     def test_get_columns_from_model(self, mock_cli):
         output_handler = mock_cli.output_handler
 

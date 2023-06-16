@@ -1,4 +1,3 @@
-import os
 import re
 import time
 
@@ -9,7 +8,7 @@ from tests.integration.helpers import delete_target_id, exec_test_command
 BASE_CMD = ["linode-cli", "events"]
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture
 def events_setup():
     timestamp = str(int(time.time()))
     # Create domain
@@ -60,15 +59,22 @@ def test_list_events():
 
 
 def test_view_events():
-    event_id_arr = (
-        os.popen(
-            'linode-cli events list --format "id" --text --no-headers | xargs |  awk "{ print $1 }"'
+    event_id = (
+        exec_test_command(
+            [
+                "linode-cli",
+                "events",
+                "list",
+                "--format",
+                "id",
+                "--no-headers",
+                "--text",
+            ]
         )
-        .read()
+        .stdout.decode()
         .rstrip()
-        .split()
+        .split()[0]
     )
-    event_id = event_id_arr[0]
 
     result = exec_test_command(
         BASE_CMD
@@ -78,15 +84,22 @@ def test_view_events():
 
 
 def test_mark_event_seen():
-    event_id_arr = (
-        os.popen(
-            'linode-cli events list --format "id" --text --no-headers | xargs |  awk "{ print $1 }"'
+    event_id = (
+        exec_test_command(
+            [
+                "linode-cli",
+                "events",
+                "list",
+                "--format",
+                "id",
+                "--no-headers",
+                "--text",
+            ]
         )
-        .read()
+        .stdout.decode()
         .rstrip()
-        .split()
+        .split()[0]
     )
-    event_id = event_id_arr[0]
 
     # mark event as seen
     exec_test_command(
@@ -103,17 +116,24 @@ def test_mark_event_seen():
 
 
 def test_mark_event_read():
-    event_id_arr = (
-        os.popen(
-            'linode-cli events list --format "id" --text --no-headers | xargs |  awk "{ print $1 }"'
+    event_id = (
+        exec_test_command(
+            [
+                "linode-cli",
+                "events",
+                "list",
+                "--format",
+                "id",
+                "--no-headers",
+                "--text",
+            ]
         )
-        .read()
+        .stdout.decode()
         .rstrip()
-        .split()
+        .split()[0]
     )
-    event_id = event_id_arr[0]
 
-    # mark event as seen
+    # mark event as read
     exec_test_command(
         BASE_CMD
         + ["mark-read", event_id, "--text", "--no-headers", "--delimiter", ","]
@@ -128,15 +148,22 @@ def test_mark_event_read():
 
 
 def test_filter_events_by_entity_id():
-    event_id_arr = (
-        os.popen(
-            'linode-cli events list --format "id" --text --no-headers | xargs |  awk "{ print $1 }"'
+    event_id = (
+        exec_test_command(
+            [
+                "linode-cli",
+                "events",
+                "list",
+                "--format",
+                "id",
+                "--no-headers",
+                "--text",
+            ]
         )
-        .read()
+        .stdout.decode()
         .rstrip()
-        .split()
+        .split()[0]
     )
-    event_id = event_id_arr[0]
 
     result = exec_test_command(
         BASE_CMD
