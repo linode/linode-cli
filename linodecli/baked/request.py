@@ -99,7 +99,12 @@ def _parse_request_model(schema, prefix=None, list_of_objects=False):
                 # nested objects receive a prefix and are otherwise parsed normally
                 pref = prefix + "." + k if prefix else k
                 args += _parse_request_model(v, prefix=pref)
-            elif v.type == "array" and v.items and v.items.type == "object":
+            elif (
+                    v.type == "array"
+                    and v.items
+                    and v.items.type == "object"
+                    and v.extensions.get("linode-cli-format") != "json"
+                ):
                 # handle lists of objects as a special case, where each property
                 # of the object in the list is its own argument
                 pref = prefix + "." + k if prefix else k
