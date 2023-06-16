@@ -15,6 +15,7 @@ from .auth import (
 )
 from .helpers import (
     _check_browsers,
+    _config_get_with_default,
     _default_thing_input,
     _get_config,
     _get_config_path,
@@ -385,6 +386,9 @@ If you prefer to supply a Personal Access Token, use `linode-cli configure --tok
             regions,
             "Default Region (Optional): ",
             "Please select a valid Region, or press Enter to skip",
+            current_value=_config_get_with_default(
+                self.config, username, "region"
+            ),
         )
 
         config["type"] = _default_thing_input(
@@ -392,6 +396,9 @@ If you prefer to supply a Personal Access Token, use `linode-cli configure --tok
             types,
             "Default Type of Linode (Optional): ",
             "Please select a valid Type, or press Enter to skip",
+            current_value=_config_get_with_default(
+                self.config, username, "type"
+            ),
         )
 
         config["image"] = _default_thing_input(
@@ -399,6 +406,9 @@ If you prefer to supply a Personal Access Token, use `linode-cli configure --tok
             images,
             "Default Image (Optional): ",
             "Please select a valid Image, or press Enter to skip",
+            current_value=_config_get_with_default(
+                self.config, username, "image"
+            ),
         )
 
         config["mysql_engine"] = _default_thing_input(
@@ -406,6 +416,9 @@ If you prefer to supply a Personal Access Token, use `linode-cli configure --tok
             mysql_engines,
             "Default Engine (Optional): ",
             "Please select a valid MySQL Database Engine, or press Enter to skip",
+            current_value=_config_get_with_default(
+                self.config, username, "mysql_engine"
+            ),
         )
 
         config["postgresql_engine"] = _default_thing_input(
@@ -413,6 +426,9 @@ If you prefer to supply a Personal Access Token, use `linode-cli configure --tok
             postgresql_engines,
             "Default Engine (Optional): ",
             "Please select a valid PostgreSQL Database Engine, or press Enter to skip",
+            current_value=_config_get_with_default(
+                self.config, username, "postgresql_engine"
+            ),
         )
 
         if auth_users:
@@ -421,6 +437,9 @@ If you prefer to supply a Personal Access Token, use `linode-cli configure --tok
                 auth_users,
                 "Default Option (Optional): ",
                 "Please select a valid Option, or press Enter to skip",
+                current_value=_config_get_with_default(
+                    self.config, username, "authorized_users"
+                ),
             )
 
         # save off the new configuration
@@ -449,8 +468,13 @@ If you prefer to supply a Personal Access Token, use `linode-cli configure --tok
             print(f"Active user is now {username}")
 
         for k, v in config.items():
-            if v:
-                self.config.set(username, k, v)
+            if v is None:
+                if self.config.has_option(username, k):
+                    self.config.remove_option(username, k)
+
+                continue
+
+            self.config.set(username, k, v)
 
         self.write_config()
         os.chmod(_get_config_path(), 0o600)

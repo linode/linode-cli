@@ -1,24 +1,30 @@
 on:
   pull_request:
-  repository_dispatch:
-    types: [acctest-command]
+  workflow_dispatch:
+    inputs:
+      test_path:
+        description: 'Test path to be tested: e.g. integration/cli'
+        required: false
+      sha:
+        description: 'The hash value of the commit.'
+        required: true
+      pull_request_number:
+        description: 'The number of the PR.'
+        required: false
 
 name: PR E2E Tests
 
 jobs:
-  # Maintainer has commented /acctest on a pull request
   integration-fork-ubuntu:
     runs-on: ubuntu-latest
     if:
-      github.event_name == 'repository_dispatch' &&
-      github.event.client_payload.slash_command.sha != '' &&
-      github.event.client_payload.pull_request.head.sha == github.event.client_payload.slash_command.sha
+      github.event_name == 'workflow_dispatch' && inputs.sha != ''
 
     steps:
       - uses: actions-ecosystem/action-regex-match@v2
         id: validate-tests
         with:
-          text: ${{ github.event.client_payload.slash_command.tests }}
+          text: ${{ inputs.test_path }}
           regex: '[^a-z0-9-:.\/_]'  # Tests validation
           flags: gi
 
@@ -26,7 +32,30 @@ jobs:
       - name: Checkout PR
         uses: actions/checkout@v3
         with:
-          ref: ${{ github.event.client_payload.slash_command.sha }}
+          ref: ${{ inputs.sha }}
+
+      - name: Get the hash value of the latest commit from the PR branch
+        uses: octokit/graphql-action@v2.x
+        id: commit-hash
+        if: ${{ inputs.pull_request_number != '' }}
+        with:
+          query: |
+            query PRHeadCommitHash($owner: String!, $repo: String!, $pr_num: Int!) {
+              repository(owner:$owner, name:$repo) {
+                pullRequest(number: $pr_num) {
+                  headRef {
+                    target {
+                      ... on Commit {
+                        oid
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          owner: ${{ github.event.repository.owner.login }}
+          repo: ${{ github.event.repository.name }}
+          pr_num: ${{ fromJSON(inputs.pull_request_number) }}
 
       - name: Update system packages
         run: sudo apt-get update -y
@@ -47,16 +76,16 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - run: make INTEGRATION_TEST_PATH="${{ github.event.client_payload.slash_command.tests }}" TEST_CASE="${{ github.event.client_payload.slash_command.testcase }}" testint
+      - run: make INTEGRATION_TEST_PATH="${{ inputs.test_path }}" testint
         if: ${{ steps.validate-tests.outputs.match == '' }}
         env:
           LINODE_CLI_TOKEN: ${{ secrets.LINODE_TOKEN }}
 
-      - uses: actions/github-script@v5
+      - uses: actions/github-script@v6
         id: update-check-run
-        if: ${{ always() }}
+        if: ${{ inputs.pull_request_number != '' && fromJson(steps.commit-hash.outputs.data).repository.pullRequest.headRef.target.oid == inputs.sha }}
         env:
-          number: ${{ github.event.client_payload.pull_request.number }}
+          number: ${{ inputs.pull_request_number }}
           job: ${{ github.job }}
           conclusion: ${{ job.status }}
         with:
@@ -83,15 +112,13 @@ jobs:
   integration-fork-windows:
     runs-on: windows-latest
     if:
-      github.event_name == 'repository_dispatch' &&
-      github.event.client_payload.slash_command.sha != '' &&
-      github.event.client_payload.pull_request.head.sha == github.event.client_payload.slash_command.sha
+      github.event_name == 'workflow_dispatch' && inputs.sha != ''
 
     steps:
       - uses: actions-ecosystem/action-regex-match@v2
         id: validate-tests
         with:
-          text: ${{ github.event.client_payload.slash_command.tests }}
+          text: ${{ inputs.test_path }}
           regex: '[^a-z0-9-:.\/_]'  # Tests validation
           flags: gi
 
@@ -99,7 +126,32 @@ jobs:
       - name: Checkout PR
         uses: actions/checkout@v3
         with:
-          ref: ${{ github.event.client_payload.slash_command.sha }}
+          ref: ${{ inputs.sha }}
+
+      - name: Get the hash value of the latest commit from the PR branch
+        uses: octokit/graphql-action@v2.x
+        id: commit-hash
+        if: ${{ inputs.pull_request_number != '' }}
+        with:
+          query: |
+            query PRHeadCommitHash($owner: String!, $repo: String!, $pr_num: Int!) {
+              repository(owner:$owner, name:$repo) {
+                pullRequest(number: $pr_num) {
+                  headRef {
+                    target {
+                      ... on Commit {
+                        oid
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          owner: ${{ github.event.repository.owner.login }}
+          repo: ${{ github.event.repository.name }}
+          pr_num: ${{ fromJSON(inputs.pull_request_number) }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Python
         uses: actions/setup-python@v4
@@ -114,13 +166,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - run: make INTEGRATION_TEST_PATH="${{ github.event.client_payload.slash_command.tests }}" TEST_CASE="${{ github.event.client_payload.slash_command.testcase }}" testint
+      - run: make INTEGRATION_TEST_PATH="${{ inputs.test_path }}" testint
         env:
           LINODE_CLI_TOKEN: ${{ secrets.LINODE_TOKEN_2 }}
 
-      - uses: actions/github-script@v5
+      - uses: actions/github-script@v6
         id: update-check-run
-        if: ${{ always() }}
+        if: ${{ inputs.pull_request_number != '' && fromJson(steps.commit-hash.outputs.data).repository.pullRequest.headRef.target.oid == inputs.sha }}
         env:
           number: ${{ github.event.client_payload.pull_request.number }}
           job: ${{ github.job }}

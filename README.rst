@@ -251,6 +251,9 @@ the ``obj`` plugin that ships with the CLI.  To do so, simply set
 appropriate values.  This allows using Linode Object Storage through the CLI
 without having a configuration file, which is desirable in some situations.
 
+You may also specify the path to a custom Certificate Authority file using the ``LINODE_CLI_CA``
+environment variable.
+
 Configurable API URL
 """"""""""""""""""""
 
