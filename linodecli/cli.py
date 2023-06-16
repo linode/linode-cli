@@ -53,7 +53,7 @@ class CLI:  # pylint: disable=too-many-instance-attributes
             "defaults": "linode-cli-allowed-defaults",
         }
 
-        for _, path in spec.paths.items():
+        for path in spec.paths.values():
             command = path.extensions.get(ext["command"], "default")
             for m in METHODS:
                 operation = getattr(path, m)
