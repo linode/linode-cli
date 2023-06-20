@@ -77,18 +77,30 @@ def _build_filter_header(
     if filter_header is not None:
         return json.dumps(filter_header)
 
-    filters = vars(parsed_args)
+    parsed_args_dict = vars(parsed_args)
 
     # remove URL parameters
     for p in operation.params:
-        if p.name in filters:
-            del filters[p.name]
+        if p.name in parsed_args_dict:
+            del parsed_args_dict[p.name]
 
-    # remove empty filters
-    filters = {k: v for k, v in filters.items() if v is not None}
+    # The "+and" list to be used in the filter header
+    filter_list = []
 
-    if filters:
-        return json.dumps(filters)
+    for k, v in parsed_args_dict.items():
+        if v is None:
+            continue
+
+        if not isinstance(v, list):
+            filter_list.append({k: v})
+            continue
+
+        # Flatten out any duplicate keys
+        for sub_filter in v:
+            filter_list.append({k: sub_filter})
+
+    if len(filter_list) > 0:
+        return json.dumps({"+and": filter_list})
 
     return None
 
