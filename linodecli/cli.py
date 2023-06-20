@@ -94,14 +94,11 @@ class CLI:  # pylint: disable=too-many-instance-attributes
             with open(data_path, "rb") as f:
                 self.ops = pickle.load(f)
                 if "_base_url" in self.ops:
-                    self.base_url = self.ops["_base_url"]
-                    del self.ops["_base_url"]
+                    self.base_url = self.ops.pop("_base_url")
                 if "_spec_version" in self.ops:
-                    self.spec_version = self.ops["_spec_version"]
-                    del self.ops["_spec_version"]
+                    self.spec_version = self.ops.pop("_spec_version")
                 if "_spec" in self.ops:
-                    self.spec = self.ops["_spec"]
-                    del self.ops["_spec"]
+                    self.spec = self.ops.pop("_spec")
         else:
             print(
                 "No spec baked.  Please bake by calling this script as follows:"
