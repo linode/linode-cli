@@ -91,13 +91,13 @@ def _build_filter_header(
         if v is None:
             continue
 
-        if not isinstance(v, list):
-            filter_list.append({k: v})
-            continue
+        new_filters = [{k: v}]
 
-        # Flatten out any duplicate keys
-        for sub_filter in v:
-            filter_list.append({k: sub_filter})
+        # If this is a list, flatten it out
+        if isinstance(v, list):
+            new_filters = [{k: j} for j in v]
+
+        filter_list.extend(new_filters)
 
     if len(filter_list) > 0:
         return json.dumps({"+and": filter_list})
