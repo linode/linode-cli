@@ -435,8 +435,8 @@ def get_credentials(cli: CLI):
     )
     if bool(access_key) != bool(secret_key):
         print(
-            f"You must set both {ENV_ACCESS_KEY_NAME} "
-            f"and {ENV_SECRET_KEY_NAME}, or neither"
+            "You must set both 'ENV_ACCESS_KEY_NAME' "
+            "and 'ENV_SECRET_KEY_NAME', or neither"
         )
         sys.exit(1)
 
@@ -592,7 +592,7 @@ def _get_s3_creds(client: CLI, force: bool = False):
                 "You are running the Linode CLI without a configuration file, but "
                 "object storage keys were not configured.  "
                 "Please set the following variables in your environment: "
-                f"'{ENV_ACCESS_KEY_NAME}' and '{ENV_SECRET_KEY_NAME}'.  If you'd rather "
+                "'ENV_ACCESS_KEY_NAME' and 'ENV_SECRET_KEY_NAME'.  If you'd rather "
                 "configure the CLI, unset the 'LINODE_CLI_TOKEN' environment "
                 "variable and then run `linode-cli configure`."
             )
