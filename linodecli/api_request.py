@@ -91,12 +91,8 @@ def _build_filter_header(
         if v is None:
             continue
 
-        new_filters = [{k: v}]
-
         # If this is a list, flatten it out
-        if isinstance(v, list):
-            new_filters = [{k: j} for j in v]
-
+        new_filters = [{k: j} for j in v] if isinstance(v, list) else [{k: v}]
         filter_list.extend(new_filters)
 
     if len(filter_list) > 0:
