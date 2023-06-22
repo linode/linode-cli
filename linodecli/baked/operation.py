@@ -224,18 +224,16 @@ class OpenAPIOperation:
         self.method = method
         self.command = command
 
-        alias = None
         action = operation.extensions.get(
-            "linode-cli-action", operation.operationId
+            "linode-cli-action",
+            operation.operationId
         )
         if isinstance(action, list):
-            alias = action[1:]
-            action = action[0]
-
-        self.action = action
-        self.action_aliases = {}
-        if alias:
-            self.action_aliases = alias
+            self.action_aliases = action[1:]
+            self.action = action[0]
+        else:
+            self.action_aliases = {}
+            self.action = action
 
         self.summary = operation.summary
         self.description = operation.description.split(".")[0]
