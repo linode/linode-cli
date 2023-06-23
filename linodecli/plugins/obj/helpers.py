@@ -106,16 +106,11 @@ def _denominate(total):
     """
     Coverts bucket size to human readable bytes.
     """
-    total = float(total)
-    denomination = ["KB", "MB", "GB", "TB"]
-    for x in denomination:
-        if total > 1024:
-            total = total / 1024
+    for unit in ("KB", "MB", "GB", "TB"):
+        total = total / 1024
         if total < 1024:
-            total = round(total, 2)
-            total = str(total) + " " + x
             break
-    return total
+    return f'{round(total, 2)} {unit}'
 
 
 # helper functions for output
