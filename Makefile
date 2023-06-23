@@ -21,8 +21,7 @@ install: check-prerequisites requirements build
 build: clean
 	python3 -m linodecli bake ${SPEC} --skip-config
 	cp data-3 linodecli/
-	python3 setup.py bdist_wheel
-	python3 setup.py sdist
+	python3 -m build --wheel --sdist --no-isolation
 
 .PHONY: requirements
 requirements:

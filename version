@@ -19,22 +19,14 @@ def get_version_env():
 def get_version(ref="HEAD"):
     # We want to override the version if an environment variable is specified.
     # This is useful for certain release and testing pipelines.
-    describe = get_version_env()
-
-    if describe is None:
-        describe = call('git describe {} --tags'.format(ref))
+    version_str = get_version_env() or "0.0.0"
 
     # Strip the `v` prefix if specified
-    if describe.startswith("v"):
-        describe = describe[1:]
+    if version_str.startswith("v"):
+        version_str = version_str[1:]
 
-    parts = LooseVersion(describe).version[:3]
+    parts = LooseVersion(version_str).version[:3]
     return tuple(parts)
-
-
-def call(cmd):
-    _, output = subprocess.getstatusoutput(cmd)
-    return output
 
 
 major, minor, patch = get_version()
