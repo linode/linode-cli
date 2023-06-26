@@ -168,6 +168,7 @@ def test_fail_to_create_nodebalancer_without_region():
     assert "region	region is required" in result
 
 
+@pytest.mark.smoke
 def test_create_nodebalancer_with_default_conf(
     create_nodebalancer_with_default_conf,
 ):

@@ -34,6 +34,7 @@ def test_display_ips_for_available_linodes(setup_test_networking):
     )
 
 
+@pytest.mark.smoke
 def test_view_an_ip_address(setup_test_networking):
     linode_id = setup_test_networking
     linode_ipv4 = exec_test_command(

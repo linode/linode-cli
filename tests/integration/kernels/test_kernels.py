@@ -1,5 +1,7 @@
 import re
 
+import pytest
+
 from tests.integration.helpers import exec_test_command
 
 BASE_CMD = ["linode-cli", "kernels", "list", "--text", "--no-headers"]
@@ -35,6 +37,7 @@ def test_fields_from_kernels_list():
         )
 
 
+@pytest.mark.smoke
 def test_view_kernel():
     process = exec_test_command(BASE_CMD + ["--format", "id"])
     output = process.stdout.decode()

@@ -23,6 +23,7 @@ def test_create_tag():
     yield unique_tag
 
 
+@pytest.mark.smoke
 def test_view_unique_tag(test_create_tag):
     result = exec_test_command(
         BASE_CMD + ["list", "--text", "--no-headers"]

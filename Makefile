@@ -25,7 +25,7 @@ build: clean
 
 .PHONY: requirements
 requirements:
-	pip3 install -r requirements.txt
+	pip3 install -r requirements.txt -r requirements-dev.txt
 
 .PHONY: requirements
 lint:
@@ -73,3 +73,7 @@ autoflake:
 	autoflake linodecli tests
 
 format: black isort autoflake
+
+@PHONEY: smoketest
+smoketest:
+	pytest -m smoke tests/integration --disable-warnings
