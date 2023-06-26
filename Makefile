@@ -14,6 +14,7 @@ ifndef SPEC
 override SPEC = $(shell ./resolve_spec_url ${SPEC_VERSION})
 endif
 
+.PHONY: install
 install: check-prerequisites requirements build
 	pip3 install --force dist/*.whl
 
@@ -27,7 +28,7 @@ build: clean
 requirements:
 	pip3 install -r requirements.txt
 
-.PHONY: requirements
+.PHONY: lint
 lint:
 	pylint linodecli
 	isort --check-only linodecli tests
@@ -63,13 +64,17 @@ testall:
 .PHONY: test
 test: testunit
 
+.PHONY: black
 black:
 	black linodecli tests
 
+.PHONY: isort
 isort:
 	isort linodecli tests
 
+.PHONY: autoflake
 autoflake:
 	autoflake linodecli tests
 
+.PHONY: format
 format: black isort autoflake
