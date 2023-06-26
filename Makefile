@@ -22,7 +22,7 @@ install: check-prerequisites requirements build
 build: clean
 	python3 -m linodecli bake ${SPEC} --skip-config
 	cp data-3 linodecli/
-	python3 -m build --wheel --sdist --no-isolation
+	python3 -m build --wheel --sdist
 
 .PHONY: requirements
 requirements:
