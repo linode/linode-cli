@@ -29,11 +29,12 @@ requirements:
 	pip3 install -r requirements.txt
 
 .PHONY: lint
-lint:
+lint: build
 	pylint linodecli
 	isort --check-only linodecli tests
 	autoflake --check linodecli tests
 	black --check --verbose linodecli tests
+	twine check dist/*
 
 .PHONY: check-prerequisites
 check-prerequisites:
