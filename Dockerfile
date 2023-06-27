@@ -1,21 +1,27 @@
-FROM python:2-slim
+FROM python:3.11-bookworm AS builder
 
-ENV PYTHONPATH=.
-ENV PATH="/usr/local/bin:/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/root/.local/bin"
-
-RUN apt-get update && apt-get install -y git python3 python3-pip \
-    && rm -rf /var/lib/apt/lists/* \
-    && rm -rf /var/cache/apt/*
+ARG linode_cli_version
+ARG github_token
 
 WORKDIR /src
 
 COPY requirements.txt .
 
-RUN pip install -r requirements.txt \
-    && pip3 install -r requirements.txt \
-    && pip install twine
+RUN apt-get update && \
+    apt-get install -y make git && \
+    pip3 install -r requirements.txt
 
 COPY . .
 
-# Build and Install the Linode CLI
-ENTRYPOINT ["make", "build"]
+RUN LINODE_CLI_VERSION=$linode_cli_version GITHUB_TOKEN=$github_token make build
+
+FROM python:3.11-bookworm
+
+COPY --from=builder /src/dist /dist
+
+RUN pip3 install /dist/*.whl boto3
+
+RUN useradd -ms /bin/bash cli
+USER cli:cli
+
+ENTRYPOINT ["linode-cli"]
