@@ -110,7 +110,7 @@ def _denominate(total):
         total = total / 1024
         if total < 1024:
             break
-    return f'{round(total, 2)} {unit}'
+    return f"{round(total, 2)} {unit}"
 
 
 # helper functions for output
