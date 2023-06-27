@@ -78,6 +78,7 @@ setup(
     version=version,
     description="CLI for the Linode API",
     long_description=long_description,
+    long_description_content_type="text/x-rst",
     author="Linode",
     author_email="developers@linode.com",
     url="https://www.linode.com/docs/api/",
