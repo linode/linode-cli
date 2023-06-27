@@ -89,6 +89,7 @@ def test_ssh_instance_provisioning(target_instance: Dict[str, Any]):
     assert "is not running" in output
 
 
+@pytest.mark.smoke
 @pytest.mark.skipif(platform == "win32", reason="Test N/A on Windows")
 def test_ssh_instance_ready(
     ssh_key_pair_generator, target_instance: Dict[str, Any]

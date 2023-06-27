@@ -137,6 +137,7 @@ def test_view_private_stackscript():
     )
 
 
+@pytest.mark.smoke
 def test_update_stackscript_compatible_image(create_stackscript):
     images = get_linode_image_lists()
     private_stackscript = create_stackscript

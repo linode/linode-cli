@@ -84,6 +84,7 @@ def test_create_master_domain_fails_without_soa_email():
     assert "soa_email	soa_email required when type=master" in result
 
 
+@pytest.mark.smoke
 def test_create_master_domain(create_master_domain):
     domain_id = create_master_domain
     assert re.search("[0-9]+", domain_id)

@@ -14,6 +14,7 @@ def setup_test_clusters():
     remove_lke_clusters()
 
 
+@pytest.mark.smoke
 def test_deploy_an_lke_cluster():
     timestamp = str(int(time.time()) + randint(10, 1000))
     label = "cluster_test" + timestamp
