@@ -83,7 +83,7 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
             ),
             OutputMode.ascii_table: lambda: self._table_output(
                 header, data, columns, title, to, box.ASCII
-            ),               
+            ),
             OutputMode.delimited: lambda: self._delimited_output(
                 header, data, columns, to
             ),
