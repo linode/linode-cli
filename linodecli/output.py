@@ -90,7 +90,7 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
             OutputMode.json: lambda: self._json_output(header, data, to),
             OutputMode.markdown: lambda: self._markdown_output(
                 header, data, columns, to
-            )
+            ),
         }
 
         if columns is None:

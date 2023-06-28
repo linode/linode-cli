@@ -64,7 +64,7 @@ def register_args(parser):
     parser.add_argument(
         "--ascii-table",
         action="store_true",
-        help="Display output in an ASCII table."
+        help="Display output in an ASCII table.",
     )
     parser.add_argument(
         "--pretty",
