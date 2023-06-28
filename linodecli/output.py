@@ -135,7 +135,7 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
         return columns
 
     def _table_output(
-        self, header, data, columns, title, to, box=box.SQUARE
+        self, header, data, columns, title, to, box_style=box.SQUARE
     ):  # pylint: disable=too-many-arguments
         """
         Pretty-prints data in a table
@@ -149,7 +149,7 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
         )
 
         tab = Table(
-            *header, header_style="", box=box, show_header=self.headers
+            *header, header_style="", box=box_style, show_header=self.headers
         )
         for row in content:
             row = [Text.from_ansi(item) for item in row]
