@@ -62,6 +62,11 @@ def register_args(parser):
         help="Display output in Markdown format.",
     )
     parser.add_argument(
+        "--ascii-table",
+        action="store_true",
+        help="Display output in an ASCII table"
+    )
+    parser.add_argument(
         "--pretty",
         action="store_true",
         help="If set, pretty-print JSON output.",
@@ -253,7 +258,7 @@ def help_with_ops(ops, config):
         "(e.g. 'https')",
     }
 
-    table = Table(show_header=True, header_style="", box=box.SQUARE)
+    table = Table(show_header=True, header_style="", box=box.SQUARE, safe_box=True)
     table.add_column("Name")
     table.add_column("Description")
 
