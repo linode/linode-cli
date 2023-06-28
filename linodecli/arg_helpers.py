@@ -258,7 +258,7 @@ def help_with_ops(ops, config):
         "(e.g. 'https')",
     }
 
-    table = Table(show_header=True, header_style="", box=box.SQUARE, safe_box=True)
+    table = Table(show_header=True, header_style="", box=box.SQUARE)
     table.add_column("Name")
     table.add_column("Description")
 
