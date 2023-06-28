@@ -197,7 +197,7 @@ class TestOutputHandler:
             },
             {"cool": "bar"},
         ]
-        columns = [ModelAttr("cool", True, True, "string")]        
+        columns = [ModelAttr("cool", True, True, "string")]
 
         output_handler = mock_cli.output_handler
         output_handler._table_output(
@@ -208,13 +208,13 @@ class TestOutputHandler:
 
         assert (
             output.getvalue() == " cool  \n"
-                " table \n"
-                "+-----+\n"
-                "| h1  |\n"
-                "|-----|\n"
-                "| foo |\n"
-                "| bar |\n"
-                "+-----+\n"
+            " table \n"
+            "+-----+\n"
+            "| h1  |\n"
+            "|-----|\n"
+            "| foo |\n"
+            "| bar |\n"
+            "+-----+\n"
         )
 
     def test_get_columns_from_model(self, mock_cli):
