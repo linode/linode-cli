@@ -14,6 +14,7 @@ ifndef SPEC
 override SPEC = $(shell ./resolve_spec_url ${SPEC_VERSION})
 endif
 
+.PHONY: install
 install: check-prerequisites requirements build
 	pip3 install --force dist/*.whl
 
@@ -21,19 +22,19 @@ install: check-prerequisites requirements build
 build: clean
 	python3 -m linodecli bake ${SPEC} --skip-config
 	cp data-3 linodecli/
-	python3 setup.py bdist_wheel
-	python3 setup.py sdist
+	python3 -m build --wheel --sdist
 
 .PHONY: requirements
 requirements:
-	pip3 install -r requirements.txt
+	pip3 install -r requirements.txt -r requirements-dev.txt
 
-.PHONY: requirements
-lint:
+.PHONY: lint
+lint: build
 	pylint linodecli
 	isort --check-only linodecli tests
 	autoflake --check linodecli tests
 	black --check --verbose linodecli tests
+	twine check dist/*
 
 .PHONY: check-prerequisites
 check-prerequisites:
@@ -64,13 +65,21 @@ testall:
 .PHONY: test
 test: testunit
 
+.PHONY: black
 black:
 	black linodecli tests
 
+.PHONY: isort
 isort:
 	isort linodecli tests
 
+.PHONY: autoflake
 autoflake:
 	autoflake linodecli tests
 
+.PHONY: format
 format: black isort autoflake
+
+@PHONEY: smoketest
+smoketest:
+	pytest -m smoke tests/integration --disable-warnings

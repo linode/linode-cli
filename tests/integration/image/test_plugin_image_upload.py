@@ -61,6 +61,7 @@ def test_invalid_file(
     assert f"No file at {file_path}" in output
 
 
+@pytest.mark.smoke
 @pytest.mark.skipif(platform == "win32", reason="Test N/A on Windows")
 def test_file_upload(
     fake_image_file,

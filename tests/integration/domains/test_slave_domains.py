@@ -60,6 +60,7 @@ def test_create_slave_domain_fails_without_master_dns_server():
     )
 
 
+@pytest.mark.smoke
 def test_create_slave_domain(create_slave_domain):
     domain_id = create_slave_domain
     assert re.search("[0-9]+", domain_id)

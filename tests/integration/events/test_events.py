@@ -49,6 +49,7 @@ def test_print_events_usage_information():
     assert re.search("view.*Event View", output)
 
 
+@pytest.mark.smoke
 def test_list_events():
     process = exec_test_command(
         BASE_CMD + ["list", "--text", "--no-headers", "--delimiter", ","]
@@ -115,6 +116,7 @@ def test_mark_event_seen():
     assert re.search("[0-9]+,.*,.*,[0-9]+-[0-9][0-9]-.*,.*,[a-z]+.*", result)
 
 
+@pytest.mark.smoke
 def test_mark_event_read():
     event_id = (
         exec_test_command(

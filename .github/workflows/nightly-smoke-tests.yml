@@ -1,0 +1,35 @@
+name: Nightly Smoke Tests
+
+on:
+  schedule:
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+
+jobs:
+  smoke_tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          ref: dev
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install Python deps
+        run: pip install -r requirements.txt -r requirements-dev.txt wheel boto3
+
+      - name: Install Linode CLI
+        run: make install
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run smoke tests
+        run: |
+          make smoketest
+        env:
+          LINODE_CLI_TOKEN: ${{ secrets.LINODE_TOKEN_2 }}

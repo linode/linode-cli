@@ -27,6 +27,7 @@ def create_linode_in_running_state():
     delete_target_id("linodes", linode_id)
 
 
+@pytest.mark.smoke
 def test_create_linode_and_boot(setup_power_status):
     linode_id = setup_power_status
 
