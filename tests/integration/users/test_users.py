@@ -40,6 +40,7 @@ def test_display_users():
     exec_test_command(BASE_CMD + ["list"])
 
 
+@pytest.mark.smoke
 @pytest.mark.usefixtures("test_create_user")
 def test_view_user():
     exec_test_command(BASE_CMD + ["view", unique_user])

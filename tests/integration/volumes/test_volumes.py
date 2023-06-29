@@ -154,6 +154,7 @@ def test_list_volume(setup_test_volumes):
     )
 
 
+@pytest.mark.smoke
 def test_view_single_volume(setup_test_volumes):
     volume_id = setup_test_volumes
     result = exec_test_command(

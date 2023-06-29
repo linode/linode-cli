@@ -63,6 +63,7 @@ def test_update_linode_with_a_image():
     assert "--image" not in result
 
 
+@pytest.mark.smoke
 def test_create_linodes_with_a_label(create_linode_with_label):
     result = create_linode_with_label
 
@@ -71,6 +72,7 @@ def test_create_linodes_with_a_label(create_linode_with_label):
     )
 
 
+@pytest.mark.smoke
 def test_view_linode_configuration(setup_linodes):
     linode_id = setup_linodes
     result = exec_test_command(

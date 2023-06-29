@@ -42,6 +42,7 @@ def firewalls_setup():
     delete_target_id(target="firewalls", id=firewall_id)
 
 
+@pytest.mark.smoke
 def test_view_firewall(firewalls_setup):
     firewall_id = firewalls_setup
 
@@ -78,6 +79,7 @@ def test_list_firewall(firewalls_setup):
     assert re.search(firewall_id + "," + FIREWALL_LABEL + ",enabled", result)
 
 
+@pytest.mark.smoke
 def test_create_firewall_with_minimum_required_args():
     timestamp = str(int(time.time()))
     firewall_label = "label-fw-test" + timestamp
