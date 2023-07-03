@@ -336,27 +336,14 @@ def action_help(cli, command, action):
         return
     print(f"linode-cli {command} {action}", end="")
     for param in op.params:
-        # clean up parameter names - we add an '_' at the end of them
-        # during baking if it conflicts with the name of an argument.
         pname = param.name.upper()
-        if pname[-1] == "_":
-            pname = pname[:-1]
         print(f" [{pname}]", end="")
     print()
     print(op.summary)
     if op.docs_url:
         print(f"API Documentation: {op.docs_url}")
     print()
-    if op.args:
-        print("Arguments:")
-        for arg in sorted(op.args, key=lambda s: not s.required):
-            is_required = (
-                "(required) "
-                if op.method in {"post", "put"} and arg.required
-                else ""
-            )
-            print(f"  --{arg.path}: {is_required}{arg.description}")
-    elif op.method == "get" and op.action == "list":
+    if op.method == "get" and op.action == "list":
         filterable_attrs = [
             attr for attr in op.response_model.attrs if attr.filterable
         ]
@@ -365,6 +352,20 @@ def action_help(cli, command, action):
             print("You may filter results with:")
             for attr in filterable_attrs:
                 print(f"  --{attr.name}")
+        return
+    if op.args:
+        print("Arguments:")
+        for arg in sorted(
+            op.args, key=lambda s: not s.required
+        ):
+            if arg.read_only:
+                continue
+            is_required = (
+                "(required) "
+                if op.method in {"post", "put"} and arg.required
+                else ""
+            )
+            print(f"  --{arg.path}: {is_required}{arg.description}")
 
 
 def bake_command(cli, spec_loc):

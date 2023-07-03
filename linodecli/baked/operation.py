@@ -1,17 +1,17 @@
 """
-Classes related to OpenAPI-defined operations and their arguments and parameters.
+CLI Operation logic
 """
-
 import argparse
 import glob
 import json
 import platform
+import re
 from getpass import getpass
 from os import environ, path
 
-from linodecli.helpers import handle_url_overrides
-
-from .overrides import OUTPUT_OVERRIDES
+from linodecli.baked.request import OpenAPIFilteringRequest, OpenAPIRequest
+from linodecli.baked.response import OpenAPIResponse
+from linodecli.overrides import OUTPUT_OVERRIDES
 
 
 def parse_boolean(value):
@@ -37,6 +37,68 @@ def parse_dict(value):
         return json.loads(value)
     except Exception as e:
         raise argparse.ArgumentTypeError("Expected a JSON string") from e
+
+
+TYPES = {
+    "string": str,
+    "integer": int,
+    "boolean": parse_boolean,
+    "array": list,
+    "object": parse_dict,
+    "number": float,
+}
+
+
+class ListArgumentAction(argparse.Action):
+    """
+    This action is intended to be used only with list arguments.
+    Its purpose is to aggregate adjacent object fields and produce consistent
+    lists in the output namespace.
+    """
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        if getattr(namespace, self.dest) is None:
+            setattr(namespace, self.dest, [])
+
+        dest_list = getattr(namespace, self.dest)
+        dest_length = len(dest_list)
+        dest_parent = self.dest.split(".")[:-1]
+
+        # If this isn't a nested structure,
+        # append and return early
+        if len(dest_parent) < 1:
+            dest_list.append(values)
+            return
+
+        # A list of adjacent fields
+        adjacent_keys = [
+            k
+            for k in vars(namespace).keys()
+            if k.split(".")[:-1] == dest_parent
+        ]
+
+        # Let's populate adjacent fields ahead of time
+        for k in adjacent_keys:
+            if getattr(namespace, k) is None:
+                setattr(namespace, k, [])
+
+        adjacent_items = {k: getattr(namespace, k) for k in adjacent_keys}
+
+        # Find the deepest field so we can know if
+        # we're starting a new object.
+        deepest_length = max(len(x) for x in adjacent_items.values())
+
+        # If we're creating a new list object, append
+        # None to every non-populated field.
+        if dest_length >= deepest_length:
+            for k, item in adjacent_items.items():
+                if k == self.dest:
+                    continue
+
+                if len(item) < dest_length:
+                    item.append(None)
+
+        dest_list.append(values)
 
 
 class PasswordPromptAction(argparse.Action):
@@ -100,148 +162,132 @@ class OptionalFromFileAction(argparse.Action):
             raise argparse.ArgumentTypeError("Expected a string")
 
 
-class ListArgumentAction(argparse.Action):
+class OpenAPIOperationParameter:
     """
-    This action is intended to be used only with list arguments.
-    Its purpose is to aggregate adjacent object fields and produce consistent
-    lists in the output namespace.
+    A parameter is a variable element of the URL path, generally an ID or slug
     """
 
-    def __call__(self, parser, namespace, values, option_string=None):
-        if getattr(namespace, self.dest) is None:
-            setattr(namespace, self.dest, [])
-
-        dest_list = getattr(namespace, self.dest)
-        dest_length = len(dest_list)
-        dest_parent = self.dest.split(".")[:-1]
-
-        # If this isn't a nested structure,
-        # append and return early
-        if len(dest_parent) < 1:
-            dest_list.append(values)
-            return
-
-        # A list of adjacent fields
-        adjacent_keys = [
-            k
-            for k in vars(namespace).keys()
-            if k.split(".")[:-1] == dest_parent
-        ]
-
-        # Let's populate adjacent fields ahead of time
-        for k in adjacent_keys:
-            if getattr(namespace, k) is None:
-                setattr(namespace, k, [])
-
-        adjacent_items = {k: getattr(namespace, k) for k in adjacent_keys}
-
-        # Find the deepest field so we can know if
-        # we're starting a new object.
-        deepest_length = max(len(x) for x in adjacent_items.values())
-
-        # If we're creating a new list object, append
-        # None to every non-populated field.
-        if dest_length >= deepest_length:
-            for k, item in adjacent_items.items():
-                if k == self.dest:
-                    continue
-
-                if len(item) < dest_length:
-                    item.append(None)
-
-        dest_list.append(values)
-
-
-TYPES = {
-    "string": str,
-    "integer": int,
-    "boolean": parse_boolean,
-    "array": list,
-    "object": parse_dict,
-    "number": float,
-}
-
-
-class CLIArg:  # pylint: disable=too-many-instance-attributes,too-few-public-methods
-    """
-    An argument passed to the CLI with a flag, such as `--example value`.  These
-    are defined in a requestBody in the api spec.
-    """
-
-    def __init__(
-        self, name, arg_type, description, path, arg_format, list_item=None
-    ):  # pylint: disable=too-many-arguments,redefined-outer-name
-        self.name = name
-        self.arg_type = arg_type
-        self.arg_format = arg_format
-        self.description = description.replace("\n", "").replace("\r", "")
-        self.path = path
-        self.arg_item_type = None  # populated during baking for arrays
-        self.required = False  # this is set during baking
-        self.list_item = list_item
-
-
-class URLParam:  # pylint: disable=too-few-public-methods
-    """
-    An argument passed to the CLI positionally. These are defined in a path in
-    the OpenAPI spec, in a "parameters" block
-    """
-
-    def __init__(self, name, param_type):
-        self.name = name
-        self.param_type = param_type
-
-    def clone(self):
+    def __init__(self, parameter):
         """
-        Returns a new URLParam that is exactly like this one
+        :param parameter: The Parameter object this is parsing values from
+        :type parameter: openapi3.Parameter
         """
-        return URLParam(self.name, self.param_type)
+        self.name = parameter.name
+        self.type = parameter.schema.type
+
+    def __repr__(self):
+        return f"<OpenAPIOperationParameter {self.name}>"
 
 
-class CLIOperation:  # pylint: disable=too-many-instance-attributes
+class OpenAPIOperation:
     """
-    A single operation described by the OpenAPI spec.  An operation is a method
-    on a path, and should have a unique operationId to identify it.  Operations
-    are responsible for parsing their own arguments and processing their
-    responses with the help of their ResponseModel
+    A wrapper class for information parsed from the OpenAPI spec for a single operation.
+    This is the class that should be pickled when building the CLI.
     """
 
-    def __init__(  # pylint: disable=too-many-arguments
-        self,
-        command,
-        action,
-        method,
-        url,
-        summary,
-        args,
-        response_model,
-        params,
-        servers,
-        docs_url=None,
-        allowed_defaults=None,
-        action_aliases=None,
-    ):
-        self.command = command
-        self.action = action
+    def __init__(self, command, operation, method, params):
+        """
+        Wraps an openapi3.Operation object and handles pulling out values relevant
+        to the Linode CLI.
+        .. note::
+           This function runs _before pickling!  As such, this is the only place
+           where the OpenAPI3 objects can be accessed safely (as they are not
+           usable when unpickled!)
+        """
+        self.request = None
+        self.responses = {}
+        self.response_model = None
+        self.allowed_defaults = None
+
+        if (
+            "200" in operation.responses
+            and "application/json" in operation.responses["200"].content
+        ):
+            self.response_model = OpenAPIResponse(
+                operation.responses["200"].content["application/json"]
+            )
+
+        if method in ("post", "put") and operation.requestBody:
+            if "application/json" in operation.requestBody.content:
+                self.request = OpenAPIRequest(
+                    operation.requestBody.content["application/json"]
+                )
+                self.required_fields = self.request.required
+                self.allowed_defaults = operation.requestBody.extensions.get(
+                    "linode-cli-allowed-defaults"
+                )
+        elif method in ("get",):
+            # for get requests, self.request is all filterable fields of the response model
+            if self.response_model and self.response_model.is_paginated:
+                self.request = OpenAPIFilteringRequest(self.response_model)
+
         self.method = method
-        self._url = url
-        self.summary = summary
-        self.args = args
-        self.response_model = response_model
-        self.params = params
-        self.servers = servers
+        self.command = command
+
+        action = operation.extensions.get(
+            "linode-cli-action",
+            operation.operationId
+        )
+        if isinstance(action, list):
+            self.action_aliases = action[1:]
+            self.action = action[0]
+        else:
+            self.action_aliases = {}
+            self.action = action
+
+        self.summary = operation.summary
+        self.description = operation.description.split(".")[0]
+        self.params = [OpenAPIOperationParameter(c) for c in params]
+
+        server = (
+            operation.servers[0].url
+            if operation.servers
+            else operation._root.servers[0].url
+        )
+        self.url = server + operation.path[-2]
+
+        docs_url = None
+        tags = operation.tags
+        if tags is not None and len(tags) > 0 and len(operation.summary) > 0:
+            tag_path = self._flatten_url_path(tags[0])
+            summary_path = self._flatten_url_path(operation.summary)
+            docs_url = (
+                f"https://www.linode.com/docs/api/{tag_path}/#{summary_path}"
+            )
         self.docs_url = docs_url
-        self.allowed_defaults = allowed_defaults
-        self.action_aliases = action_aliases or []
 
     @property
-    def url(self):
+    def args(self):
         """
-        Returns the full URL for this resource based on servers and endpoint
+        Return a list of attributes from the request schema
         """
-        base_url = handle_url_overrides(self.servers[0])
+        return self.request.attrs if self.request else []
 
-        return base_url + "/" + self._url
+    @staticmethod
+    def _flatten_url_path(tag):
+        new_tag = tag.lower()
+        new_tag = re.sub(r"[^a-z ]", "", new_tag).replace(" ", "-")
+        return new_tag
+
+    def process_response_json(
+        self, json, handler
+    ):  # pylint: disable=redefined-outer-name
+        """
+        Processes the response as JSON and prints
+        """
+        if self.response_model is None:
+            return
+        if self.response_model.attrs == []:
+            return
+
+        override = OUTPUT_OVERRIDES.get(
+            (self.command, self.action, handler.mode)
+        )
+        if override is not None and not override(self, handler, json):
+            return
+
+        json = self.response_model.fix_json(json)
+        handler.print(self.response_model, json)
 
     def parse_args(
         self, args
@@ -259,7 +305,7 @@ class CLIOperation:  # pylint: disable=too-many-instance-attributes
         )
         for param in self.params:
             parser.add_argument(
-                param.name, metavar=param.name, type=TYPES[param.param_type]
+                param.name, metavar=param.name, type=TYPES[param.type]
             )
 
         if self.method == "get":
@@ -284,34 +330,33 @@ class CLIOperation:  # pylint: disable=too-many-instance-attributes
         elif self.method in ("post", "put"):
             # build args for body JSON
             for arg in self.args:
-                if arg.arg_type == "array":
+                if arg.read_only:
+                    continue
+                if arg.datatype == "array":
                     # special handling for input arrays
                     parser.add_argument(
                         "--" + arg.path,
                         metavar=arg.name,
                         action="append",
-                        type=TYPES[arg.arg_item_type],
+                        type=TYPES[arg.item_type],
                     )
-                elif arg.list_item is not None:
+                elif arg.list_item:
                     parser.add_argument(
                         "--" + arg.path,
                         metavar=arg.name,
                         action=ListArgumentAction,
-                        type=TYPES[arg.arg_type],
+                        type=TYPES[arg.datatype],
                     )
-                    list_items.append((arg.path, arg.list_item))
+                    list_items.append((arg.path, arg.prefix))
                 else:
-                    if (
-                        arg.arg_type == "string"
-                        and arg.arg_format == "password"
-                    ):
+                    if arg.datatype == "string" and arg.format == "password":
                         # special case - password input
                         parser.add_argument(
                             "--" + arg.path,
                             nargs="?",
                             action=PasswordPromptAction,
                         )
-                    elif arg.arg_type == "string" and arg.arg_format in (
+                    elif arg.datatype == "string" and arg.format in (
                         "file",
                         "ssl-cert",
                         "ssl-key",
@@ -320,13 +365,13 @@ class CLIOperation:  # pylint: disable=too-many-instance-attributes
                             "--" + arg.path,
                             metavar=arg.name,
                             action=OptionalFromFileAction,
-                            type=TYPES[arg.arg_type],
+                            type=TYPES[arg.datatype],
                         )
                     else:
                         parser.add_argument(
                             "--" + arg.path,
                             metavar=arg.name,
-                            type=TYPES[arg.arg_type],
+                            type=TYPES[arg.datatype],
                         )
 
         parsed = parser.parse_args(args)
@@ -390,22 +435,3 @@ class CLIOperation:  # pylint: disable=too-many-instance-attributes
             parsed = argparse.Namespace(**parsed)
 
         return parsed
-
-    def process_response_json(
-        self, json, handler
-    ):  # pylint: disable=redefined-outer-name
-        """
-        Processes the response as JSON and prints
-        """
-        if self.response_model is None:
-            return
-
-        override = OUTPUT_OVERRIDES.get(
-            (self.command, self.action, handler.mode)
-        )
-        if override is not None and not override(self, handler, json):
-            return
-
-        json = self.response_model.fix_json(json)
-
-        handler.print(self.response_model, json)

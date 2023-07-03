@@ -2,17 +2,47 @@
 This module is responsible for handling HTTP requests to the Linode API.
 """
 
+import itertools
 import json
 import sys
 from sys import version_info
-from typing import Optional
+from typing import Iterable, List, Optional
 
 import requests
 from packaging import version
 from requests import Response
 
+from .baked.operation import OpenAPIOperation
+from .helpers import handle_url_overrides
 from linodecli.helpers import API_CA_PATH
 
+
+def get_all_pages(ctx, operation: OpenAPIOperation, args: List[str]):
+    """
+    Receive all pages of a resource from multiple
+    API responses then merge into one page.
+
+    :param ctx: The main CLI object
+    """
+
+    ctx.page_size = 500
+    ctx.page = 1
+    result = do_request(ctx, operation, args).json()
+
+    total_pages = result.get("pages")
+
+    if total_pages and total_pages > 1:
+        pages_needed = range(2, total_pages + 1)
+
+        result = _merge_results_data(
+            itertools.chain(
+                (result,),
+                _generate_all_pages_results(
+                    ctx, operation, args, pages_needed
+                ),
+            )
+        )
+    return result
 
 def do_request(
     ctx,
@@ -26,7 +56,10 @@ def do_request(
     """
     Makes a request to an operation's URL and returns the resulting JSON, or
     prints and error if a non-200 comes back
+
+    :param ctx: The main CLI object
     """
+    # TODO: Revisit using pre-built calls from OpenAPI
     method = getattr(requests, operation.method)
     headers = {
         "Authorization": f"Bearer {ctx.config.get_token()}",
@@ -67,6 +100,39 @@ def do_request(
     return result
 
 
+def _merge_results_data(results: Iterable[dict]):
+    """Merge multiple json response into one"""
+
+    iterator = iter(results)
+    merged_result = next(iterator, None)
+    if not merged_result:
+        return None
+
+    if "pages" in merged_result:
+        merged_result["pages"] = 1
+    if "page" in merged_result:
+        merged_result["page"] = 1
+    if "data" in merged_result:
+        merged_result["data"] += list(
+            itertools.chain.from_iterable(r["data"] for r in iterator)
+        )
+    return merged_result
+
+
+def _generate_all_pages_results(
+    ctx,
+    operation: OpenAPIOperation,
+    args: List[str],
+    pages_needed: Iterable[int],
+):
+    """
+    :param ctx: The main CLI object
+    """
+    for p in pages_needed:
+        ctx.page = p
+        yield do_request(ctx, operation, args).json()
+
+
 def _build_filter_header(
     operation, parsed_args, filter_header=None
 ) -> Optional[str]:
@@ -99,7 +165,7 @@ def _build_request_url(ctx, operation, parsed_args) -> str:
     if operation.method == "get":
         result += f"?page={ctx.page}&page_size={ctx.page_size}"
 
-    return result
+    return handle_url_overrides(result)
 
 
 def _build_request_body(ctx, operation, parsed_args) -> Optional[str]:

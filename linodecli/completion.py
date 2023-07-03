@@ -2,8 +2,9 @@
 """
 Contains any code relevant to generating/updating shell completions for linode-cli
 """
-
 from string import Template
+
+from openapi3 import OpenAPI
 
 
 def bake_completions(ops):
@@ -117,6 +118,7 @@ complete -F _linode_cli lin"""
             command=op, actions=" ".join(list(actions.keys()))
         )
         for op, actions in ops.items()
+        if not isinstance(actions, OpenAPI)
     ]
 
     rendered = completion_template.safe_substitute(
