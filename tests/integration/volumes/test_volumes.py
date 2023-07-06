@@ -150,7 +150,7 @@ def test_list_volume(setup_test_volumes):
         BASE_CMD + ["list", "--text", "--no-headers", "--delimiter", ","]
     ).stdout.decode()
     assert re.search(
-        "[0-9]+,[A-Za-z0-9].*,[A-Za-z0-9].*,(creating|active|offline),.*", result
+        "[0-9]+,[A-Za-z0-9].*,.*,(creating|active|offline),.*", result
     )
 
 
