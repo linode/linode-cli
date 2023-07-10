@@ -188,6 +188,35 @@ class TestOutputHandler:
 
         assert output.getvalue() == mock_table.getvalue()
 
+    def test_ascii_table_output(self, mock_cli):
+        output = io.StringIO()
+        header = ["h1"]
+        data = [
+            {
+                "cool": "foo",
+            },
+            {"cool": "bar"},
+        ]
+        columns = [ModelAttr("cool", True, True, "string")]
+
+        output_handler = mock_cli.output_handler
+        output_handler._table_output(
+            header, data, columns, "cool table", output, box.ASCII
+        )
+
+        print(output.getvalue())
+
+        assert (
+            output.getvalue() == " cool  \n"
+            " table \n"
+            "+-----+\n"
+            "| h1  |\n"
+            "|-----|\n"
+            "| foo |\n"
+            "| bar |\n"
+            "+-----+\n"
+        )
+
     def test_get_columns_from_model(self, mock_cli):
         output_handler = mock_cli.output_handler
 

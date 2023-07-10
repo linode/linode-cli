@@ -62,6 +62,11 @@ def register_args(parser):
         help="Display output in Markdown format.",
     )
     parser.add_argument(
+        "--ascii-table",
+        action="store_true",
+        help="Display output in an ASCII table.",
+    )
+    parser.add_argument(
         "--pretty",
         action="store_true",
         help="If set, pretty-print JSON output.",
