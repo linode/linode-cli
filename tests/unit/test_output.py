@@ -320,6 +320,12 @@ class TestOutputHandler:
 
         assert result == test_str
 
+        # Ensure integers are properly converted
+        result = mock_cli.output_handler._attempt_truncate_value(12345)
+
+        assert result == "12345"
+        assert isinstance(result, str)
+
     def test_truncated_table(self, mock_cli):
         output = io.StringIO()
 

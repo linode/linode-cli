@@ -260,11 +260,11 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
         return content
 
     def _attempt_truncate_value(self, value):
-        if self.disable_truncation:
-            return value
-
         if not isinstance(value, str):
             value = str(value)
+
+        if self.disable_truncation:
+            return value
 
         if len(value) < self.truncation_length:
             return value
