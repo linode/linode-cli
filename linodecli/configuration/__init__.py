@@ -6,6 +6,7 @@ used elsewhere.
 import argparse
 import os
 import sys
+from typing import Dict
 
 from .auth import (
     _check_full_access,
@@ -14,8 +15,10 @@ from .auth import (
     _get_token_web,
 )
 from .helpers import (
+    _bool_input,
     _check_browsers,
     _config_get_with_default,
+    _default_text_input,
     _default_thing_input,
     _get_config,
     _get_config_path,
@@ -442,21 +445,19 @@ If you prefer to supply a Personal Access Token, use `linode-cli configure --tok
                 ),
             )
 
+        if _bool_input("Configure a custom API target?", default=False):
+            self._configure_api_target(config)
+
         # save off the new configuration
         if username != "DEFAULT" and not self.config.has_section(username):
             self.config.add_section(username)
 
         if not is_default:
             if username != self.default_username():
-                while True:
-                    value = input(
-                        "Make this user the default when using the CLI? [y/N]: "
-                    )
-                    if value.lower() in "yn":
-                        is_default = value.lower() == "y"
-                        break
-                    if not value.strip():
-                        break
+                is_default = _bool_input(
+                    "Make this user the default when using the CLI?"
+                )
+
             if not is_default:  # they didn't change the default user
                 print(
                     f"Active user will remain {self.config.get('DEFAULT', 'default-user')}"
@@ -479,3 +480,23 @@ If you prefer to supply a Personal Access Token, use `linode-cli configure --tok
         self.write_config()
         os.chmod(_get_config_path(), 0o600)
         self._configured = True
+
+    @staticmethod
+    def _configure_api_target(config: Dict[str, str]):
+        config["api_host"] = _default_text_input(
+            "NOTE: Skipping this field will use the default Linode API host.\n"
+            'API host override (e.g. "api.dev.linode.com")',
+            optional=True,
+        )
+
+        config["api_version"] = _default_text_input(
+            "NOTE: Skipping this field will use the default Linode API version.\n"
+            'API version override (e.g. "v4beta")',
+            optional=True,
+        )
+
+        config["api_scheme"] = _default_text_input(
+            "NOTE: Skipping this field will use the HTTPS scheme.\n"
+            'API scheme override (e.g. "https")',
+            optional=True,
+        )

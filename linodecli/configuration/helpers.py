@@ -5,7 +5,7 @@ General helper functions for configuraiton
 import configparser
 import os
 import webbrowser
-from typing import Any, Optional
+from typing import Any, Callable, Optional
 
 from .auth import _do_get_request
 
@@ -16,7 +16,6 @@ CONFIG_NAME = "linode-cli"
 CONFIG_DIR = os.environ.get(
     "XDG_CONFIG_HOME", f"{os.path.expanduser('~')}/.config"
 )
-
 
 # this is a list of browser that _should_ work for web-based auth.  This is mostly
 # intended to exclude lynx and other terminal browsers which could be opened, but
@@ -139,6 +138,67 @@ def _default_thing_input(
         return things[choice_idx]
 
 
+def _default_text_input(
+    ask: str,
+    default: str = None,
+    optional: bool = False,
+    validator: Callable[[str], Optional[str]] = None,
+) -> Optional[str]:  # pylint: disable=too-many-arguments
+    """
+    Requests the user to enter a certain string of text with the given prompt.
+    If optional, the user may hit enter to not configure this option.
+    """
+
+    prompt_text = f"\n{ask} "
+
+    if default is not None:
+        prompt_text += f"(Default {default})"
+
+    if optional:
+        prompt_text += "(Optional)"
+
+    while True:
+        user_input = input(prompt_text + ": ")
+
+        # If the user skips on an optional value, return None
+        if user_input == "":
+            if optional:
+                return None
+
+            print("Please enter a valid value.")
+            continue
+
+        # Validate the user's input using the
+        # passed in validator.
+        if validator is not None:
+            validation_result = validator(user_input)
+
+            if validation_result is not None:
+                print(validation_result)
+                continue
+
+        return user_input
+
+
+def _bool_input(
+    prompt: str, default: bool = True
+):  # pylint: disable=too-many-arguments
+    """
+    Requests the user to enter either `y` or `n` given a prompt.
+    """
+    while True:
+        user_input = input(f"\n{prompt} " + f"[y/N]: ").strip().lower()
+
+        if user_input == "":
+            return default
+
+        if user_input not in ("y", "n"):
+            print("Invalid input. Please input either y or n.")
+            continue
+
+        return user_input == "y"
+
+
 def _config_get_with_default(
     config: configparser.ConfigParser,
     user: str,
@@ -187,41 +247,23 @@ def _handle_no_default_user(self):  # pylint: disable=too-many-branches
             self.config.add_section(username)
             self.config.set(username, "token", token)
 
-            if self.config.has_option("DEFAULT", "region"):
-                self.config.set(
-                    username, "region", self.config.get("DEFAULT", "region")
-                )
+            config_keys = (
+                "region",
+                "type",
+                "image",
+                "mysql_engine",
+                "postgresql_engine",
+                "authorized_keys",
+                "api_host",
+                "api_version",
+                "api_scheme",
+            )
 
-            if self.config.has_option("DEFAULT", "type"):
-                self.config.set(
-                    username, "type", self.config.get("DEFAULT", "type")
-                )
+            for key in config_keys:
+                if not self.config.has_option("DEFAULT", key):
+                    continue
 
-            if self.config.has_option("DEFAULT", "image"):
-                self.config.set(
-                    username, "image", self.config.get("DEFAULT", "image")
-                )
-
-            if self.config.has_option("DEFAULT", "mysql_engine"):
-                self.config.set(
-                    username,
-                    "mysql_engine",
-                    self.config.get("DEFAULT", "mysql_engine"),
-                )
-
-            if self.config.has_option("DEFAULT", "postgresql_engine"):
-                self.config.set(
-                    username,
-                    "postgresql_engine",
-                    self.config.get("DEFAULT", "postgresql_engine"),
-                )
-
-            if self.config.has_option("DEFAULT", "authorized_keys"):
-                self.config.set(
-                    username,
-                    "authorized_keys",
-                    self.config.get("DEFAULT", "authorized_keys"),
-                )
+                self.config.set(username, key, self.config.get("DEFAULT", key))
 
             self.write_config()
         else:
