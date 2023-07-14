@@ -318,6 +318,7 @@ class OpenAPIOperation:
                             "--" + attr.name,
                             type=TYPES[attr.item_type],
                             metavar=attr.name,
+                            action="append",
                             nargs="?",
                         )
                     else:
