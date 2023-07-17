@@ -111,8 +111,6 @@ class TestAPIRequest:
                 mock_cli, list_operation, ["--filterable_result", "cool"]
             )
 
-        print("NESTED:", list_operation.response_model.nested_list)
-
         assert result == mock_response
 
     def test_do_request_post(self, mock_cli, create_operation):
