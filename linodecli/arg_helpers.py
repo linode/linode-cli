@@ -355,9 +355,7 @@ def action_help(cli, command, action):
         return
     if op.args:
         print("Arguments:")
-        for arg in sorted(
-            op.args, key=lambda s: not s.required
-        ):
+        for arg in sorted(op.args, key=lambda s: not s.required):
             if arg.read_only:
                 continue
             is_required = (

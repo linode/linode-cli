@@ -12,9 +12,10 @@ import requests
 from packaging import version
 from requests import Response
 
+from linodecli.helpers import API_CA_PATH
+
 from .baked.operation import OpenAPIOperation
 from .helpers import handle_url_overrides
-from linodecli.helpers import API_CA_PATH
 
 
 def get_all_pages(ctx, operation: OpenAPIOperation, args: List[str]):
@@ -37,12 +38,11 @@ def get_all_pages(ctx, operation: OpenAPIOperation, args: List[str]):
         result = _merge_results_data(
             itertools.chain(
                 (result,),
-                _generate_all_pages_results(
-                    ctx, operation, args, pages_needed
-                ),
+                _generate_all_pages_results(ctx, operation, args, pages_needed),
             )
         )
     return result
+
 
 def do_request(
     ctx,

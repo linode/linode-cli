@@ -2,13 +2,11 @@ import configparser
 
 import pytest
 from openapi3 import OpenAPI
-from openapi3.paths import Path, Operation, Parameter, Response
-from openapi3.schemas import Schema
-from linodecli.baked.response import OpenAPIResponse, OpenAPIResponseAttr
+from openapi3.paths import Operation, Parameter
 from yaml import safe_load
 
-from linodecli.cli import CLI
 from linodecli.baked import OpenAPIOperation
+from linodecli.cli import CLI
 
 MOCK_CONFIG = """
 [DEFAULT]
@@ -94,7 +92,6 @@ def make_test_operation(
     method,
     params: Parameter,
 ):
-
     return OpenAPIOperation(
         command=command,
         operation=operation,
@@ -115,20 +112,21 @@ def list_operation():
 
     X-Filter: {"filterable_result": "value"}
     """
-    spec = _get_parsed_spec("example.yaml")
+    spec = _get_parsed_spec("api_request_test_foobar_get.yaml")
 
-    print("parsed spec:, ", spec)
+    dict_values = list(spec.paths.values())
 
-    for path in spec.paths.values():
-        command = path.extensions.get("linode-cli-command", "default")
+    # Get parameters for OpenAPIOperation() from yaml fixture
+    path = dict_values[0]
+    command = path.extensions.get("linode-cli-command", "default")
+    operation = getattr(path, "get")
+    method = "get"
 
-        operation = getattr(path, "get")
+    list_operation = make_test_operation(
+        command, operation, method, path.parameters
+    )
 
-        method = "get"
-
-        list_operation = make_test_operation(command, operation, method, path.parameters)
-
-        return list_operation
+    return list_operation
 
 
 @pytest.fixture
@@ -145,12 +143,107 @@ def create_operation():
     }
     """
 
-    return make_test_operation(
-        command="foo",
-        operation=['paths', '/foo/bar', 'post'],
-        method="post",
-        params=['paths', '/foo/bar', 'parameters', '0']
+    spec = _get_parsed_spec("api_request_test_foobar_post.yaml")
+
+    dict_values = list(spec.paths.values())
+
+    # Get parameters for OpenAPIOperation() from yaml fixture
+    path = dict_values[0]
+    command = path.extensions.get("linode-cli-command", "default")
+    operation = getattr(path, "post")
+    method = "post"
+
+    create_operation = make_test_operation(
+        command, operation, method, path.parameters
     )
+
+    return create_operation
+
+
+@pytest.fixture
+def list_operation_for_output_tests():
+    """
+    Creates the following CLI operation:
+
+    GET http://localhost/foo/bar
+    {}
+
+    X-Filter: {"cool": "value"}
+    """
+
+    spec = _get_parsed_spec("output_test_get.yaml")
+
+    dict_values = list(spec.paths.values())
+
+    # Get parameters for OpenAPIOperation() from yaml fixture
+    path = dict_values[0]
+    command = path.extensions.get("linode-cli-command", "default")
+    operation = getattr(path, "get")
+    method = "get"
+
+    cool_operation = make_test_operation(
+        command, operation, method, path.parameters
+    )
+
+    return cool_operation
+
+
+@pytest.fixture
+def list_operation_for_overrides_test():
+    """
+    Creates the following CLI operation:
+
+    GET http://localhost/foo/bar
+    {}
+
+    X-Filter: {"cool": "value"}
+    """
+
+    spec = _get_parsed_spec("overrides_test_get.yaml")
+
+    dict_values = list(spec.paths.values())
+
+    # Get parameters for OpenAPIOperation() from yaml fixture
+    path = dict_values[0]
+
+    command = path.extensions.get("linode-cli-command", "default")
+    operation = getattr(path, "get")
+    method = "get"
+
+    cool_operation = make_test_operation(
+        command, operation, method, path.parameters
+    )
+
+    return cool_operation
+
+
+@pytest.fixture
+def list_operation_for_response_test():
+    """
+    Creates the following CLI operation:
+
+    GET http://localhost/foo/bar
+    {}
+
+    X-Filter: {"cool": "value"}
+    """
+
+    spec = _get_parsed_spec("response_test_get.yaml")
+
+    dict_values = list(spec.paths.values())
+
+    # Get parameters for OpenAPIOperation() from yaml fixture
+    path = dict_values[0]
+
+    command = path.extensions.get("linode-cli-command", "default")
+    operation = getattr(path, "get")
+    method = "get"
+
+    cool_operation = make_test_operation(
+        command, operation, method, path.parameters
+    )
+
+    return cool_operation
 
 
 @pytest.fixture
@@ -166,4 +259,3 @@ def mocked_config():
             pass
 
     return Config()
-

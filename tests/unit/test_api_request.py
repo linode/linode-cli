@@ -111,6 +111,8 @@ class TestAPIRequest:
                 mock_cli, list_operation, ["--filterable_result", "cool"]
             )
 
+        print("NESTED:", list_operation.response_model.nested_list)
+
         assert result == mock_response
 
     def test_do_request_post(self, mock_cli, create_operation):
@@ -135,7 +137,9 @@ class TestAPIRequest:
             "linodecli.api_request.requests.post", validate_http_request
         ):
             result = api_request.do_request(
-                mock_cli, create_operation, ["--generic_arg", "foobar", "12345"]
+                mock_cli,
+                create_operation,
+                ["--generic_arg", "foobar", "--test_param", "12345"],
             )
 
         assert result == mock_response

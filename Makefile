@@ -19,13 +19,10 @@ install: check-prerequisites requirements build
 	pip3 install --force dist/*.whl
 
 .PHONY: build
-build: clean bake
+build: clean
+	python3 -m linodecli bake ${SPEC} --skip-config
 	cp data-3 linodecli/
 	python3 -m build --wheel --sdist
-
-.PHONY: bake
-bake:
-    python3 -m linodecli bake ${SPEC} --skip-config
 
 .PHONY: requirements
 requirements:
