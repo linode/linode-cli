@@ -11,7 +11,7 @@ here = pathlib.Path().absolute()
 
 
 # get the long description from the README.rst
-with open(here / "README.rst", encoding="utf-8") as f:
+with open(here / "README.md", encoding="utf-8") as f:
     long_description = f.read()
 
 
@@ -78,7 +78,7 @@ setup(
     version=version,
     description="CLI for the Linode API",
     long_description=long_description,
-    long_description_content_type="text/x-rst",
+    long_description_content_type="text/markdown",
     author="Linode",
     author_email="developers@linode.com",
     url="https://www.linode.com/docs/api/",
