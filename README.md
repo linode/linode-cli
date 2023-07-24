@@ -21,7 +21,7 @@ Visit the [Wiki](../../wiki/Installation) for more information.
 
 ## Contributing
 
-This CLI is generated based on the OpenAPI specification for Linode's API.  As
+This CLI is generated from the [OpenAPI specification for Linode's API](https://github.com/linode/linode-api-docs).  As
 such, many changes are made directly to the spec.
 
 Please follow the [Contributing Guidelines](https://github.com/linode/linode-cli/blob/main/CONTRIBUTING.md) when making a contribution.
