@@ -225,8 +225,7 @@ class OpenAPIOperation:
         self.command = command
 
         action = operation.extensions.get(
-            "linode-cli-action",
-            operation.operationId
+            "linode-cli-action", operation.operationId
         )
         if isinstance(action, list):
             self.action_aliases = action[1:]
