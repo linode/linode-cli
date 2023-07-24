@@ -12,7 +12,7 @@ Visit the [Wiki](../../wiki) for more information.
 
 ## Install
 
-Install via pypi
+Install via PyPI:
 ```bash
 pip3 install linode-cli
 ```
