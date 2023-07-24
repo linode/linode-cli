@@ -24,7 +24,6 @@ from .arg_helpers import (
 )
 from .cli import CLI
 from .completion import bake_completions, get_completions
-from .configuration import ENV_TOKEN_NAME
 from .helpers import handle_url_overrides
 from .output import OutputMode
 
@@ -83,6 +82,7 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
         cli.output_handler.columns = parsed.format
 
     cli.defaults = not parsed.no_defaults
+    cli.no_retry = parsed.no_retry
     cli.suppress_warnings = parsed.suppress_warnings
 
     if parsed.all_columns or parsed.all:

@@ -4,6 +4,7 @@ This module is responsible for handling HTTP requests to the Linode API.
 
 import itertools
 import json
+import time
 import sys
 from sys import version_info
 from typing import Iterable, List, Optional
@@ -12,9 +13,9 @@ import requests
 from packaging import version
 from requests import Response
 
+from linodecli.helpers import API_CA_PATH
 from .baked.operation import OpenAPIOperation
 from .helpers import handle_url_overrides
-from linodecli.helpers import API_CA_PATH
 
 
 def get_all_pages(ctx, operation: OpenAPIOperation, args: List[str]):
@@ -91,6 +92,13 @@ def do_request(
     # Print response debug info is requested
     if ctx.debug_request:
         _print_response_debug_info(result)
+
+    if (_check_retry(result)
+    and ctx.no_retry
+    and ctx.retry_count < 3):
+        time.sleep(_get_retry_after(result.headers))
+        ctx.retry_count += 1
+        do_request(ctx, operation, args, filter_header, skip_error_handling)
 
     _attempt_warn_old_version(ctx, result)
 
@@ -332,3 +340,30 @@ def _handle_error(ctx, response):
             columns=["field", "reason"],
         )
     sys.exit(1)
+
+def _check_retry(response):
+    """
+    Check for valid retry scenario, returns true if retry is valid
+    """
+    if response.status_code == 408:
+        # request timed out
+        return True
+    if response.headers:
+        if (response.status_code == 503
+        and response.headers.get("X-Maintenance-Mode")):
+            # API is in Maintenance Mode
+            return True
+        if (response.status_code == 400
+        and response.headers.get("Server") == "nginx"
+        and response.headers.get("Content-Type") == "text/html"):
+            # nginx html response
+            return True
+    return False
+
+def _get_retry_after(headers):
+    if headers.get("Retry-After"):
+        retry_str = headers.get("Retry-After")
+        if retry_str == "":
+            return 0
+        return int(retry_str)
+    return 0
