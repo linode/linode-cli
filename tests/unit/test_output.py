@@ -202,7 +202,9 @@ class TestOutputHandler:
 
         assert output.getvalue() == mock_table.getvalue()
 
-    def test_ascii_table_output(self, mock_cli):
+    def test_ascii_table_output(
+        self, mock_cli, list_operation_for_output_tests
+    ):
         output = io.StringIO()
         header = ["h1"]
         data = [
@@ -211,7 +213,7 @@ class TestOutputHandler:
             },
             {"cool": "bar"},
         ]
-        columns = [ModelAttr("cool", True, True, "string")]
+        columns = [list_operation_for_output_tests.response_model.attrs[0]]
 
         output_handler = mock_cli.output_handler
         output_handler._table_output(
