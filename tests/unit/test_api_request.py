@@ -165,7 +165,9 @@ class TestAPIRequest:
             "linodecli.api_request.requests.post", validate_http_request
         ):
             result = api_request.do_request(
-                mock_cli, create_operation, ["--generic_arg", "foobar", "12345"]
+                mock_cli,
+                create_operation,
+                ["--generic_arg", "foobar", "--test_param", "12345"],
             )
 
         assert result == mock_response

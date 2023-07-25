@@ -1,6 +1,6 @@
 import argparse
 
-from linodecli import operation
+from linodecli.baked import operation
 
 
 class TestOperation:
