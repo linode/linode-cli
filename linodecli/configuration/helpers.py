@@ -153,8 +153,7 @@ def _default_text_input(
 
     if default is not None:
         prompt_text += f"(Default {default})"
-
-    if optional:
+    elif optional:
         prompt_text += "(Optional)"
 
     while True:
@@ -162,6 +161,9 @@ def _default_text_input(
 
         # If the user skips on an optional value, return None
         if user_input == "":
+            if default is not None:
+                return default
+
             if optional:
                 return None
 
