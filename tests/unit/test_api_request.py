@@ -88,10 +88,25 @@ class TestAPIRequest:
 
     def test_build_filter_header(self, list_operation):
         result = api_request._build_filter_header(
-            list_operation, SimpleNamespace(filterable_result="bar")
+            list_operation,
+            SimpleNamespace(
+                filterable_result="bar",
+                filterable_list_result=["foo", "bar"],
+            ),
         )
 
-        assert json.dumps({"filterable_result": "bar"}) == result
+        assert (
+            json.dumps(
+                {
+                    "+and": [
+                        {"filterable_result": "bar"},
+                        {"filterable_list_result": "foo"},
+                        {"filterable_list_result": "bar"},
+                    ]
+                }
+            )
+            == result
+        )
 
     def test_do_request_get(self, mock_cli, list_operation):
         mock_response = Mock(status_code=200, reason="OK")
@@ -99,7 +114,13 @@ class TestAPIRequest:
         def validate_http_request(url, headers=None, data=None, **kwargs):
             assert url == "http://localhost/foo/bar?page=1&page_size=100"
             assert headers["X-Filter"] == json.dumps(
-                {"filterable_result": "cool"}
+                {
+                    "+and": [
+                        {"filterable_result": "cool"},
+                        {"filterable_list_result": "foo"},
+                        {"filterable_list_result": "bar"},
+                    ]
+                }
             )
             assert "Authorization" in headers
             assert data is None
@@ -108,7 +129,16 @@ class TestAPIRequest:
 
         with patch("linodecli.api_request.requests.get", validate_http_request):
             result = api_request.do_request(
-                mock_cli, list_operation, ["--filterable_result", "cool"]
+                mock_cli,
+                list_operation,
+                [
+                    "--filterable_result",
+                    "cool",
+                    "--filterable_list_result",
+                    "foo",
+                    "--filterable_list_result",
+                    "bar",
+                ],
             )
 
         assert result == mock_response

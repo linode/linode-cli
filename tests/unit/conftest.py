@@ -124,7 +124,6 @@ def list_operation():
 
     list_operation = make_test_operation(
         command, operation, method, path.parameters
-    )
 
     return list_operation
 
