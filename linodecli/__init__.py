@@ -82,6 +82,7 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
         cli.output_handler.columns = parsed.format
 
     cli.defaults = not parsed.no_defaults
+    cli.retry_count = 0
     cli.no_retry = parsed.no_retry
     cli.suppress_warnings = parsed.suppress_warnings
 
