@@ -24,6 +24,7 @@ class OutputMode(Enum):
     delimited = 2
     json = 3
     markdown = 4
+    ascii_table = 5
 
 
 class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance-attributes
@@ -80,6 +81,9 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
             OutputMode.table: lambda: self._table_output(
                 header, data, columns, title, to
             ),
+            OutputMode.ascii_table: lambda: self._table_output(
+                header, data, columns, title, to, box.ASCII
+            ),
             OutputMode.delimited: lambda: self._delimited_output(
                 header, data, columns, to
             ),
@@ -131,7 +135,7 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
         return columns
 
     def _table_output(
-        self, header, data, columns, title, to
+        self, header, data, columns, title, to, box_style=box.SQUARE
     ):  # pylint: disable=too-many-arguments
         """
         Pretty-prints data in a table
@@ -145,7 +149,7 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
         )
 
         tab = Table(
-            *header, header_style="", box=box.SQUARE, show_header=self.headers
+            *header, header_style="", box=box_style, show_header=self.headers
         )
         for row in content:
             row = [Text.from_ansi(item) for item in row]
@@ -256,11 +260,11 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
         return content
 
     def _attempt_truncate_value(self, value):
-        if self.disable_truncation:
-            return value
-
         if not isinstance(value, str):
             value = str(value)
+
+        if self.disable_truncation:
+            return value
 
         if len(value) < self.truncation_length:
             return value
