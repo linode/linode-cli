@@ -189,7 +189,7 @@ def _bool_input(
     Requests the user to enter either `y` or `n` given a prompt.
     """
     while True:
-        user_input = input(f"\n{prompt} " + f"[y/N]: ").strip().lower()
+        user_input = input(f"\n{prompt} [y/N]: ").strip().lower()
 
         if user_input == "":
             return default
