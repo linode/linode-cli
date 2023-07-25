@@ -201,7 +201,7 @@ class TestOutputHandler:
         rprint(tab, file=mock_table)
 
         assert output.getvalue() == mock_table.getvalue()
-        
+
     def test_ascii_table_output(self, mock_cli):
         output = io.StringIO()
         header = ["h1"]
@@ -325,7 +325,6 @@ class TestOutputHandler:
         assert result == test_str
 
     def test_truncated_table(self, mock_cli, list_operation_for_output_tests):
-
         # Ensure integers are properly converted
         result = mock_cli.output_handler._attempt_truncate_value(12345)
 

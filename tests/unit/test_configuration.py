@@ -13,7 +13,11 @@ import pytest
 import requests_mock
 
 from linodecli import configuration
-from linodecli.configuration import _default_thing_input, _default_text_input, _bool_input
+from linodecli.configuration import (
+    _bool_input,
+    _default_text_input,
+    _default_thing_input,
+)
 
 
 class TestConfiguration:
@@ -256,7 +260,20 @@ mysql_engine = mysql/8.0.26"""
         """
         conf = configuration.CLIConfig(self.base_url, skip_config=True)
 
-        answers = iter(["1", "1", "1", "1", "1", "1", "n"])
+        answers = iter(
+            [
+                "1",
+                "1",
+                "1",
+                "1",
+                "1",
+                "1",
+                "y",
+                "foobar.linode.com",
+                "v4beta",
+                "https",
+            ]
+        )
 
         def mock_input(prompt):
             if "token" in prompt.lower():
@@ -311,6 +328,9 @@ mysql_engine = mysql/8.0.26"""
         # make sure that we set the default engine value according to type of database
         assert conf.get_value("mysql_engine") == "mysql/test-engine"
         assert conf.get_value("postgresql_engine") == "postgresql/test-engine"
+        assert conf.get_value("api_host") == "foobar.linode.com"
+        assert conf.get_value("api_version") == "v4beta"
+        assert conf.get_value("api_scheme") == "https"
 
     def test_configure_default_terminal(self):
         """
@@ -523,6 +543,7 @@ mysql_engine = mysql/8.0.26"""
         assert "error text" in output
 
         assert result == "foo"
+
     def test_default_text_input_optional(self, monkeypatch):
         # No value specified
         stdout_buf = io.StringIO()
@@ -596,10 +617,7 @@ mysql_engine = mysql/8.0.26"""
         monkeypatch.setattr("sys.stdin", io.StringIO("w\nn\n"))
 
         with contextlib.redirect_stdout(stdout_buf):
-            result = _bool_input(
-                "foo",
-                default=True
-            )
+            result = _bool_input("foo", default=True)
 
         output = stdout_buf.getvalue()
         assert "foo [y/N]: " in output
@@ -611,12 +629,8 @@ mysql_engine = mysql/8.0.26"""
         monkeypatch.setattr("sys.stdin", io.StringIO("\n"))
 
         with contextlib.redirect_stdout(stdout_buf):
-            result = _bool_input(
-                "foo",
-                default=True
-            )
+            result = _bool_input("foo", default=True)
 
         output = stdout_buf.getvalue()
         assert "foo [y/N]: " in output
         assert result
-

@@ -168,17 +168,19 @@ def _build_filter_header(
 
 
 def _build_request_url(ctx, operation, parsed_args) -> str:
-    result = operation.url.format(**vars(parsed_args))
-
-    if operation.method == "get":
-        result += f"?page={ctx.page}&page_size={ctx.page_size}"
-
-    return handle_url_overrides(
-        result,
+    target_server = handle_url_overrides(
+        operation.url_base,
         host=ctx.config.get_value("api_host"),
         version=ctx.config.get_value("api_version"),
         scheme=ctx.config.get_value("api_scheme"),
     )
+
+    result = f"{target_server}{operation.url_path}".format(**vars(parsed_args))
+
+    if operation.method == "get":
+        result += f"?page={ctx.page}&page_size={ctx.page_size}"
+
+    return result
 
 
 def _build_request_body(ctx, operation, parsed_args) -> Optional[str]:
