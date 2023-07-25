@@ -68,6 +68,8 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
         cli.output_handler.columns = "*"
     elif parsed.markdown:
         cli.output_handler.mode = OutputMode.markdown
+    elif parsed.ascii_table:
+        cli.output_handler.mode = OutputMode.ascii_table
 
     if parsed.delimiter:
         cli.output_handler.delimiter = parsed.delimiter

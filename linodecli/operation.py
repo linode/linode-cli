@@ -272,6 +272,7 @@ class CLIOperation:  # pylint: disable=too-many-instance-attributes
                             "--" + attr.name,
                             type=TYPES[attr.item_type],
                             metavar=attr.name,
+                            action="append",
                             nargs="?",
                         )
                     else:
