@@ -118,7 +118,18 @@ def list_operation():
         "foo/bar",
         "get info",
         [],
-        ResponseModel([ModelAttr("filterable_result", True, True, "string")]),
+        ResponseModel(
+            [
+                ModelAttr("filterable_result", True, True, "string"),
+                ModelAttr(
+                    "filterable_list_result",
+                    True,
+                    True,
+                    "array",
+                    item_type="string",
+                ),
+            ]
+        ),
         [],
     )
 

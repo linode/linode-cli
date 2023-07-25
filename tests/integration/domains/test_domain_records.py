@@ -64,6 +64,7 @@ def domain_records_setup():
     delete_target_id(target="domains", id=domain_id)
 
 
+@pytest.mark.smoke
 def test_create_a_domain(create_master_domain):
     # Current domain list
     process = exec_test_command(
@@ -86,6 +87,7 @@ def test_create_a_domain(create_master_domain):
     )
 
 
+@pytest.mark.smoke
 def test_create_domain_srv_record(domain_records_setup):
     domain_id = domain_records_setup[0]
 
@@ -135,6 +137,7 @@ def test_list_srv_record(domain_records_setup):
     )
 
 
+@pytest.mark.smoke
 def test_view_domain_record(domain_records_setup):
     domain_id = domain_records_setup[0]
     record_id = domain_records_setup[1]

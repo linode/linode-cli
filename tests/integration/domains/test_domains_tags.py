@@ -1,6 +1,8 @@
 import re
 import time
 
+import pytest
+
 from tests.integration.helpers import (
     delete_tag,
     delete_target_id,
@@ -57,7 +59,7 @@ def test_fail_to_create_slave_domain_with_invalid_tags():
     )
 
 
-# @pytest.mark.skip(reason="BUG 943")
+@pytest.mark.smoke
 def test_create_master_domain_with_tags():
     timestamp = str(int(time.time()))
     tag = "foo"

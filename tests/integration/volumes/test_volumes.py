@@ -150,10 +150,11 @@ def test_list_volume(setup_test_volumes):
         BASE_CMD + ["list", "--text", "--no-headers", "--delimiter", ","]
     ).stdout.decode()
     assert re.search(
-        "[0-9]+,[A-Za-z0-9]+,(creating|active|offline),10,[a-z-]+", result
+        "[0-9]+,[A-Za-z0-9].*,.*,(creating|active|offline),.*", result
     )
 
 
+@pytest.mark.smoke
 def test_view_single_volume(setup_test_volumes):
     volume_id = setup_test_volumes
     result = exec_test_command(

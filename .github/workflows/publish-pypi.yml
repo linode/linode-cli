@@ -34,6 +34,6 @@ jobs:
           LINODE_CLI_VERSION: ${{ github.event.release.tag_name }}
 
       - name: Publish the release artifacts to PyPI
-        uses: pypa/gh-action-pypi-publish@37f50c210e3d2f9450da2cd423303d6a14a6e29f # pin@release/v1
+        uses: pypa/gh-action-pypi-publish@a56da0b891b3dc519c7ee3284aff1fad93cc8598 # pin@release/v1.8.6
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}

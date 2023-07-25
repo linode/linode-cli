@@ -43,6 +43,7 @@ def test_create_linode_with_backup_disabled(create_linode_setup):
     assert re.search(linode_id + ",False", result)
 
 
+@pytest.mark.smoke
 def test_enable_backups(create_linode_setup):
     # get linode id
     linode_id = create_linode_setup
