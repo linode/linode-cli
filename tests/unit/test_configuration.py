@@ -13,7 +13,7 @@ import pytest
 import requests_mock
 
 from linodecli import configuration
-from linodecli.configuration import _default_thing_input, _default_text_input
+from linodecli.configuration import _default_thing_input, _default_text_input, _bool_input
 
 
 class TestConfiguration:
@@ -590,4 +590,33 @@ mysql_engine = mysql/8.0.26"""
 
         assert "error text" in stdout_buf.getvalue()
         assert result == "bar"
+
+    def test_bool_input(self, monkeypatch):
+        stdout_buf = io.StringIO()
+        monkeypatch.setattr("sys.stdin", io.StringIO("w\nn\n"))
+
+        with contextlib.redirect_stdout(stdout_buf):
+            result = _bool_input(
+                "foo",
+                default=True
+            )
+
+        output = stdout_buf.getvalue()
+        assert "foo [y/N]: " in output
+        assert "Invalid input. Please input either y or n." in output
+        assert not result
+
+    def test_bool_input_default(self, monkeypatch):
+        stdout_buf = io.StringIO()
+        monkeypatch.setattr("sys.stdin", io.StringIO("\n"))
+
+        with contextlib.redirect_stdout(stdout_buf):
+            result = _bool_input(
+                "foo",
+                default=True
+            )
+
+        output = stdout_buf.getvalue()
+        assert "foo [y/N]: " in output
+        assert result
 
