@@ -39,6 +39,12 @@ components:
           x-linode-filterable: true
           type: string
           description: Filterable result value
+        filterable_list_result:
+          x-linode-filterable: true
+          type: array
+          items:
+            type: string
+          description: Filterable result value
     PaginationEnvelope:
       type: object
       properties:

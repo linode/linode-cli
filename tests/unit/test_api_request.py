@@ -129,7 +129,7 @@ class TestAPIRequest:
         mock_response = Mock(status_code=200, reason="OK")
 
         def validate_http_request(url, headers=None, data=None, **kwargs):
-            assert url == "http://localhost/foo/bar?page=1&page_size=100"
+            assert url == "http://localhost/v4/foo/bar?page=1&page_size=100"
             assert headers["X-Filter"] == json.dumps(
                 {
                     "+and": [
