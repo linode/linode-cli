@@ -77,7 +77,24 @@ class TestAPIRequest:
             mock_cli, list_operation, SimpleNamespace()
         )
 
-        assert "http://localhost/foo/bar?page=1&page_size=100" == result
+        assert "http://localhost/v4/foo/bar?page=1&page_size=100" == result
+
+    def test_build_request_url_with_overrides(self, mock_cli, list_operation):
+        def mock_getvalue(key: str):
+            return {
+                "api_host": "foobar.local",
+                "api_scheme": "https",
+                "api_version": "v4beta",
+            }[key]
+
+        mock_cli.config.get_value = mock_getvalue
+
+        result = api_request._build_request_url(
+            mock_cli, list_operation, SimpleNamespace()
+        )
+        assert (
+            result == "https://foobar.local/v4beta/foo/bar?page=1&page_size=100"
+        )
 
     def test_build_request_url_post(self, mock_cli, create_operation):
         result = api_request._build_request_url(
@@ -112,7 +129,7 @@ class TestAPIRequest:
         mock_response = Mock(status_code=200, reason="OK")
 
         def validate_http_request(url, headers=None, data=None, **kwargs):
-            assert url == "http://localhost/foo/bar?page=1&page_size=100"
+            assert url == "http://localhost/v4/foo/bar?page=1&page_size=100"
             assert headers["X-Filter"] == json.dumps(
                 {
                     "+and": [
