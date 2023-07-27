@@ -238,12 +238,18 @@ class OpenAPIOperation:
         self.description = operation.description.split(".")[0]
         self.params = [OpenAPIOperationParameter(c) for c in params]
 
-        server = (
+        # These fields must be stored separately
+        # to allow them to be easily modified
+        # at runtime.
+        self.url_base = (
             operation.servers[0].url
             if operation.servers
             else operation._root.servers[0].url
         )
-        self.url = server + operation.path[-2]
+
+        self.url_path = operation.path[-2]
+
+        self.url = self.url_base + self.url_path
 
         docs_url = None
         tags = operation.tags
