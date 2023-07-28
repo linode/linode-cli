@@ -78,3 +78,52 @@ class TestOperation:
         assert getattr(result, "foo.foo") == ["cool", "test", "linode"]
         assert getattr(result, "foo.bar") == [None, "wow"]
         assert getattr(result, "foo.aaa") == ["computer", None, "akamai"]
+
+    def test_password_prompt_basic(self):
+        """
+        Tests a basic password prompt base condition.
+        """
+
+        parser = argparse.ArgumentParser(
+            prog=f"",
+        )
+
+        parser.add_argument(
+            f"--TOKEN",
+            metavar="TOKEN",
+            action=operation.PasswordPromptAction,
+            type=str,
+        )
+
+        result = parser.parse_args(
+            [
+                "--TOKEN",
+                "test_token",
+            ]
+        )
+
+        assert getattr(result, "TOKEN") == "test_token"
+
+    def test_optional_from_file_action(self):
+        """
+        Tests a optional from file action base condition.
+        """
+
+        parser = argparse.ArgumentParser(
+            prog=f"",
+        )
+
+        parser.add_argument(
+            f"--path",
+            action=operation.OptionalFromFileAction,
+            type=str,
+        )
+
+        result = parser.parse_args(
+            [
+                "--path",
+                "/path/get",
+            ]
+        )
+
+        assert getattr(result, "path") == "/path/get"
