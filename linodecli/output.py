@@ -2,14 +2,14 @@
 Handles formatting the output of commands used in Linode CLI
 """
 import json
-import sys
 from enum import Enum
 from sys import stdout
-from typing import IO, List, Optional, Union
+from typing import IO, List, Optional, Union, cast
 
 from rich import box
 from rich import print as rprint
-from rich.table import Table
+from rich.console import OverflowMethod
+from rich.table import Column, Table
 from rich.text import Text
 
 from linodecli.baked.response import OpenAPIResponse
@@ -40,7 +40,6 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
         pretty_json=False,
         columns=None,
         disable_truncation=False,
-        truncation_length=64,
         suppress_warnings=False,
     ):
         self.mode = mode
@@ -48,9 +47,12 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
         self.pretty_json = pretty_json
         self.headers = headers
         self.columns = columns
-        self.disable_truncation = disable_truncation
-        self.truncation_length = truncation_length
         self.suppress_warnings = suppress_warnings
+
+        self.disable_truncation = disable_truncation
+        self.overflow_mode = cast(
+            OverflowMethod, "fold" if disable_truncation else "ellipsis"
+        )
 
         # Used to track whether a warning has already been printed
         self.has_warned = False
@@ -82,14 +84,14 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
                 header, data, columns, title, to
             ),
             OutputMode.ascii_table: lambda: self._table_output(
-                header, data, columns, title, to, box.ASCII
+                header, data, columns, title, to, box_style=box.ASCII
             ),
             OutputMode.delimited: lambda: self._delimited_output(
                 header, data, columns, to
             ),
             OutputMode.json: lambda: self._json_output(header, data, to),
-            OutputMode.markdown: lambda: self._markdown_output(
-                header, data, columns, to
+            OutputMode.markdown: lambda: self._table_output(
+                header, data, columns, title, to, box_style=box.MARKDOWN
             ),
         }
 
@@ -143,13 +145,20 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
         content = self._build_output_content(
             data,
             columns,
-            value_transform=lambda attr, v: self._attempt_truncate_value(
-                attr.render_value(v)
-            ),
+            value_transform=lambda attr, v: str(attr.render_value(v)),
         )
 
+        # Convert the headers into column objects
+        # so we can override the overflow method.
+        header_columns = [
+            Column(v, overflow=self.overflow_mode) for v in header
+        ]
+
         tab = Table(
-            *header, header_style="", box=box_style, show_header=self.headers
+            *header_columns,
+            header_style="",
+            box=box_style,
+            show_header=self.headers,
         )
         for row in content:
             row = [Text.from_ansi(item) for item in row]
@@ -212,26 +221,6 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
                     ret[k] = v
         return ret
 
-    def _markdown_output(self, header, data, columns, to):
-        """
-        Pretty-prints data in a Markdown-formatted table.  This uses github's
-        flavor of Markdown
-        """
-        content = self._build_output_content(
-            data,
-            columns,
-            value_transform=lambda attr, v: self._attempt_truncate_value(
-                attr.render_value(v, colorize=False)
-            ),
-        )
-
-        if header:
-            print("| " + " | ".join([str(c) for c in header]) + " |", file=to)
-            print("|---" * len(header) + "|", file=to)
-
-        for row in content:
-            print("| " + " | ".join([str(c) for c in row]) + " |", file=to)
-
     def _build_output_content(
         self,
         data,
@@ -258,25 +247,3 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
             content.append([value_transform(attr, model) for attr in columns])
 
         return content
-
-    def _attempt_truncate_value(self, value):
-        if not isinstance(value, str):
-            value = str(value)
-
-        if self.disable_truncation:
-            return value
-
-        if len(value) < self.truncation_length:
-            return value
-
-        if not self.suppress_warnings and not self.has_warned:
-            print(
-                "Certain values in this output have been truncated. "
-                "To disable output truncation, use --no-truncation. "
-                "Alternatively, use the --json or --text output modes, "
-                "or disable warnings using --suppress-warnings.",
-                file=sys.stderr,
-            )
-            self.has_warned = True
-
-        return f"{value[:self.truncation_length]}..."
