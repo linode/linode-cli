@@ -41,6 +41,7 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
         columns=None,
         disable_truncation=False,
         suppress_warnings=False,
+        column_width=None,
     ):
         self.mode = mode
         self.delimiter = delimiter
@@ -50,9 +51,7 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
         self.suppress_warnings = suppress_warnings
 
         self.disable_truncation = disable_truncation
-        self.overflow_mode = cast(
-            OverflowMethod, "fold" if disable_truncation else "ellipsis"
-        )
+        self.column_width = column_width
 
         # Used to track whether a warning has already been printed
         self.has_warned = False
@@ -148,10 +147,17 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
             value_transform=lambda attr, v: str(attr.render_value(v)),
         )
 
+        # Determine the rich overflow mode to use
+        # for each column.
+        overflow_mode = cast(
+            OverflowMethod, "fold" if self.disable_truncation else "ellipsis"
+        )
+
         # Convert the headers into column objects
         # so we can override the overflow method.
         header_columns = [
-            Column(v, overflow=self.overflow_mode) for v in header
+            Column(v, overflow=overflow_mode, max_width=self.column_width)
+            for v in header
         ]
 
         tab = Table(
