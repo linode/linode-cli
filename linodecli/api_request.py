@@ -161,10 +161,15 @@ def _build_filter_header(
         new_filters = [{k: j} for j in v] if isinstance(v, list) else [{k: v}]
         filter_list.extend(new_filters)
 
-    if len(filter_list) > 0:
-        return json.dumps({"+and": filter_list})
+    if len(filter_list) < 1:
+        return None
 
-    return None
+    return json.dumps(
+        # Only use +and if there are multiple attributes to filter on
+        {"+and": filter_list}
+        if len(filter_list) > 1
+        else filter_list[0]
+    )
 
 
 def _build_request_url(ctx, operation, parsed_args) -> str:

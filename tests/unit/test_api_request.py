@@ -125,6 +125,21 @@ class TestAPIRequest:
             == result
         )
 
+    def test_build_filter_header_single(self, list_operation):
+        result = api_request._build_filter_header(
+            list_operation,
+            SimpleNamespace(
+                filterable_result="bar",
+            ),
+        )
+
+        assert (
+            json.dumps(
+                {"filterable_result": "bar"},
+            )
+            == result
+        )
+
     def test_do_request_get(self, mock_cli, list_operation):
         mock_response = Mock(status_code=200, reason="OK")
 
