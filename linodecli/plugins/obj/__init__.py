@@ -70,6 +70,25 @@ try:
 except ImportError:
     HAS_BOTO = False
 
+TRUNCATED_WARNING_MSG = (
+    "WARNING: Not all results was returned. If your would "
+    "like full results, please add the '--all-row' flag to"
+    " the command."
+)
+
+
+def add_all_rows_arg(parser: ArgumentParser):
+    parser.add_argument(
+        "--all-rows",
+        action="store_true",
+        help="Output all possible rows in the results with pagination",
+    )
+
+
+def warn(parsed, msg: str):
+    if not parsed.suppress_warnings:
+        print(msg)
+
 
 def list_objects_or_buckets(
     get_client, args, **kwargs
@@ -78,6 +97,7 @@ def list_objects_or_buckets(
     Lists buckets or objects
     """
     parser = inherit_plugin_args(ArgumentParser(PLUGIN_BASE + " ls"))
+    add_all_rows_arg(parser)
 
     parser.add_argument(
         "bucket",
@@ -106,16 +126,28 @@ def list_objects_or_buckets(
             prefix = ""
 
         data = []
+        objects = []
+        sub_directories = []
         try:
-            response = client.list_objects_v2(
-                Prefix=prefix, Bucket=bucket_name, Delimiter="/"
-            )
+            if parsed.all_rows:
+                responses = client.get_paginator("list_objects_v2").paginate(
+                    Prefix=prefix, Bucket=bucket_name, Delimiter="/"
+                )
+            else:
+                response = client.list_objects_v2(
+                    Prefix=prefix, Bucket=bucket_name, Delimiter="/"
+                )
+                if response.get("IsTruncated", False):
+                    warn(parsed, TRUNCATED_WARNING_MSG)
+
+                responses = [response]
         except client.exceptions.NoSuchBucket:
             print("No bucket named " + bucket_name)
             sys.exit(2)
 
-        objects = response.get("Contents", [])
-        sub_directories = response.get("CommonPrefixes", [])
+        for item in responses:
+            objects.extend(item.get("Contents", []))
+            sub_directories.extend(item.get("CommonPrefixes", []))
 
         for d in sub_directories:
             data.append((" " * 16, "DIR", d.get("Prefix")))
@@ -329,17 +361,29 @@ def list_all_objects(
     """
     # this is for printing help when --help is in the args
     parser = inherit_plugin_args(ArgumentParser(PLUGIN_BASE + " la"))
+    add_all_rows_arg(parser)
 
-    parser.parse_args(args)
+    parsed = parser.parse_args(args)
 
     client = get_client()
 
-    # all buckets
     buckets = [b["Name"] for b in client.list_buckets().get("Buckets", [])]
 
     for b in buckets:
         print()
-        objects = client.list_objects_v2(Bucket=b).get("Contents", [])
+        objects = []
+        if parsed.all_rows:
+            responses = client.get_paginator("list_objects_v2").paginate(
+                Bucket=b
+            )
+        else:
+            response = client.list_objects_v2(Bucket=b)
+            if response.get("IsTruncated", False):
+                warn(parsed, TRUNCATED_WARNING_MSG)
+            responses = [response]
+
+        for response in responses:
+            objects.extend(response.get("Contents", []))
 
         for obj in objects:
             size = obj.get("Size", 0)
