@@ -135,6 +135,11 @@ def register_args(parser):
     parser.add_argument(
         "--debug", action="store_true", help="Enable verbose HTTP debug output."
     )
+    parser.add_argument(
+        "--all-rows",
+        action="store_true",
+        help="Output all possible rows in the results with pagination",
+    )
 
     register_args_shared(parser)
 

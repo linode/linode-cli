@@ -87,12 +87,6 @@ def register_args_shared(parser: ArgumentParser):
         "This is useful for scripting the CLI's behavior.",
     )
 
-    parser.add_argument(
-        "--all-rows",
-        action="store_true",
-        help="Output all possible rows in the results with pagination",
-    )
-
     return parser
 
 
