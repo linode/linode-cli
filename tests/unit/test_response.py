@@ -1,5 +1,4 @@
-from linodecli import ModelAttr, ResponseModel
-from linodecli.response import colorize_string
+from linodecli.baked.response import colorize_string
 
 
 class TestOutputHandler:
@@ -7,15 +6,16 @@ class TestOutputHandler:
     Unit tests for linodecli.response
     """
 
-    def test_model_fix_json_rows(self):
-        model = ResponseModel([], rows=["foo.bar", "bar"])
-
+    def test_model_fix_json_rows(self, list_operation_for_response_test):
+        model = list_operation_for_response_test.response_model
+        model.rows = ["foo.bar", "bar"]
         result = model.fix_json({"foo": {"bar": 123}, "bar": "cool"})
 
         assert result == [123, "cool"]
 
-    def test_model_fix_json_nested(self):
-        model = ResponseModel([], nested_list="foo.cool")
+    def test_model_fix_json_nested(self, list_operation_for_response_test):
+        model = list_operation_for_response_test.response_model
+        model.nested_list = "foo.cool"
 
         result = model.fix_json([{"foo": {"cool": [123, 321]}}])
 
@@ -29,27 +29,26 @@ class TestOutputHandler:
 
         assert result == "\x1b[33mcool\x1b[0m"
 
-    def test_attr_get_value(self):
+    def test_attr_get_value(self, list_operation_for_response_test):
         model = {"foo": {"bar": "cool"}}
-        attr = ModelAttr("foo.bar", True, True, "string")
+        attr = list_operation_for_response_test.response_model.attrs[0]
 
         result = attr._get_value(model)
 
         assert result == "cool"
 
-    def test_attr_get_string(self):
+    def test_attr_get_string(self, list_operation_for_response_test):
         model = {"foo": {"bar": ["cool1", "cool2"]}}
-        attr = ModelAttr("foo.bar", True, True, "string")
+        attr = list_operation_for_response_test.response_model.attrs[0]
 
         result = attr.get_string(model)
 
         assert result == "cool1 cool2"
 
-    def test_attr_render_value(self):
+    def test_attr_render_value(self, list_operation_for_response_test):
         model = {"foo": {"bar": ["cool1", "cool2"]}}
-        attr = ModelAttr(
-            "foo.bar", True, True, "string", color_map={"default_": "yellow"}
-        )
+        attr = list_operation_for_response_test.response_model.attrs[0]
+        attr.color_map = {"default_": "yellow"}
 
         result = attr.render_value(model)
 

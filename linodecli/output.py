@@ -12,7 +12,7 @@ from rich import print as rprint
 from rich.table import Table
 from rich.text import Text
 
-from linodecli.response import ResponseModel
+from linodecli.baked.response import OpenAPIResponse
 
 
 class OutputMode(Enum):
@@ -57,7 +57,7 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
 
     def print(
         self,
-        response_model: ResponseModel,
+        response_model: OpenAPIResponse,
         data: List[Union[str, dict]],
         title: Optional[str] = None,
         to: IO[str] = stdout,
@@ -65,7 +65,7 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
     ):  # pylint: disable=too-many-arguments
         """
         :param response_model: The Model corresponding to this response
-        :type response_model: ResponseModel
+        :type response_model: OpenAPIResponse
         :param data: The data to display
         :type data: list[str] or list[dict]
         :param title: The title to display on a table

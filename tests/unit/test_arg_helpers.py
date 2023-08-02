@@ -181,6 +181,7 @@ class TestArgParsing:
         mocked_ops.method = "post"
 
         mocked_args = mocker.MagicMock()
+        mocked_args.read_only = False
         mocked_args.required = True
         mocked_args.path = "path"
         mocked_args.description = "test description"
@@ -191,6 +192,7 @@ class TestArgParsing:
 
         arg_helpers.action_help(mock_cli, "command", "action")
         captured = capsys.readouterr()
+
         assert "test summary" in captured.out
         assert "API Documentation" in captured.out
         assert "https://website.com/endpoint" in captured.out
