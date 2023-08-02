@@ -78,6 +78,9 @@ TRUNCATED_WARNING_MSG = (
 
 
 def add_all_rows_arg(parser: ArgumentParser):
+    """
+    Adding the --all-rows flag to the arguments parser
+    """
     parser.add_argument(
         "--all-rows",
         action="store_true",
@@ -86,13 +89,16 @@ def add_all_rows_arg(parser: ArgumentParser):
 
 
 def warn(parsed, msg: str):
+    """
+    Print warning if not suppressed
+    """
     if not parsed.suppress_warnings:
         print(msg)
 
 
 def list_objects_or_buckets(
     get_client, args, **kwargs
-):  # pylint: disable=too-many-locals,unused-argument
+):  # pylint: disable=too-many-locals,unused-argument,too-many-branches
     """
     Lists buckets or objects
     """
