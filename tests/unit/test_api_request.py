@@ -11,6 +11,7 @@ from unittest.mock import Mock, patch
 import requests
 
 from linodecli import api_request
+from linodecli.baked.operation import ExplicitNullValue
 
 
 class TestAPIRequest:
@@ -59,7 +60,34 @@ class TestAPIRequest:
         result = api_request._build_request_body(
             mock_cli,
             create_operation,
-            SimpleNamespace(generic_arg="foo", region=None, engine=None),
+            SimpleNamespace(
+                generic_arg="foo",
+                region=None,
+                engine=None,
+                nullable_int=ExplicitNullValue(),
+            ),
+        )
+        assert (
+            json.dumps(
+                {
+                    "generic_arg": "foo",
+                    "region": "us-southeast",
+                    "engine": "mysql/8.0.26",
+                    "nullable_int": None,
+                }
+            )
+            == result
+        )
+
+        # The nullable field should be excluded
+        result = api_request._build_request_body(
+            mock_cli,
+            create_operation,
+            SimpleNamespace(
+                generic_arg="foo",
+                region=None,
+                engine=None,
+            ),
         )
         assert (
             json.dumps(

@@ -49,6 +49,31 @@ TYPES = {
 }
 
 
+# pylint: disable=too-few-public-methods
+class ExplicitNullValue:
+    """
+    A special type class used to explicitly pass null values to the API.
+    """
+
+
+def wrap_parse_nullable_value(arg_type):
+    """
+    A helper function to parse `null` as None for nullable CLI args.
+    This is intended to be called and passed to the `type=` kwarg for ArgumentParser.add_argument.
+    """
+
+    def type_func(value):
+        if not value:
+            return None
+
+        if value == "null":
+            return ExplicitNullValue()
+
+        return TYPES[arg_type](value)
+
+    return type_func
+
+
 class ListArgumentAction(argparse.Action):
     """
     This action is intended to be used only with list arguments.
@@ -338,6 +363,14 @@ class OpenAPIOperation:
             for arg in self.args:
                 if arg.read_only:
                     continue
+
+                arg_type_handler = TYPES[
+                    arg.item_type if arg.datatype == "array" else arg.datatype
+                ]
+
+                if arg.nullable:
+                    arg_type_handler = wrap_parse_nullable_value(arg.datatype)
+
                 if arg.datatype == "array":
                     # special handling for input arrays
                     parser.add_argument(
@@ -351,7 +384,7 @@ class OpenAPIOperation:
                         "--" + arg.path,
                         metavar=arg.name,
                         action=ListArgumentAction,
-                        type=TYPES[arg.datatype],
+                        type=arg_type_handler,
                     )
                     list_items.append((arg.path, arg.prefix))
                 else:
@@ -371,13 +404,13 @@ class OpenAPIOperation:
                             "--" + arg.path,
                             metavar=arg.name,
                             action=OptionalFromFileAction,
-                            type=TYPES[arg.datatype],
+                            type=arg_type_handler,
                         )
                     else:
                         parser.add_argument(
                             "--" + arg.path,
                             metavar=arg.name,
-                            type=TYPES[arg.datatype],
+                            type=arg_type_handler,
                         )
 
         parsed = parser.parse_args(args)
