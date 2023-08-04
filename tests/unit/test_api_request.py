@@ -321,19 +321,14 @@ class TestAPIRequest:
         output = api_request._check_retry(mock_response)
         assert output
 
-        mock_response = Mock(
-            status_code=400,
-            headers={
-                "Server": "nginx",
-                "Content-Type": "text/html",
-            })
+        mock_response = Mock(status_code=429)
         output = api_request._check_retry(mock_response)
         assert output
 
         mock_response = Mock(
-            status_code=503,
+            status_code=400,
             headers={
-                "X-Maintenance-Mode": "nginx",
+                "Server": "nginx",
                 "Content-Type": "text/html",
             })
         output = api_request._check_retry(mock_response)

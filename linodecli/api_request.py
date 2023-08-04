@@ -354,12 +354,10 @@ def _check_retry(response):
     if response.status_code == 408:
         # request timed out
         return True
+    if response.status_code == 429:
+        # rate limit exceeded
+        return True
     if response.headers:
-        if response.status_code == 503 and response.headers.get(
-            "X-Maintenance-Mode"
-        ):
-            # API is in Maintenance Mode
-            return True
         if (
             response.status_code == 400
             and response.headers.get("Server") == "nginx"
