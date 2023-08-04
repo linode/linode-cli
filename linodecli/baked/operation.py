@@ -364,12 +364,13 @@ class OpenAPIOperation:
                 if arg.read_only:
                     continue
 
-                arg_type_handler = TYPES[
+                arg_type = (
                     arg.item_type if arg.datatype == "array" else arg.datatype
-                ]
+                )
+                arg_type_handler = TYPES[arg_type]
 
                 if arg.nullable:
-                    arg_type_handler = wrap_parse_nullable_value(arg.datatype)
+                    arg_type_handler = wrap_parse_nullable_value(arg_type)
 
                 if arg.datatype == "array":
                     # special handling for input arrays
