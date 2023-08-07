@@ -378,7 +378,7 @@ class OpenAPIOperation:
                         "--" + arg.path,
                         metavar=arg.name,
                         action="append",
-                        type=TYPES[arg.item_type],
+                        type=arg_type_handler,
                     )
                 elif arg.list_item:
                     parser.add_argument(
