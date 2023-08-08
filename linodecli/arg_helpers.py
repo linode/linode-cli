@@ -16,7 +16,7 @@ from rich.table import Table
 from linodecli import plugins
 
 from .completion import bake_completions
-from .helpers import register_args_shared
+from .helpers import pagination_args, register_args_shared
 
 
 def register_args(parser):
@@ -77,21 +77,6 @@ def register_args(parser):
         help="If set, does not display headers in output.",
     )
     parser.add_argument(
-        "--page",
-        metavar="PAGE",
-        default=1,
-        type=int,
-        help="For listing actions, specifies the page to request",
-    )
-    parser.add_argument(
-        "--page-size",
-        metavar="PAGESIZE",
-        default=100,
-        type=int,
-        help="For listing actions, specifies the number of items per page, "
-        "accepts any value between 25 and 500",
-    )
-    parser.add_argument(
         "--all",
         action="store_true",
         help=(
@@ -135,12 +120,8 @@ def register_args(parser):
     parser.add_argument(
         "--debug", action="store_true", help="Enable verbose HTTP debug output."
     )
-    parser.add_argument(
-        "--all-rows",
-        action="store_true",
-        help="Output all possible rows in the results with pagination",
-    )
 
+    pagination_args(parser)
     register_args_shared(parser)
 
     return parser

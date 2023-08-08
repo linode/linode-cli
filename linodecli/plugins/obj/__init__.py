@@ -14,8 +14,7 @@ from argparse import ArgumentParser
 from contextlib import suppress
 from datetime import datetime
 from math import ceil
-from pathlib import Path
-from typing import List
+from typing import Iterable, List
 
 from rich import print as rprint
 from rich.table import Table
@@ -23,7 +22,7 @@ from rich.table import Table
 from linodecli.cli import CLI
 from linodecli.configuration import _do_get_request
 from linodecli.configuration.helpers import _default_thing_input
-from linodecli.helpers import expand_globs
+from linodecli.helpers import expand_globs, pagination_args
 from linodecli.plugins import PluginContext, inherit_plugin_args
 from linodecli.plugins.obj.buckets import create_bucket, delete_bucket
 from linodecli.plugins.obj.config import (
@@ -70,30 +69,19 @@ try:
 except ImportError:
     HAS_BOTO = False
 
-TRUNCATED_WARNING_MSG = (
-    "WARNING: Not all results was returned. If your would "
+TRUNCATED_MSG = (
+    "Notice: Not all results was returned. If your would "
     "like full results, please add the '--all-row' flag to"
-    " the command."
+    " the command or use the built-in pagination feature."
 )
 
 
-def add_all_rows_arg(parser: ArgumentParser):
-    """
-    Adding the --all-rows flag to the arguments parser
-    """
-    parser.add_argument(
-        "--all-rows",
-        action="store_true",
-        help="Output all possible rows in the results with pagination",
-    )
+def flip_to_page(iterable: Iterable, page: int = 1):
+    iterable = iter(iterable)
+    for _ in range(page - 1):
+        next(iterable)
 
-
-def warn(parsed, msg: str):
-    """
-    Print warning if not suppressed
-    """
-    if not parsed.suppress_warnings:
-        print(msg)
+    return next(iterable)
 
 
 def list_objects_or_buckets(
@@ -103,7 +91,7 @@ def list_objects_or_buckets(
     Lists buckets or objects
     """
     parser = inherit_plugin_args(ArgumentParser(PLUGIN_BASE + " ls"))
-    add_all_rows_arg(parser)
+    pagination_args(parser)
 
     parser.add_argument(
         "bucket",
@@ -134,24 +122,26 @@ def list_objects_or_buckets(
         data = []
         objects = []
         sub_directories = []
+        pages = client.get_paginator("list_objects_v2").paginate(
+            Prefix=prefix,
+            Bucket=bucket_name,
+            Delimiter="/",
+            PaginationConfig={"PageSize": parsed.page_size},
+        )
         try:
             if parsed.all_rows:
-                responses = client.get_paginator("list_objects_v2").paginate(
-                    Prefix=prefix, Bucket=bucket_name, Delimiter="/"
-                )
+                results = pages
             else:
-                response = client.list_objects_v2(
-                    Prefix=prefix, Bucket=bucket_name, Delimiter="/"
-                )
-                if response.get("IsTruncated", False):
-                    warn(parsed, TRUNCATED_WARNING_MSG)
+                page = flip_to_page(pages, parsed.page)
+                if page.get("IsTruncated", False):
+                    print(TRUNCATED_MSG)
 
-                responses = [response]
+                results = [page]
         except client.exceptions.NoSuchBucket:
             print("No bucket named " + bucket_name)
             sys.exit(2)
 
-        for item in responses:
+        for item in results:
             objects.extend(item.get("Contents", []))
             sub_directories.extend(item.get("CommonPrefixes", []))
 
@@ -367,7 +357,7 @@ def list_all_objects(
     """
     # this is for printing help when --help is in the args
     parser = inherit_plugin_args(ArgumentParser(PLUGIN_BASE + " la"))
-    add_all_rows_arg(parser)
+    pagination_args(parser)
 
     parsed = parser.parse_args(args)
 
@@ -378,18 +368,20 @@ def list_all_objects(
     for b in buckets:
         print()
         objects = []
+        pages = client.get_paginator("list_objects_v2").paginate(
+            Bucket=b, PaginationConfig={"PageSize": parsed.page_size}
+        )
         if parsed.all_rows:
-            responses = client.get_paginator("list_objects_v2").paginate(
-                Bucket=b
-            )
+            results = pages
         else:
-            response = client.list_objects_v2(Bucket=b)
-            if response.get("IsTruncated", False):
-                warn(parsed, TRUNCATED_WARNING_MSG)
-            responses = [response]
+            page = flip_to_page(pages, parsed.page)
+            if page.get("IsTruncated", False):
+                print(TRUNCATED_MSG)
 
-        for response in responses:
-            objects.extend(response.get("Contents", []))
+            results = [page]
+
+        for page in results:
+            objects.extend(page.get("Contents", []))
 
         for obj in objects:
             size = obj.get("Size", 0)

@@ -63,6 +63,29 @@ def filter_markdown_links(text):
     return result
 
 
+def pagination_args(parser: ArgumentParser):
+    parser.add_argument(
+        "--page",
+        metavar="PAGE",
+        default=1,
+        type=int,
+        help="For listing actions, specifies the page to request",
+    )
+    parser.add_argument(
+        "--page-size",
+        metavar="PAGESIZE",
+        default=100,
+        type=int,
+        help="For listing actions, specifies the number of items per page, "
+        "accepts any value between 25 and 500",
+    )
+    parser.add_argument(
+        "--all-rows",
+        action="store_true",
+        help="Output all possible rows in the results with pagination",
+    )
+
+
 def register_args_shared(parser: ArgumentParser):
     """
     Adds certain arguments to the given ArgumentParser that may be shared across
