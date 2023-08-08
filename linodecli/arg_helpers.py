@@ -16,7 +16,7 @@ from rich.table import Table
 from linodecli import plugins
 
 from .completion import bake_completions
-from .helpers import pagination_args, register_args_shared
+from .helpers import pagination_args_shared, register_args_shared
 
 
 def register_args(parser):
@@ -121,7 +121,7 @@ def register_args(parser):
         "--debug", action="store_true", help="Enable verbose HTTP debug output."
     )
 
-    pagination_args(parser)
+    pagination_args_shared(parser)
     register_args_shared(parser)
 
     return parser

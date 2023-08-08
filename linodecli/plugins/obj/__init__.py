@@ -22,7 +22,7 @@ from rich.table import Table
 from linodecli.cli import CLI
 from linodecli.configuration import _do_get_request
 from linodecli.configuration.helpers import _default_thing_input
-from linodecli.helpers import expand_globs, pagination_args
+from linodecli.helpers import expand_globs, pagination_args_shared
 from linodecli.plugins import PluginContext, inherit_plugin_args
 from linodecli.plugins.obj.buckets import create_bucket, delete_bucket
 from linodecli.plugins.obj.config import (
@@ -77,6 +77,7 @@ TRUNCATED_MSG = (
 
 
 def flip_to_page(iterable: Iterable, page: int = 1):
+    """Given a iterable object and return a specific iteration (page)"""
     iterable = iter(iterable)
     for _ in range(page - 1):
         next(iterable)
@@ -91,7 +92,7 @@ def list_objects_or_buckets(
     Lists buckets or objects
     """
     parser = inherit_plugin_args(ArgumentParser(PLUGIN_BASE + " ls"))
-    pagination_args(parser)
+    pagination_args_shared(parser)
 
     parser.add_argument(
         "bucket",
@@ -357,7 +358,7 @@ def list_all_objects(
     """
     # this is for printing help when --help is in the args
     parser = inherit_plugin_args(ArgumentParser(PLUGIN_BASE + " la"))
-    pagination_args(parser)
+    pagination_args_shared(parser)
 
     parsed = parser.parse_args(args)
 

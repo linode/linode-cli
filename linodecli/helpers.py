@@ -63,7 +63,11 @@ def filter_markdown_links(text):
     return result
 
 
-def pagination_args(parser: ArgumentParser):
+def pagination_args_shared(parser: ArgumentParser):
+    """
+    Add pagination related arguments to the given
+    ArgumentParser that may be shared across the CLI and plugins.
+    """
     parser.add_argument(
         "--page",
         metavar="PAGE",
