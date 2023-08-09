@@ -6,6 +6,7 @@ import glob
 import json
 import platform
 import re
+import sys
 from getpass import getpass
 from os import environ, path
 
@@ -339,11 +340,10 @@ class OpenAPIOperation:
             parser.add_argument(
                 "--order_by", 
                 choices=filterable_args,
-                help="Attribute to order the results by - must be filterable.")
-
-            order_group = parser.add_mutually_exclusive_group()
-    
-            order_group.add_argument(
+                help="Attribute to order the results by - must be filterable.",
+                required='--order' in sys.argv)    
+            
+            parser.add_argument(
                 "--order", 
                 choices=['asc', 'desc'], 
                 default='asc',

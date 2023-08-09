@@ -151,16 +151,13 @@ def _build_filter_header(
             del parsed_args_dict[p.name]
 
     # check for order_by and order
-    order_by = None
+    order_by, order = None, None
     if parsed_args_dict['order_by'] is not None:
         order_by = parsed_args_dict['order_by']
         order = 'asc' if parsed_args_dict['order'] == None else parsed_args_dict['order']
     
     del parsed_args_dict['order_by']
     del parsed_args_dict['order']
-
-    print(order_by, order)
-
 
     # The "+and" list to be used in the filter header
     filter_list = []
