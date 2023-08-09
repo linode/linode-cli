@@ -110,7 +110,7 @@ class TestAPIRequest:
                 filterable_result="bar",
                 filterable_list_result=["foo", "bar"],
                 order_by=None,
-                order=None
+                order=None,
             ),
         )
 

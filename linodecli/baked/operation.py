@@ -338,17 +338,18 @@ class OpenAPIOperation:
 
             # Add --order_by and --order argument
             parser.add_argument(
-                "--order_by", 
+                "--order_by",
                 choices=filterable_args,
                 help="Attribute to order the results by - must be filterable.",
-                required='--order' in sys.argv)
+                required="--order" in sys.argv,
+            )
 
             parser.add_argument(
-                "--order", 
-                choices=['asc', 'desc'],
-                default='asc',
-                help="Either “asc” or “desc”. Defaults to “asc”. Requires +order_by")
-
+                "--order",
+                choices=["asc", "desc"],
+                default="asc",
+                help="Either “asc” or “desc”. Defaults to “asc”. Requires +order_by",
+            )
 
         elif self.method in ("post", "put"):
             # build args for body JSON
