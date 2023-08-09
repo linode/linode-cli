@@ -174,7 +174,7 @@ def _build_filter_header(
         if order_by is None:
             return json.dumps({"+and": filter_list})
         return json.dumps({"+and": filter_list, "+order_by": order_by, "+order": order})
-    elif order_by is not None:
+    if order_by is not None:
         return json.dumps({"+order_by": order_by, "+order": order})
 
     return None
