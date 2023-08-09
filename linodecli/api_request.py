@@ -167,6 +167,9 @@ def _build_filter_header(
 
     result = {}
     if len(filter_list) > 0:
+      if len(filter_list) == 1:
+        result = filter_list[0]
+      else:
         result["+and"] = filter_list
     if order_by is not None:
         result["+order_by"] = order_by
