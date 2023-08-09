@@ -109,6 +109,7 @@ class TestAPIRequest:
             SimpleNamespace(
                 filterable_result="bar",
                 filterable_list_result=["foo", "bar"],
+                order_by=None,
             ),
         )
 

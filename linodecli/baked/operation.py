@@ -335,17 +335,17 @@ class OpenAPIOperation:
                             type=expected_type,
                             metavar=attr.name,
                         )
-            
+
             # Add --order_by and --order argument
             parser.add_argument(
                 "--order_by", 
                 choices=filterable_args,
                 help="Attribute to order the results by - must be filterable.",
-                required='--order' in sys.argv)    
-            
+                required='--order' in sys.argv)
+
             parser.add_argument(
                 "--order", 
-                choices=['asc', 'desc'], 
+                choices=['asc', 'desc'],
                 default='asc',
                 help="Either “asc” or “desc”. Defaults to “asc”. Requires +order_by")
 
