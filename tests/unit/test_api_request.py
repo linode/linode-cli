@@ -127,6 +127,77 @@ class TestAPIRequest:
             == result
         )
 
+    def test_build_filter_header_order_by(self, list_operation):
+        result = api_request._build_filter_header(
+            list_operation,
+            SimpleNamespace(
+                filterable_result="bar",
+                filterable_list_result=["foo", "bar"],
+                order_by="baz",
+                order=None,
+            ),
+        )
+
+        assert (
+            json.dumps(
+                {
+                    "+and": [
+                        {"filterable_result": "bar"},
+                        {"filterable_list_result": "foo"},
+                        {"filterable_list_result": "bar"},
+                    ],
+                    "+order_by": "baz",
+                    "+order": "asc",
+                }
+            )
+            == result
+        )
+
+    def test_build_filter_header_order(self, list_operation):
+        result = api_request._build_filter_header(
+            list_operation,
+            SimpleNamespace(
+                filterable_result="bar",
+                filterable_list_result=["foo", "bar"],
+                order_by="baz",
+                order="desc",
+            ),
+        )
+
+        assert (
+            json.dumps(
+                {
+                    "+and": [
+                        {"filterable_result": "bar"},
+                        {"filterable_list_result": "foo"},
+                        {"filterable_list_result": "bar"},
+                    ],
+                    "+order_by": "baz",
+                    "+order": "desc",
+                }
+            )
+            == result
+        )
+
+    def test_build_filter_header_only_order(self, list_operation):
+        result = api_request._build_filter_header(
+            list_operation,
+            SimpleNamespace(
+                order_by="baz",
+                order="desc",
+            ),
+        )
+
+        assert (
+            json.dumps(
+                {
+                    "+order_by": "baz",
+                    "+order": "desc",
+                }
+            )
+            == result
+        )
+
     def test_do_request_get(self, mock_cli, list_operation):
         mock_response = Mock(status_code=200, reason="OK")
 
