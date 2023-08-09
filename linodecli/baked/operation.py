@@ -315,8 +315,10 @@ class OpenAPIOperation:
 
         if self.method == "get":
             # build args for filtering
+            filterable_args = []
             for attr in self.response_model.attrs:
                 if attr.filterable:
+                    filterable_args.append(attr.name)
                     expected_type = TYPES[attr.datatype]
                     if expected_type == list:
                         parser.add_argument(
@@ -332,6 +334,21 @@ class OpenAPIOperation:
                             type=expected_type,
                             metavar=attr.name,
                         )
+            
+            # Add --order_by and --order argument
+            parser.add_argument(
+                "--order_by", 
+                choices=filterable_args,
+                help="Attribute to order the results by - must be filterable.")
+
+            order_group = parser.add_mutually_exclusive_group()
+    
+            order_group.add_argument(
+                "--order", 
+                choices=['asc', 'desc'], 
+                default='asc',
+                help="Either “asc” or “desc”. Defaults to “asc”. Requires +order_by")
+
 
         elif self.method in ("post", "put"):
             # build args for body JSON

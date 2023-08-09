@@ -150,6 +150,18 @@ def _build_filter_header(
         if p.name in parsed_args_dict:
             del parsed_args_dict[p.name]
 
+    # check for order_by and order
+    order_by = None
+    if parsed_args_dict['order_by'] is not None:
+        order_by = parsed_args_dict['order_by']
+        order = 'asc' if parsed_args_dict['order'] == None else parsed_args_dict['order']
+    
+    del parsed_args_dict['order_by']
+    del parsed_args_dict['order']
+
+    print(order_by, order)
+
+
     # The "+and" list to be used in the filter header
     filter_list = []
 
@@ -162,7 +174,13 @@ def _build_filter_header(
         filter_list.extend(new_filters)
 
     if len(filter_list) > 0:
-        return json.dumps({"+and": filter_list})
+        if order_by is None:
+            return json.dumps({"+and": filter_list})
+        else:
+            return json.dumps({"+and": filter_list, "+order_by": order_by, "+order": order})
+    else:
+        if order_by is not None:
+            return json.dumps({"+order_by": order_by, "+order": order})
 
     return None
 
