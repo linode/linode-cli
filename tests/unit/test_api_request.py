@@ -126,7 +126,7 @@ class TestAPIRequest:
             )
             == result
         )
-        
+
     def test_build_filter_header_single(self, list_operation):
         result = api_request._build_filter_header(
             list_operation,
