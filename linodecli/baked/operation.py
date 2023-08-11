@@ -8,6 +8,7 @@ import platform
 import re
 from getpass import getpass
 from os import environ, path
+from typing import List, Tuple
 
 from linodecli.baked.request import OpenAPIFilteringRequest, OpenAPIRequest
 from linodecli.baked.response import OpenAPIResponse
@@ -319,102 +320,89 @@ class OpenAPIOperation:
         json = self.response_model.fix_json(json)
         handler.print(self.response_model, json)
 
-    def parse_args(
-        self, args
-    ):  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
-        """
-        Given sys.argv after the operation name, parse args based on the params
-        and args of this operation
-        """
+    def _add_args_filter(self, parser):
+        # build args for filtering
+        for attr in self.response_model.attrs:
+            if not attr.filterable:
+                continue
+
+            expected_type = TYPES[attr.datatype]
+            if expected_type == list:
+                parser.add_argument(
+                    "--" + attr.name,
+                    type=TYPES[attr.item_type],
+                    metavar=attr.name,
+                    action="append",
+                    nargs="?",
+                )
+            else:
+                parser.add_argument(
+                    "--" + attr.name,
+                    type=expected_type,
+                    metavar=attr.name,
+                )
+
+    def _add_args_post_put(self, parser) -> List[Tuple[str, str]]:
         list_items = []
 
-        #  build an argparse
-        parser = argparse.ArgumentParser(
-            prog=f"linode-cli {self.command} {self.action}",
-            description=self.summary,
-        )
-        for param in self.params:
-            parser.add_argument(
-                param.name, metavar=param.name, type=TYPES[param.type]
+        # build args for body JSON
+        for arg in self.args:
+            if arg.read_only:
+                continue
+
+            arg_type = (
+                arg.item_type if arg.datatype == "array" else arg.datatype
             )
+            arg_type_handler = TYPES[arg_type]
 
-        if self.method == "get":
-            # build args for filtering
-            for attr in self.response_model.attrs:
-                if attr.filterable:
-                    expected_type = TYPES[attr.datatype]
-                    if expected_type == list:
-                        parser.add_argument(
-                            "--" + attr.name,
-                            type=TYPES[attr.item_type],
-                            metavar=attr.name,
-                            action="append",
-                            nargs="?",
-                        )
-                    else:
-                        parser.add_argument(
-                            "--" + attr.name,
-                            type=expected_type,
-                            metavar=attr.name,
-                        )
+            if arg.nullable:
+                arg_type_handler = wrap_parse_nullable_value(arg_type)
 
-        elif self.method in ("post", "put"):
-            # build args for body JSON
-            for arg in self.args:
-                if arg.read_only:
-                    continue
-
-                arg_type = (
-                    arg.item_type if arg.datatype == "array" else arg.datatype
+            if arg.datatype == "array":
+                # special handling for input arrays
+                parser.add_argument(
+                    "--" + arg.path,
+                    metavar=arg.name,
+                    action="append",
+                    type=arg_type_handler,
                 )
-                arg_type_handler = TYPES[arg_type]
-
-                if arg.nullable:
-                    arg_type_handler = wrap_parse_nullable_value(arg_type)
-
-                if arg.datatype == "array":
-                    # special handling for input arrays
+            elif arg.list_item:
+                parser.add_argument(
+                    "--" + arg.path,
+                    metavar=arg.name,
+                    action=ListArgumentAction,
+                    type=arg_type_handler,
+                )
+                list_items.append((arg.path, arg.prefix))
+            else:
+                if arg.datatype == "string" and arg.format == "password":
+                    # special case - password input
+                    parser.add_argument(
+                        "--" + arg.path,
+                        nargs="?",
+                        action=PasswordPromptAction,
+                    )
+                elif arg.datatype == "string" and arg.format in (
+                    "file",
+                    "ssl-cert",
+                    "ssl-key",
+                ):
                     parser.add_argument(
                         "--" + arg.path,
                         metavar=arg.name,
-                        action="append",
+                        action=OptionalFromFileAction,
                         type=arg_type_handler,
                     )
-                elif arg.list_item:
-                    parser.add_argument(
-                        "--" + arg.path,
-                        metavar=arg.name,
-                        action=ListArgumentAction,
-                        type=arg_type_handler,
-                    )
-                    list_items.append((arg.path, arg.prefix))
                 else:
-                    if arg.datatype == "string" and arg.format == "password":
-                        # special case - password input
-                        parser.add_argument(
-                            "--" + arg.path,
-                            nargs="?",
-                            action=PasswordPromptAction,
-                        )
-                    elif arg.datatype == "string" and arg.format in (
-                        "file",
-                        "ssl-cert",
-                        "ssl-key",
-                    ):
-                        parser.add_argument(
-                            "--" + arg.path,
-                            metavar=arg.name,
-                            action=OptionalFromFileAction,
-                            type=arg_type_handler,
-                        )
-                    else:
-                        parser.add_argument(
-                            "--" + arg.path,
-                            metavar=arg.name,
-                            type=arg_type_handler,
-                        )
+                    parser.add_argument(
+                        "--" + arg.path,
+                        metavar=arg.name,
+                        type=arg_type_handler,
+                    )
 
-        parsed = parser.parse_args(args)
+        return list_items
+
+    def _handle_list_items(self, list_items, parsed):
         lists = {}
         # group list items as expected
         for arg_name, list_name in list_items:
@@ -475,3 +463,30 @@ class OpenAPIOperation:
             parsed = argparse.Namespace(**parsed)
 
         return parsed
+
+    def parse_args(
+        self, args
+    ):  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
+        """
+        Given sys.argv after the operation name, parse args based on the params
+        and args of this operation
+        """
+
+        #  build an argparse
+        parser = argparse.ArgumentParser(
+            prog=f"linode-cli {self.command} {self.action}",
+            description=self.summary,
+        )
+        for param in self.params:
+            parser.add_argument(
+                param.name, metavar=param.name, type=TYPES[param.type]
+            )
+
+        list_items = []
+
+        if self.method == "get":
+            self._add_args_filter(parser)
+        elif self.method in ("post", "put"):
+            list_items = self._add_args_post_put(parser)
+
+        return self._handle_list_items(list_items, parser.parse_args(args))
