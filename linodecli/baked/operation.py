@@ -402,7 +402,11 @@ class OpenAPIOperation:
 
         return list_items
 
-    def _handle_list_items(self, list_items, parsed):
+    @staticmethod
+    def _handle_list_items(
+        list_items,
+        parsed,
+    ):  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
         lists = {}
         # group list items as expected
         for arg_name, list_name in list_items:
@@ -464,9 +468,7 @@ class OpenAPIOperation:
 
         return parsed
 
-    def parse_args(
-        self, args
-    ):  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
+    def parse_args(self, args):
         """
         Given sys.argv after the operation name, parse args based on the params
         and args of this operation
