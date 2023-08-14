@@ -1,6 +1,7 @@
 import argparse
 
 from linodecli.baked import operation
+from linodecli.baked.operation import ExplicitNullValue
 
 
 class TestOperation:
@@ -127,3 +128,33 @@ class TestOperation:
         )
 
         assert getattr(result, "path") == "/path/get"
+
+    def test_parse_args_nullable_string(self, create_operation):
+        result = create_operation.parse_args(
+            ["--nullable_string", "null", "--region", "null"]
+        )
+        assert result.region == "null"
+        assert isinstance(result.nullable_string, ExplicitNullValue)
+
+        result = create_operation.parse_args(["--nullable_string", "foobar"])
+        assert result.nullable_string == "foobar"
+
+    def test_parse_args_nullable_integer(self, create_operation):
+        result = create_operation.parse_args(
+            ["--nullable_int", "null", "--region", "null"]
+        )
+        assert result.region == "null"
+        assert isinstance(result.nullable_int, ExplicitNullValue)
+
+        result = create_operation.parse_args(["--nullable_int", "456"])
+        assert result.nullable_int == 456
+
+    def test_parse_args_nullable_float(self, create_operation):
+        result = create_operation.parse_args(
+            ["--nullable_float", "null", "--region", "null"]
+        )
+        assert result.region == "null"
+        assert isinstance(result.nullable_float, ExplicitNullValue)
+
+        result = create_operation.parse_args(["--nullable_float", "456.123"])
+        assert result.nullable_float == 456.123

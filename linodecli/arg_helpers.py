@@ -127,6 +127,13 @@ def register_args(parser):
         help="Prevent the truncation of long values in command outputs.",
     )
     parser.add_argument(
+        "--column-width",
+        type=int,
+        default=None,
+        help="Sets the maximum width of each column in outputted tables. "
+        "By default, columns are dynamically sized to fit the terminal.",
+    )
+    parser.add_argument(
         "--version",
         "-v",
         action="store_true",

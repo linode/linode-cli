@@ -85,3 +85,15 @@ components:
           x-linode-filterable: true
           type: string
           description: The region
+        nullable_int:
+          type: integer
+          nullable: true
+          description: An arbitrary nullable int
+        nullable_string:
+          type: string
+          nullable: true
+          description: An arbitrary nullable string
+        nullable_float:
+          type: number
+          nullable: true
+          description: An arbitrary nullable float
