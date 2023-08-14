@@ -150,7 +150,7 @@ def _build_filter_header(
         if p.name in parsed_args_dict:
             del parsed_args_dict[p.name]
 
-    # check for order_by and order
+    # check for order-by and order
     order_by = parsed_args_dict.pop("order_by")
     order = parsed_args_dict.pop("order") or "asc"
 

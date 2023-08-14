@@ -364,6 +364,9 @@ def action_help(cli, command, action):
             print("You may filter results with:")
             for attr in filterable_attrs:
                 print(f"  --{attr.name}")
+            print(
+                "Additionally, you may order results using --order-by and --order."
+            )
         return
     if op.args:
         print("Arguments:")
