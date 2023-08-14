@@ -150,6 +150,10 @@ def _build_filter_header(
         if p.name in parsed_args_dict:
             del parsed_args_dict[p.name]
 
+    # check for order_by and order
+    order_by = parsed_args_dict.pop("order_by")
+    order = parsed_args_dict.pop("order") or "asc"
+
     # The "+and" list to be used in the filter header
     filter_list = []
 
@@ -161,15 +165,16 @@ def _build_filter_header(
         new_filters = [{k: j} for j in v] if isinstance(v, list) else [{k: v}]
         filter_list.extend(new_filters)
 
-    if len(filter_list) < 1:
-        return None
-
-    return json.dumps(
-        # Only use +and if there are multiple attributes to filter on
-        {"+and": filter_list}
-        if len(filter_list) > 1
-        else filter_list[0]
-    )
+    result = {}
+    if len(filter_list) > 0:
+        if len(filter_list) == 1:
+            result = filter_list[0]
+        else:
+            result["+and"] = filter_list
+    if order_by is not None:
+        result["+order_by"] = order_by
+        result["+order"] = order
+    return json.dumps(result) if len(result) > 0 else None
 
 
 def _build_request_url(ctx, operation, parsed_args) -> str:
