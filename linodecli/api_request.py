@@ -151,7 +151,7 @@ def _build_filter_header(
             del parsed_args_dict[p.name]
 
     # check for order-by and order
-    order_by = parsed_args_dict.pop("order-by")
+    order_by = parsed_args_dict.pop("order_by")
     order = parsed_args_dict.pop("order") or "asc"
 
     # The "+and" list to be used in the filter header
