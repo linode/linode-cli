@@ -41,4 +41,3 @@ class TestHelpers:
         )
         assert args.as_user == "linode-user"
         assert args.suppress_warnings
-
