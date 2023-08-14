@@ -344,9 +344,9 @@ class OpenAPIOperation:
                     type=expected_type,
                     metavar=attr.name,
                 )
-        # Add --order_by and --order argument
+        # Add --order-by and --order argument
         parser.add_argument(
-            "--order_by",
+            "--order-by",
             choices=filterable_args,
             help="Attribute to order the results by - must be filterable.",
             required="--order" in sys.argv,
