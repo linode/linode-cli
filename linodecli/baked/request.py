@@ -65,6 +65,9 @@ class OpenAPIRequestArg:
         #: The path of the path element in the schema.
         self.prefix = prefix
 
+        #: Whether null is an acceptable value for this attribute
+        self.nullable = schema.nullable
+
         # handle the type for list values if this is an array
         if self.datatype == "array" and schema.items:
             self.item_type = schema.items.type

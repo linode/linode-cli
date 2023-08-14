@@ -14,7 +14,7 @@ from requests import Response
 
 from linodecli.helpers import API_CA_PATH
 
-from .baked.operation import OpenAPIOperation
+from .baked.operation import ExplicitNullValue, OpenAPIOperation
 from .helpers import handle_url_overrides
 
 
@@ -199,7 +199,19 @@ def _build_request_body(ctx, operation, parsed_args) -> Optional[str]:
             parsed_args, operation.allowed_defaults, operation.action
         )
 
-    to_json = {k: v for k, v in vars(parsed_args).items() if v is not None}
+    to_json = {}
+
+    for k, v in vars(parsed_args).items():
+        # Skip null values
+        if v is None:
+            continue
+
+        # Explicitly include ExplicitNullValues
+        if isinstance(v, ExplicitNullValue):
+            to_json[k] = None
+            continue
+
+        to_json[k] = v
 
     expanded_json = {}
 
