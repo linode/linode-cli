@@ -346,17 +346,17 @@ class OpenAPIOperation:
                 )
         # Add --order_by and --order argument
         parser.add_argument(
-                "--order_by",
-                choices=filterable_args,
-                help="Attribute to order the results by - must be filterable.",
-                required="--order" in sys.argv,
+            "--order_by",
+            choices=filterable_args,
+            help="Attribute to order the results by - must be filterable.",
+            required="--order" in sys.argv,
         )
 
         parser.add_argument(
-                "--order",
-                choices=["asc", "desc"],
-                default="asc",
-                help="Either “asc” or “desc”. Defaults to “asc”. Requires +order_by",
+            "--order",
+            choices=["asc", "desc"],
+            default="asc",
+            help="Either “asc” or “desc”. Defaults to “asc”. Requires +order_by",
         )
 
     def _add_args_post_put(self, parser) -> List[Tuple[str, str]]:
