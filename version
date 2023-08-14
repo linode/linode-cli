@@ -4,9 +4,6 @@
 #       Prints the current version
 
 import os
-import re
-import subprocess
-import sys
 from distutils.version import LooseVersion
 
 ENV_LINODE_CLI_VERSION = "LINODE_CLI_VERSION"

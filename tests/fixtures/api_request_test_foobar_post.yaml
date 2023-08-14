@@ -1,0 +1,99 @@
+openapi: 3.0.1
+info:
+  title: API Specification
+  version: 1.0.0
+servers:
+  - url: http://localhost
+
+paths:
+  /foo/bar:
+    post:
+      summary: create foobar
+      operationId: fooBarPost
+      description: This is description
+      requestBody:
+        description: >
+          The parameters to set when creating the Foobar
+        required: True
+        content:
+          application/json:
+            schema:
+              required:
+              - test_param
+              - generic_arg
+              allOf:
+              - $ref: '#/components/schemas/FooBarCreate'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/OpenAPIResponseAttr'
+                  page:
+                    $ref: '#/components/schemas/PaginationEnvelope/properties/page'
+                  pages:
+                    $ref: '#/components/schemas/PaginationEnvelope/properties/pages'
+                  results:
+                    $ref: '#/components/schemas/PaginationEnvelope/properties/results'
+
+components:
+  schemas:
+    OpenAPIResponseAttr:
+      type: object
+      properties:
+        filterable_result:
+          x-linode-filterable: true
+          type: string
+          description: Filterable result value
+    PaginationEnvelope:
+      type: object
+      properties:
+        pages:
+          type: integer
+          readOnly: true
+          description: The total number of pages.
+          example: 1
+        page:
+          type: integer
+          readOnly: true
+          description: The current page.
+          example: 1
+        results:
+          type: integer
+          readOnly: true
+          description: The total number of results.
+          example: 1
+    FooBarCreate:
+      type: object
+      description: Foobar object request
+      properties:
+        test_param:
+          x-linode-filterable: true
+          type: integer
+          description: The test parameter
+        generic_arg:
+          x-linode-filterable: true
+          type: string
+          description: The generic argument
+        region:
+          x-linode-filterable: true
+          type: string
+          description: The region
+        nullable_int:
+          type: integer
+          nullable: true
+          description: An arbitrary nullable int
+        nullable_string:
+          type: string
+          nullable: true
+          description: An arbitrary nullable string
+        nullable_float:
+          type: number
+          nullable: true
+          description: An arbitrary nullable float

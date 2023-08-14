@@ -26,9 +26,7 @@ from .cli import CLI
 from .completion import bake_completions, get_completions
 from .configuration import ENV_TOKEN_NAME
 from .helpers import handle_url_overrides
-from .operation import CLIArg, CLIOperation, URLParam
 from .output import OutputMode
-from .response import ModelAttr, ResponseModel
 
 # this might not be installed at the time of building
 try:
@@ -102,6 +100,7 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
 
     cli.output_handler.suppress_warnings = parsed.suppress_warnings
     cli.output_handler.disable_truncation = parsed.no_truncation
+    cli.output_handler.column_width = parsed.column_width
 
     if parsed.as_user and not skip_config:
         cli.config.set_user(parsed.as_user)

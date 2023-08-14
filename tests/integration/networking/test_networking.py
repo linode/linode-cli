@@ -54,8 +54,6 @@ def test_view_an_ip_address(setup_test_networking):
         BASE_CMD
         + [
             "ip-view",
-            "--region",
-            "us-east",
             "--text",
             "--no-headers",
             "--delimiter",
