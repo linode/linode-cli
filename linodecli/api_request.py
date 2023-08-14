@@ -368,9 +368,5 @@ def _check_retry(response):
 
 
 def _get_retry_after(headers):
-    if headers.get("Retry-After"):
-        retry_str = headers.get("Retry-After")
-        if retry_str == "":
-            return 0
-        return int(retry_str)
-    return 0
+    retry_str = headers.get("Retry-After", "")
+    return int(retry_str) if retry_str else 0
