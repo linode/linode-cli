@@ -356,7 +356,7 @@ def _check_retry(response):
         return True
 
     if (
-        response.headers 
+        response.headers
         and response.status_code == 400
         and response.headers.get("Server") == "nginx"
         and response.headers.get("Content-Type") == "text/html"

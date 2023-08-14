@@ -8,8 +8,8 @@ import json
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
-import requests
 import pytest
+import requests
 
 from linodecli import api_request
 
@@ -183,7 +183,9 @@ class TestAPIRequest:
             "linodecli.api_request.requests.post", validate_http_request
         ):
             result = api_request.do_request(
-                mock_cli, create_operation, ["--generic_arg", "foobar", "--test_param", "12345"]
+                mock_cli,
+                create_operation,
+                ["--generic_arg", "foobar", "--test_param", "12345"],
             )
 
         assert result == mock_response
@@ -307,8 +309,9 @@ class TestAPIRequest:
 
     def test_do_request_recursion(self, mock_cli, list_operation):
         mock_response = Mock(status_code=408)
-        with (patch("linodecli.api_request.requests.get", return_value=mock_response)
-            and pytest.raises(SystemExit)):
+        with patch(
+            "linodecli.api_request.requests.get", return_value=mock_response
+        ) and pytest.raises(SystemExit):
             _ = api_request.do_request(mock_cli, list_operation, None)
             assert mock_cli.retry_count == 3
 
@@ -330,7 +333,8 @@ class TestAPIRequest:
             headers={
                 "Server": "nginx",
                 "Content-Type": "text/html",
-            })
+            },
+        )
         output = api_request._check_retry(mock_response)
         assert output
 

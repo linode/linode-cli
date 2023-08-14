@@ -16,7 +16,12 @@ if True:
 
 class MockResponse:
     def __init__(
-            self, page: int, pages: int, results: int, status_code: int = 200, headers: dict = None
+        self,
+        page: int,
+        pages: int,
+        results: int,
+        status_code: int = 200,
+        headers: dict = None,
     ):
         self.page = page
         self.pages = pages
