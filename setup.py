@@ -10,7 +10,7 @@ from os import path
 here = pathlib.Path().absolute()
 
 
-# get the long description from the README.rst
+# get the long description from the README.md
 with open(here / "README.md", encoding="utf-8") as f:
     long_description = f.read()
 
