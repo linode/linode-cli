@@ -12,6 +12,7 @@ import pytest
 import requests
 
 from linodecli import api_request
+from linodecli.baked.operation import ExplicitNullValue
 
 
 class TestAPIRequest:
@@ -57,10 +58,15 @@ class TestAPIRequest:
     def test_build_request_body(self, mock_cli, create_operation):
         create_operation.allowed_defaults = ["region", "engine"]
         create_operation.action = "mysql-create"
+
         result = api_request._build_request_body(
             mock_cli,
             create_operation,
-            SimpleNamespace(generic_arg="foo", region=None, engine=None),
+            SimpleNamespace(
+                generic_arg="foo",
+                region=None,
+                engine=None,
+            ),
         )
         assert (
             json.dumps(
@@ -68,6 +74,58 @@ class TestAPIRequest:
                     "generic_arg": "foo",
                     "region": "us-southeast",
                     "engine": "mysql/8.0.26",
+                }
+            )
+            == result
+        )
+
+    def test_build_request_body_null_field(self, mock_cli, create_operation):
+        create_operation.allowed_defaults = ["region", "engine"]
+        create_operation.action = "mysql-create"
+        result = api_request._build_request_body(
+            mock_cli,
+            create_operation,
+            SimpleNamespace(
+                generic_arg="foo",
+                region=None,
+                engine=None,
+                nullable_int=ExplicitNullValue(),
+            ),
+        )
+        assert (
+            json.dumps(
+                {
+                    "generic_arg": "foo",
+                    "region": "us-southeast",
+                    "engine": "mysql/8.0.26",
+                    "nullable_int": None,
+                }
+            )
+            == result
+        )
+
+    def test_build_request_body_non_null_field(
+        self, mock_cli, create_operation
+    ):
+        create_operation.allowed_defaults = ["region", "engine"]
+        create_operation.action = "mysql-create"
+        result = api_request._build_request_body(
+            mock_cli,
+            create_operation,
+            SimpleNamespace(
+                generic_arg="foo",
+                region=None,
+                engine=None,
+                nullable_int=12345,
+            ),
+        )
+        assert (
+            json.dumps(
+                {
+                    "generic_arg": "foo",
+                    "region": "us-southeast",
+                    "engine": "mysql/8.0.26",
+                    "nullable_int": 12345,
                 }
             )
             == result
@@ -110,6 +168,8 @@ class TestAPIRequest:
             SimpleNamespace(
                 filterable_result="bar",
                 filterable_list_result=["foo", "bar"],
+                order_by=None,
+                order=None,
             ),
         )
 
@@ -121,6 +181,116 @@ class TestAPIRequest:
                         {"filterable_list_result": "foo"},
                         {"filterable_list_result": "bar"},
                     ]
+                }
+            )
+            == result
+        )
+
+    def test_build_filter_header_single(self, list_operation):
+        result = api_request._build_filter_header(
+            list_operation,
+            SimpleNamespace(
+                filterable_result="bar",
+                order_by=None,
+                order=None,
+            ),
+        )
+
+        assert (
+            json.dumps(
+                {"filterable_result": "bar"},
+            )
+            == result
+        )
+
+    def test_build_filter_header_single_list(self, list_operation):
+        result = api_request._build_filter_header(
+            list_operation,
+            SimpleNamespace(
+                filterable_list_result=["foo", "bar"],
+                order_by=None,
+                order=None,
+            ),
+        )
+
+        assert (
+            json.dumps(
+                {
+                    "+and": [
+                        {"filterable_list_result": "foo"},
+                        {"filterable_list_result": "bar"},
+                    ]
+                }
+            )
+            == result
+        )
+
+    def test_build_filter_header_order_by(self, list_operation):
+        result = api_request._build_filter_header(
+            list_operation,
+            SimpleNamespace(
+                filterable_result="bar",
+                filterable_list_result=["foo", "bar"],
+                order_by="baz",
+                order=None,
+            ),
+        )
+
+        assert (
+            json.dumps(
+                {
+                    "+and": [
+                        {"filterable_result": "bar"},
+                        {"filterable_list_result": "foo"},
+                        {"filterable_list_result": "bar"},
+                    ],
+                    "+order_by": "baz",
+                    "+order": "asc",
+                }
+            )
+            == result
+        )
+
+    def test_build_filter_header_order(self, list_operation):
+        result = api_request._build_filter_header(
+            list_operation,
+            SimpleNamespace(
+                filterable_result="bar",
+                filterable_list_result=["foo", "bar"],
+                order_by="baz",
+                order="desc",
+            ),
+        )
+
+        assert (
+            json.dumps(
+                {
+                    "+and": [
+                        {"filterable_result": "bar"},
+                        {"filterable_list_result": "foo"},
+                        {"filterable_list_result": "bar"},
+                    ],
+                    "+order_by": "baz",
+                    "+order": "desc",
+                }
+            )
+            == result
+        )
+
+    def test_build_filter_header_only_order(self, list_operation):
+        result = api_request._build_filter_header(
+            list_operation,
+            SimpleNamespace(
+                order_by="baz",
+                order="desc",
+            ),
+        )
+
+        assert (
+            json.dumps(
+                {
+                    "+order_by": "baz",
+                    "+order": "desc",
                 }
             )
             == result

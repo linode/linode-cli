@@ -15,7 +15,7 @@ from requests import Response
 
 from linodecli.helpers import API_CA_PATH
 
-from .baked.operation import OpenAPIOperation
+from .baked.operation import ExplicitNullValue, OpenAPIOperation
 from .helpers import handle_url_overrides
 
 
@@ -156,6 +156,10 @@ def _build_filter_header(
         if p.name in parsed_args_dict:
             del parsed_args_dict[p.name]
 
+    # check for order-by and order
+    order_by = parsed_args_dict.pop("order_by")
+    order = parsed_args_dict.pop("order") or "asc"
+
     # The "+and" list to be used in the filter header
     filter_list = []
 
@@ -167,10 +171,16 @@ def _build_filter_header(
         new_filters = [{k: j} for j in v] if isinstance(v, list) else [{k: v}]
         filter_list.extend(new_filters)
 
+    result = {}
     if len(filter_list) > 0:
-        return json.dumps({"+and": filter_list})
-
-    return None
+        if len(filter_list) == 1:
+            result = filter_list[0]
+        else:
+            result["+and"] = filter_list
+    if order_by is not None:
+        result["+order_by"] = order_by
+        result["+order"] = order
+    return json.dumps(result) if len(result) > 0 else None
 
 
 def _build_request_url(ctx, operation, parsed_args) -> str:
@@ -200,7 +210,19 @@ def _build_request_body(ctx, operation, parsed_args) -> Optional[str]:
             parsed_args, operation.allowed_defaults, operation.action
         )
 
-    to_json = {k: v for k, v in vars(parsed_args).items() if v is not None}
+    to_json = {}
+
+    for k, v in vars(parsed_args).items():
+        # Skip null values
+        if v is None:
+            continue
+
+        # Explicitly include ExplicitNullValues
+        if isinstance(v, ExplicitNullValue):
+            to_json[k] = None
+            continue
+
+        to_json[k] = v
 
     expanded_json = {}
 

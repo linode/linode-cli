@@ -132,6 +132,13 @@ def register_args(parser):
         help="Skip retrying on common errors like timeouts.",
     )
     parser.add_argument(
+        "--column-width",
+        type=int,
+        default=None,
+        help="Sets the maximum width of each column in outputted tables. "
+        "By default, columns are dynamically sized to fit the terminal.",
+    )
+    parser.add_argument(
         "--version",
         "-v",
         action="store_true",
@@ -362,6 +369,9 @@ def action_help(cli, command, action):
             print("You may filter results with:")
             for attr in filterable_attrs:
                 print(f"  --{attr.name}")
+            print(
+                "Additionally, you may order results using --order-by and --order."
+            )
         return
     if op.args:
         print("Arguments:")
