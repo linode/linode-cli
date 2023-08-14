@@ -127,6 +127,11 @@ def register_args(parser):
         help="Prevent the truncation of long values in command outputs.",
     )
     parser.add_argument(
+        "--no-retry",
+        action="store_true",
+        help="Skip retrying on common errors like timeouts.",
+    )
+    parser.add_argument(
         "--column-width",
         type=int,
         default=None,
