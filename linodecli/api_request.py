@@ -351,20 +351,19 @@ def _check_retry(response):
     """
     Check for valid retry scenario, returns true if retry is valid
     """
-    if response.status_code == 408:
-        # request timed out
+    if response.status_code in (408, 429):
+        # request timed out or rate limit exceeded
         return True
-    if response.status_code == 429:
-        # rate limit exceeded
+
+    if (
+        response.headers 
+        and response.status_code == 400
+        and response.headers.get("Server") == "nginx"
+        and response.headers.get("Content-Type") == "text/html"
+    ):
+        # nginx html response
         return True
-    if response.headers:
-        if (
-            response.status_code == 400
-            and response.headers.get("Server") == "nginx"
-            and response.headers.get("Content-Type") == "text/html"
-        ):
-            # nginx html response
-            return True
+
     return False
 
 
