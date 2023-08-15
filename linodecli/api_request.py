@@ -93,7 +93,7 @@ def do_request(
     if ctx.debug_request:
         _print_response_debug_info(result)
 
-    while _check_retry(result) and ctx.no_retry and ctx.retry_count < 3:
+    while _check_retry(result) and not ctx.no_retry and ctx.retry_count < 3:
         time.sleep(_get_retry_after(result.headers))
         ctx.retry_count += 1
         result = method(url, headers=headers, data=body, verify=API_CA_PATH)
@@ -377,16 +377,12 @@ def _check_retry(response):
         # request timed out or rate limit exceeded
         return True
 
-    if (
+    return (
         response.headers
         and response.status_code == 400
         and response.headers.get("Server") == "nginx"
         and response.headers.get("Content-Type") == "text/html"
-    ):
-        # nginx html response
-        return True
-
-    return False
+    )
 
 
 def _get_retry_after(headers):
