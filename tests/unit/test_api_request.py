@@ -477,7 +477,7 @@ class TestAPIRequest:
         output = stderr_buf.getvalue()
         assert "" == output
 
-    def test_do_request_recursion(self, mock_cli, list_operation):
+    def test_do_request_retry(self, mock_cli, list_operation):
         mock_response = Mock(status_code=408)
         with patch(
             "linodecli.api_request.requests.get", return_value=mock_response
