@@ -319,7 +319,7 @@ class OpenAPIOperation:
             return
 
         json = self.response_model.fix_json(json)
-        handler.print(self.response_model, json)
+        handler.print_response(self.response_model, json)
 
     def _add_args_filter(self, parser):
         # build args for filtering
