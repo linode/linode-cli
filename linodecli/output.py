@@ -225,11 +225,6 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
                 v = OutputHandler._select_json_elements(keys, v)
                 if v:
                     ret[k] = v
-            elif isinstance(v, list):
-                for elem in v:
-                    v = OutputHandler._select_json_elements(keys, elem)
-                    if v:
-                        ret[k] = v
         return ret
 
     def _build_output_content(
