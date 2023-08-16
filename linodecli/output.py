@@ -177,7 +177,7 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
 
             result = result[seg]
 
-        return result if isinstance(result, list) else []
+        return result if isinstance(result, list) else [result]
 
     def _get_columns(self, attrs):
         """
