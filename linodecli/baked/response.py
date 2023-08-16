@@ -187,13 +187,14 @@ class OpenAPIResponse:
             )
         else:
             self.attrs = _parse_response_model(response.schema)
-        self.rows = response.schema.extensions.get("linode-cli-rows")
+        self.rows = response.extensions.get("linode-cli-rows")
         self.nested_list = response.extensions.get("linode-cli-nested-list")
 
     def fix_json(self, json):
         """
         Formats JSON from the API into a list of rows
         """
+
         if self.rows:
             return self._fix_json_rows(json)
         if self.nested_list:
