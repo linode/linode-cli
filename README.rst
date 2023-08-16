@@ -509,5 +509,9 @@ added to Linode's OpenAPI spec:
 |                             |             | paired with ``x-linode-cli-nested-list``, allowing a schema to describe the flattened     |
 |                             |             | object instead of the original object.                                                    |
 +-----------------------------+-------------+-------------------------------------------------------------------------------------------+
+|x-linode-cli-subtables       | content-type| Indicates that certain response attributes should be printed in a separate "sub"-table.   |
+|                             |             | This allows certain endpoints with nested structures in the response to be displayed      |
+|                             |             | correctly.                                                                                |
++-----------------------------+-------------+-------------------------------------------------------------------------------------------+
 
 .. _Specification Extensions: https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.1.md#specificationExtensions
