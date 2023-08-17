@@ -264,7 +264,9 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
 
         rprint(tab, file=to)
 
-    def _delimited_output(self, header, data, columns, to, title=None):
+    def _delimited_output(
+        self, header, data, columns, to, title=None
+    ):  # pylint: disable=too-many-arguments
         """
         Prints data in delimited format with the given delimiter
         """
