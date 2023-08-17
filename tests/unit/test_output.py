@@ -1,4 +1,3 @@
-import contextlib
 import io
 
 from rich import box
@@ -96,7 +95,9 @@ class TestOutputHandler:
         )
 
         mock_table = io.StringIO()
-        tab = Table("h1", "h2", header_style="", box=box.SQUARE)
+        tab = Table(
+            "h1", "h2", header_style="", box=box.SQUARE, title_justify="left"
+        )
         for row in [["foo", "bar"], ["oof", "rab"]]:
             tab.add_row(*row)
         tab.title = "cool table"
@@ -124,7 +125,7 @@ class TestOutputHandler:
         )
 
         mock_table = io.StringIO()
-        tab = Table("h1", header_style="", box=box.SQUARE)
+        tab = Table("h1", header_style="", box=box.SQUARE, title_justify="left")
         for row in [["foo"], ["bar"]]:
             tab.add_row(*row)
         tab.title = "cool table"
@@ -152,7 +153,12 @@ class TestOutputHandler:
         )
 
         mock_table = io.StringIO()
-        tab = Table(header_style="", show_header=False, box=box.SQUARE)
+        tab = Table(
+            header_style="",
+            show_header=False,
+            box=box.SQUARE,
+            title_justify="left",
+        )
         for row in [["foo"], ["bar"]]:
             tab.add_row(*row)
         tab.title = "cool table"
@@ -181,8 +187,8 @@ class TestOutputHandler:
         print(output.getvalue())
 
         assert (
-            output.getvalue() == " cool  \n"
-            " table \n"
+            output.getvalue() == "cool   \n"
+            "table  \n"
             "+-----+\n"
             "| h1  |\n"
             "|-----|\n"
@@ -196,9 +202,9 @@ class TestOutputHandler:
     ):
         output_handler = mock_cli.output_handler
 
-        response_model = list_operation_for_output_tests.response_model
-
-        result = output_handler._get_columns(response_model)
+        result = output_handler._get_columns(
+            list_operation_for_output_tests.response_model.attrs
+        )
 
         assert len(result) == 3
         assert result[0].name == "cool"
@@ -209,11 +215,12 @@ class TestOutputHandler:
         self, mock_cli, list_operation_for_output_tests
     ):
         output_handler = mock_cli.output_handler
-        response_model = list_operation_for_output_tests.response_model
 
         output_handler.columns = "*"
 
-        result = output_handler._get_columns(response_model)
+        result = output_handler._get_columns(
+            list_operation_for_output_tests.response_model.attrs
+        )
 
         assert len(result) == 3
         assert result[0].name == "cool"
@@ -225,28 +232,27 @@ class TestOutputHandler:
     ):
         output_handler = mock_cli.output_handler
 
-        response_model = list_operation_for_output_tests.response_model
-
         output_handler.columns = "cool,bar"
 
-        result = output_handler._get_columns(response_model)
+        result = output_handler._get_columns(
+            list_operation_for_output_tests.response_model.attrs
+        )
 
         assert len(result) == 2
         assert result[0].name == "cool"
         assert result[1].name == "bar"
 
     # Let's test a single print case
-    def test_print(self, mock_cli, list_operation_for_output_tests):
+    def test_print_response(self, mock_cli, list_operation_for_output_tests):
         output = io.StringIO()
 
         response_model = list_operation_for_output_tests.response_model
 
         mock_cli.output_handler.mode = OutputMode.json
 
-        mock_cli.output_handler.print(
+        mock_cli.output_handler.print_response(
             response_model,
             [{"cool": "blah", "bar": "blah2", "test": "blah3"}],
-            title="cool table",
             to=output,
         )
 
@@ -278,7 +284,7 @@ class TestOutputHandler:
         data[0]["cool"] = test_str_truncated
 
         mock_table = io.StringIO()
-        tab = Table("h1", header_style="", box=box.SQUARE)
+        tab = Table("h1", header_style="", box=box.SQUARE, title_justify="left")
         tab.add_row(test_str_truncated)
         tab.title = "cool table"
         rprint(tab, file=mock_table)
@@ -311,7 +317,7 @@ class TestOutputHandler:
         data[0]["cool"] = test_str_truncated
 
         mock_table = io.StringIO()
-        tab = Table("h1", header_style="", box=box.SQUARE)
+        tab = Table("h1", header_style="", box=box.SQUARE, title_justify="left")
         tab.add_row(test_str_truncated)
         tab.title = "cool table"
         rprint(tab, file=mock_table)
@@ -319,28 +325,3 @@ class TestOutputHandler:
         print(output.getvalue())
 
         assert output.getvalue() != mock_table.getvalue()
-
-    def test_warn_broken_output(self, mock_cli):
-        stderr_buf = io.StringIO()
-
-        try:
-            with contextlib.redirect_stderr(stderr_buf):
-                mock_cli.handle_command("linodes", "ips-list", ["10"])
-        except SystemExit:
-            pass
-
-        assert (
-            "This output contains a nested structure that may not properly be displayed by linode-cli."
-            in stderr_buf.getvalue()
-        )
-
-        try:
-            with contextlib.redirect_stderr(stderr_buf):
-                mock_cli.handle_command("firewalls", "rules-list", ["10"])
-        except SystemExit:
-            pass
-
-        assert (
-            "This output contains a nested structure that may not properly be displayed by linode-cli."
-            in stderr_buf.getvalue()
-        )
