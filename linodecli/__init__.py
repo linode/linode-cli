@@ -24,6 +24,7 @@ from .arg_helpers import (
 )
 from .cli import CLI
 from .completion import bake_completions, get_completions
+from .configuration import ENV_TOKEN_NAME
 from .helpers import handle_url_overrides
 from .output import OutputMode
 
