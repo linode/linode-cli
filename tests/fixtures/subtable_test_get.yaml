@@ -1,0 +1,56 @@
+openapi: 3.0.1
+info:
+  title: API Specification
+  version: 1.0.0
+servers:
+  - url: http://localhost
+
+paths:
+  /foo/bar:
+    get:
+      summary: get info with a complex structure
+      operationId: fooBarGet
+      description: This is description
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              x-linode-cli-subtables:
+                - table
+                - foo.table
+                - foo.single_nested
+              schema:
+                type: object
+                properties:
+                  table:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        foo:
+                          type: string
+                        bar:
+                          type: integer
+                  foo:
+                    type: object
+                    properties:
+                      single_nested:
+                        type: object
+                        properties:
+                          foo:
+                            type: string
+                          bar:
+                            type: string
+                      table:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            foobar:
+                              type: array
+                              format: ipv4
+                              items:
+                                type: string
+                  foobar:
+                    type: string

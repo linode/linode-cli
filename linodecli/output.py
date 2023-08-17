@@ -92,6 +92,12 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
             ),
         }
 
+        if len(columns) < 1:
+            raise ValueError(
+                "Expected a non-zero number of columns."
+                "This is always an error in the OpenAPI spec."
+            )
+
         if isinstance(columns[0], OpenAPIResponseAttr):
             header = [c.column_name for c in columns]
         else:
@@ -148,7 +154,7 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
         Pops all attributes that belong to the given subtable
         and returns them.
         """
-        results = [v for v in attrs if table + "." in v.name]
+        results = [v for v in attrs if v.name.startswith(table + ".")]
 
         # Drop the corresponding entries from the root attrs
         for v in results:
@@ -169,7 +175,7 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
         if len(data) == 0:
             return data
 
-        result = data[0]
+        result = data[0] if isinstance(data, list) else data
 
         for seg in table.split("."):
             if seg not in result:
@@ -245,6 +251,7 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
 
         if title is not None:
             tab.title = title
+            tab.min_width = self.column_width or len(title)
 
         rprint(tab, file=to)
 
@@ -291,6 +298,7 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
         paths to handle nested dicts
         """
         ret = {}
+
         for k, v in json_res.items():
             if k in keys:
                 ret[k] = v
@@ -298,6 +306,18 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
                 v = OutputHandler._select_json_elements(keys, v)
                 if v:
                     ret[k] = v
+            elif isinstance(v, list):
+                results = []
+                for elem in v:
+                    selected = OutputHandler._select_json_elements(keys, elem)
+                    if not selected:
+                        continue
+
+                    results.append(selected)
+
+                if len(results) > 0:
+                    ret[k] = results
+
         return ret
 
     def _build_output_content(
