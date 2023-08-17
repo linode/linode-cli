@@ -437,3 +437,47 @@ class TestOutputHandler:
 
         output = json.loads(output.getvalue())
         assert output == [mock_data]
+
+    def test_print_subtable_delimited(
+        self, mock_cli, get_operation_for_subtable_test
+    ):
+        output = io.StringIO()
+
+        mock_cli.output_handler.mode = OutputMode.delimited
+
+        mock_data = {
+            "table": [{"foo": "cool", "bar": 12345}],
+            "foo": {
+                "single_nested": {"foo": "cool", "bar": "cool2"},
+                "table": [{"foobar": ["127.0.0.1", "127.0.0.2"]}],
+            },
+            "foobar": "wow",
+        }
+
+        mock_cli.output_handler.print_response(
+            get_operation_for_subtable_test.response_model,
+            data=[mock_data],
+            to=output,
+        )
+
+        output = output.getvalue().splitlines()
+
+        lines = [
+            "foobar",
+            "wow",
+            "",
+            "table",
+            "foo\tbar",
+            "cool\t12345",
+            "",
+            "foo.table",
+            "foobar",
+            "127.0.0.1 127.0.0.2",
+            "",
+            "foo.single_nested",
+            "foo\tbar",
+            "cool\tcool2",
+        ]
+
+        for i, line in enumerate(lines):
+            assert line in output[i]

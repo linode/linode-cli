@@ -84,7 +84,7 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
                 header, data, columns, title, to, box_style=box.ASCII
             ),
             OutputMode.delimited: lambda: self._delimited_output(
-                header, data, columns, to
+                header, data, columns, to, title=title
             ),
             OutputMode.json: lambda: self._json_output(header, data, to),
             OutputMode.markdown: lambda: self._table_output(
@@ -118,7 +118,7 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
         Handles printing responses from Linode API requests.
         """
         attrs = copy.deepcopy(response_model.attrs)
-        table_attrs = {}
+        tables = []
 
         if (
             response_model.subtables is not None
@@ -127,24 +127,30 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
         ):
             for table in response_model.subtables:
                 # Store these tables to be printed after the primary table
-                table_attrs[table] = self._pop_attrs_for_subtable(attrs, table)
+                tables.append(
+                    (table, self._pop_attrs_for_subtable(attrs, table))
+                )
 
-        # Print the remaining attributes if necessary
+        # Add a root table if any attributes remain
         if len(attrs) > 0:
-            self.print(data, self._get_columns(attrs), to=to)
+            # The root table should always be printed first
+            tables.insert(0, (None, attrs))
 
-        # Return if there is nothing left to print
-        if len(table_attrs) == 0:
-            return
+        for i, v in enumerate(tables):
+            table_name, table_attrs = v
 
-        # Else, print the subtables
-        for k, v in table_attrs.items():
             self.print(
-                self._scope_data_to_subtable(data, k),
-                self._get_columns(v),
-                title=k,
+                self._scope_data_to_subtable(data, table_name)
+                if table_name is not None
+                else data,
+                self._get_columns(table_attrs),
+                title=table_name,
                 to=to,
             )
+
+            # Print gaps between tables for delimited outputs
+            if self.mode == OutputMode.delimited and i < len(tables) - 1:
+                print(file=to)
 
     @staticmethod
     def _pop_attrs_for_subtable(
@@ -255,7 +261,7 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
 
         rprint(tab, file=to)
 
-    def _delimited_output(self, header, data, columns, to):
+    def _delimited_output(self, header, data, columns, to, title=None):
         """
         Prints data in delimited format with the given delimiter
         """
@@ -265,6 +271,9 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
             header=header,
             value_transform=lambda attr, v: attr.get_string(v),
         )
+
+        if title is not None:
+            print(title, file=to)
 
         for row in content:
             print(self.delimiter.join(row), file=to)
