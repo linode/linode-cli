@@ -43,6 +43,7 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
         disable_truncation=False,
         suppress_warnings=False,
         column_width=None,
+        single_table=False,
     ):
         self.mode = mode
         self.delimiter = delimiter
@@ -53,6 +54,7 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
 
         self.disable_truncation = disable_truncation
         self.column_width = column_width
+        self.single_table = single_table
 
         # Used to track whether a warning has already been printed
         self.has_warned = False
@@ -124,6 +126,7 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
             response_model.subtables is not None
             # We do not want to use subtables in JSON output
             and self.mode != OutputMode.json
+            and not self.single_table
         ):
             for table in response_model.subtables:
                 # Store these tables to be printed after the primary table
