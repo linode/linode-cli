@@ -137,6 +137,12 @@ def register_args(parser):
         help="Disable printing multiple tables for complex API responses.",
     )
     parser.add_argument(
+        "--table",
+        type=str,
+        action="append",
+        help="The specific table(s) to print in output of a command.",
+    )
+    parser.add_argument(
         "--column-width",
         type=int,
         default=None,

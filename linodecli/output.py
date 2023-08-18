@@ -44,6 +44,7 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
         suppress_warnings=False,
         column_width=None,
         single_table=False,
+        tables=None,
     ):
         self.mode = mode
         self.delimiter = delimiter
@@ -55,6 +56,7 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
         self.disable_truncation = disable_truncation
         self.column_width = column_width
         self.single_table = single_table
+        self.tables = tables
 
         # Used to track whether a warning has already been printed
         self.has_warned = False
@@ -121,6 +123,9 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
         """
         attrs = copy.deepcopy(response_model.attrs)
         tables = []
+        target_tables = self._get_tables(
+            [None] + (response_model.subtables or [])
+        )
 
         if (
             response_model.subtables is not None
@@ -141,6 +146,8 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
 
         for i, v in enumerate(tables):
             table_name, table_attrs = v
+            if table_name not in target_tables:
+                continue
 
             self.print(
                 self._scope_data_to_subtable(data, table_name)
@@ -194,6 +201,20 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
 
         return result if isinstance(result, list) else [result]
 
+    def _get_tables(self, tables):
+        """
+        Returns which tables to display based on the configured columns (--format).
+        """
+        if self.tables is None or len(self.tables) < 1 or "*" in self.tables:
+            return tables
+
+        displayed_tables = [(v if v != "root" else None) for v in self.tables]
+
+        result = [v for v in tables if v in displayed_tables]
+
+        # If there is nothing to print, we should print everything
+        return result if len(result) > 0 else tables
+
     def _get_columns(self, attrs):
         """
         Based on the configured columns, returns columns from a response model
@@ -213,7 +234,6 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
                     if attr.column_name == col:
                         attrs.remove(attr)
                         columns.append(attr)
-                        continue
 
         if not columns:
             # either they selected nothing, or the model wasn't setup for CLI
@@ -258,7 +278,7 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
             row = [Text.from_ansi(item) for item in row]
             tab.add_row(*row)
 
-        if title is not None:
+        if title is not None and self.headers:
             tab.title = title
             tab.min_width = self.column_width or len(title)
 
@@ -277,7 +297,7 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
             value_transform=lambda attr, v: attr.get_string(v),
         )
 
-        if title is not None:
+        if title is not None and self.headers:
             print(title, file=to)
 
         for row in content:

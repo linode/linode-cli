@@ -169,12 +169,9 @@ class TestOutputHandler:
             show_header=False,
             box=box.SQUARE,
             title_justify="left",
-            title=title,
-            min_width=len(title),
         )
         for row in [["foo"], ["bar"]]:
             tab.add_row(*row)
-        tab.title = "cool table"
         rprint(tab, file=mock_table)
 
         assert output.getvalue() == mock_table.getvalue()
@@ -508,6 +505,49 @@ class TestOutputHandler:
         output = output.getvalue().splitlines()
 
         lines = ["foo\tbar\tfoobar", "cool\tcool2\twow"]
+
+        for i, line in enumerate(lines):
+            assert line in output[i]
+
+    def test_print_subtable_with_selection(
+        self, mock_cli, get_operation_for_subtable_test
+    ):
+        output = io.StringIO()
+
+        mock_cli.output_handler.mode = OutputMode.table
+        mock_cli.output_handler.tables = ["foo.table", "foo.single_nested"]
+
+        mock_data = {
+            "table": [{"foo": "cool", "bar": 12345}],
+            "foo": {
+                "single_nested": {"foo": "cool", "bar": "cool2"},
+                "table": [{"foobar": ["127.0.0.1", "127.0.0.2"]}],
+            },
+            "foobar": "wow",
+        }
+
+        mock_cli.output_handler.print_response(
+            get_operation_for_subtable_test.response_model,
+            data=[mock_data],
+            to=output,
+        )
+
+        output = output.getvalue().splitlines()
+
+        lines = [
+            "foo.table",
+            "┌──────────────────────┐",
+            "│ foobar               │",
+            "├──────────────────────┤",
+            "│ 127.0.0.1, 127.0.0.2 │",
+            "└──────────────────────┘",
+            "foo.single_nested",
+            "┌───────┬───────┐",
+            "│ foo   │ bar   │",
+            "├───────┼───────┤",
+            "│ cool  │ cool2 │",
+            "└───────┴───────┘",
+        ]
 
         for i, line in enumerate(lines):
             assert line in output[i]
