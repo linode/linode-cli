@@ -30,8 +30,9 @@ jobs:
         env:
           LINODE_CLI_TOKEN: ${{ secrets.LINODE_TOKEN_2 }}
 
-      - name: Post results to Obj Storage
-        run: linode-cli obj --cluster us-southeast-1 put test_report.xml tod-poc-bucket
+      - name: Upload results to Obj Storage
+        run: |
+          linode-cli obj --cluster us-southeast-1 put test_report.xml tod-poc-bucket
         env:
           LINODE_CLI_TOKEN: ${{ secrets.LINODE_TOKEN_2 }}
           LINODE_CLI_OBJ_ACCESS_KEY: ${{ secrets.LINODE_CLI_OBJ_ACCESS_KEY }}
