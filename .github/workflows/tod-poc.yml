@@ -1,0 +1,38 @@
+name: POC Smoke Tests
+
+on:
+  workflow_dispatch:
+
+jobs:
+  smoke_tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install Python deps
+        run: pip install -r requirements.txt -r requirements-dev.txt wheel boto3
+
+      - name: Install Linode CLI
+        run: make install
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run smoke tests
+        run: |
+          pytest -m smoke tests/integration --disable-warnings --junitxml=test_report.xml
+        env:
+          LINODE_CLI_TOKEN: ${{ secrets.LINODE_TOKEN_2 }}
+
+      - name: Post results to Obj Storage
+        run: linode-cli obj --cluster us-southeast-1 put test_report.xml tod-poc-bucket
+        env:
+          LINODE_CLI_TOKEN: ${{ secrets.LINODE_TOKEN_2 }}
+          LINODE_CLI_OBJ_ACCESS_KEY: ${{ secrets.LINODE_CLI_OBJ_ACCESS_KEY }}
+          LINODE_CLI_OBJ_SECRET_KEY: ${{ secrets.LINODE_CLI_OBJ_SECRET_KEY }}
