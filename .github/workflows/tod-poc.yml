@@ -37,3 +37,4 @@ jobs:
           LINODE_CLI_TOKEN: ${{ secrets.LINODE_TOKEN_2 }}
           LINODE_CLI_OBJ_ACCESS_KEY: ${{ secrets.LINODE_CLI_OBJ_ACCESS_KEY }}
           LINODE_CLI_OBJ_SECRET_KEY: ${{ secrets.LINODE_CLI_OBJ_SECRET_KEY }}
+        continue-on-error: true
