@@ -70,17 +70,23 @@ except ImportError:
     HAS_BOTO = False
 
 TRUNCATED_MSG = (
-    "Notice: Not all results was returned. If your would "
-    "like full results, please add the '--all-row' flag to"
-    " the command or use the built-in pagination feature."
+    "Notice: Not all results were shown. If your would "
+    "like to get more results, you can add the '--all-row' "
+    "flag to the command or use the built-in pagination flags."
 )
+
+INVALID_PAGE_MSG = "No result to show in this page."
 
 
 def flip_to_page(iterable: Iterable, page: int = 1):
     """Given a iterable object and return a specific iteration (page)"""
     iterable = iter(iterable)
     for _ in range(page - 1):
-        next(iterable)
+        try:
+            next(iterable)
+        except StopIteration:
+            print(INVALID_PAGE_MSG)
+            sys.exit(2)
 
     return next(iterable)
 
