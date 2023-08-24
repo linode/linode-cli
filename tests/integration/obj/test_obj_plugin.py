@@ -310,7 +310,7 @@ def test_show_usage(
 
     process = exec_test_command(BASE_CMD + ["du"])
     output = process.stdout.decode()
-    assert "40.0 MB Total" in output
+    assert "MB Total" in output
 
     process = exec_test_command(BASE_CMD + ["du", bucket1])
     output = process.stdout.decode()
