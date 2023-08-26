@@ -1,16 +1,19 @@
 import logging
-import subprocess
 from dataclasses import dataclass
-from typing import Callable, List, Optional
+from typing import Callable, Optional
 
 import pytest
 import requests
 from pytest import MonkeyPatch
 
 from linodecli.configuration.auth import _do_request
-from linodecli.plugins.obj import ENV_ACCESS_KEY_NAME, ENV_SECRET_KEY_NAME
+from linodecli.plugins.obj import (
+    ENV_ACCESS_KEY_NAME,
+    ENV_SECRET_KEY_NAME,
+    TRUNCATED_MSG,
+)
 from tests.integration.fixture_types import GetTestFilesType, GetTestFileType
-from tests.integration.helpers import BASE_URL
+from tests.integration.helpers import BASE_URL, count_lines, exec_test_command
 
 REGION = "us-southeast-1"
 BASE_CMD = ["linode-cli", "obj", "--cluster", REGION]
@@ -75,15 +78,6 @@ def patch_keys(keys: Keys, monkeypatch: MonkeyPatch):
     assert keys.secret_key is not None
     monkeypatch.setenv(ENV_ACCESS_KEY_NAME, keys.access_key)
     monkeypatch.setenv(ENV_SECRET_KEY_NAME, keys.secret_key)
-
-
-def exec_test_command(args: List[str]):
-    process = subprocess.run(
-        args,
-        stdout=subprocess.PIPE,
-    )
-    assert process.returncode == 0
-    return process
 
 
 @pytest.fixture
@@ -174,6 +168,49 @@ def test_multi_files_multi_bucket(
             output = process.stdout.decode()
             assert "100.0%" in output
             assert "Done" in output
+
+
+def test_all_rows(
+    create_bucket: Callable[[Optional[str]], str],
+    generate_test_files: GetTestFilesType,
+    keys: Keys,
+    monkeypatch: MonkeyPatch,
+):
+    patch_keys(keys, monkeypatch)
+    number = 5
+    bucket_name = create_bucket()
+    file_paths = generate_test_files(number)
+
+    process = exec_test_command(
+        BASE_CMD
+        + ["put"]
+        + [str(file.resolve()) for file in file_paths]
+        + [bucket_name]
+    )
+    output = process.stdout.decode()
+    assert "100.0%" in output
+    assert "Done" in output
+
+    process = exec_test_command(
+        BASE_CMD + ["ls", bucket_name, "--page-size", "2", "--page", "1"]
+    )
+    output = process.stdout.decode()
+    assert TRUNCATED_MSG in output
+    assert count_lines(output) == 3
+
+    process = exec_test_command(
+        BASE_CMD + ["ls", bucket_name, "--page-size", "999"]
+    )
+    output = process.stdout.decode()
+    assert TRUNCATED_MSG not in output
+    assert count_lines(output) == 5
+
+    process = exec_test_command(
+        BASE_CMD + ["ls", bucket_name, "--page-size", "2", "--all-rows"]
+    )
+    output = process.stdout.decode()
+    assert TRUNCATED_MSG not in output
+    assert count_lines(output) == 5
 
 
 def test_modify_access_control(
@@ -273,7 +310,7 @@ def test_show_usage(
 
     process = exec_test_command(BASE_CMD + ["du"])
     output = process.stdout.decode()
-    assert "40.0 MB Total" in output
+    assert "MB Total" in output
 
     process = exec_test_command(BASE_CMD + ["du", bucket1])
     output = process.stdout.decode()

@@ -14,8 +14,7 @@ from argparse import ArgumentParser
 from contextlib import suppress
 from datetime import datetime
 from math import ceil
-from pathlib import Path
-from typing import List
+from typing import Iterable, List
 
 from rich import print as rprint
 from rich.table import Table
@@ -23,7 +22,7 @@ from rich.table import Table
 from linodecli.cli import CLI
 from linodecli.configuration import _do_get_request
 from linodecli.configuration.helpers import _default_thing_input
-from linodecli.helpers import expand_globs
+from linodecli.helpers import expand_globs, pagination_args_shared
 from linodecli.plugins import PluginContext, inherit_plugin_args
 from linodecli.plugins.obj.buckets import create_bucket, delete_bucket
 from linodecli.plugins.obj.config import (
@@ -70,14 +69,36 @@ try:
 except ImportError:
     HAS_BOTO = False
 
+TRUNCATED_MSG = (
+    "Notice: Not all results were shown. If your would "
+    "like to get more results, you can add the '--all-row' "
+    "flag to the command or use the built-in pagination flags."
+)
+
+INVALID_PAGE_MSG = "No result to show in this page."
+
+
+def flip_to_page(iterable: Iterable, page: int = 1):
+    """Given a iterable object and return a specific iteration (page)"""
+    iterable = iter(iterable)
+    for _ in range(page - 1):
+        try:
+            next(iterable)
+        except StopIteration:
+            print(INVALID_PAGE_MSG)
+            sys.exit(2)
+
+    return next(iterable)
+
 
 def list_objects_or_buckets(
     get_client, args, **kwargs
-):  # pylint: disable=too-many-locals,unused-argument
+):  # pylint: disable=too-many-locals,unused-argument,too-many-branches
     """
     Lists buckets or objects
     """
     parser = inherit_plugin_args(ArgumentParser(PLUGIN_BASE + " ls"))
+    pagination_args_shared(parser)
 
     parser.add_argument(
         "bucket",
@@ -106,16 +127,30 @@ def list_objects_or_buckets(
             prefix = ""
 
         data = []
+        objects = []
+        sub_directories = []
+        pages = client.get_paginator("list_objects_v2").paginate(
+            Prefix=prefix,
+            Bucket=bucket_name,
+            Delimiter="/",
+            PaginationConfig={"PageSize": parsed.page_size},
+        )
         try:
-            response = client.list_objects_v2(
-                Prefix=prefix, Bucket=bucket_name, Delimiter="/"
-            )
+            if parsed.all_rows:
+                results = pages
+            else:
+                page = flip_to_page(pages, parsed.page)
+                if page.get("IsTruncated", False):
+                    print(TRUNCATED_MSG)
+
+                results = [page]
         except client.exceptions.NoSuchBucket:
             print("No bucket named " + bucket_name)
             sys.exit(2)
 
-        objects = response.get("Contents", [])
-        sub_directories = response.get("CommonPrefixes", [])
+        for item in results:
+            objects.extend(item.get("Contents", []))
+            sub_directories.extend(item.get("CommonPrefixes", []))
 
         for d in sub_directories:
             data.append((" " * 16, "DIR", d.get("Prefix")))
@@ -329,17 +364,31 @@ def list_all_objects(
     """
     # this is for printing help when --help is in the args
     parser = inherit_plugin_args(ArgumentParser(PLUGIN_BASE + " la"))
+    pagination_args_shared(parser)
 
-    parser.parse_args(args)
+    parsed = parser.parse_args(args)
 
     client = get_client()
 
-    # all buckets
     buckets = [b["Name"] for b in client.list_buckets().get("Buckets", [])]
 
     for b in buckets:
         print()
-        objects = client.list_objects_v2(Bucket=b).get("Contents", [])
+        objects = []
+        pages = client.get_paginator("list_objects_v2").paginate(
+            Bucket=b, PaginationConfig={"PageSize": parsed.page_size}
+        )
+        if parsed.all_rows:
+            results = pages
+        else:
+            page = flip_to_page(pages, parsed.page)
+            if page.get("IsTruncated", False):
+                print(TRUNCATED_MSG)
+
+            results = [page]
+
+        for page in results:
+            objects.extend(page.get("Contents", []))
 
         for obj in objects:
             size = obj.get("Size", 0)
