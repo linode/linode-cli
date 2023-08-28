@@ -103,6 +103,8 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
     cli.output_handler.suppress_warnings = parsed.suppress_warnings
     cli.output_handler.disable_truncation = parsed.no_truncation
     cli.output_handler.column_width = parsed.column_width
+    cli.output_handler.single_table = parsed.single_table
+    cli.output_handler.tables = parsed.table
 
     if parsed.as_user and not skip_config:
         cli.config.set_user(parsed.as_user)
