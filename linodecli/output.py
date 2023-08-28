@@ -120,6 +120,13 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
     ):
         """
         Handles printing responses from Linode API requests.
+
+        :param response_model: The OpenAPI response to format this output with.
+        :type response_model: OpenAPIResponse
+        :param data: The API-returned data to output.
+        :type data: List[Union[str, dict]]
+        :param to: The IO stream to output to.
+        :type to: IO[str]
         """
         attrs = copy.deepcopy(response_model.attrs)
         tables = []

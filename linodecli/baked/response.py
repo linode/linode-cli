@@ -37,6 +37,8 @@ class OpenAPIResponseAttr:
         :param prefix: The json path style prefix (dot notation) to this schema
                        in the response object
         :type prefix: str
+        :param nested_list_depth: The number of nested lists this attribute is nested in.
+        :type: nested_list_depth: int
         """
         #: The name of this attribute, which is the full json path to it within the schema
         self.name = name if prefix is None else prefix + "." + name
@@ -152,6 +154,8 @@ def _parse_response_model(schema, prefix=None, nested_list_depth=0):
                    become a new OpenAPIResponseAttr instance, and this process is
                    recursive to include the properties of properties and so on.
     :type schema: openapi3.Schema
+    :param nested_list_depth: The number of nested lists this attribute is nested in.
+    :type: nested_list_depth: int
     :returns: The list of parsed OpenAPIResponseAttr objects representing this schema
     :rtype: List[OpenAPIResponseAttr]
     """
