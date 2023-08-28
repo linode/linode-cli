@@ -8,6 +8,7 @@ import json
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
+import pytest
 import requests
 
 from linodecli import api_request
@@ -475,3 +476,47 @@ class TestAPIRequest:
 
         output = stderr_buf.getvalue()
         assert "" == output
+
+    def test_do_request_retry(self, mock_cli, list_operation):
+        mock_response = Mock(status_code=408)
+        with patch(
+            "linodecli.api_request.requests.get", return_value=mock_response
+        ) and pytest.raises(SystemExit):
+            _ = api_request.do_request(mock_cli, list_operation, None)
+            assert mock_cli.retry_count == 3
+
+    def test_check_retry(self):
+        mock_response = Mock(status_code=200)
+        output = api_request._check_retry(mock_response)
+        assert not output
+
+        mock_response = Mock(status_code=408)
+        output = api_request._check_retry(mock_response)
+        assert output
+
+        mock_response = Mock(status_code=429)
+        output = api_request._check_retry(mock_response)
+        assert output
+
+        mock_response = Mock(
+            status_code=400,
+            headers={
+                "Server": "nginx",
+                "Content-Type": "text/html",
+            },
+        )
+        output = api_request._check_retry(mock_response)
+        assert output
+
+    def test_get_retry_after(self):
+        headers = {"Retry-After": "10"}
+        output = api_request._get_retry_after(headers)
+        assert output == 10
+
+        headers = {"Retry-After": ""}
+        output = api_request._get_retry_after(headers)
+        assert output == 0
+
+        headers = {}
+        output = api_request._get_retry_after(headers)
+        assert output == 0

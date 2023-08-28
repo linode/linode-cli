@@ -5,6 +5,7 @@ This module is responsible for handling HTTP requests to the Linode API.
 import itertools
 import json
 import sys
+import time
 from sys import version_info
 from typing import Iterable, List, Optional
 
@@ -91,6 +92,11 @@ def do_request(
     # Print response debug info is requested
     if ctx.debug_request:
         _print_response_debug_info(result)
+
+    while _check_retry(result) and not ctx.no_retry and ctx.retry_count < 3:
+        time.sleep(_get_retry_after(result.headers))
+        ctx.retry_count += 1
+        result = method(url, headers=headers, data=body, verify=API_CA_PATH)
 
     _attempt_warn_old_version(ctx, result)
 
@@ -361,3 +367,24 @@ def _handle_error(ctx, response):
             columns=["field", "reason"],
         )
     sys.exit(1)
+
+
+def _check_retry(response):
+    """
+    Check for valid retry scenario, returns true if retry is valid
+    """
+    if response.status_code in (408, 429):
+        # request timed out or rate limit exceeded
+        return True
+
+    return (
+        response.headers
+        and response.status_code == 400
+        and response.headers.get("Server") == "nginx"
+        and response.headers.get("Content-Type") == "text/html"
+    )
+
+
+def _get_retry_after(headers):
+    retry_str = headers.get("Retry-After", "")
+    return int(retry_str) if retry_str else 0
