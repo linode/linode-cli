@@ -99,7 +99,7 @@ def _parse_request_model(schema, prefix=None, list_of_objects=False):
 
     if schema.properties is not None:
         for k, v in schema.properties.items():
-            if v.type == "object":
+            if v.type == "object" and not v.readOnly and v.properties:
                 # nested objects receive a prefix and are otherwise parsed normally
                 pref = prefix + "." + k if prefix else k
                 args += _parse_request_model(v, prefix=pref)
