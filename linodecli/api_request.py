@@ -360,11 +360,10 @@ def _handle_error(ctx, response):
             for error in resp_json["errors"]
         ]
         ctx.output_handler.print(
-            None,
             data,
+            ["field", "reason"],
             title="errors",
             to=sys.stderr,
-            columns=["field", "reason"],
         )
     sys.exit(1)
 

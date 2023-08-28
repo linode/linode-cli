@@ -27,7 +27,7 @@ class OpenAPIResponseAttr:
     from it.
     """
 
-    def __init__(self, name, schema, prefix=None):
+    def __init__(self, name, schema, prefix=None, nested_list_depth=0):
         """
         :param name: The key that held this schema in the properties list, representing
                      its name in a response.
@@ -37,12 +37,18 @@ class OpenAPIResponseAttr:
         :param prefix: The json path style prefix (dot notation) to this schema
                        in the response object
         :type prefix: str
+        :param nested_list_depth: The number of nested lists this attribute is nested in.
+        :type: nested_list_depth: int
         """
         #: The name of this attribute, which is the full json path to it within the schema
         self.name = name if prefix is None else prefix + "." + name
 
         #: If this attribute is filterable in GET requests
         self.filterable = schema.extensions.get("linode-filterable")
+
+        #: The depth of this nested attribute in lists. This is necessary to prevent displaying
+        #: list nested items in normal tables.
+        self.nested_list_depth = nested_list_depth
 
         #: The description of this argument, for help display.  Only used for filterable attributes.
         self.description = (
@@ -90,8 +96,14 @@ class OpenAPIResponseAttr:
         """
         value = model
         for part in self.name.split("."):
-            if value is None or value == {}:
+            if (
+                value is None
+                or value == {}
+                or isinstance(value, list)
+                or part not in value
+            ):
                 return None
+
             value = value[part]
         return value
 
@@ -133,7 +145,7 @@ class OpenAPIResponseAttr:
         return value
 
 
-def _parse_response_model(schema, prefix=None):
+def _parse_response_model(schema, prefix=None, nested_list_depth=0):
     """
     Recursively parses all properties of this schema to create a flattened set of
     OpenAPIResponseAttr objects that allow the CLI to display this response in a
@@ -142,6 +154,8 @@ def _parse_response_model(schema, prefix=None):
                    become a new OpenAPIResponseAttr instance, and this process is
                    recursive to include the properties of properties and so on.
     :type schema: openapi3.Schema
+    :param nested_list_depth: The number of nested lists this attribute is nested in.
+    :type: nested_list_depth: int
     :returns: The list of parsed OpenAPIResponseAttr objects representing this schema
     :rtype: List[OpenAPIResponseAttr]
     """
@@ -149,11 +163,22 @@ def _parse_response_model(schema, prefix=None):
 
     if schema.properties is not None:
         for k, v in schema.properties.items():
+            pref = prefix + "." + k if prefix else k
+
             if v.type == "object":
-                pref = prefix + "." + k if prefix else k
                 attrs += _parse_response_model(v, prefix=pref)
+            elif v.type == "array" and v.items.type == "object":
+                attrs += _parse_response_model(
+                    v.items,
+                    prefix=pref,
+                    nested_list_depth=nested_list_depth + 1,
+                )
             else:
-                attrs.append(OpenAPIResponseAttr(k, v, prefix=prefix))
+                attrs.append(
+                    OpenAPIResponseAttr(
+                        k, v, prefix=prefix, nested_list_depth=nested_list_depth
+                    )
+                )
 
     return attrs
 
@@ -189,6 +214,7 @@ class OpenAPIResponse:
             self.attrs = _parse_response_model(response.schema)
         self.rows = response.extensions.get("linode-cli-rows")
         self.nested_list = response.extensions.get("linode-cli-nested-list")
+        self.subtables = response.extensions.get("linode-cli-subtables")
 
     def fix_json(self, json):
         """
