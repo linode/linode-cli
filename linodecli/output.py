@@ -240,7 +240,7 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
                 for attr in attrs:
                     # Display this column if the format string
                     # matches the column_name or path of this column
-                    if attr.column_name == col or attr.name == col:
+                    if col in (attr.column_name, attr.name):
                         attrs.remove(attr)
                         columns.append(attr)
 
