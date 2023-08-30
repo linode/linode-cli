@@ -103,7 +103,7 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
             )
 
         if isinstance(columns[0], OpenAPIResponseAttr):
-            header = [c.column_name for c in columns]
+            header = [c.name for c in columns]
         else:
             header = columns
 
@@ -238,7 +238,9 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
             columns = []
             for col in self.columns.split(","):
                 for attr in attrs:
-                    if attr.column_name == col:
+                    # Display this column if the format string
+                    # matches the column_name or path of this column
+                    if attr.column_name == col or attr.name == col:
                         attrs.remove(attr)
                         columns.append(attr)
 
@@ -314,6 +316,10 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
         """
         Prints data in JSON format
         """
+        # Special handling for JSON headers.
+        # We're only interested in the last part of the column name.
+        header = [v.split(".")[-1] for v in header]
+
         content = []
         if len(data) and isinstance(data[0], dict):  # we got delimited json in
             # parse down to the value we display
