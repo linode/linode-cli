@@ -504,7 +504,10 @@ class TestOutputHandler:
 
         output = output.getvalue().splitlines()
 
-        lines = ["foo\tbar\tfoobar", "cool\tcool2\twow"]
+        lines = [
+            "foo.single_nested.foo\tfoo.single_nested.bar\tfoobar",
+            "cool\tcool2\twow",
+        ]
 
         for i, line in enumerate(lines):
             assert line in output[i]
@@ -547,6 +550,40 @@ class TestOutputHandler:
             "├───────┼───────┤",
             "│ cool  │ cool2 │",
             "└───────┴───────┘",
+        ]
+
+        for i, line in enumerate(lines):
+            assert line in output[i]
+
+    def test_format_nested_field(
+        self, mock_cli, get_operation_for_subtable_test
+    ):
+        output = io.StringIO()
+
+        mock_cli.output_handler.mode = OutputMode.delimited
+        mock_cli.output_handler.single_table = True
+        mock_cli.output_handler.columns = "foo.single_nested.bar"
+
+        mock_data = {
+            "table": [{"foo": "cool", "bar": 12345}],
+            "foo": {
+                "single_nested": {"foo": "cool", "bar": "cool2"},
+                "table": [{"foobar": ["127.0.0.1", "127.0.0.2"]}],
+            },
+            "foobar": "wow",
+        }
+
+        mock_cli.output_handler.print_response(
+            get_operation_for_subtable_test.response_model,
+            data=[mock_data],
+            to=output,
+        )
+
+        output = output.getvalue().splitlines()
+
+        lines = [
+            "foo.single_nested.bar",
+            "cool2",
         ]
 
         for i, line in enumerate(lines):
