@@ -31,7 +31,7 @@ jobs:
           else
             echo "Tests failed, but attempting to upload results anyway"
             linode-cli obj --cluster us-southeast-1 put test_report.xml tod-poc-bucket
-            exit 0
+            exit 1
           fi
         env:
           LINODE_CLI_TOKEN: ${{ secrets.LINODE_TOKEN_2 }}
