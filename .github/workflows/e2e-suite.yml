@@ -39,15 +39,17 @@ jobs:
         run: |
           timestamp=$(date +'%Y%m%d%H%M')
           report_filename="${timestamp}_cli_test_report.xml"
-          
-          if pytest -m tests/integration --disable-warnings --junitxml="${report_filename}"; then
-            linode-cli obj --cluster us-southeast-1 put "${report_filename}" test-report-bucket
-          else
+          status=0
+          if ! pytest -m tests/integration --disable-warnings --junitxml="${report_filename}"; then
             echo "Tests failed, but attempting to upload results anyway"
-            linode-cli obj --cluster us-southeast-1 put "${report_filename}" test-report-bucket
-            exit 1
           fi
         env:
           LINODE_CLI_TOKEN: ${{ secrets.LINODE_TOKEN }}
+
+      - name: Upload test results
+        run: |
+          linode-cli obj --cluster us-southeast-1 put "${report_filename}" dx-test-results
+        env:
+          LINODE_CLI_TOKEN: ${{ secrets.SHARED_DX_TOKEN }}
           LINODE_CLI_OBJ_ACCESS_KEY: ${{ secrets.LINODE_CLI_OBJ_ACCESS_KEY }}
           LINODE_CLI_OBJ_SECRET_KEY: ${{ secrets.LINODE_CLI_OBJ_SECRET_KEY }}
