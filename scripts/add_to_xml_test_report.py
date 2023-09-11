@@ -6,6 +6,7 @@ parser = argparse.ArgumentParser(description='Modify XML with workflow informati
 parser.add_argument('--branch_name', required=True)
 parser.add_argument('--gha_run_id', required=True)
 parser.add_argument('--gha_run_number', required=True)
+parser.add_argument('--version', required=True)
 parser.add_argument('--xmlfile', required=True)  # Added argument for XML file path
 
 args = parser.parse_args()
