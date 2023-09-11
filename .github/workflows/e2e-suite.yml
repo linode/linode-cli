@@ -46,15 +46,14 @@ jobs:
         env:
           LINODE_CLI_TOKEN: ${{ secrets.LINODE_TOKEN }}
 
-      - name: Set env
-        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
-      - name: Test
+      - name: Add version of CLI to XML report
         run: |
-          echo $RELEASE_VERSION
-          echo ${{ env.RELEASE_VERSION }}
+          echo "branch_name=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
           filename=$(ls | grep -E '^[0-9]{12}_cli_test_report\.xml$') 
-          python scripts/add_to_xml_test_report.py \
-          --semanticversion "${{ env.RELEASE_VERSION }}" \
+          python scripts/add_to_xml_test_report.py  \
+          --branch_name "${{ env.RELEASE_VERSION }}" \
+          --gha_run_id "$GITHUB_RUN_ID" \
+          --gha_run_number "$GITHUB_RUN_NUMBER" \
           --xmlfile "${filename}"
 
       - name: Upload test results
