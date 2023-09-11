@@ -59,7 +59,7 @@ jobs:
           --branch_name "${{ env.RELEASE_VERSION }}" \
           --gha_run_id "$GITHUB_RUN_ID" \
           --gha_run_number "$GITHUB_RUN_NUMBER" \
-          --version "${release_ver}" \
+          --rel_version "${release_ver}" \
           --xmlfile "${filename}"
 
       - name: Upload test results
