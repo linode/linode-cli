@@ -46,6 +46,26 @@ jobs:
         env:
           LINODE_CLI_TOKEN: ${{ secrets.LINODE_TOKEN }}
 
+      - name: Set Branch Name
+        run: echo "BRANCH_NAME=$(echo $GITHUB_REF | sed 's/refs\/heads\///')" >> $GITHUB_ENV
+
+      - name: Display Branch Name
+        run:
+          echo "Branch: $BRANCH_NAME"
+
+      - name: Modify XML Report
+        run: |
+          filename=$(ls | grep -E '^[0-9]{12}_cli_test_report\.xml$')
+          
+          python scripts/add_to_xml_test_report.py \
+            --workflow-id ${{ secrets.WORKFLOW_ID }} \
+            --workflow-run-number ${{ secrets.WORKFLOW_RUN_NUMBER }} \
+            --repository ${{ secrets.REPOSITORY }} \
+            --head-branch ${{ secrets.HEAD_BRANCH }} \
+            --commit-sha ${{ secrets.COMMIT_SHA }} \
+            --input-file "${filename}" \
+            --output-file "${filename}"
+
       - name: Upload test results
         run: |
           filename=$(ls | grep -E '^[0-9]{12}_cli_test_report\.xml$')
