@@ -46,17 +46,16 @@ jobs:
         env:
           LINODE_CLI_TOKEN: ${{ secrets.LINODE_TOKEN }}
 
-      - name: Modify XML Report
+      - name: Set env
+        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+      - name: Test
         run: |
+          echo $RELEASE_VERSION
+          echo ${{ env.RELEASE_VERSION }}
           filename=$(ls | grep -E '^[0-9]{12}_cli_test_report\.xml$') 
           python scripts/add_to_xml_test_report.py \
-            --workflow-id ${{ github.event.workflow_run.id }} \
-            --workflow-run-number ${{ github.event.workflow_run.run_number }} \
-            --repository ${{ github.event.repository.full_name }} \
-            --head-branch ${{ github.event.workflow_run.head_branch }} \
-            --commit-sha ${{ github.event.workflow_run.head_sha }} \
-            --input-file "${filename}" \
-            --output-file "${filename}"
+          --semanticversion "${{ env.RELEASE_VERSION }}" \
+          --xmlfile "${filename}"
 
       - name: Upload test results
         run: |
