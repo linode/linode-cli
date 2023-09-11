@@ -50,11 +50,11 @@ jobs:
         run: |
           filename=$(ls | grep -E '^[0-9]{12}_cli_test_report\.xml$') 
           python scripts/add_to_xml_test_report.py \
-            --workflow-id ${{ secrets.WORKFLOW_ID }} \
-            --workflow-run-number ${{ secrets.WORKFLOW_RUN_NUMBER }} \
-            --repository ${{ secrets.REPOSITORY }} \
-            --head-branch ${{ secrets.HEAD_BRANCH }} \
-            --commit-sha ${{ secrets.COMMIT_SHA }} \
+            --workflow-id ${{ github.event.workflow_run.id }} \
+            --workflow-run-number ${{ github.event.workflow_run.run_number }} \
+            --repository ${{ github.event.repository.full_name }} \
+            --head-branch ${{ github.event.workflow_run.head_branch }} \
+            --commit-sha ${{ github.event.workflow_run.head_sha }} \
             --input-file "${filename}" \
             --output-file "${filename}"
 
