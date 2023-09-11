@@ -46,14 +46,18 @@ jobs:
         env:
           LINODE_CLI_TOKEN: ${{ secrets.LINODE_TOKEN }}
 
-      - name: Add version of CLI to XML report
+      - name: Add additional information to XML report
         run: |
           echo "branch_name=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
           filename=$(ls | grep -E '^[0-9]{12}_cli_test_report\.xml$') 
+          latest_release_url="https://api.github.com/repos/linode/linode-cli/releases/latest"
+          release_info=$(curl -sSL "$latest_release_url")
+          release_version=$(echo "$release_info" | grep -o '"tag_name": *"[^"]*"' | cut -d'"' -f4 | sed 's/^v//')
           python scripts/add_to_xml_test_report.py  \
           --branch_name "${{ env.RELEASE_VERSION }}" \
           --gha_run_id "$GITHUB_RUN_ID" \
           --gha_run_number "$GITHUB_RUN_NUMBER" \
+          --version "${release_version}"
           --xmlfile "${filename}"
 
       - name: Upload test results
