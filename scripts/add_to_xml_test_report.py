@@ -6,7 +6,7 @@ parser = argparse.ArgumentParser(description='Modify XML with workflow informati
 parser.add_argument('--branch_name', required=True)
 parser.add_argument('--gha_run_id', required=True)
 parser.add_argument('--gha_run_number', required=True)
-parser.add_argument('--version', required=True)
+parser.add_argument('--rel_version', required=True)
 parser.add_argument('--xmlfile', required=True)  # Added argument for XML file path
 
 args = parser.parse_args()
@@ -26,10 +26,14 @@ gha_run_id_element.text = args.gha_run_id
 gha_run_number_element = ET.Element('gha_run_number')
 gha_run_number_element.text = args.gha_run_number
 
+version_element = ET.Element('rel_version')
+version_element.text = args.rel_version
+
 # Add the new elements to the root of the XML
 root.append(branch_name_element)
 root.append(gha_run_id_element)
 root.append(gha_run_number_element)
+root.append(version_element)
 
 # Save the modified XML
 modified_xml_file_path = xml_file_path  # Overwrite it
