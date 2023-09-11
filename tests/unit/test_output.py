@@ -1,55 +1,17 @@
-import contextlib
 import io
+import json
 
 from rich import box
 from rich import print as rprint
 from rich.table import Table
 
-from linodecli import ModelAttr, OutputMode, ResponseModel
+from linodecli import OutputMode
 
 
 class TestOutputHandler:
     """
     Unit tests for linodecli.output
     """
-
-    def test_markdown_output_columns(self, mock_cli):
-        output = io.StringIO()
-
-        output_handler = mock_cli.output_handler
-
-        output_handler._markdown_output(
-            ["very cool header", "wow"],
-            [["foo", "bar"], ["oof", "rab"]],
-            ["1", "2"],
-            output,
-        )
-
-        assert (
-            output.getvalue() == "| very cool header | wow |\n"
-            "|---|---|\n"
-            "| foo | bar |\n"
-            "| oof | rab |\n"
-        )
-
-    def test_markdown_output_models(self, mock_cli):
-        output = io.StringIO()
-
-        output_handler = mock_cli.output_handler
-
-        output_handler._markdown_output(
-            ["very cool header"],
-            [{"cool": "foo"}, {"cool": "bar"}],
-            [ModelAttr("cool", True, True, "string")],
-            output,
-        )
-
-        assert (
-            output.getvalue() == "| very cool header |\n"
-            "|---|\n"
-            "| foo |\n"
-            "| bar |\n"
-        )
 
     def test_json_output_delimited(self, mock_cli):
         output = io.StringIO()
@@ -102,7 +64,9 @@ class TestOutputHandler:
 
         assert output.getvalue() == "h1,h2\nfoo,bar\noof,rab\n"
 
-    def test_delimited_output_models(self, mock_cli):
+    def test_delimited_output_models(
+        self, mock_cli, list_operation_for_output_tests
+    ):
         output = io.StringIO()
         header = ["h1"]
         data = [
@@ -111,7 +75,9 @@ class TestOutputHandler:
             },
             {"cool": "bar"},
         ]
-        columns = [ModelAttr("cool", True, True, "string")]
+
+        attr = list_operation_for_output_tests.response_model.attrs[0]
+        columns = [attr]
 
         mock_cli.output_handler.delimiter = ","
 
@@ -130,7 +96,9 @@ class TestOutputHandler:
         )
 
         mock_table = io.StringIO()
-        tab = Table("h1", "h2", header_style="", box=box.SQUARE)
+        tab = Table(
+            "h1", "h2", header_style="", box=box.SQUARE, title_justify="left"
+        )
         for row in [["foo", "bar"], ["oof", "rab"]]:
             tab.add_row(*row)
         tab.title = "cool table"
@@ -138,8 +106,12 @@ class TestOutputHandler:
 
         assert output.getvalue() == mock_table.getvalue()
 
-    def test_table_output_models(self, mock_cli):
+    def test_table_output_models(
+        self, mock_cli, list_operation_for_output_tests
+    ):
         output = io.StringIO()
+
+        title = "cool table"
         header = ["h1"]
         data = [
             {
@@ -147,25 +119,37 @@ class TestOutputHandler:
             },
             {"cool": "bar"},
         ]
-        columns = [ModelAttr("cool", True, True, "string")]
+
+        attr = list_operation_for_output_tests.response_model.attrs[0]
+        columns = [attr]
 
         mock_cli.output_handler._table_output(
-            header, data, columns, "cool table", output
+            header, data, columns, title, output
         )
 
         mock_table = io.StringIO()
-        tab = Table("h1", header_style="", box=box.SQUARE)
+        tab = Table(
+            "h1",
+            header_style="",
+            box=box.SQUARE,
+            title_justify="left",
+            title=title,
+            min_width=len(title),
+        )
         for row in [["foo"], ["bar"]]:
             tab.add_row(*row)
-        tab.title = "cool table"
         rprint(tab, file=mock_table)
 
         assert output.getvalue() == mock_table.getvalue()
 
-    def test_table_output_models_no_headers(self, mock_cli):
+    def test_table_output_models_no_headers(
+        self, mock_cli, list_operation_for_output_tests
+    ):
         mock_cli.output_handler.headers = False
 
         output = io.StringIO()
+
+        title = "cool table"
         header = ["h1"]
         data = [
             {
@@ -173,23 +157,31 @@ class TestOutputHandler:
             },
             {"cool": "bar"},
         ]
-        columns = [ModelAttr("cool", True, True, "string")]
+        columns = [list_operation_for_output_tests.response_model.attrs[0]]
 
         mock_cli.output_handler._table_output(
             header, data, columns, "cool table", output
         )
 
         mock_table = io.StringIO()
-        tab = Table(header_style="", show_header=False, box=box.SQUARE)
+        tab = Table(
+            header_style="",
+            show_header=False,
+            box=box.SQUARE,
+            title_justify="left",
+        )
         for row in [["foo"], ["bar"]]:
             tab.add_row(*row)
-        tab.title = "cool table"
         rprint(tab, file=mock_table)
 
         assert output.getvalue() == mock_table.getvalue()
 
-    def test_ascii_table_output(self, mock_cli):
+    def test_ascii_table_output(
+        self, mock_cli, list_operation_for_output_tests
+    ):
         output = io.StringIO()
+
+        title = "cool table"
         header = ["h1"]
         data = [
             {
@@ -197,140 +189,115 @@ class TestOutputHandler:
             },
             {"cool": "bar"},
         ]
-        columns = [ModelAttr("cool", True, True, "string")]
+        columns = [list_operation_for_output_tests.response_model.attrs[0]]
 
         output_handler = mock_cli.output_handler
         output_handler._table_output(
-            header, data, columns, "cool table", output, box.ASCII
+            header, data, columns, title, output, box.ASCII
         )
 
         print(output.getvalue())
 
         assert (
-            output.getvalue() == " cool  \n"
-            " table \n"
-            "+-----+\n"
-            "| h1  |\n"
-            "|-----|\n"
-            "| foo |\n"
-            "| bar |\n"
-            "+-----+\n"
+            output.getvalue() == "cool table\n"
+            "+--------+\n"
+            "| h1     |\n"
+            "|--------|\n"
+            "| foo    |\n"
+            "| bar    |\n"
+            "+--------+\n"
         )
 
-    def test_get_columns_from_model(self, mock_cli):
+    def test_get_columns_from_model(
+        self, mock_cli, list_operation_for_output_tests
+    ):
         output_handler = mock_cli.output_handler
 
-        response_model = ResponseModel(
-            [
-                ModelAttr("foo", True, True, "string"),
-                ModelAttr("bar", True, False, "string"),
-            ]
+        result = output_handler._get_columns(
+            list_operation_for_output_tests.response_model.attrs
         )
 
-        result = output_handler._get_columns(response_model)
+        assert len(result) == 3
+        assert result[0].name == "cool"
+        assert result[1].name == "bar"
+        assert result[2].name == "test"
 
-        assert len(result) == 1
-        assert result[0].name == "foo"
-
-    def test_get_columns_from_model_all(self, mock_cli):
+    def test_get_columns_from_model_all(
+        self, mock_cli, list_operation_for_output_tests
+    ):
         output_handler = mock_cli.output_handler
-        response_model = ResponseModel(
-            [
-                ModelAttr("foo", True, True, "string"),
-                ModelAttr("bar", True, False, "string"),
-            ]
-        )
 
         output_handler.columns = "*"
 
-        result = output_handler._get_columns(response_model)
+        result = output_handler._get_columns(
+            list_operation_for_output_tests.response_model.attrs
+        )
 
-        assert len(result) == 2
-        assert result[0].name == "foo"
+        assert len(result) == 3
+        assert result[0].name == "cool"
         assert result[1].name == "bar"
+        assert result[2].name == "test"
 
-    def test_get_columns_from_model_select(self, mock_cli):
+    def test_get_columns_from_model_select(
+        self, mock_cli, list_operation_for_output_tests
+    ):
         output_handler = mock_cli.output_handler
 
-        response_model = ResponseModel(
-            [
-                ModelAttr("foo", True, True, "string"),
-                ModelAttr("bar", True, False, "string"),
-                ModelAttr("test", True, False, "string"),
-            ]
+        output_handler.columns = "cool,bar"
+
+        result = output_handler._get_columns(
+            list_operation_for_output_tests.response_model.attrs
         )
-
-        output_handler.columns = "foo,bar"
-
-        result = output_handler._get_columns(response_model)
 
         assert len(result) == 2
-        assert result[0].name == "foo"
+        assert result[0].name == "cool"
         assert result[1].name == "bar"
 
-    # Let's test a single print case
-    def test_print(self, mock_cli):
-        output = io.StringIO()
+        # Let's test a single print case
 
-        response_model = ResponseModel(
-            [
-                ModelAttr("foo", True, True, "string"),
-                ModelAttr("bar", True, True, "string"),
-                ModelAttr("test", True, False, "string"),
-            ]
-        )
+    def test_print_raw(self, mock_cli):
+        output = io.StringIO()
 
         mock_cli.output_handler.mode = OutputMode.json
 
         mock_cli.output_handler.print(
-            response_model,
-            [{"foo": "blah", "bar": "blah2", "test": "blah3"}],
-            title="cool table",
+            [{"cool": "blah", "bar": "blah2", "test": "blah3"}],
+            ["cool", "bar", "test"],
             to=output,
         )
 
-        assert '[{"foo": "blah", "bar": "blah2"}]' in output.getvalue()
+        assert (
+            '[{"cool": "blah", "bar": "blah2", "test": "blah3"}]'
+            in output.getvalue()
+        )
 
-    def test_truncation(self, mock_cli):
-        stderr_buf = io.StringIO()
-        test_str = "x" * 80
-        test_str_truncated = f"{'x' * 64}..."
-
-        with contextlib.redirect_stderr(stderr_buf):
-            result = mock_cli.output_handler._attempt_truncate_value(test_str)
-
-        assert "truncation" in stderr_buf.getvalue()
-        assert result == test_str_truncated
-
-        # --suppress-warnings
-        # Faster than flushing apparently
-        stderr_buf = io.StringIO()
-        mock_cli.output_handler.suppress_warnings = True
-
-        with contextlib.redirect_stderr(stderr_buf):
-            result = mock_cli.output_handler._attempt_truncate_value(test_str)
-
-        assert "truncation" not in stderr_buf
-        assert result == test_str_truncated
-
-        # --no-truncation
-        mock_cli.output_handler.disable_truncation = True
-
-        result = mock_cli.output_handler._attempt_truncate_value(test_str)
-
-        assert result == test_str
-
-        # Ensure integers are properly converted
-        result = mock_cli.output_handler._attempt_truncate_value(12345)
-
-        assert result == "12345"
-        assert isinstance(result, str)
-
-    def test_truncated_table(self, mock_cli):
+    # Let's test a single print case
+    def test_print_response(self, mock_cli, list_operation_for_output_tests):
         output = io.StringIO()
 
+        response_model = list_operation_for_output_tests.response_model
+
+        mock_cli.output_handler.mode = OutputMode.json
+
+        mock_cli.output_handler.print_response(
+            response_model,
+            [{"cool": "blah", "bar": "blah2", "test": "blah3"}],
+            to=output,
+        )
+
+        assert (
+            '[{"cool": "blah", "bar": "blah2", "test": "blah3"}]'
+            in output.getvalue()
+        )
+
+    def test_truncated_table(self, mock_cli, list_operation_for_output_tests):
+        mock_cli.output_handler.column_width = 2
+
+        output = io.StringIO()
+
+        title = "cool table"
         test_str = "x" * 80
-        test_str_truncated = f"{'x' * 64}..."
+        test_str_truncated = "x…"
 
         header = ["h1"]
         data = [
@@ -338,7 +305,45 @@ class TestOutputHandler:
                 "cool": test_str,
             },
         ]
-        columns = [ModelAttr("cool", True, True, "string")]
+        columns = [list_operation_for_output_tests.response_model.attrs[0]]
+
+        mock_cli.output_handler._table_output(
+            header, data, columns, title, output
+        )
+
+        data[0]["cool"] = test_str_truncated
+
+        mock_table = io.StringIO()
+        tab = Table(
+            "h1",
+            header_style="",
+            box=box.SQUARE,
+            title_justify="left",
+            title=title,
+        )
+        tab.add_row(test_str_truncated)
+        rprint(tab, file=mock_table)
+
+        assert output.getvalue() == mock_table.getvalue()
+
+    def test_nontruncated_table(
+        self, mock_cli, list_operation_for_output_tests
+    ):
+        mock_cli.output_handler.column_width = 2
+        mock_cli.output_handler.disable_truncation = True
+
+        output = io.StringIO()
+
+        test_str = "x" * 80
+        test_str_truncated = "x…"
+
+        header = ["h1"]
+        data = [
+            {
+                "cool": test_str,
+            },
+        ]
+        columns = [list_operation_for_output_tests.response_model.attrs[0]]
 
         mock_cli.output_handler._table_output(
             header, data, columns, "cool table", output
@@ -347,58 +352,239 @@ class TestOutputHandler:
         data[0]["cool"] = test_str_truncated
 
         mock_table = io.StringIO()
-        tab = Table("h1", header_style="", box=box.SQUARE)
+        tab = Table("h1", header_style="", box=box.SQUARE, title_justify="left")
         tab.add_row(test_str_truncated)
         tab.title = "cool table"
         rprint(tab, file=mock_table)
 
-        assert output.getvalue() == mock_table.getvalue()
+        assert output.getvalue() != mock_table.getvalue()
 
-    def test_truncated_markdown(self, mock_cli):
-        test_str = "x" * 80
-        test_str_truncated = f"{'x' * 64}..."
-
+    def test_print_subtable(self, mock_cli, get_operation_for_subtable_test):
         output = io.StringIO()
 
-        header = ["very cool header"]
-        data = [
-            {
-                "cool": test_str,
+        mock_cli.output_handler.mode = OutputMode.table
+
+        mock_data = {
+            "table": [{"foo": "cool", "bar": 12345}],
+            "foo": {
+                "single_nested": {"foo": "cool", "bar": "cool2"},
+                "table": [{"foobar": ["127.0.0.1", "127.0.0.2"]}],
             },
+            "foobar": "wow",
+        }
+
+        mock_cli.output_handler.print_response(
+            get_operation_for_subtable_test.response_model,
+            data=[mock_data],
+            to=output,
+        )
+
+        output = output.getvalue().splitlines()
+
+        lines = [
+            "┌────────┐",
+            "│ foobar │",
+            "├────────┤",
+            "│ wow    │",
+            "└────────┘",
+            "table",
+            "┌──────┬───────┐",
+            "│ foo  │ bar   │",
+            "├──────┼───────┤",
+            "│ cool │ 12345 │",
+            "└──────┴───────┘",
+            "foo.table",
+            "┌──────────────────────┐",
+            "│ foobar               │",
+            "├──────────────────────┤",
+            "│ 127.0.0.1, 127.0.0.2 │",
+            "└──────────────────────┘",
+            "foo.single_nested",
+            "┌───────┬───────┐",
+            "│ foo   │ bar   │",
+            "├───────┼───────┤",
+            "│ cool  │ cool2 │",
+            "└───────┴───────┘",
         ]
-        columns = [ModelAttr("cool", True, True, "string")]
 
-        output_handler = mock_cli.output_handler
+        for i, line in enumerate(lines):
+            assert line in output[i]
 
-        output_handler._markdown_output(header, data, columns, output)
+    def test_print_subtable_json(
+        self, mock_cli, get_operation_for_subtable_test
+    ):
+        output = io.StringIO()
 
-        assert (
-            output.getvalue() == "| very cool header |\n"
-            "|---|\n"
-            f"| {test_str_truncated} |\n"
+        mock_cli.output_handler.mode = OutputMode.json
+
+        mock_data = {
+            "table": [{"foo": "cool", "bar": 12345}],
+            "foo": {
+                "single_nested": {"foo": "cool", "bar": "cool2"},
+                "table": [{"foobar": ["127.0.0.1", "127.0.0.2"]}],
+            },
+            "foobar": "wow",
+        }
+
+        mock_cli.output_handler.print_response(
+            get_operation_for_subtable_test.response_model,
+            data=[mock_data],
+            to=output,
         )
 
-    def test_warn_broken_output(self, mock_cli):
-        stderr_buf = io.StringIO()
+        output = json.loads(output.getvalue())
+        assert output == [mock_data]
 
-        try:
-            with contextlib.redirect_stderr(stderr_buf):
-                mock_cli.handle_command("linodes", "ips-list", ["10"])
-        except SystemExit:
-            pass
+    def test_print_subtable_delimited(
+        self, mock_cli, get_operation_for_subtable_test
+    ):
+        output = io.StringIO()
 
-        assert (
-            "This output contains a nested structure that may not properly be displayed by linode-cli."
-            in stderr_buf.getvalue()
+        mock_cli.output_handler.mode = OutputMode.delimited
+
+        mock_data = {
+            "table": [{"foo": "cool", "bar": 12345}],
+            "foo": {
+                "single_nested": {"foo": "cool", "bar": "cool2"},
+                "table": [{"foobar": ["127.0.0.1", "127.0.0.2"]}],
+            },
+            "foobar": "wow",
+        }
+
+        mock_cli.output_handler.print_response(
+            get_operation_for_subtable_test.response_model,
+            data=[mock_data],
+            to=output,
         )
 
-        try:
-            with contextlib.redirect_stderr(stderr_buf):
-                mock_cli.handle_command("firewalls", "rules-list", ["10"])
-        except SystemExit:
-            pass
+        output = output.getvalue().splitlines()
 
-        assert (
-            "This output contains a nested structure that may not properly be displayed by linode-cli."
-            in stderr_buf.getvalue()
+        lines = [
+            "foobar",
+            "wow",
+            "",
+            "table",
+            "foo\tbar",
+            "cool\t12345",
+            "",
+            "foo.table",
+            "foobar",
+            "127.0.0.1 127.0.0.2",
+            "",
+            "foo.single_nested",
+            "foo\tbar",
+            "cool\tcool2",
+        ]
+
+        for i, line in enumerate(lines):
+            assert line in output[i]
+
+    def test_print_subtable_single(
+        self, mock_cli, get_operation_for_subtable_test
+    ):
+        output = io.StringIO()
+
+        mock_cli.output_handler.mode = OutputMode.delimited
+        mock_cli.output_handler.single_table = True
+
+        mock_data = {
+            "table": [{"foo": "cool", "bar": 12345}],
+            "foo": {
+                "single_nested": {"foo": "cool", "bar": "cool2"},
+                "table": [{"foobar": ["127.0.0.1", "127.0.0.2"]}],
+            },
+            "foobar": "wow",
+        }
+
+        mock_cli.output_handler.print_response(
+            get_operation_for_subtable_test.response_model,
+            data=[mock_data],
+            to=output,
         )
+
+        output = output.getvalue().splitlines()
+
+        lines = [
+            "foo.single_nested.foo\tfoo.single_nested.bar\tfoobar",
+            "cool\tcool2\twow",
+        ]
+
+        for i, line in enumerate(lines):
+            assert line in output[i]
+
+    def test_print_subtable_with_selection(
+        self, mock_cli, get_operation_for_subtable_test
+    ):
+        output = io.StringIO()
+
+        mock_cli.output_handler.mode = OutputMode.table
+        mock_cli.output_handler.tables = ["foo.table", "foo.single_nested"]
+
+        mock_data = {
+            "table": [{"foo": "cool", "bar": 12345}],
+            "foo": {
+                "single_nested": {"foo": "cool", "bar": "cool2"},
+                "table": [{"foobar": ["127.0.0.1", "127.0.0.2"]}],
+            },
+            "foobar": "wow",
+        }
+
+        mock_cli.output_handler.print_response(
+            get_operation_for_subtable_test.response_model,
+            data=[mock_data],
+            to=output,
+        )
+
+        output = output.getvalue().splitlines()
+
+        lines = [
+            "foo.table",
+            "┌──────────────────────┐",
+            "│ foobar               │",
+            "├──────────────────────┤",
+            "│ 127.0.0.1, 127.0.0.2 │",
+            "└──────────────────────┘",
+            "foo.single_nested",
+            "┌───────┬───────┐",
+            "│ foo   │ bar   │",
+            "├───────┼───────┤",
+            "│ cool  │ cool2 │",
+            "└───────┴───────┘",
+        ]
+
+        for i, line in enumerate(lines):
+            assert line in output[i]
+
+    def test_format_nested_field(
+        self, mock_cli, get_operation_for_subtable_test
+    ):
+        output = io.StringIO()
+
+        mock_cli.output_handler.mode = OutputMode.delimited
+        mock_cli.output_handler.single_table = True
+        mock_cli.output_handler.columns = "foo.single_nested.bar"
+
+        mock_data = {
+            "table": [{"foo": "cool", "bar": 12345}],
+            "foo": {
+                "single_nested": {"foo": "cool", "bar": "cool2"},
+                "table": [{"foobar": ["127.0.0.1", "127.0.0.2"]}],
+            },
+            "foobar": "wow",
+        }
+
+        mock_cli.output_handler.print_response(
+            get_operation_for_subtable_test.response_model,
+            data=[mock_data],
+            to=output,
+        )
+
+        output = output.getvalue().splitlines()
+
+        lines = [
+            "foo.single_nested.bar",
+            "cool2",
+        ]
+
+        for i, line in enumerate(lines):
+            assert line in output[i]

@@ -35,7 +35,11 @@ def get_version():
     """
     Uses the version file to calculate this package's version
     """
-    return subprocess.check_output([sys.executable, "./version"]).decode("utf-8").rstrip()
+    return (
+        subprocess.check_output([sys.executable, "./version"])
+        .decode("utf-8")
+        .rstrip()
+    )
 
 
 def get_baked_version():
@@ -70,7 +74,7 @@ else:
     version = get_version()
     bake_version(version)
 
-with open('requirements.txt') as f:
+with open("requirements.txt") as f:
     requirements = f.read().splitlines()
 
 setup(
@@ -82,7 +86,7 @@ setup(
     author="Linode",
     author_email="developers@linode.com",
     url="https://www.linode.com/docs/api/",
-    packages=find_packages(include=['linodecli*']),
+    packages=find_packages(include=["linodecli*"]),
     license="BSD 3-Clause License",
     install_requires=requirements,
     extras_require={

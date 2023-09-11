@@ -16,7 +16,7 @@ from rich.table import Table
 from linodecli import plugins
 
 from .completion import bake_completions
-from .helpers import register_args_shared
+from .helpers import pagination_args_shared, register_args_shared
 
 
 def register_args(parser):
@@ -77,21 +77,6 @@ def register_args(parser):
         help="If set, does not display headers in output.",
     )
     parser.add_argument(
-        "--page",
-        metavar="PAGE",
-        default=1,
-        type=int,
-        help="For listing actions, specifies the page to request",
-    )
-    parser.add_argument(
-        "--page-size",
-        metavar="PAGESIZE",
-        default=100,
-        type=int,
-        help="For listing actions, specifies the number of items per page, "
-        "accepts any value between 25 and 500",
-    )
-    parser.add_argument(
         "--all",
         action="store_true",
         help=(
@@ -127,6 +112,29 @@ def register_args(parser):
         help="Prevent the truncation of long values in command outputs.",
     )
     parser.add_argument(
+        "--no-retry",
+        action="store_true",
+        help="Skip retrying on common errors like timeouts.",
+    )
+    parser.add_argument(
+        "--single-table",
+        action="store_true",
+        help="Disable printing multiple tables for complex API responses.",
+    )
+    parser.add_argument(
+        "--table",
+        type=str,
+        action="append",
+        help="The specific table(s) to print in output of a command.",
+    )
+    parser.add_argument(
+        "--column-width",
+        type=int,
+        default=None,
+        help="Sets the maximum width of each column in outputted tables. "
+        "By default, columns are dynamically sized to fit the terminal.",
+    )
+    parser.add_argument(
         "--version",
         "-v",
         action="store_true",
@@ -136,6 +144,7 @@ def register_args(parser):
         "--debug", action="store_true", help="Enable verbose HTTP debug output."
     )
 
+    pagination_args_shared(parser)
     register_args_shared(parser)
 
     return parser
@@ -341,27 +350,14 @@ def action_help(cli, command, action):
         return
     print(f"linode-cli {command} {action}", end="")
     for param in op.params:
-        # clean up parameter names - we add an '_' at the end of them
-        # during baking if it conflicts with the name of an argument.
         pname = param.name.upper()
-        if pname[-1] == "_":
-            pname = pname[:-1]
         print(f" [{pname}]", end="")
     print()
     print(op.summary)
     if op.docs_url:
         print(f"API Documentation: {op.docs_url}")
     print()
-    if op.args:
-        print("Arguments:")
-        for arg in sorted(op.args, key=lambda s: not s.required):
-            is_required = (
-                "(required) "
-                if op.method in {"post", "put"} and arg.required
-                else ""
-            )
-            print(f"  --{arg.path}: {is_required}{arg.description}")
-    elif op.method == "get" and op.action == "list":
+    if op.method == "get" and op.action == "list":
         filterable_attrs = [
             attr for attr in op.response_model.attrs if attr.filterable
         ]
@@ -370,6 +366,21 @@ def action_help(cli, command, action):
             print("You may filter results with:")
             for attr in filterable_attrs:
                 print(f"  --{attr.name}")
+            print(
+                "Additionally, you may order results using --order-by and --order."
+            )
+        return
+    if op.args:
+        print("Arguments:")
+        for arg in sorted(op.args, key=lambda s: not s.required):
+            if arg.read_only:
+                continue
+            is_required = (
+                "(required) "
+                if op.method in {"post", "put"} and arg.required
+                else ""
+            )
+            print(f"  --{arg.path}: {is_required}{arg.description}")
 
 
 def bake_command(cli, spec_loc):

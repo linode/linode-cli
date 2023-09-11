@@ -49,6 +49,8 @@ This can be done using the following environment variables to override certain s
 
 * `LINODE_CLI_API_SCHEME` - The request scheme to use (e.g. `https`)
 
+Alternatively, these values can be configured per-user using the ``linode-cli configure`` command.
+
 ## Multiple Users
 
 If you use the Linode CLI to manage multiple Linode accounts, you may configure

@@ -45,7 +45,7 @@ def create_stackscript():
         + [
             "create",
             "--script",
-            "#!/bin/bash \n $EXAMPLE_SCRIPT",
+            '#!/bin/bash\n# <UDF name="foo" Label="foo" example="bar" />\n $EXAMPLE_SCRIPT',
             "--image",
             "linode/debian9",
             "--label",
@@ -236,6 +236,8 @@ def test_deploy_linode_from_stackscript(create_stackscript):
             "create",
             "--stackscript_id",
             private_stackscript,
+            "--stackscript_data",
+            '{"foo": "bar"}',
             "--type",
             linode_plan,
             "--image",

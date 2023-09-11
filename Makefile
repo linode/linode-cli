@@ -51,7 +51,7 @@ clean:
 .PHONY: testunit
 testunit: export LINODE_CLI_TEST_MODE = 1
 testunit:
-	pytest tests/unit
+	pytest -v tests/unit
 
 .PHONY: testint
 testint:

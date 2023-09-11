@@ -159,3 +159,7 @@ def exec_failing_test_command(args: List[str]):
     )
     assert process.returncode == 1
     return process
+
+
+def count_lines(text: str):
+    return len(list(filter(len, text.split("\n"))))

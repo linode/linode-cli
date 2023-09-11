@@ -8,9 +8,11 @@ import json
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
+import pytest
 import requests
 
 from linodecli import api_request
+from linodecli.baked.operation import ExplicitNullValue
 
 
 class TestAPIRequest:
@@ -56,10 +58,15 @@ class TestAPIRequest:
     def test_build_request_body(self, mock_cli, create_operation):
         create_operation.allowed_defaults = ["region", "engine"]
         create_operation.action = "mysql-create"
+
         result = api_request._build_request_body(
             mock_cli,
             create_operation,
-            SimpleNamespace(generic_arg="foo", region=None, engine=None),
+            SimpleNamespace(
+                generic_arg="foo",
+                region=None,
+                engine=None,
+            ),
         )
         assert (
             json.dumps(
@@ -72,12 +79,81 @@ class TestAPIRequest:
             == result
         )
 
+    def test_build_request_body_null_field(self, mock_cli, create_operation):
+        create_operation.allowed_defaults = ["region", "engine"]
+        create_operation.action = "mysql-create"
+        result = api_request._build_request_body(
+            mock_cli,
+            create_operation,
+            SimpleNamespace(
+                generic_arg="foo",
+                region=None,
+                engine=None,
+                nullable_int=ExplicitNullValue(),
+            ),
+        )
+        assert (
+            json.dumps(
+                {
+                    "generic_arg": "foo",
+                    "region": "us-southeast",
+                    "engine": "mysql/8.0.26",
+                    "nullable_int": None,
+                }
+            )
+            == result
+        )
+
+    def test_build_request_body_non_null_field(
+        self, mock_cli, create_operation
+    ):
+        create_operation.allowed_defaults = ["region", "engine"]
+        create_operation.action = "mysql-create"
+        result = api_request._build_request_body(
+            mock_cli,
+            create_operation,
+            SimpleNamespace(
+                generic_arg="foo",
+                region=None,
+                engine=None,
+                nullable_int=12345,
+            ),
+        )
+        assert (
+            json.dumps(
+                {
+                    "generic_arg": "foo",
+                    "region": "us-southeast",
+                    "engine": "mysql/8.0.26",
+                    "nullable_int": 12345,
+                }
+            )
+            == result
+        )
+
     def test_build_request_url_get(self, mock_cli, list_operation):
         result = api_request._build_request_url(
             mock_cli, list_operation, SimpleNamespace()
         )
 
-        assert "http://localhost/foo/bar?page=1&page_size=100" == result
+        assert "http://localhost/v4/foo/bar?page=1&page_size=100" == result
+
+    def test_build_request_url_with_overrides(self, mock_cli, list_operation):
+        def mock_getvalue(key: str):
+            return {
+                "api_host": "foobar.local",
+                "api_scheme": "https",
+                "api_version": "v4beta",
+            }[key]
+
+        mock_cli.config.get_value = mock_getvalue
+
+        result = api_request._build_request_url(
+            mock_cli, list_operation, SimpleNamespace()
+        )
+        assert (
+            result == "https://foobar.local/v4beta/foo/bar?page=1&page_size=100"
+        )
 
     def test_build_request_url_post(self, mock_cli, create_operation):
         result = api_request._build_request_url(
@@ -92,6 +168,8 @@ class TestAPIRequest:
             SimpleNamespace(
                 filterable_result="bar",
                 filterable_list_result=["foo", "bar"],
+                order_by=None,
+                order=None,
             ),
         )
 
@@ -108,11 +186,121 @@ class TestAPIRequest:
             == result
         )
 
+    def test_build_filter_header_single(self, list_operation):
+        result = api_request._build_filter_header(
+            list_operation,
+            SimpleNamespace(
+                filterable_result="bar",
+                order_by=None,
+                order=None,
+            ),
+        )
+
+        assert (
+            json.dumps(
+                {"filterable_result": "bar"},
+            )
+            == result
+        )
+
+    def test_build_filter_header_single_list(self, list_operation):
+        result = api_request._build_filter_header(
+            list_operation,
+            SimpleNamespace(
+                filterable_list_result=["foo", "bar"],
+                order_by=None,
+                order=None,
+            ),
+        )
+
+        assert (
+            json.dumps(
+                {
+                    "+and": [
+                        {"filterable_list_result": "foo"},
+                        {"filterable_list_result": "bar"},
+                    ]
+                }
+            )
+            == result
+        )
+
+    def test_build_filter_header_order_by(self, list_operation):
+        result = api_request._build_filter_header(
+            list_operation,
+            SimpleNamespace(
+                filterable_result="bar",
+                filterable_list_result=["foo", "bar"],
+                order_by="baz",
+                order=None,
+            ),
+        )
+
+        assert (
+            json.dumps(
+                {
+                    "+and": [
+                        {"filterable_result": "bar"},
+                        {"filterable_list_result": "foo"},
+                        {"filterable_list_result": "bar"},
+                    ],
+                    "+order_by": "baz",
+                    "+order": "asc",
+                }
+            )
+            == result
+        )
+
+    def test_build_filter_header_order(self, list_operation):
+        result = api_request._build_filter_header(
+            list_operation,
+            SimpleNamespace(
+                filterable_result="bar",
+                filterable_list_result=["foo", "bar"],
+                order_by="baz",
+                order="desc",
+            ),
+        )
+
+        assert (
+            json.dumps(
+                {
+                    "+and": [
+                        {"filterable_result": "bar"},
+                        {"filterable_list_result": "foo"},
+                        {"filterable_list_result": "bar"},
+                    ],
+                    "+order_by": "baz",
+                    "+order": "desc",
+                }
+            )
+            == result
+        )
+
+    def test_build_filter_header_only_order(self, list_operation):
+        result = api_request._build_filter_header(
+            list_operation,
+            SimpleNamespace(
+                order_by="baz",
+                order="desc",
+            ),
+        )
+
+        assert (
+            json.dumps(
+                {
+                    "+order_by": "baz",
+                    "+order": "desc",
+                }
+            )
+            == result
+        )
+
     def test_do_request_get(self, mock_cli, list_operation):
         mock_response = Mock(status_code=200, reason="OK")
 
         def validate_http_request(url, headers=None, data=None, **kwargs):
-            assert url == "http://localhost/foo/bar?page=1&page_size=100"
+            assert url == "http://localhost/v4/foo/bar?page=1&page_size=100"
             assert headers["X-Filter"] == json.dumps(
                 {
                     "+and": [
@@ -165,7 +353,9 @@ class TestAPIRequest:
             "linodecli.api_request.requests.post", validate_http_request
         ):
             result = api_request.do_request(
-                mock_cli, create_operation, ["--generic_arg", "foobar", "12345"]
+                mock_cli,
+                create_operation,
+                ["--generic_arg", "foobar", "--test_param", "12345"],
             )
 
         assert result == mock_response
@@ -286,3 +476,47 @@ class TestAPIRequest:
 
         output = stderr_buf.getvalue()
         assert "" == output
+
+    def test_do_request_retry(self, mock_cli, list_operation):
+        mock_response = Mock(status_code=408)
+        with patch(
+            "linodecli.api_request.requests.get", return_value=mock_response
+        ) and pytest.raises(SystemExit):
+            _ = api_request.do_request(mock_cli, list_operation, None)
+            assert mock_cli.retry_count == 3
+
+    def test_check_retry(self):
+        mock_response = Mock(status_code=200)
+        output = api_request._check_retry(mock_response)
+        assert not output
+
+        mock_response = Mock(status_code=408)
+        output = api_request._check_retry(mock_response)
+        assert output
+
+        mock_response = Mock(status_code=429)
+        output = api_request._check_retry(mock_response)
+        assert output
+
+        mock_response = Mock(
+            status_code=400,
+            headers={
+                "Server": "nginx",
+                "Content-Type": "text/html",
+            },
+        )
+        output = api_request._check_retry(mock_response)
+        assert output
+
+    def test_get_retry_after(self):
+        headers = {"Retry-After": "10"}
+        output = api_request._get_retry_after(headers)
+        assert output == 10
+
+        headers = {"Retry-After": ""}
+        output = api_request._get_retry_after(headers)
+        assert output == 0
+
+        headers = {}
+        output = api_request._get_retry_after(headers)
+        assert output == 0

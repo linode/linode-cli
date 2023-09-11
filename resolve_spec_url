@@ -19,7 +19,8 @@ def get_latest_tag():
 
     data = requests.get(
         f"https://api.github.com/repos/{LINODE_DOCS_REPO}/releases/latest",
-        headers=headers)
+        headers=headers,
+    )
 
     if data.status_code != 200:
         raise RuntimeError("Got error from GitHub API: {}".format(data.json()))
@@ -37,4 +38,6 @@ if __name__ == "__main__":
     if desired_version.lower() == "latest":
         desired_version = get_latest_tag()
 
-    print(f"https://raw.githubusercontent.com/{LINODE_DOCS_REPO}/{desired_version}/openapi.yaml")
+    print(
+        f"https://raw.githubusercontent.com/{LINODE_DOCS_REPO}/{desired_version}/openapi.yaml"
+    )
