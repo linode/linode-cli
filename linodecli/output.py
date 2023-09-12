@@ -1,10 +1,11 @@
 """
 Handles formatting the output of commands used in Linode CLI
 """
+import copy
 import json
 from enum import Enum
 from sys import stdout
-from typing import IO, List, Optional, Union, cast
+from typing import IO, Any, Dict, List, Optional, Union, cast
 
 from rich import box
 from rich import print as rprint
@@ -12,7 +13,7 @@ from rich.console import OverflowMethod
 from rich.table import Column, Table
 from rich.text import Text
 
-from linodecli.baked.response import OpenAPIResponse
+from linodecli.baked.response import OpenAPIResponse, OpenAPIResponseAttr
 
 
 class OutputMode(Enum):
@@ -42,6 +43,8 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
         disable_truncation=False,
         suppress_warnings=False,
         column_width=None,
+        single_table=False,
+        tables=None,
     ):
         self.mode = mode
         self.delimiter = delimiter
@@ -52,21 +55,20 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
 
         self.disable_truncation = disable_truncation
         self.column_width = column_width
+        self.single_table = single_table
+        self.tables = tables
 
         # Used to track whether a warning has already been printed
         self.has_warned = False
 
     def print(
         self,
-        response_model: OpenAPIResponse,
         data: List[Union[str, dict]],
+        columns: List[Union[str, OpenAPIResponseAttr]],
         title: Optional[str] = None,
         to: IO[str] = stdout,
-        columns: Optional[List[str]] = None,
     ):  # pylint: disable=too-many-arguments
         """
-        :param response_model: The Model corresponding to this response
-        :type response_model: OpenAPIResponse
         :param data: The data to display
         :type data: list[str] or list[dict]
         :param title: The title to display on a table
@@ -86,7 +88,7 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
                 header, data, columns, title, to, box_style=box.ASCII
             ),
             OutputMode.delimited: lambda: self._delimited_output(
-                header, data, columns, to
+                header, data, columns, to, title=title
             ),
             OutputMode.json: lambda: self._json_output(header, data, to),
             OutputMode.markdown: lambda: self._table_output(
@@ -94,9 +96,14 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
             ),
         }
 
-        if columns is None:
-            columns = self._get_columns(response_model)
-            header = [c.column_name for c in columns]
+        if len(columns) < 1:
+            raise ValueError(
+                "Expected a non-zero number of columns."
+                "This is always an error in the OpenAPI spec."
+            )
+
+        if isinstance(columns[0], OpenAPIResponseAttr):
+            header = [c.name for c in columns]
         else:
             header = columns
 
@@ -105,35 +112,144 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
 
         output_mode_to_func[self.mode]()
 
-    def _get_columns(self, response_model):
+    def print_response(
+        self,
+        response_model: OpenAPIResponse,
+        data: List[Union[str, dict]],
+        to: IO[str] = stdout,
+    ):
+        """
+        Handles printing responses from Linode API requests.
+
+        :param response_model: The OpenAPI response to format this output with.
+        :type response_model: OpenAPIResponse
+        :param data: The API-returned data to output.
+        :type data: List[Union[str, dict]]
+        :param to: The IO stream to output to.
+        :type to: IO[str]
+        """
+        attrs = copy.deepcopy(response_model.attrs)
+        tables = []
+        target_tables = self._get_tables(
+            [None] + (response_model.subtables or [])
+        )
+
+        if (
+            response_model.subtables is not None
+            # We do not want to use subtables in JSON output
+            and self.mode != OutputMode.json
+            and not self.single_table
+        ):
+            for table in response_model.subtables:
+                # Store these tables to be printed after the primary table
+                tables.append(
+                    (table, self._pop_attrs_for_subtable(attrs, table))
+                )
+
+        # Add a root table if any attributes remain
+        if len(attrs) > 0:
+            # The root table should always be printed first
+            tables.insert(0, (None, attrs))
+
+        for i, v in enumerate(tables):
+            table_name, table_attrs = v
+            if table_name not in target_tables:
+                continue
+
+            self.print(
+                self._scope_data_to_subtable(data, table_name)
+                if table_name is not None
+                else data,
+                self._get_columns(table_attrs),
+                title=table_name,
+                to=to,
+            )
+
+            # Print gaps between tables for delimited outputs
+            if self.mode == OutputMode.delimited and i < len(tables) - 1:
+                print(file=to)
+
+    @staticmethod
+    def _pop_attrs_for_subtable(
+        attrs: List[OpenAPIResponseAttr], table: str
+    ) -> List[OpenAPIResponseAttr]:
+        """
+        Pops all attributes that belong to the given subtable
+        and returns them.
+        """
+        results = [v for v in attrs if v.name.startswith(table + ".")]
+
+        # Drop the corresponding entries from the root attrs
+        for v in results:
+            attrs.remove(v)
+
+        # Scope the attributes to root
+        for v in results:
+            v.name = v.name[len(table) + 1 :]
+            v.nested_list_depth -= 1
+
+        return results
+
+    @staticmethod
+    def _scope_data_to_subtable(data: List[Dict[str, Any]], table: str) -> Any:
+        """
+        Scopes the given JSON dictionary to the given subtable.
+        """
+        if len(data) == 0:
+            return data
+
+        result = data[0] if isinstance(data, list) else data
+
+        for seg in table.split("."):
+            if seg not in result:
+                raise IndexError(f"Segment {seg} missing from input data")
+
+            result = result[seg]
+
+        return result if isinstance(result, list) else [result]
+
+    def _get_tables(self, tables):
+        """
+        Returns which tables to display based on the configured columns (--format).
+        """
+        if self.tables is None or len(self.tables) < 1 or "*" in self.tables:
+            return tables
+
+        displayed_tables = [(v if v != "root" else None) for v in self.tables]
+
+        result = [v for v in tables if v in displayed_tables]
+
+        # If there is nothing to print, we should print everything
+        return result if len(result) > 0 else tables
+
+    def _get_columns(self, attrs):
         """
         Based on the configured columns, returns columns from a response model
         """
         if self.columns is None:
             columns = [
                 attr
-                for attr in sorted(
-                    response_model.attrs, key=lambda c: c.display
-                )
+                for attr in sorted(attrs, key=lambda c: c.display)
                 if attr.display
             ]
         elif self.columns == "*":
-            columns = list(response_model.attrs)
+            columns = list(attrs)
         else:
             columns = []
             for col in self.columns.split(","):
-                for attr in response_model.attrs:
-                    if attr.column_name == col:
-                        response_model.attrs.remove(attr)
+                for attr in attrs:
+                    # Display this column if the format string
+                    # matches the column_name or path of this column
+                    if col in (attr.column_name, attr.name):
+                        attrs.remove(attr)
                         columns.append(attr)
-                        continue
 
         if not columns:
             # either they selected nothing, or the model wasn't setup for CLI
             # display - either way, display everything
-            columns = response_model.attrs
+            columns = attrs
 
-        return columns
+        return [v for v in columns if v.nested_list_depth < 1]
 
     def _table_output(
         self, header, data, columns, title, to, box_style=box.SQUARE
@@ -165,17 +281,21 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
             header_style="",
             box=box_style,
             show_header=self.headers,
+            title_justify="left",
         )
         for row in content:
             row = [Text.from_ansi(item) for item in row]
             tab.add_row(*row)
 
-        if title is not None:
+        if title is not None and self.headers:
             tab.title = title
+            tab.min_width = self.column_width or len(title)
 
         rprint(tab, file=to)
 
-    def _delimited_output(self, header, data, columns, to):
+    def _delimited_output(
+        self, header, data, columns, to, title=None
+    ):  # pylint: disable=too-many-arguments
         """
         Prints data in delimited format with the given delimiter
         """
@@ -186,6 +306,9 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
             value_transform=lambda attr, v: attr.get_string(v),
         )
 
+        if title is not None and self.headers:
+            print(title, file=to)
+
         for row in content:
             print(self.delimiter.join(row), file=to)
 
@@ -193,6 +316,10 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
         """
         Prints data in JSON format
         """
+        # Special handling for JSON headers.
+        # We're only interested in the last part of the column name.
+        header = [v.split(".")[-1] for v in header]
+
         content = []
         if len(data) and isinstance(data[0], dict):  # we got delimited json in
             # parse down to the value we display
@@ -218,6 +345,7 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
         paths to handle nested dicts
         """
         ret = {}
+
         for k, v in json_res.items():
             if k in keys:
                 ret[k] = v
@@ -225,6 +353,18 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
                 v = OutputHandler._select_json_elements(keys, v)
                 if v:
                     ret[k] = v
+            elif isinstance(v, list):
+                results = []
+                for elem in v:
+                    selected = OutputHandler._select_json_elements(keys, elem)
+                    if not selected:
+                        continue
+
+                    results.append(selected)
+
+                if len(results) > 0:
+                    ret[k] = results
+
         return ret
 
     def _build_output_content(

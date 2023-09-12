@@ -247,6 +247,49 @@ def list_operation_for_response_test():
 
 
 @pytest.fixture
+def get_operation_for_subtable_test():
+    """
+    Creates the following CLI operation:
+
+    GET http://localhost/foo/bar
+
+    Returns {
+        "table": [
+            {
+                "foo": "",
+                "bar": 0
+            }
+        ],
+        "foo": {
+            "single_nested": {
+                "foo": "",
+                "bar": ""
+            },
+            "table": [
+                {
+                    "foobar": ["127.0.0.1"]
+                }
+            ]
+        },
+        "foobar": ""
+    }
+    """
+
+    spec = _get_parsed_spec("subtable_test_get.yaml")
+
+    dict_values = list(spec.paths.values())
+
+    # Get parameters for OpenAPIOperation() from yaml fixture
+    path = dict_values[0]
+
+    command = path.extensions.get("linode-cli-command", "default")
+    operation = getattr(path, "get")
+    method = "get"
+
+    return make_test_operation(command, operation, method, path.parameters)
+
+
+@pytest.fixture
 def mocked_config():
     """
     mock config representing cli.config
