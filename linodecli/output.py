@@ -156,18 +156,11 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
             if table_name not in target_tables:
                 continue
 
-            cols = self._get_columns(
-                table_attrs,
-                # We don't want to limit the maximum attribute depth for
-                # JSON outputs
-                max_depth=None if self.mode == OutputMode.json else 1,
-            )
-
             self.print(
                 self._scope_data_to_subtable(data, table_name)
                 if table_name is not None
                 else data,
-                cols,
+                self._get_columns(table_attrs),
                 title=table_name,
                 to=to,
             )
@@ -260,7 +253,9 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
         return [
             v
             for v in columns
-            if max_depth is None or v.nested_list_depth < max_depth
+            # We don't want to limit the attribute depth on JSON
+            # outputs since JSON can properly display nested lists.
+            if self.mode == OutputMode.json or v.nested_list_depth < max_depth
         ]
 
     def _table_output(
