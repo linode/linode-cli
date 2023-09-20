@@ -363,6 +363,9 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
             elif isinstance(v, list):
                 results = []
                 for elem in v:
+                    if not isinstance(elem, dict):
+                        continue
+
                     selected = OutputHandler._select_json_elements(keys, elem)
                     if not selected:
                         continue

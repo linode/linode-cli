@@ -284,3 +284,43 @@ def test_list_rules_json(create_firewall):
     assert result[0]["inbound"][0]["action"] == "ACCEPT"
     assert result[0]["inbound"][0]["label"] == "rules-list-test"
     assert result[0]["inbound"][0]["addresses"]["ipv4"] == ["198.0.0.1/32"]
+
+
+def test_list_rules_json_format(create_firewall):
+    firewall_id = create_firewall
+    new_label = '"rules-list-test"'
+    inbound_rule = (
+        '[{"ports": "22", "protocol": "TCP", "addresses": {"ipv4": ["198.0.0.1/32"]}, "action": "ACCEPT", "label": '
+        + new_label
+        + "}]"
+    )
+    # adding a rule
+    exec_test_command(
+        BASE_CMD
+        + [
+            firewall_id,
+            "--inbound",
+            inbound_rule,
+            "--text",
+            "--no-headers",
+            "--delimiter",
+            ",",
+        ]
+    ).stdout.decode().rstrip()
+    result = json.loads(
+        exec_test_command(
+            [
+                "linode-cli",
+                "firewalls",
+                "rules-list",
+                firewall_id,
+                "--json",
+                "--format",
+                "label",
+            ]
+        )
+        .stdout.decode()
+        .rstrip()
+    )
+
+    assert result[0]["inbound"][0] == {"label": "rules-list-test"}
