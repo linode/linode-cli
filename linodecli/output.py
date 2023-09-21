@@ -222,10 +222,11 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
         # If there is nothing to print, we should print everything
         return result if len(result) > 0 else tables
 
-    def _get_columns(self, attrs):
+    def _get_columns(self, attrs, max_depth=1):
         """
         Based on the configured columns, returns columns from a response model
         """
+
         if self.columns is None:
             columns = [
                 attr
@@ -249,7 +250,13 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
             # display - either way, display everything
             columns = attrs
 
-        return [v for v in columns if v.nested_list_depth < 1]
+        return [
+            v
+            for v in columns
+            # We don't want to limit the attribute depth on JSON
+            # outputs since JSON can properly display nested lists.
+            if self.mode == OutputMode.json or v.nested_list_depth < max_depth
+        ]
 
     def _table_output(
         self, header, data, columns, title, to, box_style=box.SQUARE
@@ -356,6 +363,9 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
             elif isinstance(v, list):
                 results = []
                 for elem in v:
+                    if not isinstance(elem, dict):
+                        continue
+
                     selected = OutputHandler._select_json_elements(keys, elem)
                     if not selected:
                         continue

@@ -1,3 +1,4 @@
+import json
 import re
 import time
 
@@ -42,7 +43,7 @@ def test_add_rule_to_existing_firewall(create_firewall):
     firewall_id = create_firewall
     inbound_rule = '[{"ports": "22", "protocol": "TCP", "addresses": {"ipv4": ["198.0.0.1/32"]}, "action": "ACCEPT", "label": "accept-inbound-SSH"}]'
     outbound_rule = '[{"ports": "22", "protocol": "TCP", "addresses": {"ipv4": ["198.0.0.2/32"]}, "action": "ACCEPT", "label": "accept-outbound-SSH"}]'
-    result = (
+    result = json.loads(
         exec_test_command(
             BASE_CMD
             + [
@@ -51,22 +52,15 @@ def test_add_rule_to_existing_firewall(create_firewall):
                 inbound_rule,
                 "--outbound",
                 outbound_rule,
-                "--text",
-                "--no-headers",
-                "--delimiter",
-                ",",
+                "--json",
             ]
         )
         .stdout.decode()
         .rstrip()
     )
 
-    # search strings for assertion since output replaces all the double quotes in json with single quote
-    ir_str = inbound_rule[1:-1].replace('"', "'")
-    or_str = outbound_rule[1:-1].replace('"', "'")
-
-    assert ir_str in result
-    assert or_str in result
+    assert result[0]["inbound"][0] == json.loads(inbound_rule)[0]
+    assert result[0]["outbound"][0] == json.loads(outbound_rule)[0]
 
 
 def test_add_multiple_rules(create_firewall):
@@ -74,27 +68,16 @@ def test_add_multiple_rules(create_firewall):
     inbound_rule_1 = '{"ports": "22", "protocol": "TCP", "addresses": {"ipv4": ["198.0.0.1/32"]}, "action": "ACCEPT", "label": "accept-inbound-SSH"}'
     inbound_rule_2 = '{"ports": "22", "protocol": "TCP", "addresses": {"ipv4": ["198.0.0.2/32"]}, "action": "ACCEPT", "label": "accept-inbound-SSH-2"}'
     inbound_rules = "[" + inbound_rule_1 + "," + inbound_rule_2 + "]"
-    result = (
+    result = json.loads(
         exec_test_command(
-            BASE_CMD
-            + [
-                firewall_id,
-                "--inbound",
-                inbound_rules,
-                "--text",
-                "--no-headers",
-            ]
+            BASE_CMD + [firewall_id, "--inbound", inbound_rules, "--json"]
         )
         .stdout.decode()
         .rstrip()
     )
 
-    assert (
-        inbound_rule_1.replace('"', "'")
-        + " "
-        + inbound_rule_2.replace('"', "'")
-        in result
-    )
+    assert result[0]["inbound"][0] == json.loads(inbound_rule_1)
+    assert result[0]["inbound"][1] == json.loads(inbound_rule_2)
 
 
 def test_swap_rules():
@@ -130,27 +113,22 @@ def test_swap_rules():
     swapped_rules = "[" + inbound_rule_2 + "," + inbound_rule_1 + "]"
 
     # swapping rules
-    result = (
+    result = json.loads(
         exec_test_command(
             BASE_CMD
             + [
                 firewall_id,
                 "--inbound",
                 swapped_rules,
-                "--text",
-                "--no-headers",
+                "--json",
             ]
         )
         .stdout.decode()
         .rstrip()
     )
 
-    assert (
-        inbound_rule_2.replace('"', "'")
-        + " "
-        + inbound_rule_1.replace('"', "'")
-        in result
-    )
+    assert result[0]["inbound"][0] == json.loads(inbound_rule_2)
+    assert result[0]["inbound"][1] == json.loads(inbound_rule_1)
 
     delete_target_id(target="firewalls", id=firewall_id)
 
@@ -213,17 +191,18 @@ def test_remove_one_rule_via_rules_update():
 
     new_rule = "[" + inbound_rule_1 + "]"
     # swapping rules
-    result = (
+    result = json.loads(
         exec_test_command(
             BASE_CMD
-            + [firewall_id, "--inbound", new_rule, "--text", "--no-headers"]
+            + [firewall_id, "--inbound", new_rule, "--json", "--no-headers"]
         )
         .stdout.decode()
         .rstrip()
     )
 
-    assert inbound_rule_1.replace('"', "'") in result
-    assert inbound_rule_2.replace('"', "'") not in result
+    rule_labels = [v["label"] for v in result[0]["inbound"]]
+    assert "test_rule_1" in rule_labels
+    assert "rule_to_delete" not in rule_labels
 
     delete_target_id(target="firewalls", id=firewall_id)
 
@@ -264,4 +243,84 @@ def test_list_rules(create_firewall):
         .rstrip()
     )
 
-    assert new_label.replace('"', "'") in result
+    assert new_label.replace('"', "") in result
+
+
+def test_list_rules_json(create_firewall):
+    firewall_id = create_firewall
+    new_label = '"rules-list-test"'
+    inbound_rule = (
+        '[{"ports": "22", "protocol": "TCP", "addresses": {"ipv4": ["198.0.0.1/32"]}, "action": "ACCEPT", "label": '
+        + new_label
+        + "}]"
+    )
+    # adding a rule
+    exec_test_command(
+        BASE_CMD
+        + [
+            firewall_id,
+            "--inbound",
+            inbound_rule,
+            "--text",
+            "--no-headers",
+            "--delimiter",
+            ",",
+        ]
+    ).stdout.decode().rstrip()
+    result = json.loads(
+        exec_test_command(
+            [
+                "linode-cli",
+                "firewalls",
+                "rules-list",
+                firewall_id,
+                "--json",
+            ]
+        )
+        .stdout.decode()
+        .rstrip()
+    )
+
+    assert result[0]["inbound"][0]["action"] == "ACCEPT"
+    assert result[0]["inbound"][0]["label"] == "rules-list-test"
+    assert result[0]["inbound"][0]["addresses"]["ipv4"] == ["198.0.0.1/32"]
+
+
+def test_list_rules_json_format(create_firewall):
+    firewall_id = create_firewall
+    new_label = '"rules-list-test"'
+    inbound_rule = (
+        '[{"ports": "22", "protocol": "TCP", "addresses": {"ipv4": ["198.0.0.1/32"]}, "action": "ACCEPT", "label": '
+        + new_label
+        + "}]"
+    )
+    # adding a rule
+    exec_test_command(
+        BASE_CMD
+        + [
+            firewall_id,
+            "--inbound",
+            inbound_rule,
+            "--text",
+            "--no-headers",
+            "--delimiter",
+            ",",
+        ]
+    ).stdout.decode().rstrip()
+    result = json.loads(
+        exec_test_command(
+            [
+                "linode-cli",
+                "firewalls",
+                "rules-list",
+                firewall_id,
+                "--json",
+                "--format",
+                "label",
+            ]
+        )
+        .stdout.decode()
+        .rstrip()
+    )
+
+    assert result[0]["inbound"][0] == {"label": "rules-list-test"}
