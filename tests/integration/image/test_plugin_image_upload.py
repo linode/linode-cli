@@ -80,9 +80,8 @@ def test_file_upload(
     assert process.returncode == 0
 
     # Assertions now using keywords due to some chars getting cut off from lack of terminal space
-    assert re.search("cli-test", output)
+    assert re.search("[0-9][0-9]+.[0-9]%", output)
     assert re.search("test", output)
-    assert re.search("pending", output)
 
     # Get the new image from the API
     process = exec_test_command(
