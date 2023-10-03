@@ -25,7 +25,6 @@ def call(_, ctx):
         ("Vlans", "Vlan"),
         ("Premium Plans", "Premium"),
         ("Metadata", "Meta"),
-        ("Bare Metal", "Metal"),
         ("Block Storage", "Blocks"),
         ("Block Storage Migrations", "& Migration"),
     ]
