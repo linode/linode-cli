@@ -4,7 +4,8 @@ for the capabilities of each region.
 """
 import sys
 
-from prettytable import PrettyTable
+from rich.table import Table
+from rich.console import Console
 
 
 def call(_, ctx):
@@ -33,13 +34,15 @@ def call(_, ctx):
         print("It failed :(")
         sys.exit(1)
 
-    output = PrettyTable()
-    output.field_names = ["ID", "Label", "Loc"] + [x[1] for x in capabilities]
-    output.align = "c"
+    output = Table()
+    headers = ["ID", "Label", "Loc"] + [x[1] for x in capabilities]
+    for header in headers:
+        output.add_column(header, justify="center")
     for region in regions["data"]:
         row = [region["id"], region["label"], region["country"].upper()] + [
             "✔" if c[0] in region["capabilities"] else "-" for c in capabilities
         ]
-        output.add_row(row)
+        output.add_row(*row)
 
-    print(output)
+    console = Console()
+    console.print(output)
