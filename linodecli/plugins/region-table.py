@@ -12,29 +12,21 @@ def call(_, ctx):
     Invokes the region-table plugin
     """
     status, regions = ctx.client.call_operation("regions", "list")
-    capabilities_short = [
-        "Linodes",
-        "GPU",
-        "Premium",
-        "NB",
-        "Blocks",
-        "Objects",
-        "K8s",
-        "FW",
-        "Vlans",
-        "DB",
-    ]
+
     capabilities = [
-        "Linodes",
-        "GPU Linodes",
-        "Premium Plans",
-        "NodeBalancers",
-        "Block Storage",
-        "Object Storage",
-        "Kubernetes",
-        "Cloud Firewall",
-        "Vlans",
-        "Managed Databases",
+        ("Linodes", "Linodes"),
+        ("GPU Linodes", "GPU"),
+        ("NodeBalancers", "NB"),
+        ("Kubernetes", "K8s"),
+        ("Firewalls", "FW"),
+        ("Managed Databases", "DB"),
+        ("Object Storage", "OBJ"),
+        ("Vlans", "Vlan"),
+        ("Premium Plans", "Premium"),
+        ("Metadata", "Meta"),
+        ("Bare Metal", "Metal"),
+        ("Block Storage", "Blocks"),
+        ("Block Storage Migrations", "& Migration"),
     ]
 
     if status != 200:
@@ -42,11 +34,11 @@ def call(_, ctx):
         sys.exit(1)
 
     output = PrettyTable()
-    output.field_names = ["ID", "Label", "Loc"] + capabilities_short
+    output.field_names = ["ID", "Label", "Loc"] + [x[1] for x in capabilities]
     output.align = "c"
     for region in regions["data"]:
         row = [region["id"], region["label"], region["country"].upper()] + [
-            "✔" if c in region["capabilities"] else "-" for c in capabilities
+            "✔" if c[0] in region["capabilities"] else "-" for c in capabilities
         ]
         output.add_row(row)
 
