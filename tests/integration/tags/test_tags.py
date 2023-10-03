@@ -3,6 +3,7 @@ import time
 import pytest
 
 from tests.integration.helpers import (
+    delete_target_id,
     exec_failing_test_command,
     exec_test_command,
 )
@@ -20,7 +21,10 @@ def test_create_tag():
     exec_test_command(
         BASE_CMD + ["create", "--label", unique_tag, "--text", "--no-headers"]
     ).stdout.decode()
+
     yield unique_tag
+
+    delete_target_id("tags", unique_tag)
 
 
 @pytest.mark.smoke

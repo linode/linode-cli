@@ -184,6 +184,7 @@ def test_filter_events_by_entity_id():
     )
 
 
+@pytest.mark.skip(reason="https://github.com/linode/linode-cli/issues/500")
 def test_create_domain_and_filter_domain_events(events_setup):
     domain_id = events_setup
     result = exec_test_command(
