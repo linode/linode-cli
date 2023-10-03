@@ -4,6 +4,7 @@ for the capabilities of each region.
 """
 import sys
 
+from rich.align import Align
 from rich.table import Table
 from rich.console import Console
 
@@ -38,9 +39,11 @@ def call(_, ctx):
     for header in headers:
         output.add_column(header, justify="center")
     for region in regions["data"]:
-        row = [region["id"], region["label"], region["country"].upper()] + [
-            "✔" if c[0] in region["capabilities"] else "-" for c in capabilities
-        ]
+        row = [
+            Align(region["id"], align="left"),
+            Align(region["label"], align="left"),
+            region["country"].upper()
+        ] + ["✔" if c[0] in region["capabilities"] else "-" for c in capabilities]
         output.add_row(*row)
 
     console = Console()
