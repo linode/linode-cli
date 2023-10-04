@@ -216,7 +216,7 @@ class CLIConfig:
     # might be better to move this to argparsing during refactor and just have
     # configuration return defaults or keys or something
     def update(
-        self, namespace, allowed_defaults, action=None
+        self, namespace, allowed_defaults
     ):  # pylint: disable=too-many-branches
         """
         This updates a Namespace (as returned by ArgumentParser) with config values
