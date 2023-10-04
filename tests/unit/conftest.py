@@ -17,7 +17,6 @@ region = us-southeast
 image = linode/ubuntu21.10
 token = notafaketoken
 type = g6-nanode-1
-mysql_engine = mysql/8.0.26
 """
 
 LOADED_FILES = {}

@@ -372,8 +372,7 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
 
                     results.append(selected)
 
-                if len(results) > 0:
-                    ret[k] = results
+                ret[k] = results
 
         return ret
 
