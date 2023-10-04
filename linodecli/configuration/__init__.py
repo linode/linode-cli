@@ -247,17 +247,6 @@ class CLIConfig:
             value = None
             if self.config.has_option(username, key):
                 value = self.config.get(username, key)
-            # different types of database creation use different endpoints,
-            # so we need to set the default engine value based on the type
-            elif key == "engine":
-                if action == "mysql-create" and self.config.has_option(
-                    username, "mysql_engine"
-                ):
-                    value = self.config.get(username, "mysql_engine")
-                elif action == "postgresql-create" and self.config.has_option(
-                    username, "postgresql_engine"
-                ):
-                    value = self.config.get(username, "postgresql_engine")
             else:
                 value = ns_dict[key]
 
@@ -354,15 +343,6 @@ If you prefer to supply a Personal Access Token, use `linode-cli configure --tok
         images = [
             i["id"] for i in _do_get_request(self.base_url, "/images")["data"]
         ]
-        engines_list = _do_get_request(self.base_url, "/databases/engines")[
-            "data"
-        ]
-        mysql_engines = [
-            e["id"] for e in engines_list if e["engine"] == "mysql"
-        ]
-        postgresql_engines = [
-            e["id"] for e in engines_list if e["engine"] == "postgresql"
-        ]
 
         is_full_access = _check_full_access(self.base_url, token)
 
@@ -411,26 +391,6 @@ If you prefer to supply a Personal Access Token, use `linode-cli configure --tok
             "Please select a valid Image, or press Enter to skip",
             current_value=_config_get_with_default(
                 self.config, username, "image"
-            ),
-        )
-
-        config["mysql_engine"] = _default_thing_input(
-            "Default Engine to create a Managed MySQL Database.",
-            mysql_engines,
-            "Default Engine (Optional): ",
-            "Please select a valid MySQL Database Engine, or press Enter to skip",
-            current_value=_config_get_with_default(
-                self.config, username, "mysql_engine"
-            ),
-        )
-
-        config["postgresql_engine"] = _default_thing_input(
-            "Default Engine to create a Managed PostgreSQL Database.",
-            postgresql_engines,
-            "Default Engine (Optional): ",
-            "Please select a valid PostgreSQL Database Engine, or press Enter to skip",
-            current_value=_config_get_with_default(
-                self.config, username, "postgresql_engine"
             ),
         )
 
