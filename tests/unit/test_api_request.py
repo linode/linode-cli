@@ -56,8 +56,7 @@ class TestAPIRequest:
         assert "> " in output
 
     def test_build_request_body(self, mock_cli, create_operation):
-        create_operation.allowed_defaults = ["region", "engine"]
-        create_operation.action = "mysql-create"
+        create_operation.allowed_defaults = ["region", "image"]
 
         result = api_request._build_request_body(
             mock_cli,
@@ -65,7 +64,7 @@ class TestAPIRequest:
             SimpleNamespace(
                 generic_arg="foo",
                 region=None,
-                engine=None,
+                image=None,
             ),
         )
         assert (
@@ -73,22 +72,21 @@ class TestAPIRequest:
                 {
                     "generic_arg": "foo",
                     "region": "us-southeast",
-                    "engine": "mysql/8.0.26",
+                    "image": "linode/ubuntu21.10",
                 }
             )
             == result
         )
 
     def test_build_request_body_null_field(self, mock_cli, create_operation):
-        create_operation.allowed_defaults = ["region", "engine"]
-        create_operation.action = "mysql-create"
+        create_operation.allowed_defaults = ["region", "image"]
         result = api_request._build_request_body(
             mock_cli,
             create_operation,
             SimpleNamespace(
                 generic_arg="foo",
                 region=None,
-                engine=None,
+                image=None,
                 nullable_int=ExplicitNullValue(),
             ),
         )
@@ -97,7 +95,7 @@ class TestAPIRequest:
                 {
                     "generic_arg": "foo",
                     "region": "us-southeast",
-                    "engine": "mysql/8.0.26",
+                    "image": "linode/ubuntu21.10",
                     "nullable_int": None,
                 }
             )
@@ -107,15 +105,14 @@ class TestAPIRequest:
     def test_build_request_body_non_null_field(
         self, mock_cli, create_operation
     ):
-        create_operation.allowed_defaults = ["region", "engine"]
-        create_operation.action = "mysql-create"
+        create_operation.allowed_defaults = ["region", "image"]
         result = api_request._build_request_body(
             mock_cli,
             create_operation,
             SimpleNamespace(
                 generic_arg="foo",
                 region=None,
-                engine=None,
+                image=None,
                 nullable_int=12345,
             ),
         )
@@ -124,7 +121,7 @@ class TestAPIRequest:
                 {
                     "generic_arg": "foo",
                     "region": "us-southeast",
-                    "engine": "mysql/8.0.26",
+                    "image": "linode/ubuntu21.10",
                     "nullable_int": 12345,
                 }
             )

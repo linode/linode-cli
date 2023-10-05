@@ -234,13 +234,6 @@ mysql_engine = mysql/8.0.26"""
 
         assert "--no-defaults" not in f.getvalue()
 
-        # test that update default engine value correctly when creating database
-        create_db_action = "mysql-create"
-        f = io.StringIO()
-        with contextlib.redirect_stdout(f):
-            result = vars(conf.update(ns, allowed_defaults, create_db_action))
-        assert result.get("engine") == "mysql/new-test-engine"
-
     def test_write_config(self):
         """
         Test CLIConfig.write_config()
@@ -303,18 +296,6 @@ mysql_engine = mysql/8.0.26"""
                 f"{self.base_url}/images", json={"data": [{"id": "test-image"}]}
             )
             m.get(
-                f"{self.base_url}/databases/engines",
-                json={
-                    "data": [
-                        {"id": "mysql/test-engine", "engine": "mysql"},
-                        {
-                            "id": "postgresql/test-engine",
-                            "engine": "postgresql",
-                        },
-                    ]
-                },
-            )
-            m.get(
                 f"{self.base_url}/account/users",
                 json={"data": [{"username": "cli-dev", "ssh_keys": "testkey"}]},
             )
@@ -325,9 +306,6 @@ mysql_engine = mysql/8.0.26"""
         assert conf.get_value("image") == "test-image"
         assert conf.get_value("region") == "test-region"
         assert conf.get_value("authorized_users") == "cli-dev"
-        # make sure that we set the default engine value according to type of database
-        assert conf.get_value("mysql_engine") == "mysql/test-engine"
-        assert conf.get_value("postgresql_engine") == "postgresql/test-engine"
         assert conf.get_value("api_host") == "foobar.linode.com"
         assert conf.get_value("api_version") == "v4beta"
         assert conf.get_value("api_scheme") == "https"
@@ -369,18 +347,6 @@ mysql_engine = mysql/8.0.26"""
                 f"{self.base_url}/images", json={"data": [{"id": "test-image"}]}
             )
             m.get(
-                f"{self.base_url}/databases/engines",
-                json={
-                    "data": [
-                        {"id": "mysql/test-engine", "engine": "mysql"},
-                        {
-                            "id": "postgresql/test-engine",
-                            "engine": "postgresql",
-                        },
-                    ]
-                },
-            )
-            m.get(
                 f"{self.base_url}/account/users",
                 json={"data": [{"username": "cli-dev", "ssh_keys": "testkey"}]},
             )
@@ -391,9 +357,6 @@ mysql_engine = mysql/8.0.26"""
         assert conf.get_value("region") == "test-region"
         assert conf.get_value("authorized_users") == "cli-dev"
         assert conf.config.get("DEFAULT", "default-user") == "DEFAULT"
-        # make sure that we set the default engine value according to type of database
-        assert conf.get_value("mysql_engine") == "mysql/test-engine"
-        assert conf.get_value("postgresql_engine") == "postgresql/test-engine"
 
     def test_default_thing_input_no_current(self, monkeypatch):
         stdout_buf = io.StringIO()

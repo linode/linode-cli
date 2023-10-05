@@ -206,9 +206,7 @@ def _build_request_body(ctx, operation, parsed_args) -> Optional[str]:
 
     # Merge defaults into body if applicable
     if ctx.defaults:
-        parsed_args = ctx.config.update(
-            parsed_args, operation.allowed_defaults, operation.action
-        )
+        parsed_args = ctx.config.update(parsed_args, operation.allowed_defaults)
 
     to_json = {}
 
