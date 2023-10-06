@@ -76,6 +76,27 @@ def wrap_parse_nullable_value(arg_type):
     return type_func
 
 
+class ArrayAction(argparse.Action):
+    """
+    This action is intended to be used only with array arguments.
+    This purpose of this action is to allow users to specify explicitly
+    empty lists using a singular "[]" argument value.
+    """
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        if getattr(namespace, self.dest) is None:
+            setattr(namespace, self.dest, [])
+
+        output_list = getattr(namespace, self.dest)
+
+        # If the output list is empty and the user specifies a []
+        # argument, keep the list empty
+        if values == "[]" and len(output_list) < 1:
+            return
+
+        output_list.append(values)
+
+
 class ListArgumentAction(argparse.Action):
     """
     This action is intended to be used only with list arguments.
@@ -380,7 +401,7 @@ class OpenAPIOperation:
                 parser.add_argument(
                     "--" + arg.path,
                     metavar=arg.name,
-                    action="append",
+                    action=ArrayAction,
                     type=arg_type_handler,
                 )
             elif arg.list_item:
