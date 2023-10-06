@@ -380,7 +380,8 @@ def action_help(cli, command, action):
                 if op.method in {"post", "put"} and arg.required
                 else ""
             )
-            print(f"  --{arg.path}: {is_required}{arg.description}")
+            nullable_fmt = " (nullable)" if arg.nullable else ""
+            print(f"  --{arg.path}: {is_required}{arg.description}{nullable_fmt}")
 
 
 def bake_command(cli, spec_loc):
