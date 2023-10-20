@@ -5,9 +5,6 @@ from unittest.mock import patch
 from linodecli import OutputMode
 from linodecli.overrides import OUTPUT_OVERRIDES
 
-import subprocess
-from typing import List
-
 
 class TestOverrides:
     """
@@ -64,49 +61,39 @@ class TestOverrides:
         self, mock_cli, list_operation_for_overrides_test
     ):
         response_json = {
-          "data": [
-            {
-              "addons": {
-                "backups": {
-                  "price": {
-                    "hourly": 0.008,
-                    "monthly": 5
-                  },
-                  "region_prices": [
-                    {
-                      "hourly": 0.0096,
-                      "id": "us-east",
-                      "monthly": 6
-                    }
-                  ]
-                }
-              },
-              "class": "standard",
-              "disk": 81920,
-              "gpus": 0,
-              "id": "g6-standard-2",
-              "label": "Linode 4GB",
-              "memory": 4096,
-              "network_out": 1000,
-              "price": {
-                "hourly": 0.03,
-                "monthly": 20
-              },
-              "region_prices": [
+            "data": [
                 {
-                  "hourly": 0.036,
-                  "id": "us-east",
-                  "monthly": 24
+                    "addons": {
+                        "backups": {
+                            "price": {"hourly": 0.008, "monthly": 5},
+                            "region_prices": [
+                                {
+                                    "hourly": 0.0096,
+                                    "id": "us-east",
+                                    "monthly": 6,
+                                }
+                            ],
+                        }
+                    },
+                    "class": "standard",
+                    "disk": 81920,
+                    "gpus": 0,
+                    "id": "g6-standard-2",
+                    "label": "Linode 4GB",
+                    "memory": 4096,
+                    "network_out": 1000,
+                    "price": {"hourly": 0.03, "monthly": 20},
+                    "region_prices": [
+                        {"hourly": 0.036, "id": "us-east", "monthly": 24}
+                    ],
+                    "successor": None,
+                    "transfer": 4000,
+                    "vcpus": 2,
                 }
-              ],
-              "successor": None,
-              "transfer": 4000,
-              "vcpus": 2
-            }
-          ],
-          "page": 1,
-          "pages": 1,
-          "results": 1
+            ],
+            "page": 1,
+            "pages": 1,
+            "results": 1,
         }
 
         override_signature = ("linodes", "types", OutputMode.table)
