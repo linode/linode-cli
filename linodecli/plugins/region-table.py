@@ -20,7 +20,7 @@ def call(_, ctx):
         ("GPU Linodes", "GPU"),
         ("NodeBalancers", "NB"),
         ("Kubernetes", "K8s"),
-        ("Firewalls", "FW"),
+        ("Cloud Firewall", "FW"),
         ("Managed Databases", "DB"),
         ("Object Storage", "OBJ"),
         ("Vlans", "Vlan"),
