@@ -55,7 +55,10 @@ def handle_types_region_prices_list(
         return True
 
     output = Table()
-    headers = sorted(json_data["data"][0].keys() - ["addons"], key=len)
+
+    # To ensure the order of the headers and make sure we have region_prices as the last column
+    headers = sorted(json_data["data"][0].keys() - ["addons", "price", "region_prices"], key=len)
+    headers += ["price.hourly", "price.monthly", "region_prices"]
     region_price_sub_headers = ["id", "hourly", "monthly"]
 
     for header in headers:
@@ -77,17 +80,9 @@ def handle_types_region_prices_list(
                     sub_table.add_row(*region_price_row)
                 row += [sub_table]
 
-            elif h == "price":
-                sub_table = Table()
-                for header in ["hourly", "monthly"]:
-                    sub_table.add_column(header, justify="center")
-                sub_table.add_row(
-                    *[
-                        Align(str(linode[h]["hourly"]), align="left"),
-                        Align(str(linode[h]["monthly"]), align="left"),
-                    ]
-                )
-                row += [sub_table]
+            elif h == "price.hourly" or h == "price.monthly":
+                price_headers = h.split(".")
+                row += [Align(str(linode[price_headers[0]][price_headers[1]]), align="left")]
 
             else:
                 row += [Align(str(linode[h]), align="left")]
