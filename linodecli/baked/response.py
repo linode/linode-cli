@@ -1,8 +1,10 @@
 """
 Converting the processed OpenAPI Responses into something the CLI can work with
 """
-from .colors import colorize_string
 from openapi3.paths import MediaType
+
+from .colors import colorize_string
+
 
 def _is_paginated(response):
     """

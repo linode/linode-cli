@@ -10,7 +10,9 @@ import sys
 from getpass import getpass
 from os import environ, path
 from typing import List, Tuple
+
 from openapi3.paths import Operation
+
 from linodecli.baked.request import OpenAPIFilteringRequest, OpenAPIRequest
 from linodecli.baked.response import OpenAPIResponse
 from linodecli.overrides import OUTPUT_OVERRIDES
