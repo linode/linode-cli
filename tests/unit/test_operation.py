@@ -158,3 +158,35 @@ class TestOperation:
 
         result = create_operation.parse_args(["--nullable_float", "456.123"])
         assert result.nullable_float == 456.123
+
+    def test_array_arg_action_basic(self):
+        """
+        Tests a basic array argument condition..
+        """
+
+        parser = argparse.ArgumentParser(
+            prog=f"foo",
+        )
+
+        parser.add_argument(
+            "--foo",
+            metavar="foo",
+            action=operation.ArrayAction,
+            type=str,
+        )
+
+        # User specifies a normal list
+        result = parser.parse_args(["--foo", "foo", "--foo", "bar"])
+        assert getattr(result, "foo") == ["foo", "bar"]
+
+        # User wants an explicitly empty list
+        result = parser.parse_args(["--foo", "[]"])
+        assert getattr(result, "foo") == []
+
+        # User doesn't specify the list
+        result = parser.parse_args([])
+        assert getattr(result, "foo") is None
+
+        # User specifies a normal value and an empty list value
+        result = parser.parse_args(["--foo", "foo", "--foo", "[]"])
+        assert getattr(result, "foo") == ["foo", "[]"]

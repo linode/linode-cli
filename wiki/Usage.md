@@ -108,9 +108,29 @@ linode-cli linodes create \
 When running certain commands, you may need to specify an argument that is nested
 in another field. These arguments can be specified using a `.` delimited path to
 the argument. For example, to create a firewall with an inbound policy of `DROP`
-and an outbound policy of `ACCEPT`, you can execute the following::
+and an outbound policy of `ACCEPT`, you can execute the following:
 ```bash
 linode-cli firewalls create --label example-firewall --rules.outbound_policy ACCEPT --rules.inbound_policy DROP
+```
+
+## Special Arguments
+
+In some cases, certain values for arguments may have unique functionality.
+
+### Null Values
+
+Arguments marked as nullable can be passed the value `null` to send an explicit null value to the Linode API:
+
+```bash
+linode-cli networking ip-update --rdns null 127.0.0.1
+```
+
+### Empty Lists
+
+List arguments can be passed the value `[]` to send an explicit empty list value to the Linode API:
+
+```bash
+linode-cli networking ip-share --linode_id 12345 --ips []
 ```
 
 ## Suppressing Defaults

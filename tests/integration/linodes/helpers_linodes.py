@@ -71,9 +71,7 @@ def wait_until(linode_id: "str", timeout, status: "str", period=5):
     return False
 
 
-def create_linode():
-    region = "us-east"
-
+def create_linode(test_region=DEFAULT_REGION):
     # create linode
     linode_id = (
         exec_test_command(
@@ -84,7 +82,7 @@ def create_linode():
                 "--type",
                 DEFAULT_LINODE_TYPE,
                 "--region",
-                region,
+                test_region,
                 "--image",
                 DEFAULT_TEST_IMAGE,
                 "--root_pass",
@@ -142,7 +140,10 @@ def remove_linodes():
 
 
 def create_linode_and_wait(
-    test_plan=DEFAULT_LINODE_TYPE, test_image=DEFAULT_TEST_IMAGE, ssh_key=""
+    test_plan=DEFAULT_LINODE_TYPE,
+    test_image=DEFAULT_TEST_IMAGE,
+    ssh_key="",
+    test_region=DEFAULT_REGION,
 ):
     linode_type = test_plan
 
@@ -160,7 +161,7 @@ def create_linode_and_wait(
                     "--type",
                     linode_type,
                     "--region",
-                    "us-east",
+                    test_region,
                     "--image",
                     test_image,
                     "--root_pass",
