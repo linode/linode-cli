@@ -6,9 +6,9 @@ Argument parser for the linode CLI
 import argparse
 import os
 import sys
+from importlib.metadata import version
 from sys import argv
 
-from importlib.metadata import version
 from rich import print as rprint
 from rich.table import Table
 
