@@ -26,8 +26,7 @@ def call(_, ctx):
         ("Vlans", "Vlan"),
         ("Premium Plans", "Premium"),
         ("Metadata", "Meta"),
-        ("Block Storage", "Blocks"),
-        ("Block Storage Migrations", "& Migration"),
+        ("Block Storage", "Block"),
     ]
 
     if status != 200:
