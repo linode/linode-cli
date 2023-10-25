@@ -80,19 +80,19 @@ def handle_types_region_prices_list(
                         for header in region_price_sub_headers
                     )
                     sub_table.add_row(*region_price_row)
-                row += [sub_table]
+                row.append(sub_table)
 
             elif h in ("price.hourly", "price.monthly"):
                 price_headers = h.split(".")
-                row += [
+                row.append(
                     Align(
                         str(linode[price_headers[0]][price_headers[1]]),
                         align="left",
                     )
-                ]
+                )
 
             else:
-                row += [Align(str(linode[h]), align="left")]
+                row.append(Align(str(linode[h]), align="left"))
 
         output.add_row(*row)
 
