@@ -72,15 +72,14 @@ def handle_types_region_prices_list(
                 for header in region_price_sub_headers:
                     sub_table.add_column(header, justify="center")
                 for region_price in linode[h]:
-                    region_price_row = []
-                    for header in region_price_sub_headers:
-                        region_price_row += (
-                            Align(str(region_price[header]), align="left"),
-                        )
+                    region_price_row = (
+                        Align(str(region_price[header]), align="left")
+                        for header in region_price_sub_headers
+                    )
                     sub_table.add_row(*region_price_row)
                 row += [sub_table]
 
-            elif h == "price.hourly" or h == "price.monthly":
+            elif h in ("price.hourly", "price.monthly"):
                 price_headers = h.split(".")
                 row += [Align(str(linode[price_headers[0]][price_headers[1]]), align="left")]
 
