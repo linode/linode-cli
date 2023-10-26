@@ -6,9 +6,9 @@ Argument parser for the linode CLI
 import argparse
 import os
 import sys
+from importlib.metadata import version
 from sys import argv
 
-import pkg_resources
 from rich import print as rprint
 from rich.table import Table
 
@@ -30,7 +30,7 @@ from .output import OutputMode
 
 # this might not be installed at the time of building
 try:
-    VERSION = pkg_resources.require("linode-cli")[0].version
+    VERSION = version("linode-cli")
 except:
     VERSION = "building"
 
