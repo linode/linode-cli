@@ -47,9 +47,18 @@ def handle_domains_zone_file(operation, output_handler, json_data) -> bool:
 def handle_types_region_prices_list(
     operation, output_handler, json_data
 ) -> bool:
-    # pylint: disable=unused-argument
     """
     Override the output of 'linode-cli linodes types' to display regional pricing.
+    """
+    return linode_types_with_region_prices(operation, output_handler, json_data)
+
+
+def linode_types_with_region_prices(
+    operation, output_handler, json_data
+) -> bool:
+    # pylint: disable=unused-argument
+    """
+    Parse and reformat linode types output with region prices.
     """
     if len(json_data["data"]) < 1:
         return True
@@ -62,7 +71,6 @@ def handle_types_region_prices_list(
         key=len,
     )
     headers += ["price.hourly", "price.monthly", "region_prices"]
-    region_price_sub_headers = ["id", "hourly", "monthly"]
 
     for header in headers:
         output.add_column(header, justify="center")
@@ -71,25 +79,12 @@ def handle_types_region_prices_list(
         row = []
         for h in headers:
             if h == "region_prices":
-                sub_table = Table()
-                for header in region_price_sub_headers:
-                    sub_table.add_column(header, justify="center")
-                for region_price in linode[h]:
-                    region_price_row = (
-                        Align(str(region_price[header]), align="left")
-                        for header in region_price_sub_headers
-                    )
-                    sub_table.add_row(*region_price_row)
+                sub_table = format_region_prices(linode[h])
                 row.append(sub_table)
 
             elif h in ("price.hourly", "price.monthly"):
-                price_headers = h.split(".")
-                row.append(
-                    Align(
-                        str(linode[price_headers[0]][price_headers[1]]),
-                        align="left",
-                    )
-                )
+                price = format_prices(h, linode)
+                row.append(Align(price, align="left"))
 
             else:
                 row.append(Align(str(linode[h]), align="left"))
@@ -105,3 +100,33 @@ def handle_types_region_prices_list(
     )
 
     return False
+
+
+def format_prices(prices, data: dict[str, any]) -> any:
+    """
+    Format nested price entry.
+    """
+    price_headers = prices.split(".")
+
+    return str(data[price_headers[0]][price_headers[1]])
+
+
+def format_region_prices(data: dict[str, any]) -> any:
+    """
+    Format nested region price entry into a sub-table.
+    """
+    subheaders = ["id", "hourly", "monthly"]
+
+    sub_table = Table()
+
+    for header in subheaders:
+        sub_table.add_column(header, justify="center")
+
+    for region_price in data:
+        region_price_row = (
+            Align(str(region_price[header]), align="left")
+            for header in subheaders
+        )
+        sub_table.add_row(*region_price_row)
+
+    return sub_table
