@@ -111,4 +111,4 @@ class TestOverrides:
 
         rows = stdout_buf.getvalue().split("\n")
         # assert that the overridden table has the new columns
-        assert len(rows[1].split("┃")) == 15
+        assert len(rows[1].split(rows[1][0])) == 15
