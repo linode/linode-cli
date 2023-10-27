@@ -11,6 +11,8 @@ from getpass import getpass
 from os import environ, path
 from typing import List, Tuple
 
+from openapi3.paths import Operation
+
 from linodecli.baked.request import OpenAPIFilteringRequest, OpenAPIRequest
 from linodecli.baked.response import OpenAPIResponse
 from linodecli.overrides import OUTPUT_OVERRIDES
@@ -74,6 +76,27 @@ def wrap_parse_nullable_value(arg_type):
         return TYPES[arg_type](value)
 
     return type_func
+
+
+class ArrayAction(argparse.Action):
+    """
+    This action is intended to be used only with array arguments.
+    This purpose of this action is to allow users to specify explicitly
+    empty lists using a singular "[]" argument value.
+    """
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        if getattr(namespace, self.dest) is None:
+            setattr(namespace, self.dest, [])
+
+        output_list = getattr(namespace, self.dest)
+
+        # If the output list is empty and the user specifies a []
+        # argument, keep the list empty
+        if values == "[]" and len(output_list) < 1:
+            return
+
+        output_list.append(values)
 
 
 class ListArgumentAction(argparse.Action):
@@ -212,7 +235,7 @@ class OpenAPIOperation:
     This is the class that should be pickled when building the CLI.
     """
 
-    def __init__(self, command, operation, method, params):
+    def __init__(self, command, operation: Operation, method, params):
         """
         Wraps an openapi3.Operation object and handles pulling out values relevant
         to the Linode CLI.
@@ -380,7 +403,7 @@ class OpenAPIOperation:
                 parser.add_argument(
                     "--" + arg.path,
                     metavar=arg.name,
-                    action="append",
+                    action=ArrayAction,
                     type=arg_type_handler,
                 )
             elif arg.list_item:
