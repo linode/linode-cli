@@ -150,6 +150,53 @@ def test_obj_single_file_single_bucket(
         assert f1.read() == f2.read()
 
 
+def test_obj_single_file_single_bucket_with_subdirectory(
+    create_bucket: Callable[[Optional[str]], str],
+    generate_test_files: GetTestFilesType,
+    keys: Keys,
+    monkeypatch: MonkeyPatch,
+):
+    patch_keys(keys, monkeypatch)
+    file_path = generate_test_files()[0]
+    bucket_name = create_bucket()
+    exec_test_command(
+        BASE_CMD
+        + [
+            "put",
+            str(file_path),
+            bucket_name,
+            "--folder bigtestfolder",
+        ]
+    )
+    process = exec_test_command(BASE_CMD + ["la"])
+    output = process.stdout.decode()
+
+    assert f"{bucket_name}/bigtestfolder/{file_path.name}" in output
+
+    file_size = file_path.stat().st_size
+    assert str(file_size) in output
+
+    process = exec_test_command(BASE_CMD + ["ls"])
+    output = process.stdout.decode()
+    assert bucket_name in output
+    assert file_path.name not in output
+
+    process = exec_test_command(BASE_CMD + ["ls", bucket_name])
+    output = process.stdout.decode()
+    assert bucket_name not in output
+    assert str(file_size) in output
+    assert file_path.name in output
+
+    downloaded_file_path = file_path.parent / f"downloaded_{file_path.name}"
+    process = exec_test_command(
+        BASE_CMD
+        + ["get", bucket_name, file_path.name, str(downloaded_file_path)]
+    )
+    output = process.stdout.decode()
+    with open(downloaded_file_path) as f2, open(file_path) as f1:
+        assert f1.read() == f2.read()
+
+
 def test_multi_files_multi_bucket(
     create_bucket: Callable[[Optional[str]], str],
     generate_test_files: GetTestFilesType,

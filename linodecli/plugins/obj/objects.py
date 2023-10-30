@@ -52,6 +52,13 @@ def upload_object(
         default=MULTIPART_UPLOAD_CHUNK_SIZE_DEFAULT,
         help="The size of file chunks when uploading large files, in MB.",
     )
+    parser.add_argument(
+        "--folder",
+        metavar="FOLDER",
+        type=str,
+        help="If set, the object will be uploaded to the "
+        "specified subdirectory.",
+    )
 
     # TODO:
     # 1. Allow user specified key (filename on cloud)
@@ -91,7 +98,10 @@ def upload_object(
     for file_path in to_upload:
         print(f"Uploading {file_path.name}:")
         upload_options["Filename"] = str(file_path.resolve())
-        upload_options["Key"] = file_path.name
+        if parsed.folder:
+            upload_options["Key"] = f"{parsed.folder}/{file_path.name}"
+        else:
+            upload_options["Key"] = file_path.name
         upload_options["Callback"] = ProgressPercentage(
             file_path.stat().st_size, PROGRESS_BAR_WIDTH
         )
