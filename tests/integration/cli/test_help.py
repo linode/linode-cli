@@ -13,7 +13,6 @@ def test_help_page_for_non_aliased_actions():
         "API Documentation: https://www.linode.com/docs/api/linode-instances/#linodes-list"
         in output
     )
-    assert "wrong assertion" in output
     assert "--tags" in output
 
 

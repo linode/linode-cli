@@ -10,12 +10,12 @@ from tests.integration.helpers import (
 )
 
 BASE_CMD = ["linode-cli", "volumes"]
-timestamp = str(int(time.time()))
+timestamp = str(int(time.time_ns()))
 VOLUME_CREATION_WAIT = 5
 
 
 @pytest.fixture(scope="package")
-def setup_test_volumes_resize():
+def test_volume_id():
     volume_id = (
         exec_test_command(
             BASE_CMD
@@ -44,8 +44,8 @@ def setup_test_volumes_resize():
     delete_target_id(target="volumes", id=volume_id)
 
 
-def test_resize_fails_to_smaller_volume(setup_test_volumes_resize):
-    volume_id = setup_test_volumes_resize
+def test_resize_fails_to_smaller_volume(test_volume_id):
+    volume_id = test_volume_id
     time.sleep(VOLUME_CREATION_WAIT)
     result = exec_failing_test_command(
         BASE_CMD
@@ -56,8 +56,8 @@ def test_resize_fails_to_smaller_volume(setup_test_volumes_resize):
     assert "Storage volumes can only be resized up" in result
 
 
-def test_resize_fails_to_volume_larger_than_1024gb(setup_test_volumes_resize):
-    volume_id = setup_test_volumes_resize
+def test_resize_fails_to_volume_larger_than_1024gb(test_volume_id):
+    volume_id = test_volume_id
     result = exec_failing_test_command(
         BASE_CMD
         + [
@@ -84,8 +84,8 @@ def test_resize_fails_to_volume_larger_than_1024gb(setup_test_volumes_resize):
         )
 
 
-def test_resize_volume(setup_test_volumes_resize):
-    volume_id = setup_test_volumes_resize
+def test_resize_volume(test_volume_id):
+    volume_id = test_volume_id
 
     exec_test_command(
         BASE_CMD

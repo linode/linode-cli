@@ -13,8 +13,8 @@ BASE_CMD = ["linode-cli", "domains"]
 
 
 @pytest.fixture
-def setup_master_domains():
-    timestamp = str(int(time.time()))
+def master_test_domain():
+    timestamp = str(int(time.time_ns()))
     # Create domain
     master_domain_id = (
         exec_test_command(
@@ -43,7 +43,7 @@ def setup_master_domains():
 
 
 def test_create_domain_fails_without_spcified_type():
-    timestamp = str(int(time.time()))
+    timestamp = str(int(time.time_ns()))
 
     # get debug output from linode-cli to a temporary file..
     # not all output from the linode-cli goes to stdout, stderr
@@ -66,7 +66,7 @@ def test_create_domain_fails_without_spcified_type():
 
 
 def test_create_master_domain_fails_without_soa_email():
-    timestamp = str(int(time.time()))
+    timestamp = str(int(time.time_ns()))
     result = exec_failing_test_command(
         BASE_CMD
         + [
@@ -85,17 +85,17 @@ def test_create_master_domain_fails_without_soa_email():
 
 
 @pytest.mark.smoke
-def test_create_master_domain(create_master_domain):
-    domain_id = create_master_domain
+def test_create_master_domain(master_domain):
+    domain_id = master_domain
     assert re.search("[0-9]+", domain_id)
 
 
-def test_update_master_domain_soa_email(setup_master_domains):
+def test_update_master_domain_soa_email(master_test_domain):
     # Remove --master_ips param when 872 is resolved
-    timestamp = str(int(time.time()))
+    timestamp = str(int(time.time_ns()))
     new_soa_email = "pthiel_new@linode.com"
 
-    domain_id = setup_master_domains
+    domain_id = master_test_domain
 
     result = exec_test_command(
         BASE_CMD
@@ -117,7 +117,7 @@ def test_update_master_domain_soa_email(setup_master_domains):
     assert new_soa_email in result
 
 
-def test_list_master_domain(setup_master_domains):
+def test_list_master_domain(master_test_domain):
     result = exec_test_command(
         BASE_CMD
         + [
@@ -133,7 +133,7 @@ def test_list_master_domain(setup_master_domains):
     assert re.search("[0-9]+,BC[0-9]+-example.com,master,active", result)
 
 
-def test_show_domain_detail(setup_master_domains):
+def test_show_domain_detail(master_test_domain):
     result = exec_test_command(
         BASE_CMD
         + [

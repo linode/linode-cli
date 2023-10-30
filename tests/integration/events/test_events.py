@@ -9,8 +9,8 @@ BASE_CMD = ["linode-cli", "events"]
 
 
 @pytest.fixture
-def events_setup():
-    timestamp = str(int(time.time()))
+def events_test_domain_id():
+    timestamp = str(int(time.time_ns()))
     # Create domain
     domain_id = (
         exec_test_command(
@@ -185,8 +185,8 @@ def test_filter_events_by_entity_id():
 
 
 @pytest.mark.skip(reason="https://github.com/linode/linode-cli/issues/500")
-def test_create_domain_and_filter_domain_events(events_setup):
-    domain_id = events_setup
+def test_create_domain_and_filter_domain_events(events_test_domain_id):
+    domain_id = events_test_domain_id
     result = exec_test_command(
         BASE_CMD
         + [

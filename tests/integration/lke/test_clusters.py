@@ -9,14 +9,14 @@ BASE_CMD = ["linode-cli", "lke"]
 
 
 @pytest.fixture(autouse=True)
-def setup_test_clusters():
+def clean_up_clusters():
     yield "setup"
     remove_lke_clusters()
 
 
 @pytest.mark.smoke
 def test_deploy_an_lke_cluster():
-    timestamp = str(int(time.time()) + randint(10, 1000))
+    timestamp = str(int(time.time_ns()))
     label = "cluster_test" + timestamp
 
     lke_version = (

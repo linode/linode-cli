@@ -12,7 +12,7 @@ from tests.integration.helpers import (
 )
 
 BASE_CMD = ["linode-cli", "domains"]
-timestamp = str(int(time.time()))
+timestamp = str(int(time.time_ns()))
 
 
 @pytest.fixture
@@ -61,12 +61,12 @@ def test_create_slave_domain_fails_without_master_dns_server():
 
 
 @pytest.mark.smoke
-def test_create_slave_domain(create_slave_domain):
-    domain_id = create_slave_domain
+def test_create_slave_domain(slave_domain):
+    domain_id = slave_domain
     assert re.search("[0-9]+", domain_id)
 
 
-def test_list_slave_domain(create_slave_domain):
+def test_list_slave_domain(slave_domain):
     result = exec_test_command(
         BASE_CMD + ["list", "--text", "--no-header"]
     ).stdout.decode()

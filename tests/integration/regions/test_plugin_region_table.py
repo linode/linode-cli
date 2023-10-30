@@ -20,4 +20,4 @@ def test_output():
     for line in lines:
         assert "-" in line
         assert "✔" in line
-        assert "|" in line
+        assert "│" in line

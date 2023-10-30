@@ -17,7 +17,7 @@ def test_display_tags():
 
 
 @pytest.fixture(scope="session")
-def test_create_tag():
+def test_tag_instance():
     exec_test_command(
         BASE_CMD + ["create", "--label", unique_tag, "--text", "--no-headers"]
     ).stdout.decode()
@@ -28,11 +28,11 @@ def test_create_tag():
 
 
 @pytest.mark.smoke
-def test_view_unique_tag(test_create_tag):
+def test_view_unique_tag(test_tag_instance):
     result = exec_test_command(
         BASE_CMD + ["list", "--text", "--no-headers"]
     ).stdout.decode()
-    assert test_create_tag in result
+    assert test_tag_instance in result
 
 
 def test_fail_to_create_tag_shorter_than_three_char():
@@ -42,7 +42,3 @@ def test_fail_to_create_tag_shorter_than_three_char():
     ).stderr.decode()
     assert "Request failed: 400" in result
     assert "Length must be 3-50 characters" in result
-
-
-def test_remove_tag(test_create_tag):
-    exec_test_command(BASE_CMD + ["delete", test_create_tag])

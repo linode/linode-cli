@@ -14,7 +14,7 @@ FIREWALL_LABEL = "label-fw-test" + str(int(time.time()))
 
 
 @pytest.fixture
-def firewalls_setup():
+def test_firewall_id():
     # Create one domain for some tests in this suite
     firewall_id = (
         exec_test_command(
@@ -43,8 +43,8 @@ def firewalls_setup():
 
 
 @pytest.mark.smoke
-def test_view_firewall(firewalls_setup):
-    firewall_id = firewalls_setup
+def test_view_firewall(test_firewall_id):
+    firewall_id = test_firewall_id
 
     result = (
         exec_test_command(
@@ -65,8 +65,8 @@ def test_view_firewall(firewalls_setup):
     assert re.search(firewall_id + "," + FIREWALL_LABEL + ",enabled", result)
 
 
-def test_list_firewall(firewalls_setup):
-    firewall_id = firewalls_setup
+def test_list_firewall(test_firewall_id):
+    firewall_id = test_firewall_id
 
     result = (
         exec_test_command(
@@ -81,7 +81,7 @@ def test_list_firewall(firewalls_setup):
 
 @pytest.mark.smoke
 def test_create_firewall_with_minimum_required_args():
-    timestamp = str(int(time.time()))
+    timestamp = str(int(time.time_ns()))
     firewall_label = "label-fw-test" + timestamp
     result = (
         exec_test_command(
@@ -112,8 +112,8 @@ def test_create_firewall_with_minimum_required_args():
 
 
 def test_fails_to_create_firewall_without_inbound_policy():
-    timestamp = str(int(time.time()))
-    firewall_label = "label-fw-test_in" + timestamp
+    timestamp = str(int(time.time_ns()))
+    firewall_label = "fw_label" + timestamp
     result = (
         exec_failing_test_command(
             BASE_CMD
@@ -137,8 +137,8 @@ def test_fails_to_create_firewall_without_inbound_policy():
 
 
 def test_fails_to_create_firewall_without_outbound_policy():
-    timestamp = str(int(time.time()))
-    firewall_label = "label-fw-test_out" + timestamp
+    timestamp = str(int(time.time_ns()))
+    firewall_label = "fw_label" + timestamp
     result = (
         exec_failing_test_command(
             BASE_CMD
@@ -161,7 +161,7 @@ def test_fails_to_create_firewall_without_outbound_policy():
     assert "outbound_policy is required" in result
 
 
-def test_firewall_label_must_be_unique_upon_creation(firewalls_setup):
+def test_firewall_label_must_be_unique_upon_creation(test_firewall_id):
     result = (
         exec_failing_test_command(
             BASE_CMD
@@ -187,7 +187,7 @@ def test_firewall_label_must_be_unique_upon_creation(firewalls_setup):
 
 
 def test_create_firewall_with_inbound_and_outbound_args():
-    timestamp = str(int(time.time()))
+    timestamp = str(int(time.time_ns()))
     firewall_label = "label-fw-test" + timestamp
     result = (
         exec_test_command(
@@ -221,9 +221,9 @@ def test_create_firewall_with_inbound_and_outbound_args():
     delete_target_id(target="firewalls", id=firewall_id)
 
 
-def test_update_firewall(firewalls_setup):
-    timestamp = str(int(time.time()))
-    firewall_id = firewalls_setup
+def test_update_firewall(test_firewall_id):
+    timestamp = str(int(time.time_ns()))
+    firewall_id = test_firewall_id
     updated_tag = "updated-tag" + timestamp
     updated_label = "updated-" + timestamp
 

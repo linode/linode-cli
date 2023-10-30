@@ -11,12 +11,12 @@ from tests.integration.helpers import (
 )
 
 BASE_CMD = ["linode-cli", "volumes"]
-timestamp = str(int(time.time()))
-unique_tag = str(int(time.time())) + "-tag"
+timestamp = str(int(time.time_ns()))
+unique_tag = str(int(time.time_ns())) + "-tag"
 
 
 @pytest.fixture(scope="package")
-def setup_test_volumes():
+def test_volume_id():
     volume_id = (
         exec_test_command(
             BASE_CMD
@@ -145,7 +145,7 @@ def test_fail_to_create_volume_with_all_numberic_label():
     assert "label	Must begin with a letter" in result
 
 
-def test_list_volume(setup_test_volumes):
+def test_list_volume(test_volume_id):
     result = exec_test_command(
         BASE_CMD + ["list", "--text", "--no-headers", "--delimiter", ","]
     ).stdout.decode()
@@ -155,8 +155,8 @@ def test_list_volume(setup_test_volumes):
 
 
 @pytest.mark.smoke
-def test_view_single_volume(setup_test_volumes):
-    volume_id = setup_test_volumes
+def test_view_single_volume(test_volume_id):
+    volume_id = test_volume_id
     result = exec_test_command(
         BASE_CMD
         + [
@@ -174,8 +174,8 @@ def test_view_single_volume(setup_test_volumes):
     assert re.search(volume_id + ",[A-Za-z0-9-]+,[0-9]+,[a-z-]+", result)
 
 
-def test_update_volume_label(setup_test_volumes):
-    volume_id = setup_test_volumes
+def test_update_volume_label(test_volume_id):
+    volume_id = test_volume_id
     new_unique_label = "label-" + str(int(time.time()))
     result = exec_test_command(
         BASE_CMD
@@ -194,8 +194,8 @@ def test_update_volume_label(setup_test_volumes):
     assert new_unique_label in result
 
 
-def test_add_new_tag_to_volume(setup_test_volumes):
-    volume_id = setup_test_volumes
+def test_add_new_tag_to_volume(test_volume_id):
+    volume_id = test_volume_id
     result = exec_test_command(
         BASE_CMD
         + [
@@ -213,16 +213,16 @@ def test_add_new_tag_to_volume(setup_test_volumes):
     assert unique_tag in result
 
 
-def test_view_tags_attached_to_volume(setup_test_volumes):
-    volume_id = setup_test_volumes
+def test_view_tags_attached_to_volume(test_volume_id):
+    volume_id = test_volume_id
     exec_test_command(
         BASE_CMD
         + ["view", volume_id, "--format", "tags", "--text", "--no-headers"]
     ).stdout.decode()
 
 
-def test_fail_to_update_volume_size(setup_test_volumes):
-    volume_id = setup_test_volumes
+def test_fail_to_update_volume_size(test_volume_id):
+    volume_id = test_volume_id
     os.system(
         "linode-cli volumes update --size=15 "
         + volume_id

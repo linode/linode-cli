@@ -14,7 +14,7 @@ nodebalancer_created = "[0-9]+,balancer[0-9]+,us-east,[0-9]+-[0-9]+-[0-9]+-[0-9]
 
 
 @pytest.fixture(scope="package")
-def setup_test_node_balancers():
+def test_node_balancers():
     # create a default nodebalancer
     nodebalancer_id = (
         exec_test_command(
@@ -66,7 +66,7 @@ def setup_test_node_balancers():
                 "--region",
                 "us-east",
                 "--type",
-                "g6-standard-2",
+                "g6-nanode-1",
                 "--private_ip",
                 "true",
                 "--image",
@@ -135,7 +135,7 @@ def create_linode_to_add():
                 "--region",
                 "us-east",
                 "--type",
-                "g6-standard-2",
+                "g6-nanode-1",
                 "--private_ip",
                 "true",
                 "--image",
@@ -170,13 +170,13 @@ def test_fail_to_create_nodebalancer_without_region():
 
 @pytest.mark.smoke
 def test_create_nodebalancer_with_default_conf(
-    create_nodebalancer_with_default_conf,
+    nodebalancer_with_default_conf,
 ):
-    result = create_nodebalancer_with_default_conf
+    result = nodebalancer_with_default_conf
     assert re.search(nodebalancer_created, result)
 
 
-def test_list_nodebalancers_and_status(setup_test_node_balancers):
+def test_list_nodebalancers_and_status(test_node_balancers):
     result = exec_test_command(
         BASE_CMD
         + [
@@ -192,8 +192,8 @@ def test_list_nodebalancers_and_status(setup_test_node_balancers):
     assert re.search(nodebalancer_created, result)
 
 
-def test_display_public_ipv4_for_nodebalancer(setup_test_node_balancers):
-    nodebalancer_id = setup_test_node_balancers[0]
+def test_display_public_ipv4_for_nodebalancer(test_node_balancers):
+    nodebalancer_id = test_node_balancers[0]
 
     result = exec_test_command(
         BASE_CMD
@@ -217,8 +217,8 @@ def test_fail_to_view_nodebalancer_with_invalid_id():
     assert "Request failed: 404" in result
 
 
-def test_create_standard_configuration_profile(setup_test_node_balancers):
-    nodebalancer_id = setup_test_node_balancers[0]
+def test_create_standard_configuration_profile(test_node_balancers):
+    nodebalancer_id = test_node_balancers[0]
 
     result = exec_test_command(
         BASE_CMD
@@ -238,9 +238,9 @@ def test_create_standard_configuration_profile(setup_test_node_balancers):
     )
 
 
-def test_view_configuration_profile(setup_test_node_balancers):
-    nodebalancer_id = setup_test_node_balancers[0]
-    config_id = setup_test_node_balancers[1]
+def test_view_configuration_profile(test_node_balancers):
+    nodebalancer_id = test_node_balancers[0]
+    config_id = test_node_balancers[1]
 
     result = exec_test_command(
         BASE_CMD
@@ -260,7 +260,7 @@ def test_view_configuration_profile(setup_test_node_balancers):
 
 
 def test_add_node_to_conf_profile(
-    setup_test_node_balancers, create_linode_to_add
+    test_node_balancers, create_linode_to_add
 ):
     linode_create = create_linode_to_add
     linode_arr = linode_create.split(",")
@@ -268,8 +268,8 @@ def test_add_node_to_conf_profile(
     node_ip = ip_arr[1]
 
     node_label = "testnode1"
-    nodebalancer_id = setup_test_node_balancers[0]
-    config_id = setup_test_node_balancers[1]
+    nodebalancer_id = test_node_balancers[0]
+    config_id = test_node_balancers[1]
 
     result = exec_test_command(
         BASE_CMD
@@ -296,11 +296,11 @@ def test_add_node_to_conf_profile(
     )
 
 
-def test_update_node_label(setup_test_node_balancers):
-    nodebalancer_id = setup_test_node_balancers[0]
-    config_id = setup_test_node_balancers[1]
-    node_id = setup_test_node_balancers[2]
-    node_ip = setup_test_node_balancers[3]
+def test_update_node_label(test_node_balancers):
+    nodebalancer_id = test_node_balancers[0]
+    config_id = test_node_balancers[1]
+    node_id = test_node_balancers[2]
+    node_ip = test_node_balancers[3]
     new_label = "testnode1-edited"
 
     result = exec_test_command(
@@ -325,11 +325,11 @@ def test_update_node_label(setup_test_node_balancers):
     )
 
 
-def test_update_node_port(setup_test_node_balancers):
-    nodebalancer_id = setup_test_node_balancers[0]
-    config_id = setup_test_node_balancers[1]
-    node_id = setup_test_node_balancers[2]
-    node_ip = setup_test_node_balancers[3]
+def test_update_node_port(test_node_balancers):
+    nodebalancer_id = test_node_balancers[0]
+    config_id = test_node_balancers[1]
+    node_id = test_node_balancers[2]
+    node_ip = test_node_balancers[3]
 
     updated_port = ":23"
 
@@ -354,10 +354,10 @@ def test_update_node_port(setup_test_node_balancers):
     assert "[0-9]+,.," + new_address + ",Unknown,100,accept", result
 
 
-def test_fail_to_update_node_to_public_ipv4_address(setup_test_node_balancers):
-    nodebalancer_id = setup_test_node_balancers[0]
-    config_id = setup_test_node_balancers[1]
-    node_id = setup_test_node_balancers[2]
+def test_fail_to_update_node_to_public_ipv4_address(test_node_balancers):
+    nodebalancer_id = test_node_balancers[0]
+    config_id = test_node_balancers[1]
+    node_id = test_node_balancers[2]
 
     public_ip = "8.8.8.8:80"
 
@@ -381,19 +381,19 @@ def test_fail_to_update_node_to_public_ipv4_address(setup_test_node_balancers):
     assert "Must begin with 192.168" in result
 
 
-def test_remove_node_from_configuration_profile(setup_test_node_balancers):
-    nodebalancer_id = setup_test_node_balancers[0]
-    config_id = setup_test_node_balancers[1]
-    node_id = setup_test_node_balancers[2]
+def test_remove_node_from_configuration_profile(test_node_balancers):
+    nodebalancer_id = test_node_balancers[0]
+    config_id = test_node_balancers[1]
+    node_id = test_node_balancers[2]
 
     exec_test_command(
         BASE_CMD + ["node-delete", nodebalancer_id, config_id, node_id]
     )
 
 
-def test_update_the_port_of_a_configuration_profile(setup_test_node_balancers):
-    nodebalancer_id = setup_test_node_balancers[0]
-    config_id = setup_test_node_balancers[1]
+def test_update_the_port_of_a_configuration_profile(test_node_balancers):
+    nodebalancer_id = test_node_balancers[0]
+    config_id = test_node_balancers[1]
 
     result = exec_test_command(
         BASE_CMD
@@ -417,8 +417,8 @@ def test_update_the_port_of_a_configuration_profile(setup_test_node_balancers):
     )
 
 
-def test_add_additional_configuration_profile(setup_test_node_balancers):
-    nodebalancer_id = setup_test_node_balancers[0]
+def test_add_additional_configuration_profile(test_node_balancers):
+    nodebalancer_id = test_node_balancers[0]
 
     result = exec_test_command(
         BASE_CMD
@@ -439,8 +439,8 @@ def test_add_additional_configuration_profile(setup_test_node_balancers):
     )
 
 
-def test_list_multiple_configuration_profile(setup_test_node_balancers):
-    nodebalancer_id = setup_test_node_balancers[0]
+def test_list_multiple_configuration_profile(test_node_balancers):
+    nodebalancer_id = test_node_balancers[0]
 
     result = exec_test_command(
         BASE_CMD
