@@ -259,9 +259,7 @@ def test_view_configuration_profile(test_node_balancers):
     )
 
 
-def test_add_node_to_conf_profile(
-    test_node_balancers, create_linode_to_add
-):
+def test_add_node_to_conf_profile(test_node_balancers, create_linode_to_add):
     linode_create = create_linode_to_add
     linode_arr = linode_create.split(",")
     ip_arr = linode_arr[1].split(" ")
