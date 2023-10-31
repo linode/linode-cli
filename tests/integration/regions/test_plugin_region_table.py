@@ -12,7 +12,6 @@ def exec_test_command(args: List[str]):
     )
     return process
 
-
 def test_output():
     process = exec_test_command(BASE_CMD)
     output = process.stdout.decode()
@@ -26,5 +25,3 @@ def test_output():
         assert all(mark in line for mark in check_marks)
         assert all(hyphen in line for hyphen in hyphens)
         assert all(pipe in line for pipe in pipes)
-
-
