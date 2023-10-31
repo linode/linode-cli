@@ -11,6 +11,8 @@ from getpass import getpass
 from os import environ, path
 from typing import List, Tuple
 
+from openapi3.paths import Operation
+
 from linodecli.baked.request import OpenAPIFilteringRequest, OpenAPIRequest
 from linodecli.baked.response import OpenAPIResponse
 from linodecli.overrides import OUTPUT_OVERRIDES
@@ -233,7 +235,7 @@ class OpenAPIOperation:
     This is the class that should be pickled when building the CLI.
     """
 
-    def __init__(self, command, operation, method, params):
+    def __init__(self, command, operation: Operation, method, params):
         """
         Wraps an openapi3.Operation object and handles pulling out values relevant
         to the Linode CLI.

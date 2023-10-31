@@ -1,6 +1,8 @@
 """
 Converting the processed OpenAPI Responses into something the CLI can work with
 """
+from openapi3.paths import MediaType
+
 from .colors import colorize_string
 
 
@@ -159,26 +161,35 @@ def _parse_response_model(schema, prefix=None, nested_list_depth=0):
     :returns: The list of parsed OpenAPIResponseAttr objects representing this schema
     :rtype: List[OpenAPIResponseAttr]
     """
+
+    if schema.type == "array":
+        return _parse_response_model(
+            schema.items,
+            prefix=prefix,
+            nested_list_depth=nested_list_depth,
+        )
+
     attrs = []
+    if schema.properties is None:
+        return attrs
 
-    if schema.properties is not None:
-        for k, v in schema.properties.items():
-            pref = prefix + "." + k if prefix else k
+    for k, v in schema.properties.items():
+        pref = prefix + "." + k if prefix else k
 
-            if v.type == "object":
-                attrs += _parse_response_model(v, prefix=pref)
-            elif v.type == "array" and v.items.type == "object":
-                attrs += _parse_response_model(
-                    v.items,
-                    prefix=pref,
-                    nested_list_depth=nested_list_depth + 1,
+        if v.type == "object":
+            attrs += _parse_response_model(v, prefix=pref)
+        elif v.type == "array" and v.items.type == "object":
+            attrs += _parse_response_model(
+                v.items,
+                prefix=pref,
+                nested_list_depth=nested_list_depth + 1,
+            )
+        else:
+            attrs.append(
+                OpenAPIResponseAttr(
+                    k, v, prefix=prefix, nested_list_depth=nested_list_depth
                 )
-            else:
-                attrs.append(
-                    OpenAPIResponseAttr(
-                        k, v, prefix=prefix, nested_list_depth=nested_list_depth
-                    )
-                )
+            )
 
     return attrs
 
@@ -189,7 +200,7 @@ class OpenAPIResponse:
     responses section of an OpenAPI Operation
     """
 
-    def __init__(self, response):
+    def __init__(self, response: MediaType):
         """
         :param response: The response's MediaType object in the OpenAPI spec,
                           corresponding to the application/json response type
@@ -228,7 +239,9 @@ class OpenAPIResponse:
         # Needs to go last to handle custom schemas
         if "pages" in json:
             return json["data"]
-        return [json]
+        if not isinstance(json, list):
+            json = [json]
+        return json
 
     def _fix_json_rows(self, json):
         """
