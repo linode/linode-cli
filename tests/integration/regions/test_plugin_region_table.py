@@ -1,5 +1,5 @@
-import subprocess
 import re
+import subprocess
 from typing import List
 
 BASE_CMD = ["linode-cli", "region-table"]
