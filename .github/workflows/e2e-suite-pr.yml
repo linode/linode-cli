@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       test_path:
-        description: "The path from 'test/integration' to target to be tested, e.g. 'cli'"
+        description: "The path from 'test/integration' to the target to be tested, e.g. 'cli'"
         required: false
       sha:
         description: 'The hash value of the commit.'
