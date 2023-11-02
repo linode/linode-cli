@@ -81,7 +81,7 @@ def test_list_firewall(test_firewall_id):
 
 @pytest.mark.smoke
 def test_create_firewall_with_minimum_required_args():
-    timestamp = str(int(time.time_ns()))
+    timestamp = str(time.time_ns())
     firewall_label = "label-fw-test" + timestamp
     result = (
         exec_test_command(
@@ -112,7 +112,7 @@ def test_create_firewall_with_minimum_required_args():
 
 
 def test_fails_to_create_firewall_without_inbound_policy():
-    timestamp = str(int(time.time_ns()))
+    timestamp = str(time.time_ns())
     firewall_label = "fw_label" + timestamp
     result = (
         exec_failing_test_command(
@@ -137,7 +137,7 @@ def test_fails_to_create_firewall_without_inbound_policy():
 
 
 def test_fails_to_create_firewall_without_outbound_policy():
-    timestamp = str(int(time.time_ns()))
+    timestamp = str(time.time_ns())
     firewall_label = "fw_label" + timestamp
     result = (
         exec_failing_test_command(
@@ -187,7 +187,7 @@ def test_firewall_label_must_be_unique_upon_creation(test_firewall_id):
 
 
 def test_create_firewall_with_inbound_and_outbound_args():
-    timestamp = str(int(time.time_ns()))
+    timestamp = str(time.time_ns())
     firewall_label = "label-fw-test" + timestamp
     result = (
         exec_test_command(
@@ -222,7 +222,7 @@ def test_create_firewall_with_inbound_and_outbound_args():
 
 
 def test_update_firewall(test_firewall_id):
-    timestamp = str(int(time.time_ns()))
+    timestamp = str(time.time_ns())
     firewall_id = test_firewall_id
     updated_tag = "updated-tag" + timestamp
     updated_label = "updated-" + timestamp

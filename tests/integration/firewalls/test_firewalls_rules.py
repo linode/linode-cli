@@ -81,7 +81,7 @@ def test_add_multiple_rules(test_firewall_id):
 
 
 def test_swap_rules():
-    timestamp = str(int(time.time_ns()))
+    timestamp = str(time.time_ns())
     firewall_label = "label-fw-test" + timestamp
     inbound_rule_1 = '{"ports": "22", "protocol": "TCP", "addresses": {"ipv4": ["198.0.0.1/32"]}, "action": "ACCEPT", "label": "swap_rule_1"}'
     inbound_rule_2 = '{"ports": "22", "protocol": "TCP", "addresses": {"ipv4": ["198.0.0.2/32"]}, "action": "ACCEPT", "label": "swap_rule_2"}'
@@ -160,7 +160,7 @@ def test_update_inbound_and_outbound_policy(test_firewall_id):
 
 
 def test_remove_one_rule_via_rules_update():
-    timestamp = str(int(time.time_ns()))
+    timestamp = str(time.time_ns())
     firewall_label = "label-fw-test" + timestamp
     inbound_rule_1 = '{"ports": "22", "protocol": "TCP", "addresses": {"ipv4": ["198.0.0.1/32"]}, "action": "ACCEPT", "label": "test_rule_1"}'
     inbound_rule_2 = '{"ports": "22", "protocol": "TCP", "addresses": {"ipv4": ["198.0.0.2/32"]}, "action": "ACCEPT", "label": "rule_to_delete"}'

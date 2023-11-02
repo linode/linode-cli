@@ -12,7 +12,7 @@ from tests.integration.helpers import (
 )
 
 BASE_CMD = ["linode-cli", "domains"]
-timestamp = str(int(time.time_ns()))
+timestamp = str(time.time_ns())
 
 
 @pytest.fixture

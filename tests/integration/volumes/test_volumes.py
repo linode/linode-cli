@@ -11,8 +11,8 @@ from tests.integration.helpers import (
 )
 
 BASE_CMD = ["linode-cli", "volumes"]
-timestamp = str(int(time.time_ns()))
-unique_tag = str(int(time.time_ns())) + "-tag"
+timestamp = str(time.time_ns())
+unique_tag = str(time.time_ns()) + "-tag"
 
 
 @pytest.fixture(scope="package")

@@ -10,7 +10,7 @@ BASE_CMD = ["linode-cli", "events"]
 
 @pytest.fixture
 def events_test_domain_id():
-    timestamp = str(int(time.time_ns()))
+    timestamp = str(time.time_ns())
     # Create domain
     domain_id = (
         exec_test_command(

@@ -10,7 +10,7 @@ from tests.integration.helpers import (
 )
 
 BASE_CMD = ["linode-cli", "volumes"]
-timestamp = str(int(time.time_ns()))
+timestamp = str(time.time_ns())
 VOLUME_CREATION_WAIT = 5
 
 

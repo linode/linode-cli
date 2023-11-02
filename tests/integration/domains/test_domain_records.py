@@ -14,7 +14,7 @@ BASE_CMD = ["linode-cli", "domains"]
 
 @pytest.fixture
 def test_domain_and_record():
-    timestamp = str(int(time.time_ns()))
+    timestamp = str(time.time_ns())
     # Create domain
     domain_id = (
         exec_test_command(

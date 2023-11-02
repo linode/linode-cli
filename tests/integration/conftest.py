@@ -123,7 +123,7 @@ def generate_test_files(
 # test helper specific to Domains test suite
 @pytest.fixture
 def master_domain():
-    timestamp = str(int(time.time_ns()))
+    timestamp = str(time.time_ns())
 
     domain_id = (
         exec_test_command(
@@ -153,7 +153,7 @@ def master_domain():
 
 @pytest.fixture
 def slave_domain():
-    timestamp = str(int(time.time_ns()))
+    timestamp = str(time.time_ns())
 
     domain_id = (
         exec_test_command(
@@ -185,7 +185,7 @@ def slave_domain():
 # Test helpers specific to Linodes test suite
 @pytest.fixture
 def linode_with_label():
-    timestamp = str(int(time.time_ns()))
+    timestamp = str(time.time_ns())
     label = "cli" + timestamp
     result = (
         exec_test_command(
@@ -322,7 +322,7 @@ def linode_backup_enabled():
 
 @pytest.fixture
 def snapshot_of_linode():
-    timestamp = str(int(time.time_ns()))
+    timestamp = str(time.time_ns())
     # get linode id after creation and wait for "running" status
     linode_id = create_linode_and_wait()
     new_snapshot_label = "test_snapshot" + timestamp

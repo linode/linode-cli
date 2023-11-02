@@ -15,7 +15,7 @@ def clean_up_clusters():
 
 @pytest.mark.smoke
 def test_deploy_an_lke_cluster():
-    timestamp = str(int(time.time_ns()))
+    timestamp = str(time.time_ns())
     label = "cluster_test" + timestamp
 
     lke_version = (

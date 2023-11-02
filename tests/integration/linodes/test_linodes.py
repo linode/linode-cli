@@ -16,7 +16,7 @@ from tests.integration.linodes.helpers_linodes import (
     wait_until,
 )
 
-timestamp = str(int(time.time_ns()))
+timestamp = str(time.time_ns())
 linode_label = DEFAULT_LABEL + timestamp
 
 
