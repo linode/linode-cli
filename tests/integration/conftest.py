@@ -380,7 +380,7 @@ def create_nodebalancer_with_default_conf():
 def test_vpc_wo_subnet():
     region = get_regions_with_vpcs_capabilties()[0]
 
-    label = str(int(time.time_ns())) + "label"
+    label = str(time.time_ns()) + "label"
 
     vpc_id = (
         exec_test_command(
@@ -410,9 +410,9 @@ def test_vpc_wo_subnet():
 def test_vpc_w_subnet():
     region = get_regions_with_vpcs_capabilties()[0]
 
-    vpc_label = str(int(time.time_ns())) + "label"
+    vpc_label = str(time.time_ns()) + "label"
 
-    subnet_label = str(int(time.time_ns())) + "label"
+    subnet_label = str(time.time_ns()) + "label"
 
     vpc_id = (
         exec_test_command(
@@ -445,7 +445,7 @@ def test_vpc_w_subnet():
 @pytest.fixture
 def test_subnet(test_vpc_wo_subnet):
     vpc_id = test_vpc_wo_subnet
-    subnet_label = str(int(time.time_ns())) + "label"
+    subnet_label = str(time.time_ns()) + "label"
     res = (
         exec_test_command(
             [

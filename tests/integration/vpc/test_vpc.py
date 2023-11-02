@@ -37,7 +37,7 @@ def test_view_vpc(test_vpc_wo_subnet):
 def test_update_vpc(test_vpc_wo_subnet):
     vpc_id = test_vpc_wo_subnet
 
-    new_label = str(int(time.time_ns())) + "label"
+    new_label = str(time.time_ns()) + "label"
 
     updated_label = (
         exec_test_command(
@@ -123,7 +123,7 @@ def test_view_subnet(test_vpc_wo_subnet, test_subnet):
 def test_update_subnet(test_vpc_w_subnet):
     vpc_id = test_vpc_w_subnet
 
-    new_label = str(int(time.time_ns())) + "label"
+    new_label = str(time.time_ns()) + "label"
 
     subnet_id = (
         exec_test_command(
