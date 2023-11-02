@@ -322,4 +322,4 @@ def test_list_rules_json_format(create_firewall):
         .stdout.decode()
         .rstrip()
     )
-    assert result[0]["inbound"][0]["label"]== "rules-list-test"
+    assert result[0]["inbound"][0]["label"] == "rules-list-test"
