@@ -10,7 +10,7 @@ from tests.integration.linodes.helpers_linodes import (
 
 
 @pytest.fixture
-def setup_power_status():
+def test_linode_id():
     linode_id = create_linode()
 
     yield linode_id
@@ -28,8 +28,8 @@ def create_linode_in_running_state():
 
 
 @pytest.mark.smoke
-def test_create_linode_and_boot(setup_power_status):
-    linode_id = setup_power_status
+def test_create_linode_and_boot(test_linode_id):
+    linode_id = test_linode_id
 
     # returns false if status is not running after 240s
     result = wait_until(linode_id=linode_id, timeout=240, status="running")
@@ -52,8 +52,8 @@ def test_reboot_linode(create_linode_in_running_state):
     ), "Linode status has not changed to running from provisioning"
 
 
-def test_shutdown_linode(setup_power_status):
-    linode_id = setup_power_status
+def test_shutdown_linode(test_linode_id):
+    linode_id = test_linode_id
 
     # returns false if status is not running after 240s after reboot
     assert wait_until(

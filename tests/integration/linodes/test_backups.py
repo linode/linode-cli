@@ -68,8 +68,8 @@ def test_enable_backups(create_linode_setup):
     assert re.search(linode_id + ",True", result)
 
 
-def test_create_backup_with_backup_enabled(create_linode_backup_enabled):
-    linode_id = create_linode_backup_enabled
+def test_create_backup_with_backup_enabled(linode_backup_enabled):
+    linode_id = linode_backup_enabled
     result = exec_test_command(
         BASE_CMD
         + [
@@ -117,10 +117,10 @@ def test_take_snapshot_of_linode():
     os.environ.get("RUN_LONG_TESTS", None) != "TRUE",
     reason="Skipping long-running Test, to run set RUN_LONG_TESTS=TRUE",
 )
-def test_view_the_snapshot(take_snapshot_of_linode):
+def test_view_the_snapshot(snapshot_of_linode):
     # get linode id after creation and wait for "running" status
-    linode_id = take_snapshot_of_linode[0]
-    new_snapshot_label = take_snapshot_of_linode[1]
+    linode_id = snapshot_of_linode[0]
+    new_snapshot_label = snapshot_of_linode[1]
 
     result = exec_test_command(
         BASE_CMD
@@ -145,10 +145,10 @@ def test_view_the_snapshot(take_snapshot_of_linode):
     os.environ.get("RUN_LONG_TESTS", None) != "TRUE",
     reason="Skipping long-running Test, to run set RUN_LONG_TESTS=TRUE",
 )
-def test_cancel_backups(take_snapshot_of_linode):
+def test_cancel_backups(snapshot_of_linode):
     # get linode id after creation and wait for "running" status
-    linode_id = take_snapshot_of_linode[0]
-    new_snapshot_label = take_snapshot_of_linode[1]
+    linode_id = snapshot_of_linode[0]
+    new_snapshot_label = snapshot_of_linode[1]
 
     result = exec_test_command(
         BASE_CMD

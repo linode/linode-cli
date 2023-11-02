@@ -13,7 +13,7 @@ BASE_CMD = ["linode-cli", "networking"]
 
 
 @pytest.fixture(scope="package")
-def setup_test_networking():
+def test_linode_id():
     linode_id = create_linode_and_wait()
 
     yield linode_id
@@ -22,7 +22,7 @@ def setup_test_networking():
 
 
 @pytest.fixture(scope="package")
-def setup_test_networking_shared_ipv4():
+def test_linode_id_shared_ipv4():
     target_region = "us-southeast"
 
     linode_ids = (
@@ -47,7 +47,7 @@ def has_shared_ip(linode_id: int, ip: str) -> bool:
     return len([v for v in shared_ips if v["address"] == ip]) > 0
 
 
-def test_display_ips_for_available_linodes(setup_test_networking):
+def test_display_ips_for_available_linodes(test_linode_id):
     result = exec_test_command(
         BASE_CMD + ["ips-list", "--text", "--no-headers", "--delimiter", ","]
     ).stdout.decode()
@@ -65,8 +65,8 @@ def test_display_ips_for_available_linodes(setup_test_networking):
 
 
 @pytest.mark.smoke
-def test_view_an_ip_address(setup_test_networking):
-    linode_id = setup_test_networking
+def test_view_an_ip_address(test_linode_id):
+    linode_id = test_linode_id
     linode_ipv4 = exec_test_command(
         [
             "linode-cli",
@@ -95,8 +95,8 @@ def test_view_an_ip_address(setup_test_networking):
     assert re.search("^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}", result)
 
 
-def test_allocate_additional_private_ipv4_address(setup_test_networking):
-    linode_id = setup_test_networking
+def test_allocate_additional_private_ipv4_address(test_linode_id):
+    linode_id = test_linode_id
 
     result = exec_test_command(
         BASE_CMD
@@ -121,8 +121,8 @@ def test_allocate_additional_private_ipv4_address(setup_test_networking):
     )
 
 
-def test_share_ipv4_address(setup_test_networking_shared_ipv4):
-    target_linode, parent_linode = setup_test_networking_shared_ipv4
+def test_share_ipv4_address(test_linode_id_shared_ipv4):
+    target_linode, parent_linode = test_linode_id_shared_ipv4
 
     # Allocate an IPv4 address on the parent Linode
     ip_address = json.loads(
