@@ -7,8 +7,13 @@ from argparse import ArgumentParser
 from pathlib import Path
 from typing import List
 
-from boto3.exceptions import S3UploadFailedError
-from boto3.s3.transfer import MB, TransferConfig
+try:
+    from boto3.exceptions import S3UploadFailedError
+    from boto3.s3.transfer import MB, TransferConfig
+except:
+    # this has been handled in `call` function
+    # by print an error message
+    pass
 
 from linodecli.helpers import expand_globs
 from linodecli.plugins import inherit_plugin_args
