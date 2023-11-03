@@ -1,14 +1,20 @@
+import os
 import re
 import subprocess
 from typing import List
 
 BASE_CMD = ["linode-cli", "region-table"]
 
+# Set the console width to 100
+env = os.environ.copy()
+env["COLUMNS"] = "100"
+
 
 def exec_test_command(args: List[str]):
     process = subprocess.run(
         args,
         stdout=subprocess.PIPE,
+        env=env,
     )
     return process
 
