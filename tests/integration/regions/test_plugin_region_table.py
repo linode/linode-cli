@@ -4,7 +4,7 @@ from typing import List
 
 BASE_CMD = ["linode-cli", "region-table"]
 
-# Set the console width to 100
+# Set the console width to 150
 env = os.environ.copy()
 env["COLUMNS"] = "150"
 
