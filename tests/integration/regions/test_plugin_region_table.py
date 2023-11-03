@@ -1,5 +1,4 @@
 import os
-import re
 import subprocess
 from typing import List
 
@@ -7,7 +6,7 @@ BASE_CMD = ["linode-cli", "region-table"]
 
 # Set the console width to 100
 env = os.environ.copy()
-env["COLUMNS"] = "100"
+env["COLUMNS"] = "150"
 
 
 def exec_test_command(args: List[str]):
@@ -25,10 +24,6 @@ def test_output():
     lines = output.split("\n")
     lines = lines[3 : len(lines) - 2]
     for line in lines:
-        check_marks = re.findall("✔", line)
-        hyphens = re.findall("-", line)
-        pipes = re.findall(r"\|", line)
-
-        assert all(mark in line for mark in check_marks)
-        assert all(hyphen in line for hyphen in hyphens)
-        assert all(pipe in line for pipe in pipes)
+        assert "-" in line
+        assert "✔" in line
+        assert "│" in line
