@@ -378,7 +378,7 @@ def create_nodebalancer_with_default_conf():
 
 @pytest.fixture
 def test_vpc_wo_subnet():
-    region = get_regions_with_vpcs_capabilties()[0]
+    region = get_regions_with_capabilities(["VPCs"])[0]
 
     label = str(time.time_ns()) + "label"
 
@@ -408,7 +408,7 @@ def test_vpc_wo_subnet():
 
 @pytest.fixture
 def test_vpc_w_subnet():
-    region = get_regions_with_vpcs_capabilties()[0]
+    region = get_regions_with_capabilities(["VPCs"])[0]
 
     vpc_label = str(time.time_ns()) + "label"
 
@@ -469,7 +469,7 @@ def test_subnet(test_vpc_wo_subnet):
     yield res, subnet_label
 
 
-def get_regions_with_vpcs_capabilties():
+def get_regions_with_capabilities(capabilities):
     regions = (
         exec_test_command(
             [
@@ -487,11 +487,11 @@ def get_regions_with_vpcs_capabilties():
 
     regions = regions.split("\n")
 
-    regions_with_vpc = []
+    regions_with_all_caps = []
 
     for region in regions:
-        if "VPCs" in region:
-            region_name = region.split()[0]  # Extract the region name
-            regions_with_vpc.append(region_name)
+        region_name = region.split()[0]
+        if all(capability in region for capability in capabilities):
+            regions_with_all_caps.append(region_name)
 
-    return regions_with_vpc
+    return regions_with_all_caps
