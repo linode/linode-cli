@@ -4,7 +4,8 @@
 #       Prints the current version
 
 import os
-from distutils.version import LooseVersion
+
+from packaging.version import parse
 
 ENV_LINODE_CLI_VERSION = "LINODE_CLI_VERSION"
 
@@ -22,8 +23,7 @@ def get_version(ref="HEAD"):
     if version_str.startswith("v"):
         version_str = version_str[1:]
 
-    parts = LooseVersion(version_str).version[:3]
-    return tuple(parts)
+    return parse(version_str).release
 
 
 major, minor, patch = get_version()
