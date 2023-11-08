@@ -7,14 +7,13 @@ import pytest
 import requests
 from pytest import MonkeyPatch
 
-from linodecli.configuration.auth import _do_request
 from linodecli.plugins.obj import (
     ENV_ACCESS_KEY_NAME,
     ENV_SECRET_KEY_NAME,
     TRUNCATED_MSG,
 )
 from tests.integration.fixture_types import GetTestFilesType, GetTestFileType
-from tests.integration.helpers import BASE_URL, count_lines, exec_test_command
+from tests.integration.helpers import count_lines, exec_test_command
 
 REGION = "us-southeast-1"
 BASE_CMD = ["linode-cli", "object-storage"]
@@ -53,9 +52,17 @@ def static_site_error():
 
 @pytest.fixture(scope="session")
 def keys():
-    response = json.loads(exec_test_command(
-        BASE_CMD + ["keys-create", "--label", "cli-integration-test-obj-key", "--json"],
-    ).stdout.decode())[0]
+    response = json.loads(
+        exec_test_command(
+            BASE_CMD
+            + [
+                "keys-create",
+                "--label",
+                "cli-integration-test-obj-key",
+                "--json",
+            ],
+        ).stdout.decode()
+    )[0]
     _keys = Keys(
         access_key=response.get("access_key"),
         secret_key=response.get("secret_key"),
@@ -181,7 +188,12 @@ def test_obj_single_file_single_bucket_with_subdirectory(
     downloaded_file_path = file_path.parent / f"downloaded_{file_path.name}"
     process = exec_test_command(
         PLUGIN_CMD
-        + ["get", bucket_name, "bigtestfolder/"+file_path.name, str(downloaded_file_path)]
+        + [
+            "get",
+            bucket_name,
+            "bigtestfolder/" + file_path.name,
+            str(downloaded_file_path),
+        ]
     )
     output = process.stdout.decode()
     with open(downloaded_file_path) as f2, open(file_path) as f1:
@@ -262,10 +274,14 @@ def test_modify_access_control(
     file = generate_test_files()[0]
     exec_test_command(PLUGIN_CMD + ["put", str(file.resolve()), bucket])
     file_url = f"https://{bucket}.{REGION}.linodeobjects.com/{file.name}"
-    exec_test_command(PLUGIN_CMD + ["setacl", bucket, file.name, "--acl-public"])
+    exec_test_command(
+        PLUGIN_CMD + ["setacl", bucket, file.name, "--acl-public"]
+    )
     response = requests.get(file_url)
     assert response.status_code == 200
-    exec_test_command(PLUGIN_CMD + ["setacl", bucket, file.name, "--acl-private"])
+    exec_test_command(
+        PLUGIN_CMD + ["setacl", bucket, file.name, "--acl-private"]
+    )
     response = requests.get(file_url)
     assert response.status_code == 403
 
