@@ -1,3 +1,4 @@
+import json
 import logging
 from dataclasses import dataclass
 from typing import Callable, Optional
@@ -16,7 +17,8 @@ from tests.integration.fixture_types import GetTestFilesType, GetTestFileType
 from tests.integration.helpers import BASE_URL, count_lines, exec_test_command
 
 REGION = "us-southeast-1"
-BASE_CMD = ["linode-cli", "obj", "--cluster", REGION]
+BASE_CMD = ["linode-cli", "object-storage"]
+PLUGIN_CMD = ["linode-cli", "obj", "--cluster", REGION]
 
 
 @dataclass
@@ -50,27 +52,16 @@ def static_site_error():
 
 
 @pytest.fixture(scope="session")
-def keys(token: str):
-    response = _do_request(
-        BASE_URL,
-        requests.post,
-        "object-storage/keys",
-        token,
-        False,
-        {"label": "cli-integration-test-obj-key"},
-    )
-
+def keys():
+    response = json.loads(exec_test_command(
+        BASE_CMD + ["keys-create", "--label", "cli-integration-test-obj-key", "--json"],
+    ).stdout.decode())[0]
     _keys = Keys(
         access_key=response.get("access_key"),
         secret_key=response.get("secret_key"),
     )
     yield _keys
-    _do_request(
-        BASE_URL,
-        requests.delete,
-        f"object-storage/keys/{response['id']}",
-        token,
-    )
+    exec_test_command(BASE_CMD + ["keys-delete", str(response.get("id"))])
 
 
 def patch_keys(keys: Keys, monkeypatch: MonkeyPatch):
@@ -91,7 +82,7 @@ def create_bucket(
         if not bucket_name:
             bucket_name = name_generator("test-bk")
 
-        exec_test_command(BASE_CMD + ["mb", bucket_name])
+        exec_test_command(PLUGIN_CMD + ["mb", bucket_name])
         created_buckets.add(bucket_name)
         return bucket_name
 
@@ -104,7 +95,7 @@ def create_bucket(
 
 
 def delete_bucket(bucket_name: str, force: bool = True):
-    args = BASE_CMD + ["rb", bucket_name]
+    args = PLUGIN_CMD + ["rb", bucket_name]
     if force:
         args.append("--recursive")
     exec_test_command(args)
@@ -120,8 +111,8 @@ def test_obj_single_file_single_bucket(
     patch_keys(keys, monkeypatch)
     file_path = generate_test_files()[0]
     bucket_name = create_bucket()
-    exec_test_command(BASE_CMD + ["put", str(file_path), bucket_name])
-    process = exec_test_command(BASE_CMD + ["la"])
+    exec_test_command(PLUGIN_CMD + ["put", str(file_path), bucket_name])
+    process = exec_test_command(PLUGIN_CMD + ["la"])
     output = process.stdout.decode()
 
     assert f"{bucket_name}/{file_path.name}" in output
@@ -129,12 +120,12 @@ def test_obj_single_file_single_bucket(
     file_size = file_path.stat().st_size
     assert str(file_size) in output
 
-    process = exec_test_command(BASE_CMD + ["ls"])
+    process = exec_test_command(PLUGIN_CMD + ["ls"])
     output = process.stdout.decode()
     assert bucket_name in output
     assert file_path.name not in output
 
-    process = exec_test_command(BASE_CMD + ["ls", bucket_name])
+    process = exec_test_command(PLUGIN_CMD + ["ls", bucket_name])
     output = process.stdout.decode()
     assert bucket_name not in output
     assert str(file_size) in output
@@ -142,7 +133,7 @@ def test_obj_single_file_single_bucket(
 
     downloaded_file_path = file_path.parent / f"downloaded_{file_path.name}"
     process = exec_test_command(
-        BASE_CMD
+        PLUGIN_CMD
         + ["get", bucket_name, file_path.name, str(downloaded_file_path)]
     )
     output = process.stdout.decode()
@@ -160,15 +151,16 @@ def test_obj_single_file_single_bucket_with_subdirectory(
     file_path = generate_test_files()[0]
     bucket_name = create_bucket()
     exec_test_command(
-        BASE_CMD
+        PLUGIN_CMD
         + [
             "put",
             str(file_path),
+            "--folder",
+            "bigtestfolder",
             bucket_name,
-            "--folder bigtestfolder",
         ]
     )
-    process = exec_test_command(BASE_CMD + ["la"])
+    process = exec_test_command(PLUGIN_CMD + ["la"])
     output = process.stdout.decode()
 
     assert f"{bucket_name}/bigtestfolder/{file_path.name}" in output
@@ -176,21 +168,20 @@ def test_obj_single_file_single_bucket_with_subdirectory(
     file_size = file_path.stat().st_size
     assert str(file_size) in output
 
-    process = exec_test_command(BASE_CMD + ["ls"])
+    process = exec_test_command(PLUGIN_CMD + ["ls"])
     output = process.stdout.decode()
     assert bucket_name in output
     assert file_path.name not in output
 
-    process = exec_test_command(BASE_CMD + ["ls", bucket_name])
+    process = exec_test_command(PLUGIN_CMD + ["ls", bucket_name])
     output = process.stdout.decode()
     assert bucket_name not in output
-    assert str(file_size) in output
-    assert file_path.name in output
+    assert "bigtestfolder" in output
 
     downloaded_file_path = file_path.parent / f"downloaded_{file_path.name}"
     process = exec_test_command(
-        BASE_CMD
-        + ["get", bucket_name, file_path.name, str(downloaded_file_path)]
+        PLUGIN_CMD
+        + ["get", bucket_name, "bigtestfolder/"+file_path.name, str(downloaded_file_path)]
     )
     output = process.stdout.decode()
     with open(downloaded_file_path) as f2, open(file_path) as f1:
@@ -210,7 +201,7 @@ def test_multi_files_multi_bucket(
     for bucket in bucket_names:
         for file in file_paths:
             process = exec_test_command(
-                BASE_CMD + ["put", str(file.resolve()), bucket]
+                PLUGIN_CMD + ["put", str(file.resolve()), bucket]
             )
             output = process.stdout.decode()
             assert "100.0%" in output
@@ -229,7 +220,7 @@ def test_all_rows(
     file_paths = generate_test_files(number)
 
     process = exec_test_command(
-        BASE_CMD
+        PLUGIN_CMD
         + ["put"]
         + [str(file.resolve()) for file in file_paths]
         + [bucket_name]
@@ -239,21 +230,21 @@ def test_all_rows(
     assert "Done" in output
 
     process = exec_test_command(
-        BASE_CMD + ["ls", bucket_name, "--page-size", "2", "--page", "1"]
+        PLUGIN_CMD + ["ls", bucket_name, "--page-size", "2", "--page", "1"]
     )
     output = process.stdout.decode()
     assert TRUNCATED_MSG in output
     assert count_lines(output) == 3
 
     process = exec_test_command(
-        BASE_CMD + ["ls", bucket_name, "--page-size", "999"]
+        PLUGIN_CMD + ["ls", bucket_name, "--page-size", "999"]
     )
     output = process.stdout.decode()
     assert TRUNCATED_MSG not in output
     assert count_lines(output) == 5
 
     process = exec_test_command(
-        BASE_CMD + ["ls", bucket_name, "--page-size", "2", "--all-rows"]
+        PLUGIN_CMD + ["ls", bucket_name, "--page-size", "2", "--all-rows"]
     )
     output = process.stdout.decode()
     assert TRUNCATED_MSG not in output
@@ -269,12 +260,12 @@ def test_modify_access_control(
     patch_keys(keys, monkeypatch)
     bucket = create_bucket()
     file = generate_test_files()[0]
-    exec_test_command(BASE_CMD + ["put", str(file.resolve()), bucket])
+    exec_test_command(PLUGIN_CMD + ["put", str(file.resolve()), bucket])
     file_url = f"https://{bucket}.{REGION}.linodeobjects.com/{file.name}"
-    exec_test_command(BASE_CMD + ["setacl", bucket, file.name, "--acl-public"])
+    exec_test_command(PLUGIN_CMD + ["setacl", bucket, file.name, "--acl-public"])
     response = requests.get(file_url)
     assert response.status_code == 200
-    exec_test_command(BASE_CMD + ["setacl", bucket, file.name, "--acl-private"])
+    exec_test_command(PLUGIN_CMD + ["setacl", bucket, file.name, "--acl-private"])
     response = requests.get(file_url)
     assert response.status_code == 403
 
@@ -292,14 +283,14 @@ def test_static_site(
     error_file = generate_test_file(static_site_error, "error.html").resolve()
     bucket = create_bucket()
     exec_test_command(
-        BASE_CMD + ["put", str(index_file), bucket, "--acl-public"]
+        PLUGIN_CMD + ["put", str(index_file), bucket, "--acl-public"]
     )
     exec_test_command(
-        BASE_CMD + ["put", str(error_file), bucket, "--acl-public"]
+        PLUGIN_CMD + ["put", str(error_file), bucket, "--acl-public"]
     )
 
     exec_test_command(
-        BASE_CMD
+        PLUGIN_CMD
         + [
             "ws-create",
             "--ws-index",
@@ -320,14 +311,14 @@ def test_static_site(
     assert response.status_code == 404
     assert "Error!" in response.text
 
-    process = exec_test_command(BASE_CMD + ["ws-info", bucket])
+    process = exec_test_command(PLUGIN_CMD + ["ws-info", bucket])
     output = process.stdout.decode()
     assert f"Bucket {bucket}: Website configuration" in output
     assert f"Website endpoint: {ws_endpoint}" in output
     assert f"Index document: {index_file.name}" in output
     assert f"Error document: {error_file.name}" in output
 
-    process = exec_test_command(BASE_CMD + ["ws-delete", bucket])
+    process = exec_test_command(PLUGIN_CMD + ["ws-delete", bucket])
     response = requests.get(ws_url)
     assert response.status_code == 404
 
@@ -349,22 +340,22 @@ def test_show_usage(
     bucket1 = create_bucket()
     bucket2 = create_bucket()
 
-    exec_test_command(BASE_CMD + ["put", str(large_file1), bucket1])
+    exec_test_command(PLUGIN_CMD + ["put", str(large_file1), bucket1])
 
     exec_test_command(
-        BASE_CMD + ["put", str(large_file1), str(large_file2), bucket2]
+        PLUGIN_CMD + ["put", str(large_file1), str(large_file2), bucket2]
     )
 
-    process = exec_test_command(BASE_CMD + ["du"])
+    process = exec_test_command(PLUGIN_CMD + ["du"])
     output = process.stdout.decode()
     assert "MB Total" in output
 
-    process = exec_test_command(BASE_CMD + ["du", bucket1])
+    process = exec_test_command(PLUGIN_CMD + ["du", bucket1])
     output = process.stdout.decode()
     assert "10.0 MB" in output
     assert "1 objects" in output
 
-    process = exec_test_command(BASE_CMD + ["du", bucket2])
+    process = exec_test_command(PLUGIN_CMD + ["du", bucket2])
     output = process.stdout.decode()
     assert "30.0 MB" in output
     assert "2 objects" in output
@@ -381,10 +372,10 @@ def test_generate_url(
     content = "Hello, World!"
     test_file = generate_test_file(content=content).resolve()
 
-    exec_test_command(BASE_CMD + ["put", str(test_file), bucket])
+    exec_test_command(PLUGIN_CMD + ["put", str(test_file), bucket])
 
     process = exec_test_command(
-        BASE_CMD + ["signurl", bucket, test_file.name, "+300"]
+        PLUGIN_CMD + ["signurl", bucket, test_file.name, "+300"]
     )
     url = process.stdout.decode()
     response = requests.get(url)
