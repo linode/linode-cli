@@ -15,7 +15,7 @@ from tests.integration.linodes.helpers_linodes import (
 
 
 @pytest.fixture(scope="session")
-def setup_resize():
+def test_linode_id():
     plan = (
         exec_test_command(
             [
@@ -39,8 +39,8 @@ def setup_resize():
     delete_target_id(target="linodes", id=linode_id)
 
 
-def test_resize_fails_to_the_same_plan(setup_resize):
-    linode_id = setup_resize
+def test_resize_fails_to_the_same_plan(test_linode_id):
+    linode_id = test_linode_id
     linode_plan = (
         exec_test_command(
             [
@@ -67,8 +67,8 @@ def test_resize_fails_to_the_same_plan(setup_resize):
     assert "Linode is already running this service plan." in result
 
 
-def test_resize_fails_to_smaller_plan(setup_resize):
-    linode_id = setup_resize
+def test_resize_fails_to_smaller_plan(test_linode_id):
+    linode_id = test_linode_id
     smaller_plan = (
         exec_test_command(
             [
@@ -105,9 +105,9 @@ def test_resize_fails_to_smaller_plan(setup_resize):
     )
 
 
-def test_resize_fail_to_invalid_plan(setup_resize):
+def test_resize_fail_to_invalid_plan(test_linode_id):
     invalid_plan = "g15-bad-plan"
-    linode_id = setup_resize
+    linode_id = test_linode_id
 
     result = exec_failing_test_command(
         BASE_CMD
@@ -129,8 +129,8 @@ def test_resize_fail_to_invalid_plan(setup_resize):
     os.environ.get("RUN_LONG_TESTS", None) != "TRUE",
     reason="Skipping long-running Test, to run set RUN_LONG_TESTS=TRUE",
 )
-def test_resize_to_next_size_plan(setup_resize):
-    linode_id = setup_resize
+def test_resize_to_next_size_plan(test_linode_id):
+    linode_id = test_linode_id
     larger_plan = (
         exec_test_command(
             [

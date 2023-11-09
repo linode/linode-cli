@@ -1,15 +1,19 @@
+import json
 import re
 
 import pytest
 
 from tests.integration.helpers import delete_target_id, exec_test_command
-from tests.integration.linodes.helpers_linodes import create_linode_and_wait
+from tests.integration.linodes.helpers_linodes import (
+    create_linode,
+    create_linode_and_wait,
+)
 
 BASE_CMD = ["linode-cli", "networking"]
 
 
 @pytest.fixture(scope="package")
-def setup_test_networking():
+def test_linode_id():
     linode_id = create_linode_and_wait()
 
     yield linode_id
@@ -17,7 +21,33 @@ def setup_test_networking():
     delete_target_id(target="linodes", id=linode_id)
 
 
-def test_display_ips_for_available_linodes(setup_test_networking):
+@pytest.fixture(scope="package")
+def test_linode_id_shared_ipv4():
+    target_region = "us-southeast"
+
+    linode_ids = (
+        create_linode(test_region=target_region),
+        create_linode(test_region=target_region),
+    )
+
+    yield linode_ids
+
+    for id in linode_ids:
+        delete_target_id(target="linodes", id=id)
+
+
+def has_shared_ip(linode_id: int, ip: str) -> bool:
+    shared_ips = json.loads(
+        exec_test_command(
+            ["linode-cli", "linodes", "ips-list", "--json", linode_id]
+        ).stdout.decode()
+    )[0]["ipv4"]["shared"]
+
+    # Ensure there is a matching shared IP
+    return len([v for v in shared_ips if v["address"] == ip]) > 0
+
+
+def test_display_ips_for_available_linodes(test_linode_id):
     result = exec_test_command(
         BASE_CMD + ["ips-list", "--text", "--no-headers", "--delimiter", ","]
     ).stdout.decode()
@@ -35,8 +65,8 @@ def test_display_ips_for_available_linodes(setup_test_networking):
 
 
 @pytest.mark.smoke
-def test_view_an_ip_address(setup_test_networking):
-    linode_id = setup_test_networking
+def test_view_an_ip_address(test_linode_id):
+    linode_id = test_linode_id
     linode_ipv4 = exec_test_command(
         [
             "linode-cli",
@@ -65,8 +95,8 @@ def test_view_an_ip_address(setup_test_networking):
     assert re.search("^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}", result)
 
 
-def test_allocate_additional_private_ipv4_address(setup_test_networking):
-    linode_id = setup_test_networking
+def test_allocate_additional_private_ipv4_address(test_linode_id):
+    linode_id = test_linode_id
 
     result = exec_test_command(
         BASE_CMD
@@ -89,3 +119,54 @@ def test_allocate_additional_private_ipv4_address(setup_test_networking):
     assert re.search(
         "ipv4,False,.*,[0-9][0-9][0-9][0-9][0-9][0-9][0-9]*", result
     )
+
+
+def test_share_ipv4_address(test_linode_id_shared_ipv4):
+    target_linode, parent_linode = test_linode_id_shared_ipv4
+
+    # Allocate an IPv4 address on the parent Linode
+    ip_address = json.loads(
+        exec_test_command(
+            BASE_CMD
+            + [
+                "ip-add",
+                "--type",
+                "ipv4",
+                "--linode_id",
+                parent_linode,
+                "--json",
+                "--public",
+                "true",
+            ]
+        ).stdout.decode()
+    )[0]["address"]
+
+    # Share the IP address to the target Linode
+    exec_test_command(
+        BASE_CMD
+        + [
+            "ip-share",
+            "--ips",
+            ip_address,
+            "--linode_id",
+            target_linode,
+            "--json",
+        ]
+    )
+
+    assert has_shared_ip(target_linode, ip_address)
+
+    # Remove the IP shares
+    exec_test_command(
+        BASE_CMD
+        + [
+            "ip-share",
+            "--ips",
+            "[]",
+            "--linode_id",
+            target_linode,
+            "--json",
+        ]
+    )
+
+    assert not has_shared_ip(target_linode, ip_address)

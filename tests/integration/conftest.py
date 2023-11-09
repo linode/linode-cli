@@ -122,8 +122,8 @@ def generate_test_files(
 
 # test helper specific to Domains test suite
 @pytest.fixture
-def create_master_domain():
-    timestamp = str(int(time.time()))
+def master_domain():
+    timestamp = str(time.time_ns())
 
     domain_id = (
         exec_test_command(
@@ -152,8 +152,8 @@ def create_master_domain():
 
 
 @pytest.fixture
-def create_slave_domain():
-    timestamp = str(int(time.time()) + randint(10, 1000))
+def slave_domain():
+    timestamp = str(time.time_ns())
 
     domain_id = (
         exec_test_command(
@@ -184,8 +184,8 @@ def create_slave_domain():
 
 # Test helpers specific to Linodes test suite
 @pytest.fixture
-def create_linode_with_label():
-    timestamp = str(int(time.time()) + randint(10, 1000))
+def linode_with_label():
+    timestamp = str(time.time_ns())
     label = "cli" + timestamp
     result = (
         exec_test_command(
@@ -193,7 +193,7 @@ def create_linode_with_label():
             + [
                 "create",
                 "--type",
-                "g6-standard-2",
+                "g6-nanode-1",
                 "--region",
                 "us-east",
                 "--image",
@@ -223,14 +223,14 @@ def create_linode_with_label():
 
 
 @pytest.fixture
-def create_linode_min_req():
+def linode_min_req():
     result = (
         exec_test_command(
             LINODE_BASE_CMD
             + [
                 "create",
                 "--type",
-                "g6-standard-2",
+                "g6-nanode-1",
                 "--region",
                 "us-east",
                 "--root_pass",
@@ -256,7 +256,7 @@ def create_linode_min_req():
 
 
 @pytest.fixture
-def create_linode_wo_image():
+def linode_wo_image():
     label = "cli" + str(int(time.time()) + randint(10, 1000))
     linode_id = (
         exec_test_command(
@@ -288,7 +288,7 @@ def create_linode_wo_image():
 
 
 @pytest.fixture
-def create_linode_backup_enabled():
+def linode_backup_enabled():
     # create linode with backups enabled
     linode_id = (
         exec_test_command(
@@ -321,8 +321,8 @@ def create_linode_backup_enabled():
 
 
 @pytest.fixture
-def take_snapshot_of_linode():
-    timestamp = str(time.time())
+def snapshot_of_linode():
+    timestamp = str(time.time_ns())
     # get linode id after creation and wait for "running" status
     linode_id = create_linode_and_wait()
     new_snapshot_label = "test_snapshot" + timestamp
@@ -348,7 +348,7 @@ def take_snapshot_of_linode():
 
 # Test helpers specific to Nodebalancers test suite
 @pytest.fixture
-def create_nodebalancer_with_default_conf():
+def nodebalancer_with_default_conf():
     result = (
         exec_test_command(
             NODEBALANCER_BASE_CMD
