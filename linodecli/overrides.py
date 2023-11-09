@@ -3,6 +3,7 @@ Contains wrappers for overriding certain pieces of command-handling logic.
 This allows us to easily alter per-command outputs, etc. without making
 large changes to the OpenAPI spec.
 """
+from typing import Dict
 
 from rich.align import Align
 from rich.console import Console
@@ -102,7 +103,7 @@ def linode_types_with_region_prices(
     return False
 
 
-def format_prices(prices, data: dict[str, any]) -> any:
+def format_prices(prices, data: Dict[str, any]) -> any:
     """
     Format nested price entry.
     """
@@ -111,7 +112,7 @@ def format_prices(prices, data: dict[str, any]) -> any:
     return str(data[price_headers[0]][price_headers[1]])
 
 
-def format_region_prices(data: dict[str, any]) -> any:
+def format_region_prices(data: Dict[str, any]) -> any:
     """
     Format nested region price entry into a sub-table.
     """
