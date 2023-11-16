@@ -17,7 +17,7 @@ INCOMING_DATE_FORMAT = "%Y-%m-%dT%H:%M:%S.%fZ"
 PLUGIN_BASE = "linode-cli obj"
 
 columns = shutil.get_terminal_size(fallback=(80, 24)).columns
-PROGRESS_BAR_WIDTH = columns - 20 if columns > 100 else columns
+PROGRESS_BAR_WIDTH = columns - 20 if columns > 30 else columns
 
 # constant error messages
 NO_SCOPES_ERROR = """Your OAuth token isn't authorized to create Object Storage keys.
