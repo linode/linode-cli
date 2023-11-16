@@ -267,14 +267,10 @@ def test_modify_access_control(
     file = generate_test_files()[0]
     exec_test_command(BASE_CMD + ["put", str(file.resolve()), bucket])
     file_url = f"https://{bucket}.{REGION}.linodeobjects.com/{file.name}"
-    exec_test_command(
-        BASE_CMD + ["setacl", bucket, file.name, "--acl-public"]
-    )
+    exec_test_command(BASE_CMD + ["setacl", bucket, file.name, "--acl-public"])
     response = requests.get(file_url)
     assert response.status_code == 200
-    exec_test_command(
-        BASE_CMD + ["setacl", bucket, file.name, "--acl-private"]
-    )
+    exec_test_command(BASE_CMD + ["setacl", bucket, file.name, "--acl-private"])
     response = requests.get(file_url)
     assert response.status_code == 403
 
