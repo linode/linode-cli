@@ -39,7 +39,7 @@ def get_linode_image_lists():
 
 
 @pytest.fixture(scope="package", autouse=True)
-def create_stackscript():
+def test_stackscript_id():
     result = exec_test_command(
         BASE_CMD
         + [
@@ -47,7 +47,7 @@ def create_stackscript():
             "--script",
             '#!/bin/bash\n# <UDF name="foo" Label="foo" example="bar" />\n $EXAMPLE_SCRIPT',
             "--image",
-            "linode/debian9",
+            "linode/debian10",
             "--label",
             DEF_LABEL,
             "--is_public=false",
@@ -61,7 +61,7 @@ def create_stackscript():
     assert re.search(
         "[0-9]+,.*,"
         + DEF_LABEL
-        + ",linode/debian9,False,[0-9]+-[0-9]+-[0-9]+T[0-9]+:[0-9]+:[0-9]+,[0-9]+-[0-9]+-[0-9]+T[0-9]+:[0-9]+:[0-9]+",
+        + ",linode/debian10,False,[0-9]+-[0-9]+-[0-9]+T[0-9]+:[0-9]+:[0-9]+,[0-9]+-[0-9]+-[0-9]+T[0-9]+:[0-9]+:[0-9]+",
         result,
     )
 
@@ -94,7 +94,7 @@ def test_list_stackscripts():
     assert re.search("[0-9]+,([A-z]|[0-9])+,True", output[0])
 
 
-def test_create_stackscript_fails_without_image():
+def test_test_stackscript_id_fails_without_image():
     result = exec_failing_test_command(
         BASE_CMD
         + [
@@ -132,15 +132,15 @@ def test_view_private_stackscript():
     assert re.search(
         "[0-9]+,.*,"
         + DEF_LABEL
-        + ",linode/debian9,False,[0-9]+-[0-9]+-[0-9]+T[0-9]+:[0-9]+:[0-9]+,[0-9]+-[0-9]+-[0-9]+T[0-9]+:[0-9]+:[0-9]+",
+        + ",linode/debian10,False,[0-9]+-[0-9]+-[0-9]+T[0-9]+:[0-9]+:[0-9]+,[0-9]+-[0-9]+-[0-9]+T[0-9]+:[0-9]+:[0-9]+",
         result,
     )
 
 
 @pytest.mark.smoke
-def test_update_stackscript_compatible_image(create_stackscript):
+def test_update_stackscript_compatible_image(test_stackscript_id):
     images = get_linode_image_lists()
-    private_stackscript = create_stackscript
+    private_stackscript = test_stackscript_id
     result = (
         exec_test_command(
             BASE_CMD
@@ -168,10 +168,10 @@ def test_update_stackscript_compatible_image(create_stackscript):
 
 
 def test_update_stackscript_to_be_compatible_with_multiple_images(
-    create_stackscript,
+    test_stackscript_id,
 ):
     images = get_linode_image_lists()
-    private_stackscript = create_stackscript
+    private_stackscript = test_stackscript_id
 
     result = exec_test_command(
         BASE_CMD
@@ -193,9 +193,9 @@ def test_update_stackscript_to_be_compatible_with_multiple_images(
 
 
 def test_fail_to_deploy_stackscript_to_linode_from_incompatible_image(
-    create_stackscript,
+    test_stackscript_id,
 ):
-    private_stackscript = create_stackscript
+    private_stackscript = test_stackscript_id
     linode_plan = "g6-standard-1"
     linode_region = "us-east"
 
@@ -223,8 +223,8 @@ def test_fail_to_deploy_stackscript_to_linode_from_incompatible_image(
     assert "Request failed: 400" in result
 
 
-def test_deploy_linode_from_stackscript(create_stackscript):
-    private_stackscript = create_stackscript
+def test_deploy_linode_from_stackscript(test_stackscript_id):
+    private_stackscript = test_stackscript_id
     images = get_linode_image_lists()
     linode_plan = "g6-standard-1"
     linode_region = "us-east"

@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       test_path:
-        description: 'Test path to be tested: e.g. integration/cli'
+        description: "The path from 'test/integration' to the target to be tested, e.g. 'cli'"
         required: false
       sha:
         description: 'The hash value of the commit.'
@@ -30,7 +30,7 @@ jobs:
 
       # Check out merge commit
       - name: Checkout PR
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: ${{ inputs.sha }}
 
@@ -56,12 +56,11 @@ jobs:
           owner: ${{ github.event.repository.owner.login }}
           repo: ${{ github.event.repository.name }}
           pr_num: ${{ fromJSON(inputs.pull_request_number) }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Update system packages
         run: sudo apt-get update -y
-
-      - name: Install system deps
-        run: sudo apt-get install -y build-essential
 
       - name: Setup Python
         uses: actions/setup-python@v4
@@ -124,7 +123,7 @@ jobs:
 
       # Check out merge commit
       - name: Checkout PR
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: ${{ inputs.sha }}
 

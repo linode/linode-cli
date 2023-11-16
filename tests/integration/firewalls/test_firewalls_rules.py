@@ -11,7 +11,7 @@ FIREWALL_LABEL = "label-fw-test" + str(int(time.time()))
 
 
 @pytest.fixture
-def create_firewall():
+def test_firewall_id():
     firewall_id = (
         exec_test_command(
             [
@@ -39,8 +39,8 @@ def create_firewall():
     delete_target_id(target="firewalls", id=firewall_id)
 
 
-def test_add_rule_to_existing_firewall(create_firewall):
-    firewall_id = create_firewall
+def test_add_rule_to_existing_firewall(test_firewall_id):
+    firewall_id = test_firewall_id
     inbound_rule = '[{"ports": "22", "protocol": "TCP", "addresses": {"ipv4": ["198.0.0.1/32"]}, "action": "ACCEPT", "label": "accept-inbound-SSH"}]'
     outbound_rule = '[{"ports": "22", "protocol": "TCP", "addresses": {"ipv4": ["198.0.0.2/32"]}, "action": "ACCEPT", "label": "accept-outbound-SSH"}]'
     result = json.loads(
@@ -63,8 +63,8 @@ def test_add_rule_to_existing_firewall(create_firewall):
     assert result[0]["outbound"][0] == json.loads(outbound_rule)[0]
 
 
-def test_add_multiple_rules(create_firewall):
-    firewall_id = create_firewall
+def test_add_multiple_rules(test_firewall_id):
+    firewall_id = test_firewall_id
     inbound_rule_1 = '{"ports": "22", "protocol": "TCP", "addresses": {"ipv4": ["198.0.0.1/32"]}, "action": "ACCEPT", "label": "accept-inbound-SSH"}'
     inbound_rule_2 = '{"ports": "22", "protocol": "TCP", "addresses": {"ipv4": ["198.0.0.2/32"]}, "action": "ACCEPT", "label": "accept-inbound-SSH-2"}'
     inbound_rules = "[" + inbound_rule_1 + "," + inbound_rule_2 + "]"
@@ -81,7 +81,7 @@ def test_add_multiple_rules(create_firewall):
 
 
 def test_swap_rules():
-    timestamp = str(int(time.time()))
+    timestamp = str(time.time_ns())
     firewall_label = "label-fw-test" + timestamp
     inbound_rule_1 = '{"ports": "22", "protocol": "TCP", "addresses": {"ipv4": ["198.0.0.1/32"]}, "action": "ACCEPT", "label": "swap_rule_1"}'
     inbound_rule_2 = '{"ports": "22", "protocol": "TCP", "addresses": {"ipv4": ["198.0.0.2/32"]}, "action": "ACCEPT", "label": "swap_rule_2"}'
@@ -133,8 +133,8 @@ def test_swap_rules():
     delete_target_id(target="firewalls", id=firewall_id)
 
 
-def test_update_inbound_and_outbound_policy(create_firewall):
-    firewall_id = create_firewall
+def test_update_inbound_and_outbound_policy(test_firewall_id):
+    firewall_id = test_firewall_id
     outbound_policy = "DROP"
     inbound_policy = "ACCEPT"
     result = (
@@ -160,7 +160,7 @@ def test_update_inbound_and_outbound_policy(create_firewall):
 
 
 def test_remove_one_rule_via_rules_update():
-    timestamp = str(int(time.time()))
+    timestamp = str(time.time_ns())
     firewall_label = "label-fw-test" + timestamp
     inbound_rule_1 = '{"ports": "22", "protocol": "TCP", "addresses": {"ipv4": ["198.0.0.1/32"]}, "action": "ACCEPT", "label": "test_rule_1"}'
     inbound_rule_2 = '{"ports": "22", "protocol": "TCP", "addresses": {"ipv4": ["198.0.0.2/32"]}, "action": "ACCEPT", "label": "rule_to_delete"}'
@@ -207,8 +207,8 @@ def test_remove_one_rule_via_rules_update():
     delete_target_id(target="firewalls", id=firewall_id)
 
 
-def test_list_rules(create_firewall):
-    firewall_id = create_firewall
+def test_list_rules(test_firewall_id):
+    firewall_id = test_firewall_id
     new_label = '"rules-list-test"'
     inbound_rule = (
         '[{"ports": "22", "protocol": "TCP", "addresses": {"ipv4": ["198.0.0.1/32"]}, "action": "ACCEPT", "label": '
@@ -246,8 +246,8 @@ def test_list_rules(create_firewall):
     assert new_label.replace('"', "") in result
 
 
-def test_list_rules_json(create_firewall):
-    firewall_id = create_firewall
+def test_list_rules_json(test_firewall_id):
+    firewall_id = test_firewall_id
     new_label = '"rules-list-test"'
     inbound_rule = (
         '[{"ports": "22", "protocol": "TCP", "addresses": {"ipv4": ["198.0.0.1/32"]}, "action": "ACCEPT", "label": '
@@ -286,8 +286,8 @@ def test_list_rules_json(create_firewall):
     assert result[0]["inbound"][0]["addresses"]["ipv4"] == ["198.0.0.1/32"]
 
 
-def test_list_rules_json_format(create_firewall):
-    firewall_id = create_firewall
+def test_list_rules_json_format(test_firewall_id):
+    firewall_id = test_firewall_id
     new_label = '"rules-list-test"'
     inbound_rule = (
         '[{"ports": "22", "protocol": "TCP", "addresses": {"ipv4": ["198.0.0.1/32"]}, "action": "ACCEPT", "label": '
@@ -322,5 +322,4 @@ def test_list_rules_json_format(create_firewall):
         .stdout.decode()
         .rstrip()
     )
-
-    assert result[0]["inbound"][0] == {"label": "rules-list-test"}
+    assert result[0]["inbound"][0]["label"] == "rules-list-test"

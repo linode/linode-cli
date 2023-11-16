@@ -15,7 +15,7 @@ BASE_CMD = ["linode-cli", "domains"]
 
 # @pytest.mark.skip(reason="BUG 943")
 def test_fail_to_create_master_domain_with_invalid_tags():
-    timestamp = str(int(time.time()))
+    timestamp = str(time.time_ns())
     bad_tag = "*"
 
     exec_failing_test_command(
@@ -38,7 +38,7 @@ def test_fail_to_create_master_domain_with_invalid_tags():
 
 # @pytest.mark.skip(reason="BUG 943")
 def test_fail_to_create_slave_domain_with_invalid_tags():
-    timestamp = str(int(time.time()))
+    timestamp = str(time.time_ns())
     bad_tag = "*"
 
     exec_failing_test_command(
@@ -61,7 +61,7 @@ def test_fail_to_create_slave_domain_with_invalid_tags():
 
 @pytest.mark.smoke
 def test_create_master_domain_with_tags():
-    timestamp = str(int(time.time()))
+    timestamp = str(time.time_ns())
     tag = "foo"
 
     process = exec_test_command(
