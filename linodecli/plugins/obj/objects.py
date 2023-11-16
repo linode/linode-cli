@@ -61,8 +61,7 @@ def upload_object(
         "--folder",
         metavar="FOLDER",
         type=str,
-        help="If set, the object will be uploaded to the "
-        "specified subdirectory.",
+        help="If set, overrides the folder the object will be uploaded to.",
     )
 
     # TODO:
@@ -84,7 +83,7 @@ def upload_object(
             continue
 
     for f in files:
-        file_path = Path(f).resolve()
+        file_path = Path(f)
         if not file_path.is_file():
             sys.exit(f"No file {file_path}")
 
@@ -103,9 +102,12 @@ def upload_object(
     for file_path in to_upload:
         print(f"Uploading {file_path.name}:")
         upload_options["Filename"] = str(file_path.resolve())
-        if parsed.folder:
-            upload_options["Key"] = f"{parsed.folder}/{file_path.name}"
-        else:
+        upload_options["Key"] = (
+            str(file_path)
+            if not parsed.folder
+            else f"{parsed.folder}/{file_path.name}"
+        )
+        if parsed.folder == "/":
             upload_options["Key"] = file_path.name
         upload_options["Callback"] = ProgressPercentage(
             file_path.stat().st_size, PROGRESS_BAR_WIDTH

@@ -118,7 +118,9 @@ def test_obj_single_file_single_bucket(
     patch_keys(keys, monkeypatch)
     file_path = generate_test_files()[0]
     bucket_name = create_bucket()
-    exec_test_command(PLUGIN_CMD + ["put", str(file_path), bucket_name])
+    exec_test_command(
+        PLUGIN_CMD + ["put", "--folder", "/", str(file_path), bucket_name]
+    )
     process = exec_test_command(PLUGIN_CMD + ["la"])
     output = process.stdout.decode()
 
@@ -148,7 +150,7 @@ def test_obj_single_file_single_bucket(
         assert f1.read() == f2.read()
 
 
-def test_obj_single_file_single_bucket_with_subdirectory(
+def test_obj_single_file_single_bucket_with_folder_override(
     create_bucket: Callable[[Optional[str]], str],
     generate_test_files: GetTestFilesType,
     keys: Keys,
@@ -233,7 +235,7 @@ def test_all_rows(
 
     process = exec_test_command(
         PLUGIN_CMD
-        + ["put"]
+        + ["put", "--folder", "/"]
         + [str(file.resolve()) for file in file_paths]
         + [bucket_name]
     )
@@ -272,7 +274,9 @@ def test_modify_access_control(
     patch_keys(keys, monkeypatch)
     bucket = create_bucket()
     file = generate_test_files()[0]
-    exec_test_command(PLUGIN_CMD + ["put", str(file.resolve()), bucket])
+    exec_test_command(
+        PLUGIN_CMD + ["put", "--folder", "/", str(file.resolve()), bucket]
+    )
     file_url = f"https://{bucket}.{REGION}.linodeobjects.com/{file.name}"
     exec_test_command(
         PLUGIN_CMD + ["setacl", bucket, file.name, "--acl-public"]
@@ -299,10 +303,12 @@ def test_static_site(
     error_file = generate_test_file(static_site_error, "error.html").resolve()
     bucket = create_bucket()
     exec_test_command(
-        PLUGIN_CMD + ["put", str(index_file), bucket, "--acl-public"]
+        PLUGIN_CMD
+        + ["put", "--folder", "/", str(index_file), bucket, "--acl-public"]
     )
     exec_test_command(
-        PLUGIN_CMD + ["put", str(error_file), bucket, "--acl-public"]
+        PLUGIN_CMD
+        + ["put", "--folder", "/", str(error_file), bucket, "--acl-public"]
     )
 
     exec_test_command(
@@ -388,7 +394,9 @@ def test_generate_url(
     content = "Hello, World!"
     test_file = generate_test_file(content=content).resolve()
 
-    exec_test_command(PLUGIN_CMD + ["put", str(test_file), bucket])
+    exec_test_command(
+        PLUGIN_CMD + ["put", "--folder", "/", str(test_file), bucket]
+    )
 
     process = exec_test_command(
         PLUGIN_CMD + ["signurl", bucket, test_file.name, "+300"]
