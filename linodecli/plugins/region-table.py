@@ -20,14 +20,13 @@ def call(_, ctx):
         ("GPU Linodes", "GPU"),
         ("NodeBalancers", "NB"),
         ("Kubernetes", "K8s"),
-        ("Firewalls", "FW"),
+        ("Cloud Firewall", "FW"),
         ("Managed Databases", "DB"),
         ("Object Storage", "OBJ"),
         ("Vlans", "Vlan"),
         ("Premium Plans", "Premium"),
         ("Metadata", "Meta"),
-        ("Block Storage", "Blocks"),
-        ("Block Storage Migrations", "& Migration"),
+        ("Block Storage", "Block"),
     ]
 
     if status != 200:

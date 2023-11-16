@@ -16,7 +16,7 @@ from tests.integration.linodes.helpers_linodes import (
     wait_until,
 )
 
-timestamp = str(int(time.time()))
+timestamp = str(time.time_ns())
 linode_label = DEFAULT_LABEL + timestamp
 
 
@@ -28,7 +28,7 @@ def setup_linodes():
             + [
                 "create",
                 "--type",
-                "g6-standard-2",
+                "g6-nanode-1",
                 "--region",
                 "us-east",
                 "--image",
@@ -64,11 +64,11 @@ def test_update_linode_with_a_image():
 
 
 @pytest.mark.smoke
-def test_create_linodes_with_a_label(create_linode_with_label):
-    result = create_linode_with_label
+def test_create_linodes_with_a_label(linode_with_label):
+    result = linode_with_label
 
     assert re.search(
-        "^cli(.*),us-east,g6-standard-2," + DEFAULT_TEST_IMAGE, result
+        "^cli(.*),us-east,g6-nanode-1," + DEFAULT_TEST_IMAGE, result
     )
 
 
@@ -94,15 +94,15 @@ def test_view_linode_configuration(setup_linodes):
         linode_id
         + ","
         + linode_label
-        + ",us-east,g6-standard-2,"
+        + ",us-east,g6-nanode-1,"
         + DEFAULT_TEST_IMAGE,
         result,
     )
 
 
-def test_create_linode_with_min_required_props(create_linode_min_req):
-    result = create_linode_min_req
-    assert re.search("[0-9]+,us-east,g6-standard-2", result)
+def test_create_linode_with_min_required_props(linode_min_req):
+    result = linode_min_req
+    assert re.search("[0-9]+,us-east,g6-nanode-1", result)
 
 
 def test_create_linodes_fails_without_a_root_pass():
@@ -111,7 +111,7 @@ def test_create_linodes_fails_without_a_root_pass():
         + [
             "create",
             "--type",
-            "g6-standard-2",
+            "g6-nanode-1",
             "--region",
             "us-east",
             "--image",
@@ -124,8 +124,8 @@ def test_create_linodes_fails_without_a_root_pass():
     assert "root_pass	root_pass is required" in result
 
 
-def test_create_linode_without_image_and_not_boot(create_linode_wo_image):
-    linode_id = create_linode_wo_image
+def test_create_linode_without_image_and_not_boot(linode_wo_image):
+    linode_id = linode_wo_image
 
     wait_until(linode_id=linode_id, timeout=180, status="offline")
 

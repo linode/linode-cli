@@ -13,8 +13,8 @@ BASE_CMD = ["linode-cli", "domains"]
 
 
 @pytest.fixture
-def domain_records_setup():
-    timestamp = str(int(time.time()))
+def test_domain_and_record():
+    timestamp = str(time.time_ns())
     # Create domain
     domain_id = (
         exec_test_command(
@@ -65,7 +65,7 @@ def domain_records_setup():
 
 
 @pytest.mark.smoke
-def test_create_a_domain(create_master_domain):
+def test_create_a_domain(master_domain):
     # Current domain list
     process = exec_test_command(
         BASE_CMD + ["list", '--format="id"', "--text", "--no-header"]
@@ -73,7 +73,7 @@ def test_create_a_domain(create_master_domain):
     output_current = process.stdout.decode()
 
     # Create domain
-    domain_id = create_master_domain
+    domain_id = master_domain
 
     process = exec_test_command(
         BASE_CMD + ["list", "--format=id", "--text", "--no-header"]
@@ -88,8 +88,8 @@ def test_create_a_domain(create_master_domain):
 
 
 @pytest.mark.smoke
-def test_create_domain_srv_record(domain_records_setup):
-    domain_id = domain_records_setup[0]
+def test_create_domain_srv_record(test_domain_and_record):
+    domain_id = test_domain_and_record[0]
 
     process = exec_test_command(
         BASE_CMD
@@ -117,8 +117,8 @@ def test_create_domain_srv_record(domain_records_setup):
     )
 
 
-def test_list_srv_record(domain_records_setup):
-    domain_id = domain_records_setup[0]
+def test_list_srv_record(test_domain_and_record):
+    domain_id = test_domain_and_record[0]
     process = exec_test_command(
         BASE_CMD
         + [
@@ -138,9 +138,9 @@ def test_list_srv_record(domain_records_setup):
 
 
 @pytest.mark.smoke
-def test_view_domain_record(domain_records_setup):
-    domain_id = domain_records_setup[0]
-    record_id = domain_records_setup[1]
+def test_view_domain_record(test_domain_and_record):
+    domain_id = test_domain_and_record[0]
+    record_id = test_domain_and_record[1]
 
     process = exec_test_command(
         BASE_CMD
@@ -161,9 +161,9 @@ def test_view_domain_record(domain_records_setup):
     )
 
 
-def test_update_domain_record(domain_records_setup):
-    domain_id = domain_records_setup[0]
-    record_id = domain_records_setup[1]
+def test_update_domain_record(test_domain_and_record):
+    domain_id = test_domain_and_record[0]
+    record_id = test_domain_and_record[1]
 
     process = exec_test_command(
         BASE_CMD
@@ -185,9 +185,9 @@ def test_update_domain_record(domain_records_setup):
     )
 
 
-def test_delete_a_domain_record(domain_records_setup):
-    domain_id = domain_records_setup[0]
-    record_id = domain_records_setup[1]
+def test_delete_a_domain_record(test_domain_and_record):
+    domain_id = test_domain_and_record[0]
+    record_id = test_domain_and_record[1]
 
     process = exec_test_command(
         BASE_CMD + ["records-delete", domain_id, record_id]

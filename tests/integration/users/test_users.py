@@ -9,7 +9,7 @@ unique_user = "test-user-" + str(int(time.time()))
 
 
 @pytest.fixture(scope="package", autouse=True)
-def setup_test_users():
+def teardown_fixture():
     yield "setup"
     remove_users()
 

@@ -15,7 +15,7 @@ SSH_SLEEP_PERIOD = 50
 
 @pytest.mark.skipif(platform == "win32", reason="Test N/A on Windows")
 @pytest.fixture(scope="package")
-def test_create_a_linode_in_running_state(ssh_key_pair_generator):
+def linode_in_running_state(ssh_key_pair_generator):
     pubkey_file, privkey_file = ssh_key_pair_generator
 
     with open(pubkey_file, "r") as f:
@@ -82,9 +82,9 @@ def test_fail_to_ssh_to_nonexistent_linode():
 
 @pytest.mark.skipif(platform == "win32", reason="Test N/A on Windows")
 def test_ssh_to_linode_and_get_kernel_version(
-    test_create_a_linode_in_running_state, ssh_key_pair_generator
+    linode_in_running_state, ssh_key_pair_generator
 ):
-    linode_id = test_create_a_linode_in_running_state
+    linode_id = linode_in_running_state
     pubkey_file, privkey_file = ssh_key_pair_generator
 
     linode_label = (
@@ -120,10 +120,10 @@ def test_ssh_to_linode_and_get_kernel_version(
 
 @pytest.mark.skipif(platform == "win32", reason="Test N/A on Windows")
 def test_check_vm_for_ipv4_connectivity(
-    test_create_a_linode_in_running_state, ssh_key_pair_generator
+    linode_in_running_state, ssh_key_pair_generator
 ):
     pubkey_file, privkey_file = ssh_key_pair_generator
-    linode_id = test_create_a_linode_in_running_state
+    linode_id = linode_in_running_state
     linode_label = (
         exec_test_command(
             [

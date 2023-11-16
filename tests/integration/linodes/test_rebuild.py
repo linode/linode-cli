@@ -16,7 +16,7 @@ from tests.integration.linodes.helpers_linodes import (
 
 
 @pytest.fixture
-def setup_rebuild():
+def test_linode_id():
     linode_id = create_linode_and_wait()
 
     yield linode_id
@@ -24,8 +24,8 @@ def setup_rebuild():
     delete_target_id(target="linodes", id=linode_id)
 
 
-def test_rebuild_fails_without_image(setup_rebuild):
-    linode_id = setup_rebuild
+def test_rebuild_fails_without_image(test_linode_id):
+    linode_id = test_linode_id
 
     result = exec_failing_test_command(
         BASE_CMD
@@ -43,8 +43,8 @@ def test_rebuild_fails_without_image(setup_rebuild):
     assert "You must specify an image" in result
 
 
-def test_rebuild_fails_with_invalid_image(setup_rebuild):
-    linode_id = setup_rebuild
+def test_rebuild_fails_with_invalid_image(test_linode_id):
+    linode_id = test_linode_id
     rebuild_image = "bad/image"
 
     result = exec_failing_test_command(
@@ -68,8 +68,8 @@ def test_rebuild_fails_with_invalid_image(setup_rebuild):
     os.environ.get("RUN_LONG_TESTS", None) != "TRUE",
     reason="Skipping long-running Test, to run set RUN_LONG_TESTS=TRUE",
 )
-def test_rebuild_a_linode(setup_rebuild):
-    linode_id = setup_rebuild
+def test_rebuild_a_linode(test_linode_id):
+    linode_id = test_linode_id
     rebuild_image = (
         exec_test_command(
             [
