@@ -77,7 +77,7 @@ def upload_object(
             continue
 
     for f in files:
-        file_path = Path(f)
+        file_path = Path(f).resolve()
         if not file_path.is_file():
             sys.exit(f"No file {file_path}")
 
