@@ -13,7 +13,7 @@ ENV_LINODE_CLI_VERSION = "LINODE_CLI_VERSION"
 def get_version():
     # We want to override the version if an environment variable is specified.
     # This is useful for certain release and testing pipelines.
-    version_str = os.getenv(ENV_LINODE_CLI_VERSION, "0.0.0")
+    version_str = os.getenv(ENV_LINODE_CLI_VERSION) or "0.0.0"
 
     return parse(version_str).release
 
