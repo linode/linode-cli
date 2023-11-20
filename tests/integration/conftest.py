@@ -374,3 +374,31 @@ def nodebalancer_with_default_conf():
     res_arr = result.split(",")
     nodebalancer_id = res_arr[0]
     delete_target_id(target="nodebalancers", id=nodebalancer_id)
+
+
+def get_regions_with_capabilities(capabilities):
+    regions = (
+        exec_test_command(
+            [
+                "linode-cli",
+                "regions",
+                "ls",
+                "--text",
+                "--no-headers",
+                "--format=id,capabilities",
+            ]
+        )
+        .stdout.decode()
+        .rstrip()
+    )
+
+    regions = regions.split("\n")
+
+    regions_with_all_caps = []
+
+    for region in regions:
+        region_name = region.split()[0]
+        if all(capability in region for capability in capabilities):
+            regions_with_all_caps.append(region_name)
+
+    return regions_with_all_caps
