@@ -1,3 +1,4 @@
+import json
 import logging
 from dataclasses import dataclass
 from typing import Callable, Optional
@@ -6,16 +7,16 @@ import pytest
 import requests
 from pytest import MonkeyPatch
 
-from linodecli.configuration.auth import _do_request
 from linodecli.plugins.obj import (
     ENV_ACCESS_KEY_NAME,
     ENV_SECRET_KEY_NAME,
     TRUNCATED_MSG,
 )
 from tests.integration.fixture_types import GetTestFilesType, GetTestFileType
-from tests.integration.helpers import BASE_URL, count_lines, exec_test_command
+from tests.integration.helpers import count_lines, exec_test_command
 
 REGION = "us-southeast-1"
+CLI_CMD = ["linode-cli", "object-storage"]
 BASE_CMD = ["linode-cli", "obj", "--cluster", REGION]
 
 
@@ -50,27 +51,24 @@ def static_site_error():
 
 
 @pytest.fixture(scope="session")
-def keys(token: str):
-    response = _do_request(
-        BASE_URL,
-        requests.post,
-        "object-storage/keys",
-        token,
-        False,
-        {"label": "cli-integration-test-obj-key"},
-    )
-
+def keys():
+    response = json.loads(
+        exec_test_command(
+            CLI_CMD
+            + [
+                "keys-create",
+                "--label",
+                "cli-integration-test-obj-key",
+                "--json",
+            ],
+        ).stdout.decode()
+    )[0]
     _keys = Keys(
         access_key=response.get("access_key"),
         secret_key=response.get("secret_key"),
     )
     yield _keys
-    _do_request(
-        BASE_URL,
-        requests.delete,
-        f"object-storage/keys/{response['id']}",
-        token,
-    )
+    exec_test_command(CLI_CMD + ["keys-delete", str(response.get("id"))])
 
 
 def patch_keys(keys: Keys, monkeypatch: MonkeyPatch):
@@ -144,6 +142,51 @@ def test_obj_single_file_single_bucket(
     process = exec_test_command(
         BASE_CMD
         + ["get", bucket_name, file_path.name, str(downloaded_file_path)]
+    )
+    output = process.stdout.decode()
+    with open(downloaded_file_path) as f2, open(file_path) as f1:
+        assert f1.read() == f2.read()
+
+
+def test_obj_single_file_single_bucket_with_prefix(
+    create_bucket: Callable[[Optional[str]], str],
+    generate_test_files: GetTestFilesType,
+    keys: Keys,
+    monkeypatch: MonkeyPatch,
+):
+    patch_keys(keys, monkeypatch)
+    file_path = generate_test_files()[0]
+    bucket_name = create_bucket()
+    exec_test_command(
+        BASE_CMD + ["put", str(file_path), f"{bucket_name}/prefix"]
+    )
+    process = exec_test_command(BASE_CMD + ["la"])
+    output = process.stdout.decode()
+
+    assert f"{bucket_name}/prefix/{file_path.name}" in output
+
+    file_size = file_path.stat().st_size
+    assert str(file_size) in output
+
+    process = exec_test_command(BASE_CMD + ["ls"])
+    output = process.stdout.decode()
+    assert bucket_name in output
+    assert file_path.name not in output
+
+    process = exec_test_command(BASE_CMD + ["ls", bucket_name])
+    output = process.stdout.decode()
+    assert bucket_name not in output
+    assert "prefix" in output
+
+    downloaded_file_path = file_path.parent / f"downloaded_{file_path.name}"
+    process = exec_test_command(
+        BASE_CMD
+        + [
+            "get",
+            bucket_name,
+            "prefix/" + file_path.name,
+            str(downloaded_file_path),
+        ]
     )
     output = process.stdout.decode()
     with open(downloaded_file_path) as f2, open(file_path) as f1:
