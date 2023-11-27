@@ -451,11 +451,19 @@ def print_help(parser: ArgumentParser):
     print("See --help for individual commands for more information")
 
 
-def get_obj_args_parser():
+def get_obj_args_parser(client: CLI):
     """
     Initialize and return the argument parser for the obj plug-in.
     """
     parser = inherit_plugin_args(ArgumentParser(PLUGIN_BASE, add_help=False))
+    clusters = [
+        c["id"]
+        for c in _do_get_request(  # pylint: disable=protected-access
+            client.config.base_url,
+            "/object-storage/clusters",
+            token=client.config.get_value("token"),
+        )["data"]
+    ]
 
     parser.add_argument(
         "command",
@@ -468,6 +476,7 @@ def get_obj_args_parser():
         "--cluster",
         metavar="CLUSTER",
         type=str,
+        choices=clusters,
         help="The cluster to use for the operation",
     )
 
@@ -527,7 +536,7 @@ def call(
 
         sys.exit(2)  # requirements not met - we can't go on
 
-    parser = get_obj_args_parser()
+    parser = get_obj_args_parser(context.client)
     parsed, args = parser.parse_known_args(args)
 
     # don't mind --no-defaults if it's there; the top-level parser already took care of it
