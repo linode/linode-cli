@@ -451,7 +451,7 @@ def print_help(parser: ArgumentParser):
     print("See --help for individual commands for more information")
 
 
-def get_obj_args_parser(clusters: list[str]):
+def get_obj_args_parser(clusters: List[str]):
     """
     Initialize and return the argument parser for the obj plug-in.
     """
