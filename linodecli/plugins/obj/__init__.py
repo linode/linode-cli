@@ -78,6 +78,17 @@ TRUNCATED_MSG = (
 INVALID_PAGE_MSG = "No result to show in this page."
 
 
+def get_available_cluster(cli: CLI):
+    return [
+        c["id"]
+        for c in _do_get_request(  # pylint: disable=protected-access
+            cli.config.base_url,
+            "/object-storage/clusters",
+            token=cli.config.get_token(),
+        )["data"]
+    ]
+
+
 def flip_to_page(iterable: Iterable, page: int = 1):
     """Given a iterable object and return a specific iteration (page)"""
     iterable = iter(iterable)
@@ -528,14 +539,7 @@ def call(
 
         sys.exit(2)  # requirements not met - we can't go on
 
-    clusters = [
-        c["id"]
-        for c in _do_get_request(  # pylint: disable=protected-access
-            context.client.config.base_url,
-            "/object-storage/clusters",
-            token=context.client.config.get_value("token"),
-        )["data"]
-    ]
+    clusters = get_available_cluster(context.client)
     parser = get_obj_args_parser(clusters)
     parsed, args = parser.parse_known_args(args)
 
@@ -719,14 +723,7 @@ def _configure_plugin(client: CLI):
     """
     Configures a default cluster value.
     """
-    clusters = [
-        c["id"]
-        for c in _do_get_request(  # pylint: disable=protected-access
-            client.config.base_url,
-            "/object-storage/clusters",
-            token=client.config.get_value("token"),
-        )["data"]
-    ]
+    clusters = get_available_cluster(client)
 
     cluster = _default_thing_input(  # pylint: disable=protected-access
         "Configure a default Cluster for operations.",
