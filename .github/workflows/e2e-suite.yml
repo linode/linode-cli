@@ -41,6 +41,7 @@ jobs:
         run: |
           timestamp=$(date +'%Y%m%d%H%M')
           report_filename="${timestamp}_cli_test_report.xml"
+          echo "${{ github.event.release.tag_name }}"
           if ! pytest tests/integration --disable-warnings --junitxml="${report_filename}"; then
             echo "EXIT_STATUS=1" >> $GITHUB_ENV
           fi
@@ -52,13 +53,13 @@ jobs:
 
       - name: Add additional information to XML report
         run: |
-          echo $RELEASE_VERSION
-          echo ${{ env.RELEASE_VERSION }}
+          echo "${{ github.event.release.tag_name }}"
           filename=$(ls | grep -E '^[0-9]{12}_cli_test_report\.xml$') 
           python scripts/add_to_xml_test_report.py \
           --branch_name "${{ env.RELEASE_VERSION }}" \
           --gha_run_id "$GITHUB_RUN_ID" \
           --gha_run_number "$GITHUB_RUN_NUMBER" \
+          --release_tag "${{ github.event.release.tag_name }}" \
           --xmlfile "${filename}"
 
       - name: Upload test results
