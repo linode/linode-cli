@@ -79,6 +79,7 @@ INVALID_PAGE_MSG = "No result to show in this page."
 
 
 def get_available_cluster(cli: CLI):
+    """Get list of possible clusters for the account"""
     return [
         c["id"]
         for c in _do_get_request(  # pylint: disable=protected-access
