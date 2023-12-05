@@ -26,6 +26,9 @@ gha_run_id_element.text = args.gha_run_id
 gha_run_number_element = ET.Element('gha_run_number')
 gha_run_number_element.text = args.gha_run_number
 
+gha_run_number_element = ET.Element('release_tag')
+gha_run_number_element.text = args.gha_run_number
+
 # Add the new elements to the root of the XML
 root.append(branch_name_element)
 root.append(gha_run_id_element)
