@@ -78,6 +78,18 @@ TRUNCATED_MSG = (
 INVALID_PAGE_MSG = "No result to show in this page."
 
 
+def get_available_cluster(cli: CLI):
+    """Get list of possible clusters for the account"""
+    return [
+        c["id"]
+        for c in _do_get_request(  # pylint: disable=protected-access
+            cli.config.base_url,
+            "/object-storage/clusters",
+            token=cli.config.get_token(),
+        )["data"]
+    ]
+
+
 def flip_to_page(iterable: Iterable, page: int = 1):
     """Given a iterable object and return a specific iteration (page)"""
     iterable = iter(iterable)
@@ -451,7 +463,7 @@ def print_help(parser: ArgumentParser):
     print("See --help for individual commands for more information")
 
 
-def get_obj_args_parser():
+def get_obj_args_parser(clusters: List[str]):
     """
     Initialize and return the argument parser for the obj plug-in.
     """
@@ -468,6 +480,7 @@ def get_obj_args_parser():
         "--cluster",
         metavar="CLUSTER",
         type=str,
+        choices=clusters,
         help="The cluster to use for the operation",
     )
 
@@ -527,7 +540,8 @@ def call(
 
         sys.exit(2)  # requirements not met - we can't go on
 
-    parser = get_obj_args_parser()
+    clusters = get_available_cluster(context.client)
+    parser = get_obj_args_parser(clusters)
     parsed, args = parser.parse_known_args(args)
 
     # don't mind --no-defaults if it's there; the top-level parser already took care of it
@@ -710,14 +724,7 @@ def _configure_plugin(client: CLI):
     """
     Configures a default cluster value.
     """
-    clusters = [
-        c["id"]
-        for c in _do_get_request(  # pylint: disable=protected-access
-            client.config.base_url,
-            "/object-storage/clusters",
-            token=client.config.get_value("token"),
-        )["data"]
-    ]
+    clusters = get_available_cluster(client)
 
     cluster = _default_thing_input(  # pylint: disable=protected-access
         "Configure a default Cluster for operations.",
