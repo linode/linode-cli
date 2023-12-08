@@ -24,7 +24,7 @@ def test_volume_id():
                 "--label",
                 "A" + timestamp,
                 "--region",
-                "us-east",
+                "us-ord",
                 "--size",
                 "10",
                 "--text",

@@ -7,7 +7,7 @@ DEFAULT_RANDOM_PASS = (
     .stdout.decode()
     .rstrip()
 )
-DEFAULT_REGION = "us-east"
+DEFAULT_REGION = "us-ord"
 
 DEFAULT_TEST_IMAGE = (
     exec_test_command(
@@ -188,7 +188,7 @@ def create_linode_and_wait(
                     "--type",
                     linode_type,
                     "--region",
-                    "us-east",
+                    "us-ord",
                     "--image",
                     test_image,
                     "--root_pass",

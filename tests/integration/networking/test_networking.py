@@ -23,7 +23,7 @@ def test_linode_id():
 
 @pytest.fixture(scope="package")
 def test_linode_id_shared_ipv4():
-    target_region = "us-southeast"
+    target_region = "us-mia"
 
     linode_ids = (
         create_linode(test_region=target_region),
