@@ -26,8 +26,9 @@ class ProgressPercentage:  # pylint: disable=too-few-public-methods
         if not self.size:
             return
         self.uploaded += bytes_amount
-        percentage = self.bar_width * (self.uploaded / self.size)
-        progress = int(percentage)
+        percentage = 100 * (self.uploaded / self.size)
+        uploaded = self.bar_width * (self.uploaded / self.size)
+        progress = int(uploaded)
         progress_bar = ("#" * progress) + ("-" * (self.bar_width - progress))
         print(f"\r |{progress_bar}| {percentage:.1f}%", end="\r")
         if self.uploaded == self.size:

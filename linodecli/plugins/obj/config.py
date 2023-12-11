@@ -1,6 +1,7 @@
 """
 The config of the object storage plugin.
 """
+import shutil
 
 ENV_ACCESS_KEY_NAME = "LINODE_CLI_OBJ_ACCESS_KEY"
 ENV_SECRET_KEY_NAME = "LINODE_CLI_OBJ_SECRET_KEY"
@@ -15,7 +16,8 @@ INCOMING_DATE_FORMAT = "%Y-%m-%dT%H:%M:%S.%fZ"
 # for help commands
 PLUGIN_BASE = "linode-cli obj"
 
-PROGRESS_BAR_WIDTH = 100
+columns = shutil.get_terminal_size(fallback=(80, 24)).columns
+PROGRESS_BAR_WIDTH = columns - 20 if columns > 30 else columns
 
 # constant error messages
 NO_SCOPES_ERROR = """Your OAuth token isn't authorized to create Object Storage keys.

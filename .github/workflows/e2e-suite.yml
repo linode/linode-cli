@@ -47,16 +47,11 @@ jobs:
         env:
           LINODE_CLI_TOKEN: ${{ secrets.LINODE_TOKEN }}
 
-      - name: Set release version env
-        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
-
       - name: Add additional information to XML report
         run: |
-          echo $RELEASE_VERSION
-          echo ${{ env.RELEASE_VERSION }}
           filename=$(ls | grep -E '^[0-9]{12}_cli_test_report\.xml$') 
           python scripts/add_to_xml_test_report.py \
-          --branch_name "${{ env.RELEASE_VERSION }}" \
+          --branch_name "${GITHUB_REF#refs/*/}" \
           --gha_run_id "$GITHUB_RUN_ID" \
           --gha_run_number "$GITHUB_RUN_NUMBER" \
           --xmlfile "${filename}"

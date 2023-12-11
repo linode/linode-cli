@@ -10,21 +10,12 @@ from packaging.version import parse
 ENV_LINODE_CLI_VERSION = "LINODE_CLI_VERSION"
 
 
-def get_version_env():
-    return os.getenv(ENV_LINODE_CLI_VERSION)
-
-
-def get_version(ref="HEAD"):
+def get_version():
     # We want to override the version if an environment variable is specified.
     # This is useful for certain release and testing pipelines.
-    version_str = get_version_env() or "0.0.0"
-
-    # Strip the `v` prefix if specified
-    if version_str.startswith("v"):
-        version_str = version_str[1:]
+    version_str = os.getenv(ENV_LINODE_CLI_VERSION) or "0.0.0"
 
     return parse(version_str).release
 
 
-major, minor, patch = get_version()
-print("{}.{}.{}".format(major, minor, patch))
+print("{}.{}.{}".format(*get_version()))
