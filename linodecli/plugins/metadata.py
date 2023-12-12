@@ -28,7 +28,7 @@ def process_sub_columns(subcolumn: ResponseBase, table: Table, values_row):
             values_row.append(str(value))
 
 
-def print_metadata_table(data):
+def print_single_row(data):
     attributes = vars(data)
     values_row = []
 
@@ -44,13 +44,22 @@ def print_metadata_table(data):
     table.add_row(*values_row)
     rprint(table)
 
+def print_ssh_keys(data):
+    table = Table(show_lines=True)
+
+    table.add_column("SSH Keys")
+    for key in data.users.root:
+        table.add_row(key)
+    
+    rprint(table)
+
 
 def get_instance(client: MetadataClient):
     """
     Get information about your instance, including plan resources
     """
     data = client.get_instance()
-    print_metadata_table(data)
+    print_single_row(data)
 
 
 def get_user_data(client: MetadataClient):
@@ -66,7 +75,7 @@ def get_network(client: MetadataClient):
     Get information about your instance’s IP addresses
     """
     data = client.get_network()
-    print_metadata_table(data)
+    print_single_row(data)
 
 
 def get_ssh_keys(client: MetadataClient):
@@ -74,7 +83,7 @@ def get_ssh_keys(client: MetadataClient):
     Get information about public SSH Keys configured on your instance
     """
     data = client.get_ssh_keys()
-    print_metadata_table(data)
+    print_ssh_keys(data)
 
 
 COMMAND_MAP = {
