@@ -96,7 +96,6 @@ def call(args, context):
     )
     parser.add_argument(
         "--cloud-init",
-        metavar="CLOUD_INIT",
         action="store_true",
         help="If given, the new image will be flagged as cloud-init compatible.",
     )

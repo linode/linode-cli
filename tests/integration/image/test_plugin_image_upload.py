@@ -108,7 +108,15 @@ def test_file_upload_cloud_init(
 
     # Upload the test image
     process = exec_test_command(
-        BASE_CMD + ["--label", label, "--description", description, "--cloud-init", file_path]
+        BASE_CMD
+        + [
+            "--label",
+            label,
+            "--description",
+            description,
+            "--cloud-init",
+            file_path,
+        ]
     )
 
     assert process.returncode == 0
