@@ -95,6 +95,12 @@ def call(args, context):
         help="A description for this Image.  Blank if omitted.",
     )
     parser.add_argument(
+        "--cloud-init",
+        metavar="CLOUD_INIT",
+        action="store_true",
+        help="If given, the new image will be flagged as cloud-init compatible.",
+    )
+    parser.add_argument(
         "file",
         metavar="FILE",
         help="The image file to upload.  Should be a raw disk image "
@@ -148,6 +154,9 @@ def call(args, context):
     call_args = ["--region", parsed.region, "--label", label]
     if parsed.description:
         call_args += ["--description", parsed.description]
+
+    if parsed.cloud_init:
+        call_args += ["--cloud_init", "true"]
 
     status, resp = context.client.call_operation("images", "upload", call_args)
 
