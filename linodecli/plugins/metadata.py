@@ -28,7 +28,7 @@ def process_sub_columns(subcolumn: ResponseBase, table: Table, values_row):
             values_row.append(str(value))
 
 
-def print_single_row(data):
+def print_instance_table(data):
     attributes = vars(data)
     values_row = []
 
@@ -44,14 +44,57 @@ def print_single_row(data):
     table.add_row(*values_row)
     rprint(table)
 
-def print_ssh_keys(data):
+
+def print_ssh_keys_table(data):
     table = Table(show_lines=True)
 
-    table.add_column("SSH Keys")
+    table.add_column("ssh keys")
     for key in data.users.root:
         table.add_row(key)
-    
+
     rprint(table)
+
+
+def print_networking_tables(data):
+    interfaces = Table(title="Interfaces", show_lines=True)
+
+    interfaces.add_column("label")
+    interfaces.add_column("purpose")
+    interfaces.add_column("ipam addresses")
+
+    for interface in data.interfaces:
+        attributes = vars(interface)
+        interface_row = []
+        for _, value in attributes.items():
+            interface_row.append(str(value))
+        interfaces.add_row(*interface_row)
+
+    ipv4 = Table(title="IPv4")
+    ipv4.add_column("ip address")
+    ipv4.add_column("type")
+    attributes = vars(data.ipv4)
+    for key, value in attributes.items():
+        for address in value:
+            ipv4.add_row(*[address, key])
+
+    ipv6 = Table(title="IPv6")
+    ipv6_data = data.ipv6
+    ipv6.add_column("slaac")
+    ipv6.add_column("link local")
+    ipv6.add_column("ranges")
+    ipv6.add_column("shared ranges")
+    ipv6.add_row(
+        *[
+            ipv6_data.slaac,
+            ipv6_data.link_local,
+            str(ipv6_data.ranges),
+            str(ipv6_data.shared_ranges),
+        ]
+    )
+
+    rprint(interfaces)
+    rprint(ipv4)
+    rprint(ipv6)
 
 
 def get_instance(client: MetadataClient):
@@ -59,7 +102,7 @@ def get_instance(client: MetadataClient):
     Get information about your instance, including plan resources
     """
     data = client.get_instance()
-    print_single_row(data)
+    print_instance_table(data)
 
 
 def get_user_data(client: MetadataClient):
@@ -75,7 +118,7 @@ def get_network(client: MetadataClient):
     Get information about your instance’s IP addresses
     """
     data = client.get_network()
-    print_single_row(data)
+    print_networking_tables(data)
 
 
 def get_ssh_keys(client: MetadataClient):
@@ -83,13 +126,13 @@ def get_ssh_keys(client: MetadataClient):
     Get information about public SSH Keys configured on your instance
     """
     data = client.get_ssh_keys()
-    print_ssh_keys(data)
+    print_ssh_keys_table(data)
 
 
 COMMAND_MAP = {
     "instance": get_instance,
     "user-data": get_user_data,
-    "network": get_network,
+    "networking": get_network,
     "sshkeys": get_ssh_keys,
 }
 
@@ -115,11 +158,7 @@ def print_help(parser: argparse.ArgumentParser):
     rprint(tab)
 
 
-def call(args, context):
-    """
-    The entrypoint for this plugin
-    """
-
+def get_metadata_parser():
     parser = argparse.ArgumentParser(PLUGIN_BASE, add_help=False)
 
     parser.add_argument(
@@ -130,6 +169,15 @@ def call(args, context):
         help="The API endpoint to be called from the Metadata service.",
     )
 
+    return parser
+
+
+def call(args, context):
+    """
+    The entrypoint for this plugin
+    """
+
+    parser = get_metadata_parser()
     parsed, args = parser.parse_known_args(args)
 
     if not parsed.endpoint in COMMAND_MAP or len(args) != 0:
