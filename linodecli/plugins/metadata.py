@@ -185,14 +185,13 @@ def call(args, context):
         sys.exit(0)
 
     # make a client, but only if we weren't printing help and endpoint is valid
-    if not "--help" in args:
+    if "--help" not in args:
         try:
             client = MetadataClient()
         except ConnectTimeout:
-            print(
+            raise ConnectionError(
                 "Can't access Metadata service. Please verify that you are inside a Linode."
             )
-            sys.exit(0)
     else:
         print_help(parser)
         sys.exit(0)
