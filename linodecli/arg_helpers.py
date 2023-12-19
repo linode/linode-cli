@@ -355,7 +355,7 @@ def action_help(cli, command, action):
     print()
     print(op.summary)
     if op.docs_url:
-        print(f"API Documentation: {op.docs_url}")
+        rprint(f"API Documentation: [link={op.docs_url}]{op.docs_url}[/link]")
     print()
     if op.method == "get" and op.action == "list":
         filterable_attrs = [
