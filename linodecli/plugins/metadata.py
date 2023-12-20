@@ -20,6 +20,9 @@ PLUGIN_BASE = "linode-cli metadata"
 
 
 def process_sub_columns(subcolumn: ResponseBase, table: Table, values_row):
+    """
+    Helper method to process embedded ResponseBase objects
+    """
     for key, value in vars(subcolumn).items():
         if isinstance(value, ResponseBase):
             process_sub_columns(value, table, values_row)
@@ -29,6 +32,9 @@ def process_sub_columns(subcolumn: ResponseBase, table: Table, values_row):
 
 
 def print_instance_table(data):
+    """
+    Prints the table that contains information about the current instance
+    """
     attributes = vars(data)
     values_row = []
 
@@ -46,6 +52,9 @@ def print_instance_table(data):
 
 
 def print_ssh_keys_table(data):
+    """
+    Prints the table that contains information about the SSH keys configured for the current instance
+    """
     table = Table(show_lines=True)
 
     table.add_column("ssh keys")
@@ -56,6 +65,9 @@ def print_ssh_keys_table(data):
 
 
 def print_networking_tables(data):
+    """
+    Prints the table that contains information about the network of the current instance
+    """
     interfaces = Table(title="Interfaces", show_lines=True)
 
     interfaces.add_column("label")
@@ -139,7 +151,7 @@ COMMAND_MAP = {
 
 def print_help(parser: argparse.ArgumentParser):
     """
-    Print out the help info to the standard output.
+    Print out the help info to the standard output
     """
     parser.print_help()
 
