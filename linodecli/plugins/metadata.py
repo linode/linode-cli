@@ -53,7 +53,7 @@ def print_instance_table(data):
 
 def print_ssh_keys_table(data):
     """
-    Prints the table that contains information about the SSH keys configured for the current instance
+    Prints the table that contains information about the SSH keys for the current instance
     """
     table = Table(show_lines=True)
 
@@ -171,6 +171,9 @@ def print_help(parser: argparse.ArgumentParser):
 
 
 def get_metadata_parser():
+    """
+    Builds argparser for Metadata plug-in
+    """
     parser = argparse.ArgumentParser(PLUGIN_BASE, add_help=False)
 
     parser.add_argument(
@@ -184,7 +187,7 @@ def get_metadata_parser():
     return parser
 
 
-def call(args, context):
+def call(args, _):
     """
     The entrypoint for this plugin
     """
@@ -200,10 +203,10 @@ def call(args, context):
     if "--help" not in args:
         try:
             client = MetadataClient()
-        except ConnectTimeout:
+        except ConnectTimeout as exc:
             raise ConnectionError(
                 "Can't access Metadata service. Please verify that you are inside a Linode."
-            )
+            ) from exc
     else:
         print_help(parser)
         sys.exit(0)
