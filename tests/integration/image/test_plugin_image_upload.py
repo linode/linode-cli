@@ -10,7 +10,7 @@ import pytest
 
 from tests.integration.helpers import get_random_text
 
-REGION = "us-southeast"
+REGION = "us-iad"
 BASE_CMD = ["linode-cli", "image-upload", "--region", REGION]
 
 # A minimal gzipped image that will be accepted by the API
@@ -92,6 +92,45 @@ def test_file_upload(
     image = json.loads(process.stdout.decode())
 
     assert image[0]["label"] == label
+
+    # Delete the image
+    process = exec_test_command(["linode-cli", "images", "rm", image[0]["id"]])
+    assert process.returncode == 0
+
+
+@pytest.mark.skipif(platform == "win32", reason="Test N/A on Windows")
+def test_file_upload_cloud_init(
+    fake_image_file,
+):
+    file_path = fake_image_file
+    label = f"cli-test-{get_random_text()}"
+    description = "test description"
+
+    # Upload the test image
+    process = exec_test_command(
+        BASE_CMD
+        + [
+            "--label",
+            label,
+            "--description",
+            description,
+            "--cloud-init",
+            file_path,
+        ]
+    )
+
+    assert process.returncode == 0
+
+    # Get the new image from the API
+    process = exec_test_command(
+        ["linode-cli", "images", "ls", "--json", "--label", label]
+    )
+    assert process.returncode == 0
+
+    image = json.loads(process.stdout.decode())
+
+    assert image[0]["label"] == label
+    assert "cloud-init" in image[0]["capabilities"]
 
     # Delete the image
     process = exec_test_command(["linode-cli", "images", "rm", image[0]["id"]])
