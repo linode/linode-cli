@@ -304,10 +304,10 @@ class CLIConfig:
 
         if ENV_TOKEN_NAME in os.environ:
             print(
-                f"""Using token from {ENV_TOKEN_NAME}.
-Note that no token will be saved in your configuration file.
-    * If you lose or remove {ENV_TOKEN_NAME}.
-    * All profiles will use {ENV_TOKEN_NAME}."""
+                f"Using token from {ENV_TOKEN_NAME}.\n"
+                "Note that no token will be saved in your configuration file.\n"
+                f"    * If you lose or remove {ENV_TOKEN_NAME}.\n"
+                f"    * All profiles will use {ENV_TOKEN_NAME}.\n"
             )
             username = "DEFAULT"
             token = os.getenv(ENV_TOKEN_NAME)
@@ -315,10 +315,9 @@ Note that no token will be saved in your configuration file.
         else:
             if _check_browsers() and not self.configure_with_pat:
                 print(
-                    """
-The CLI will use its web-based authentication to log you in.
-If you prefer to supply a Personal Access Token, use `linode-cli configure --token`.
-                    """
+                    "The CLI will use its web-based authentication to log you in.\n"
+                    "If you prefer to supply a Personal Access Token,"
+                    "use `linode-cli configure --token`."
                 )
                 input(
                     "Press enter to continue. "
