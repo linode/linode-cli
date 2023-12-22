@@ -59,6 +59,8 @@ SSH_KEYS = SSHKeysResponse(
     json_data={"users": {"root": ["ssh-key-1", "ssh-key-2"]}}
 )
 
+SSH_KEYS_EMPTY = SSHKeysResponse(json_data={"users": {"root": None}})
+
 
 def test_print_help(capsys: CaptureFixture):
     with pytest.raises(SystemExit) as err:
@@ -117,3 +119,10 @@ def test_ssh_key_table(capsys: CaptureFixture):
     assert "ssh keys" in captured_text.out
     assert "ssh-key-1" in captured_text.out
     assert "ssh-key-2" in captured_text.out
+
+
+def test_empty_ssh_key_table(capsys: CaptureFixture):
+    print_ssh_keys_table(SSH_KEYS_EMPTY)
+    captured_text = capsys.readouterr()
+
+    assert "ssh keys" in captured_text.out
