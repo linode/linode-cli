@@ -14,6 +14,9 @@ jobs:
     steps:
       - name: Clone Repository
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          submodules: 'recursive'
 
       - name: Update system packages
         run: sudo apt-get update -y
@@ -50,7 +53,7 @@ jobs:
       - name: Add additional information to XML report
         run: |
           filename=$(ls | grep -E '^[0-9]{12}_cli_test_report\.xml$') 
-          python scripts/add_to_xml_test_report.py \
+          python test_scripts/add_to_xml_test_report.py \
           --branch_name "${GITHUB_REF#refs/*/}" \
           --gha_run_id "$GITHUB_RUN_ID" \
           --gha_run_number "$GITHUB_RUN_NUMBER" \
@@ -59,9 +62,8 @@ jobs:
       - name: Upload test results
         run: |
           filename=$(ls | grep -E '^[0-9]{12}_cli_test_report\.xml$')
-          linode-cli obj --cluster us-southeast-1 put "${filename}" dx-test-results
+          python3 test_scripts/test_report_upload_script.py "${filename}"
         env:
-          LINODE_CLI_TOKEN: ${{ secrets.SHARED_DX_TOKEN }}
           LINODE_CLI_OBJ_ACCESS_KEY: ${{ secrets.LINODE_CLI_OBJ_ACCESS_KEY }}
           LINODE_CLI_OBJ_SECRET_KEY: ${{ secrets.LINODE_CLI_OBJ_SECRET_KEY }}
 
