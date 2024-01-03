@@ -18,7 +18,6 @@ def exec_test_command(args: List[str]):
 def test_account_transfer():
     process = exec_test_command(["linode-cli", "account", "transfer"])
     output = process.stdout.decode()
-    print(output)
     assert "billable" in output
     assert "quota" in output
     assert "used" in output

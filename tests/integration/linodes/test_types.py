@@ -19,7 +19,6 @@ def exec_test_command(args: List[str]):
 def test_linode_type():
     process = exec_test_command(["linode-cli", "linodes", "types"])
     output = process.stdout.decode()
-    print(output)
     assert " price.hourly " in output
     assert " price.monthly " in output
     assert " region_prices " in output
