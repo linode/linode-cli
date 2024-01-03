@@ -5,18 +5,19 @@ on:
     branches: [main]
 
 jobs:
-  build:
+  publish-wiki:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Clone Repository
+        uses: actions/checkout@v3
 
       - name: Generate App Installation Token
-      id: generate_token
-      uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92 # pin@v1
-      with:
-        app_id: ${{ secrets.CLI_RELEASE_APP_ID }}
-        private_key: ${{ secrets.CLI_RELEASE_PRIVATE_KEY }}
-        repository: linode/linode-cli
+        id: generate_token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92 # pin@v1
+        with:
+          app_id: ${{ secrets.CLI_RELEASE_APP_ID }}
+          private_key: ${{ secrets.CLI_RELEASE_PRIVATE_KEY }}
+          repository: linode/linode-cli
 
       - name: Upload Documentation to Wiki
         uses: SwiftDocOrg/github-wiki-publish-action@v1
