@@ -4,3 +4,6 @@
 [submodule "test/test_helper/bats-support"]
 	path = test/test_helper/bats-support
 	url = https://github.com/ztombol/bats-support
+[submodule "tod_scripts"]
+	path = tod_scripts
+	url = https://github.com/linode/TOD-test-report-uploader.git
