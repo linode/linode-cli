@@ -179,6 +179,10 @@ class TestArgParsing:
         mocked_ops.summary = "test summary"
         mocked_ops.docs_url = "https://website.com/endpoint"
         mocked_ops.method = "post"
+        mocked_ops.samples = [
+            {"lang": "CLI", "source": "linode-cli command action\n  --foo=bar"},
+            {"lang": "CLI", "source": "linode-cli command action\n  --bar=foo"},
+        ]
 
         mocked_args = mocker.MagicMock()
         mocked_args.read_only = False
@@ -196,6 +200,13 @@ class TestArgParsing:
         assert "test summary" in captured.out
         assert "API Documentation" in captured.out
         assert "https://website.com/endpoint" in captured.out
+        assert (
+            "Example Usages: \n"
+            "  linode-cli command action\n"
+            "    --foo=bar\n\n"
+            "  linode-cli command action\n"
+            "    --bar=foo\n\n"
+        ) in captured.out
         assert "Arguments" in captured.out
         assert "test description" in captured.out
         assert "(required)" in captured.out
@@ -208,6 +219,9 @@ class TestArgParsing:
         mocked_ops.method = "get"
         mocked_ops.action = "list"
         mocked_ops.args = None
+        mocked_ops.samples = [
+            {"lang": "CLI", "source": "linode-cli command action"}
+        ]
 
         mock_attr = mocker.MagicMock()
         mock_attr.filterable = True
@@ -221,6 +235,7 @@ class TestArgParsing:
         assert "test summary" in captured.out
         assert "API Documentation" in captured.out
         assert "https://website.com/endpoint" in captured.out
+        assert "Example Usage: \n  linode-cli command action" in captured.out
         assert "Arguments" not in captured.out
         assert "filter results" in captured.out
         assert "filtername" in captured.out
