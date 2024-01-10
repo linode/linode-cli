@@ -531,6 +531,8 @@ def call(
     """
     This is called when the plugin is invoked
     """
+    is_help = "--help" in args or "-h" in args
+
     if not HAS_BOTO:
         # we can't do anything - ask for an install
         print(
@@ -540,7 +542,7 @@ def call(
 
         sys.exit(2)  # requirements not met - we can't go on
 
-    clusters = get_available_cluster(context.client)
+    clusters = get_available_cluster(context.client) if not is_help else None
     parser = get_obj_args_parser(clusters)
     parsed, args = parser.parse_known_args(args)
 
@@ -556,7 +558,7 @@ def call(
     secret_key = None
 
     # make a client, but only if we weren't printing help
-    if not "--help" in args:
+    if not is_help:
         access_key, secret_key = get_credentials(context.client)
 
     cluster = parsed.cluster
