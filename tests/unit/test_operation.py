@@ -159,6 +159,23 @@ class TestOperation:
         result = create_operation.parse_args(["--nullable_float", "456.123"])
         assert result.nullable_float == 456.123
 
+    def test_parse_args_object_list(self, create_operation):
+        result = create_operation.parse_args(
+            [
+                "--object_list.field_string", "test1", "--object_list.field_int", "123",
+                "--object_list.field_int", "456"
+            ]
+        )
+        assert result.object_list == [
+            {
+                "field_string": "test1",
+                "field_int": 123,
+            },
+            {
+                "field_int": 456,
+            }
+        ]
+
     def test_array_arg_action_basic(self):
         """
         Tests a basic array argument condition..
