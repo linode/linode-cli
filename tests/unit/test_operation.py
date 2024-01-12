@@ -162,8 +162,12 @@ class TestOperation:
     def test_parse_args_object_list(self, create_operation):
         result = create_operation.parse_args(
             [
-                "--object_list.field_string", "test1", "--object_list.field_int", "123",
-                "--object_list.field_int", "456"
+                "--object_list.field_string",
+                "test1",
+                "--object_list.field_int",
+                "123",
+                "--object_list.field_int",
+                "456",
             ]
         )
         assert result.object_list == [
@@ -173,7 +177,7 @@ class TestOperation:
             },
             {
                 "field_int": 456,
-            }
+            },
         ]
 
     def test_array_arg_action_basic(self):
