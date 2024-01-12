@@ -53,7 +53,7 @@ jobs:
       - name: Add additional information to XML report
         run: |
           filename=$(ls | grep -E '^[0-9]{12}_cli_test_report\.xml$') 
-          python test_scripts/add_to_xml_test_report.py \
+          python tod_scripts/add_to_xml_test_report.py \
           --branch_name "${GITHUB_REF#refs/*/}" \
           --gha_run_id "$GITHUB_RUN_ID" \
           --gha_run_number "$GITHUB_RUN_NUMBER" \
@@ -62,7 +62,7 @@ jobs:
       - name: Upload test results
         run: |
           filename=$(ls | grep -E '^[0-9]{12}_cli_test_report\.xml$')
-          python3 test_scripts/test_report_upload_script.py "${filename}"
+          python tod_scripts/test_report_upload_script.py "${filename}"
         env:
           LINODE_CLI_OBJ_ACCESS_KEY: ${{ secrets.LINODE_CLI_OBJ_ACCESS_KEY }}
           LINODE_CLI_OBJ_SECRET_KEY: ${{ secrets.LINODE_CLI_OBJ_SECRET_KEY }}

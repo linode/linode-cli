@@ -5,6 +5,7 @@ Argument parser for the linode CLI
 
 import os
 import sys
+import textwrap
 from importlib import import_module
 
 import requests
@@ -349,13 +350,30 @@ def action_help(cli, command, action):
     except ValueError:
         return
     print(f"linode-cli {command} {action}", end="")
+
     for param in op.params:
         pname = param.name.upper()
         print(f" [{pname}]", end="")
+
     print()
     print(op.summary)
+
     if op.docs_url:
         rprint(f"API Documentation: [link={op.docs_url}]{op.docs_url}[/link]")
+
+    if len(op.samples) > 0:
+        print()
+        print(f"Example Usage{'s' if len(op.samples) > 1 else ''}: ")
+
+        rprint(
+            *[
+                # Indent all samples for readability; strip and trailing newlines
+                textwrap.indent(v.get("source").rstrip(), "  ")
+                for v in op.samples
+            ],
+            sep="\n\n",
+        )
+
     print()
     if op.method == "get" and op.action == "list":
         filterable_attrs = [

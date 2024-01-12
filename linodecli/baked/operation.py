@@ -311,6 +311,13 @@ class OpenAPIOperation:
             )
         self.docs_url = docs_url
 
+        code_samples_ext = operation.extensions.get("code-samples")
+        self.samples = (
+            [v for v in code_samples_ext if v.get("lang").lower() == "cli"]
+            if code_samples_ext is not None
+            else []
+        )
+
     @property
     def args(self):
         """
