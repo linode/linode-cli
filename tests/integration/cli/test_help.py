@@ -10,7 +10,7 @@ def test_help_page_for_non_aliased_actions():
 
     assert "Linodes List" in output
     assert (
-        "API Documentation: https://www.linode.com/docs/api/linode-instances/#linodes-list"
+        "API Documentation: https://www.linode.com/docs/api/linode-instances/#linodes"
         in output
     )
     assert "You may filter results with:" in output
@@ -24,7 +24,7 @@ def test_help_page_for_aliased_actions():
 
     assert "Linodes List" in output
     assert (
-        "API Documentation: https://www.linode.com/docs/api/linode-instances/#linodes-list"
+        "API Documentation: https://www.linode.com/docs/api/linode-instances/#linodes"
         in output
     )
     assert "You may filter results with:" in output
