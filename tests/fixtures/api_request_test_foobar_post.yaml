@@ -104,6 +104,16 @@ components:
             type: object
             description: An arbitrary object.
             properties:
+              field_dict:
+                type: object
+                description: An arbitrary nested dict.
+                properties:
+                  nested_string:
+                    type: string
+                    description: A deeply nested string.
+                  nested_int:
+                    type: number
+                    description: A deeply nested integer.
               field_string:
                 type: string
                 description: An arbitrary field.

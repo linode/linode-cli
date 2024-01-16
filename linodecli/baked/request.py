@@ -9,7 +9,7 @@ class OpenAPIRequestArg:
     """
 
     def __init__(
-        self, name, schema, required, prefix=None, list_item=False
+        self, name, schema, required, prefix=None, list_parent=None
     ):  # pylint: disable=too-many-arguments
         """
         Parses a single Schema node into a argument the CLI can use when making
@@ -60,7 +60,12 @@ class OpenAPIRequestArg:
         self.item_type = None
 
         #: Whether the argument is a field in a nested list.
-        self.list_item = list_item
+        self.list_item = list_parent is not None
+
+        #: The name of the list this argument falls under.
+        #: This allows nested dictionaries to be specified in lists of objects.
+        #: e.g. --interfaces.ipv4.nat_1_1
+        self.list_parent = list_parent
 
         #: The path of the path element in the schema.
         self.prefix = prefix
@@ -80,7 +85,7 @@ class OpenAPIRequestArg:
             )
 
 
-def _parse_request_model(schema, prefix=None, list_of_objects=False):
+def _parse_request_model(schema, prefix=None, list_parent=None):
     """
     Parses a schema into a list of OpenAPIRequest objects
     :param schema: The schema to parse as a request model
@@ -102,7 +107,9 @@ def _parse_request_model(schema, prefix=None, list_of_objects=False):
             if v.type == "object" and not v.readOnly and v.properties:
                 # nested objects receive a prefix and are otherwise parsed normally
                 pref = prefix + "." + k if prefix else k
-                args += _parse_request_model(v, prefix=pref)
+                args += _parse_request_model(
+                    v, prefix=pref, list_parent=list_parent
+                )
             elif (
                 v.type == "array"
                 and v.items
@@ -113,7 +120,7 @@ def _parse_request_model(schema, prefix=None, list_of_objects=False):
                 # of the object in the list is its own argument
                 pref = prefix + "." + k if prefix else k
                 args += _parse_request_model(
-                    v.items, prefix=pref, list_of_objects=True
+                    v.items, prefix=pref, list_parent=pref
                 )
             else:
                 # required fields are defined in the schema above the property, so
@@ -124,7 +131,7 @@ def _parse_request_model(schema, prefix=None, list_of_objects=False):
                     required = k in schema.required
                 args.append(
                     OpenAPIRequestArg(
-                        k, v, required, prefix=prefix, list_item=list_of_objects
+                        k, v, required, prefix=prefix, list_parent=list_parent
                     )
                 )
 

@@ -420,7 +420,7 @@ class OpenAPIOperation:
                     action=ListArgumentAction,
                     type=arg_type_handler,
                 )
-                list_items.append((arg.path, arg.prefix))
+                list_items.append((arg.path, arg.list_parent))
             else:
                 if arg.datatype == "string" and arg.format == "password":
                     # special case - password input

@@ -162,22 +162,29 @@ class TestOperation:
     def test_parse_args_object_list(self, create_operation):
         result = create_operation.parse_args(
             [
+                # First object
                 "--object_list.field_string",
                 "test1",
                 "--object_list.field_int",
                 "123",
+                "--object_list.field_dict.nested_string",
+                "test2",
+                "--object_list.field_dict.nested_int",
+                "789",
+                # Second object
                 "--object_list.field_int",
                 "456",
+                "--object_list.field_dict.nested_string",
+                "test3",
             ]
         )
         assert result.object_list == [
             {
                 "field_string": "test1",
                 "field_int": 123,
+                "field_dict": {"nested_string": "test2", "nested_int": 789},
             },
-            {
-                "field_int": 456,
-            },
+            {"field_int": 456, "field_dict": {"nested_string": "test3"}},
         ]
 
     def test_array_arg_action_basic(self):
