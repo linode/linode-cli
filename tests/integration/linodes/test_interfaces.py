@@ -3,9 +3,7 @@ import time
 
 import pytest
 
-from tests.integration.conftest import (
-    create_vpc_w_subnet,
-)
+from tests.integration.conftest import create_vpc_w_subnet
 from tests.integration.helpers import delete_target_id, exec_test_command
 from tests.integration.linodes.helpers_linodes import (
     BASE_CMD,
