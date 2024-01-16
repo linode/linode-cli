@@ -455,20 +455,31 @@ class OpenAPIOperation:
         parsed,
     ):  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
         lists = {}
+
         # group list items as expected
         for arg_name, list_name in list_items:
             item_name = arg_name.split(list_name)[1][1:]
+
             if hasattr(parsed, arg_name):
                 val = getattr(parsed, arg_name) or []
                 if not val:
                     continue
+
                 if list_name not in lists:
-                    new_list = [{item_name: c} for c in val]
-                    lists[list_name] = new_list
-                else:
-                    update_list = lists[list_name]
-                    for obj, item in zip(update_list, val):
-                        obj[item_name] = item
+                    lists[list_name] = []
+
+                target_list = lists[list_name]
+
+                # If there are any additional indices not accounted for
+                # in the target list, add new objects accordingly.
+                if len(target_list) < len(val):
+                    for _ in range(len(val) - len(target_list)):
+                        target_list.append({})
+
+                # Populate each entry in the target list
+                # with each corresponding entry in val.
+                for obj, item in zip(target_list, val):
+                    obj[item_name] = item
 
         # break out list items with periods in their name into objects.  This
         # allows supporting nested lists
