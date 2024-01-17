@@ -84,14 +84,15 @@ def test_list_subnets(test_vpc_w_subnet):
 
     lines = res.splitlines()
 
-    headers = ["id", "label", "ipv4", "linodes"]
+    headers = ["id", "label", "ipv4"]
 
     for header in headers:
         assert header in lines[0]
 
     for line in lines[1:]:
+        print(line)
         assert re.match(
-            r"^(\d+),(\w+),(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\d+),", line
+            r"^(\d+),(\w+),(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\d+)$", line
         ), "String format does not match"
 
 
@@ -113,8 +114,7 @@ def test_view_subnet(test_vpc_wo_subnet, test_subnet):
         .rstrip()
     )
 
-    headers = ["id", "label", "ipv4", "linodes"]
-
+    headers = ["id", "label", "ipv4"]
     for header in headers:
         assert header in output
     assert vpc_subnet_id in output
