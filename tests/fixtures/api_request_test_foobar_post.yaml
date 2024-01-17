@@ -120,3 +120,7 @@ components:
               field_int:
                 type: number
                 description: An arbitrary field.
+              nullable_string:
+                type: string
+                description: An arbitrary nullable string.
+                nullable: true

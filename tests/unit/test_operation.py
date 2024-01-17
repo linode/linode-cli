@@ -1,7 +1,7 @@
 import argparse
 
 from linodecli.baked import operation
-from linodecli.baked.operation import ExplicitNullValue
+from linodecli.baked.operation import ExplicitEmptyListValue, ExplicitNullValue
 
 
 class TestOperation:
@@ -178,11 +178,13 @@ class TestOperation:
                 "test3",
             ]
         )
+
         assert result.object_list == [
             {
                 "field_string": "test1",
                 "field_int": 123,
                 "field_dict": {"nested_string": "test2", "nested_int": 789},
+                "nullable_string": None,  # We expect this to be filtered out later
             },
             {"field_int": 456, "field_dict": {"nested_string": "test3"}},
         ]
@@ -209,7 +211,7 @@ class TestOperation:
 
         # User wants an explicitly empty list
         result = parser.parse_args(["--foo", "[]"])
-        assert getattr(result, "foo") == []
+        assert isinstance(getattr(result, "foo"), ExplicitEmptyListValue)
 
         # User doesn't specify the list
         result = parser.parse_args([])
