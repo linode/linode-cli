@@ -1,5 +1,7 @@
-import pytest
 import textwrap
+
+import pytest
+
 from tests.integration.helpers import exec_test_command
 
 
