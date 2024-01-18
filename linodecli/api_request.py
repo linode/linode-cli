@@ -233,7 +233,7 @@ def _traverse_request_body(o: Any) -> Any:
             value = _traverse_request_body(v)
 
             # We should exclude implicit empty lists
-            if not (hasattr(value, "__len__") and len(value) < 1):
+            if not (isinstance(value, (dict, list)) and len(value) < 1):
                 result[k] = value
 
         return result
