@@ -90,7 +90,6 @@ def test_list_subnets(test_vpc_w_subnet):
         assert header in lines[0]
 
     for line in lines[1:]:
-        print(line)
         assert re.match(
             r"^(\d+),(\w+),(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\d+)$", line
         ), "String format does not match"
