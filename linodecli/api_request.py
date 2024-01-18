@@ -221,7 +221,7 @@ def _traverse_request_body(o: Any) -> Any:
             # and explicit None values are converted here.
             # See: operation.py
             # NOTE: These aren't handled at the top-level of this function
-            # because we don't want them filtered out in the step above.
+            # because we don't want them filtered out in the step below.
             if isinstance(v, ExplicitEmptyListValue):
                 result[k] = []
                 continue
