@@ -30,7 +30,7 @@ def setup_linodes():
                 "--type",
                 "g6-nanode-1",
                 "--region",
-                "us-east",
+                "us-ord",
                 "--image",
                 DEFAULT_TEST_IMAGE,
                 "--label",
@@ -68,7 +68,7 @@ def test_create_linodes_with_a_label(linode_with_label):
     result = linode_with_label
 
     assert re.search(
-        "^cli(.*),us-east,g6-nanode-1," + DEFAULT_TEST_IMAGE, result
+        "^cli(.*),us-ord,g6-nanode-1," + DEFAULT_TEST_IMAGE, result
     )
 
 
@@ -94,7 +94,7 @@ def test_view_linode_configuration(setup_linodes):
         linode_id
         + ","
         + linode_label
-        + ",us-east,g6-nanode-1,"
+        + ",us-ord,g6-nanode-1,"
         + DEFAULT_TEST_IMAGE,
         result,
     )
@@ -102,7 +102,7 @@ def test_view_linode_configuration(setup_linodes):
 
 def test_create_linode_with_min_required_props(linode_min_req):
     result = linode_min_req
-    assert re.search("[0-9]+,us-east,g6-nanode-1", result)
+    assert re.search("[0-9]+,us-ord,g6-nanode-1", result)
 
 
 def test_create_linodes_fails_without_a_root_pass():
@@ -113,7 +113,7 @@ def test_create_linodes_fails_without_a_root_pass():
             "--type",
             "g6-nanode-1",
             "--region",
-            "us-east",
+            "us-ord",
             "--image",
             DEFAULT_TEST_IMAGE,
             "--text",
