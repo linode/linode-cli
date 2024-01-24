@@ -37,7 +37,7 @@ def test_deploy_an_lke_cluster():
         + [
             "cluster-create",
             "--region",
-            "us-east",
+            "us-ord",
             "--label",
             label,
             "--node_pools.type",
@@ -58,7 +58,7 @@ def test_deploy_an_lke_cluster():
         ]
     ).stdout.decode()
 
-    assert label + ",us-east," + lke_version in result
+    assert label + ",us-ord," + lke_version in result
 
     # Sleep needed here for proper deletion of linodes that are related to lke cluster
     time.sleep(15)

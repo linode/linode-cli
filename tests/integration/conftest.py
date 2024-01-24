@@ -1,5 +1,6 @@
 # Use random integer as the start point here to avoid
 # id conflicts when multiple testings are running.
+import json
 import logging
 import os
 import subprocess
@@ -195,7 +196,7 @@ def linode_with_label():
                 "--type",
                 "g6-nanode-1",
                 "--region",
-                "us-east",
+                "us-ord",
                 "--image",
                 DEFAULT_TEST_IMAGE,
                 "--label",
@@ -232,7 +233,7 @@ def linode_min_req():
                 "--type",
                 "g6-nanode-1",
                 "--region",
-                "us-east",
+                "us-ord",
                 "--root_pass",
                 DEFAULT_RANDOM_PASS,
                 "--no-defaults",
@@ -355,7 +356,7 @@ def nodebalancer_with_default_conf():
             + [
                 "create",
                 "--region",
-                "us-east",
+                "us-ord",
                 "--text",
                 "--delimiter",
                 ",",
@@ -402,3 +403,43 @@ def get_regions_with_capabilities(capabilities):
             regions_with_all_caps.append(region_name)
 
     return regions_with_all_caps
+
+
+def create_vpc_w_subnet():
+    """
+    Creates and returns a VPC and a corresponding subnet.
+
+    This is not directly implemented as a fixture because the teardown
+    order cannot be guaranteed, causing issues when attempting to
+    assign Linodes to a VPC in a separate fixture.
+
+    See: https://github.com/pytest-dev/pytest/issues/1216
+    """
+
+    region = get_regions_with_capabilities(["VPCs"])[0]
+    vpc_label = str(time.time_ns()) + "label"
+    subnet_label = str(time.time_ns()) + "label"
+
+    vpc_json = json.loads(
+        exec_test_command(
+            [
+                "linode-cli",
+                "vpcs",
+                "create",
+                "--label",
+                vpc_label,
+                "--region",
+                region,
+                "--subnets.ipv4",
+                "10.0.0.0/24",
+                "--subnets.label",
+                subnet_label,
+                "--json",
+                "--suppress-warnings",
+            ]
+        )
+        .stdout.decode()
+        .rstrip()
+    )[0]
+
+    return vpc_json

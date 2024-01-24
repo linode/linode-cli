@@ -1,26 +1,18 @@
-name: Publish Wiki
-
+name: Publish wiki
 on:
   push:
     branches: [main]
-
+    paths:
+      - wiki/**
+      - .github/workflows/publish-wiki.yml
+concurrency:
+  group: publish-wiki
+  cancel-in-progress: true
+permissions:
+  contents: write
 jobs:
-  build:
+  publish-wiki:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-
-      - name: Generate App Installation Token
-      id: generate_token
-      uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92 # pin@v1
-      with:
-        app_id: ${{ secrets.CLI_RELEASE_APP_ID }}
-        private_key: ${{ secrets.CLI_RELEASE_PRIVATE_KEY }}
-        repository: linode/linode-cli
-
-      - name: Upload Documentation to Wiki
-        uses: SwiftDocOrg/github-wiki-publish-action@v1
-        with:
-          path: "wiki"
-        env:
-          GH_PERSONAL_ACCESS_TOKEN: ${{ steps.generate_token.outputs.token }}
+      - uses: actions/checkout@v4
+      - uses: Andrew-Chen-Wang/github-wiki-action@50650fccf3a10f741995523cf9708c53cec8912a # pin@v4.4.0

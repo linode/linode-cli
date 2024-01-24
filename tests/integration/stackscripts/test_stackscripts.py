@@ -197,7 +197,7 @@ def test_fail_to_deploy_stackscript_to_linode_from_incompatible_image(
 ):
     private_stackscript = test_stackscript_id
     linode_plan = "g6-standard-1"
-    linode_region = "us-east"
+    linode_region = "us-ord"
 
     result = exec_failing_test_command(
         [
@@ -227,7 +227,7 @@ def test_deploy_linode_from_stackscript(test_stackscript_id):
     private_stackscript = test_stackscript_id
     images = get_linode_image_lists()
     linode_plan = "g6-standard-1"
-    linode_region = "us-east"
+    linode_region = "us-ord"
 
     result = exec_test_command(
         [

@@ -2,40 +2,17 @@ import time
 
 import pytest
 
-from tests.integration.conftest import get_regions_with_capabilities
+from tests.integration.conftest import (
+    create_vpc_w_subnet,
+    get_regions_with_capabilities,
+)
 from tests.integration.helpers import delete_target_id, exec_test_command
 
 
 @pytest.fixture
 def test_vpc_w_subnet():
-    region = get_regions_with_capabilities(["VPCs"])[0]
-
-    vpc_label = str(time.time_ns()) + "label"
-
-    subnet_label = str(time.time_ns()) + "label"
-
-    vpc_id = (
-        exec_test_command(
-            [
-                "linode-cli",
-                "vpcs",
-                "create",
-                "--label",
-                vpc_label,
-                "--region",
-                region,
-                "--subnets.ipv4",
-                "10.0.0.0/24",
-                "--subnets.label",
-                subnet_label,
-                "--no-headers",
-                "--text",
-                "--format=id",
-            ]
-        )
-        .stdout.decode()
-        .rstrip()
-    )
+    vpc_json = create_vpc_w_subnet()
+    vpc_id = str(vpc_json["id"])
 
     yield vpc_id
 
