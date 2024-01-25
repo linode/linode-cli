@@ -60,6 +60,12 @@ class ExplicitNullValue:
     """
 
 
+class ExplicitEmptyListValue:
+    """
+    A special type used to explicitly pass empty lists to the API.
+    """
+
+
 def wrap_parse_nullable_value(arg_type):
     """
     A helper function to parse `null` as None for nullable CLI args.
@@ -91,9 +97,16 @@ class ArrayAction(argparse.Action):
 
         output_list = getattr(namespace, self.dest)
 
+        # If a user has already specified an [] but is specifying
+        # another value, assume "[]" was intended to be a literal.
+        if isinstance(output_list, ExplicitEmptyListValue):
+            setattr(namespace, self.dest, ["[]", values])
+            return
+
         # If the output list is empty and the user specifies a []
-        # argument, keep the list empty
+        # argument, set the list to an explicitly empty list.
         if values == "[]" and len(output_list) < 1:
+            setattr(namespace, self.dest, ExplicitEmptyListValue())
             return
 
         output_list.append(values)
