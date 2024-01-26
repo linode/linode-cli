@@ -1,0 +1,32 @@
+changelog:
+  exclude:
+    labels:
+      - ignore-for-release
+  categories:
+    - title: ⚠️  Breaking Change
+      labels:
+        - breaking-change
+    - title: 🚀 New Features
+      labels:
+        - enhancement
+    - title: 💡 Improvements
+      labels:
+        - improvement
+    - title: ⚙️  Repo/CI Improvements
+      labels:
+        - repo-ci-improvement
+    - title: 🐛 Bug Fixes
+      labels:
+        - bugfix
+    - title: 📦 Dependency Updates
+      labels:
+        - dependencies
+    - title: 📖 Documentation
+      labels:
+        - documentation
+    - title: 🧪 Testing Improvements
+      labels:
+        - testing
+    - title: Other Changes
+      labels:
+        - "*"
