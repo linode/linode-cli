@@ -6,27 +6,27 @@ changelog:
     - title: ⚠️  Breaking Change
       labels:
         - breaking-change
-    - title: 🚀 New Features
-      labels:
-        - enhancement
-    - title: 💡 Improvements
-      labels:
-        - improvement
-    - title: ⚙️  Repo/CI Improvements
-      labels:
-        - repo-ci-improvement
     - title: 🐛 Bug Fixes
       labels:
         - bugfix
-    - title: 📦 Dependency Updates
+    - title: 🚀 New Features
       labels:
-        - dependencies
-    - title: 📖 Documentation
+        - new-feature
+    - title: 💡 Improvements
       labels:
-        - documentation
+        - improvement
     - title: 🧪 Testing Improvements
       labels:
         - testing
+    - title: ⚙️  Repo/CI Improvements
+      labels:
+        - repo-ci-improvement
+    - title: 📖 Documentation
+      labels:
+        - documentation
+    - title: 📦 Dependency Updates
+      labels:
+        - dependencies
     - title: Other Changes
       labels:
         - "*"
