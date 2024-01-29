@@ -3,6 +3,7 @@ Contains wrappers for overriding certain pieces of command-handling logic.
 This allows us to easily alter per-command outputs, etc. without making
 large changes to the OpenAPI spec.
 """
+
 from typing import Dict
 
 from rich.align import Align

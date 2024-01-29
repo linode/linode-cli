@@ -1,6 +1,7 @@
 """
 The object manipulation module of CLI Plugin for handling object storage
 """
+
 import platform
 import sys
 from argparse import ArgumentParser
