@@ -21,4 +21,4 @@
   color: ff0000
 - name: ignore-for-release
   description: PRs you do not want to render in the changelog
-  color: ff0000
+  color: 7b8eac
