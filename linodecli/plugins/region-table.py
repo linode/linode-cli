@@ -2,6 +2,7 @@
 The region-table plugin displays a table output
 for the capabilities of each region.
 """
+
 import sys
 
 from rich.align import Align

@@ -1,6 +1,7 @@
 """
 CLI Operation logic
 """
+
 import argparse
 import glob
 import json

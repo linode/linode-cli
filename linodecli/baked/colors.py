@@ -1,6 +1,7 @@
 """
 Applies shell color escapes for pretty printing
 """
+
 import os
 import platform
 

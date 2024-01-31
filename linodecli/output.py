@@ -1,6 +1,7 @@
 """
 Handles formatting the output of commands used in Linode CLI
 """
+
 import copy
 import json
 from enum import Enum
@@ -157,9 +158,11 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
                 continue
 
             self.print(
-                self._scope_data_to_subtable(data, table_name)
-                if table_name is not None
-                else data,
+                (
+                    self._scope_data_to_subtable(data, table_name)
+                    if table_name is not None
+                    else data
+                ),
                 self._get_columns(table_attrs),
                 title=table_name,
                 to=to,
