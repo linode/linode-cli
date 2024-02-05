@@ -1,6 +1,7 @@
 """
 The config of the object storage plugin.
 """
+
 import shutil
 
 ENV_ACCESS_KEY_NAME = "LINODE_CLI_OBJ_ACCESS_KEY"

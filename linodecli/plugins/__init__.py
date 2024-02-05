@@ -1,6 +1,7 @@
 """
 Initialize plugins for the CLI
 """
+
 import sys
 from argparse import ArgumentParser
 from importlib import import_module

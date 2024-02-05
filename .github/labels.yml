@@ -1,0 +1,24 @@
+- name: new-feature
+  description: for new features in the changelog.
+  color: 225fee
+- name: improvement
+  description: for improvements in existing functionality in the changelog.
+  color: 22ee47
+- name: repo-ci-improvement
+  description: for improvements in the repository or CI workflow in the changelog.
+  color: c922ee
+- name: bugfix
+  description: for any bug fixes in the changelog.
+  color: ed8e21
+- name: documentation
+  description: for updates to the documentation in the changelog.
+  color: d3e1e6
+- name: testing
+  description: for updates to the testing suite in the changelog.
+  color: 933ac9
+- name: breaking-change
+  description: for breaking changes in the changelog.
+  color: ff0000
+- name: ignore-for-release
+  description: PRs you do not want to render in the changelog
+  color: 7b8eac

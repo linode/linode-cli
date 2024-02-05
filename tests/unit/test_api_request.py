@@ -12,7 +12,7 @@ import pytest
 import requests
 
 from linodecli import api_request
-from linodecli.baked.operation import ExplicitNullValue
+from linodecli.baked.operation import ExplicitEmptyListValue, ExplicitNullValue
 
 
 class TestAPIRequest:
@@ -97,6 +97,36 @@ class TestAPIRequest:
                     "region": "us-southeast",
                     "image": "linode/ubuntu21.10",
                     "nullable_int": None,
+                }
+            )
+            == result
+        )
+
+    def test_build_request_body_null_field_nested(
+        self, mock_cli, create_operation
+    ):
+        create_operation.allowed_defaults = ["region", "image"]
+        result = api_request._build_request_body(
+            mock_cli,
+            create_operation,
+            SimpleNamespace(
+                generic_arg="foo",
+                region=None,
+                image=None,
+                object_list=[{"nullable_string": ExplicitNullValue()}],
+            ),
+        )
+        assert (
+            json.dumps(
+                {
+                    "generic_arg": "foo",
+                    "region": "us-southeast",
+                    "image": "linode/ubuntu21.10",
+                    "object_list": [
+                        {
+                            "nullable_string": None,
+                        }
+                    ],
                 }
             )
             == result
@@ -517,3 +547,41 @@ class TestAPIRequest:
         headers = {}
         output = api_request._get_retry_after(headers)
         assert output == 0
+
+    def test_traverse_request_body(self):
+        result = api_request._traverse_request_body(
+            {
+                "test_string": "sdf",
+                "test_obj_list": [
+                    {
+                        "populated_field": "cool",
+                        "foo": None,
+                        "bar": ExplicitNullValue(),
+                    }
+                ],
+                "test_dict": {
+                    "foo": "bar",
+                    "bar": None,
+                    "baz": ExplicitNullValue(),
+                },
+                "cool": [],
+                "cooler": ExplicitEmptyListValue(),
+                "coolest": ExplicitNullValue(),
+            }
+        )
+
+        assert result == {
+            "test_string": "sdf",
+            "test_obj_list": [
+                {
+                    "populated_field": "cool",
+                    "bar": None,
+                }
+            ],
+            "test_dict": {
+                "foo": "bar",
+                "baz": None,
+            },
+            "cooler": [],
+            "coolest": None,
+        }

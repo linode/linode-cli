@@ -10,7 +10,7 @@ from tests.integration.helpers import (
 from tests.integration.linodes.helpers_linodes import DEFAULT_TEST_IMAGE
 
 BASE_CMD = ["linode-cli", "nodebalancers"]
-nodebalancer_created = "[0-9]+,balancer[0-9]+,us-east,[0-9]+-[0-9]+-[0-9]+-[0-9]+.ip.linodeusercontent.com,0"
+nodebalancer_created = "[0-9]+,balancer[0-9]+,us-ord,[0-9]+-[0-9]+-[0-9]+-[0-9]+.ip.linodeusercontent.com,0"
 
 
 @pytest.fixture(scope="package")
@@ -22,7 +22,7 @@ def test_node_balancers():
             + [
                 "create",
                 "--region",
-                "us-east",
+                "us-ord",
                 "--text",
                 "--delimiter",
                 ",",
@@ -64,7 +64,7 @@ def test_node_balancers():
                 "--booted",
                 "true",
                 "--region",
-                "us-east",
+                "us-ord",
                 "--type",
                 "g6-nanode-1",
                 "--private_ip",
@@ -133,7 +133,7 @@ def create_linode_to_add():
                 "--booted",
                 "true",
                 "--region",
-                "us-east",
+                "us-ord",
                 "--type",
                 "g6-nanode-1",
                 "--private_ip",
