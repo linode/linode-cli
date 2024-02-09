@@ -398,10 +398,20 @@ def action_help(cli, command, action):
                 if op.method in {"post", "put"} and arg.required
                 else ""
             )
-            nullable_fmt = " (nullable)" if arg.nullable else ""
-            print(
-                f"  --{arg.path}: {is_required}{arg.description}{nullable_fmt}"
+
+            extensions = []
+
+            if arg.format == "json":
+                extensions.append("JSON")
+
+            if arg.nullable:
+                extensions.append("nullable")
+
+            suffix = (
+                f" ({', '.join(extensions)})" if len(extensions) > 0 else ""
             )
+
+            print(f"  --{arg.path}: {is_required}{arg.description}{suffix}")
 
 
 def bake_command(cli, spec_loc):

@@ -50,6 +50,11 @@ class OpenAPIRequestArg:
             schema.extensions.get("linode-cli-format") or schema.format or None
         )
 
+        # If this is a deeply nested array we should treat it as JSON.
+        # This allows users to specify fields like --interfaces.ip_ranges.
+        if schema.type == "array" and list_parent is not None:
+            self.format = "json"
+
         #: The type accepted for this argument. This will ultimately determine what
         #: we accept in the ArgumentParser
         self.datatype = (
