@@ -57,11 +57,16 @@ def print_ssh_keys_table(data):
     """
     table = Table(show_lines=True)
 
-    table.add_column("ssh keys")
+    table.add_column("user")
+    table.add_column("ssh key")
 
-    if data.users.root is not None:
-        for key in data.users.root:
-            table.add_row(key)
+    for name, keys in data.users.items():
+        # Keys will be None if no keys are configured for the user
+        if keys is None:
+            continue
+
+        for key in keys:
+            table.add_row(name, key)
 
     rprint(table)
 
