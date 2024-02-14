@@ -184,13 +184,22 @@ class TestArgParsing:
             {"lang": "CLI", "source": "linode-cli command action\n  --bar=foo"},
         ]
 
-        mocked_args = mocker.MagicMock()
-        mocked_args.read_only = False
-        mocked_args.required = True
-        mocked_args.path = "path"
-        mocked_args.description = "test description"
-
-        mocked_ops.args = [mocked_args]
+        mocked_ops.args = [
+            mocker.MagicMock(
+                read_only=False,
+                required=True,
+                path="path",
+                description="test description",
+            ),
+            mocker.MagicMock(
+                read_only=False,
+                required=False,
+                path="path2",
+                description="test description 2",
+                format="json",
+                nullable=True,
+            ),
+        ]
 
         mock_cli.find_operation = mocker.Mock(return_value=mocked_ops)
 
@@ -209,7 +218,9 @@ class TestArgParsing:
         ) in captured.out
         assert "Arguments" in captured.out
         assert "test description" in captured.out
+        assert "test description 2" in captured.out
         assert "(required)" in captured.out
+        assert "(JSON, nullable)" in captured.out
         assert "filter results" not in captured.out
 
     def test_action_help_get_method(self, capsys, mocker, mock_cli):

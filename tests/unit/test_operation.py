@@ -1,4 +1,5 @@
 import argparse
+import json
 
 from linodecli.baked import operation
 from linodecli.baked.operation import ExplicitEmptyListValue, ExplicitNullValue
@@ -171,6 +172,8 @@ class TestOperation:
                 "test2",
                 "--object_list.field_dict.nested_int",
                 "789",
+                "--object_list.field_array",
+                json.dumps(["foo", "bar"]),
                 # Second object
                 "--object_list.field_int",
                 "456",
@@ -184,6 +187,7 @@ class TestOperation:
                 "field_string": "test1",
                 "field_int": 123,
                 "field_dict": {"nested_string": "test2", "nested_int": 789},
+                "field_array": ["foo", "bar"],
                 "nullable_string": None,  # We expect this to be filtered out later
             },
             {"field_int": 456, "field_dict": {"nested_string": "test3"}},

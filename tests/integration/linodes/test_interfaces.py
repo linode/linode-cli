@@ -47,6 +47,8 @@ def linode_with_vpc_interface():
                 "any",
                 "--interfaces.ipv4.vpc",
                 "10.0.0.5",
+                "--interfaces.ip_ranges",
+                json.dumps(["10.0.0.6/32"]),
                 "--interfaces.purpose",
                 "public",
                 "--json",
@@ -89,6 +91,7 @@ def test_with_vpc_interface(linode_with_vpc_interface):
     assert vpc_interface["vpc_id"] == vpc_json["id"]
     assert vpc_interface["ipv4"]["vpc"] == "10.0.0.5"
     assert vpc_interface["ipv4"]["nat_1_1"] == linode_json["ipv4"][0]
+    assert vpc_interface["ip_ranges"][0] == "10.0.0.6/32"
 
     assert not public_interface["primary"]
     assert public_interface["purpose"] == "public"
