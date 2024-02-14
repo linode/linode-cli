@@ -116,7 +116,9 @@ def test_ssh_key_table(capsys: CaptureFixture):
     print_ssh_keys_table(SSH_KEYS)
     captured_text = capsys.readouterr()
 
-    assert "ssh keys" in captured_text.out
+    assert "user" in captured_text.out
+    assert "ssh key" in captured_text.out
+    assert "root" in captured_text.out
     assert "ssh-key-1" in captured_text.out
     assert "ssh-key-2" in captured_text.out
 
@@ -125,4 +127,5 @@ def test_empty_ssh_key_table(capsys: CaptureFixture):
     print_ssh_keys_table(SSH_KEYS_EMPTY)
     captured_text = capsys.readouterr()
 
-    assert "ssh keys" in captured_text.out
+    assert "user" in captured_text.out
+    assert "ssh key" in captured_text.out
