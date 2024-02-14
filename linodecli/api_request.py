@@ -7,7 +7,7 @@ import json
 import sys
 import time
 from sys import version_info
-from typing import Iterable, List, Optional
+from typing import Any, Iterable, List, Optional
 
 import requests
 from packaging import version
@@ -15,7 +15,11 @@ from requests import Response
 
 from linodecli.helpers import API_CA_PATH
 
-from .baked.operation import ExplicitNullValue, OpenAPIOperation
+from .baked.operation import (
+    ExplicitEmptyListValue,
+    ExplicitNullValue,
+    OpenAPIOperation,
+)
 from .helpers import handle_url_overrides
 
 
@@ -199,6 +203,47 @@ def _build_request_url(ctx, operation, parsed_args) -> str:
     return result
 
 
+def _traverse_request_body(o: Any) -> Any:
+    """
+    This function traverses is intended to be called immediately before
+    request body serialization and contains special handling for dropping
+    keys with null values and translating ExplicitNullValue instances into
+    serializable null values.
+    """
+    if isinstance(o, dict):
+        result = {}
+        for k, v in o.items():
+            # Implicit null values should be dropped from the request
+            if v is None:
+                continue
+
+            # Values that are expected to be serialized as empty lists
+            # and explicit None values are converted here.
+            # See: operation.py
+            # NOTE: These aren't handled at the top-level of this function
+            # because we don't want them filtered out in the step below.
+            if isinstance(v, ExplicitEmptyListValue):
+                result[k] = []
+                continue
+
+            if isinstance(v, ExplicitNullValue):
+                result[k] = None
+                continue
+
+            value = _traverse_request_body(v)
+
+            # We should exclude implicit empty lists
+            if not (isinstance(value, (dict, list)) and len(value) < 1):
+                result[k] = value
+
+        return result
+
+    if isinstance(o, list):
+        return [_traverse_request_body(v) for v in o]
+
+    return o
+
+
 def _build_request_body(ctx, operation, parsed_args) -> Optional[str]:
     if operation.method == "get":
         # Get operations don't have a body
@@ -208,24 +253,10 @@ def _build_request_body(ctx, operation, parsed_args) -> Optional[str]:
     if ctx.defaults:
         parsed_args = ctx.config.update(parsed_args, operation.allowed_defaults)
 
-    to_json = {}
-
-    for k, v in vars(parsed_args).items():
-        # Skip null values
-        if v is None:
-            continue
-
-        # Explicitly include ExplicitNullValues
-        if isinstance(v, ExplicitNullValue):
-            to_json[k] = None
-            continue
-
-        to_json[k] = v
-
     expanded_json = {}
 
     # expand paths
-    for k, v in to_json.items():
+    for k, v in vars(parsed_args).items():
         cur = expanded_json
         for part in k.split(".")[:-1]:
             if part not in cur:
@@ -233,7 +264,7 @@ def _build_request_body(ctx, operation, parsed_args) -> Optional[str]:
             cur = cur[part]
         cur[k.split(".")[-1]] = v
 
-    return json.dumps(expanded_json)
+    return json.dumps(_traverse_request_body(expanded_json))
 
 
 def _print_request_debug_info(method, url, headers, body):
