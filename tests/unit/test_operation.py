@@ -1,4 +1,6 @@
 import argparse
+import contextlib
+import io
 import json
 
 from linodecli.baked import operation
@@ -192,6 +194,52 @@ class TestOperation:
             },
             {"field_int": 456, "field_dict": {"nested_string": "test3"}},
         ]
+
+    def test_parse_args_object_list_json(self, create_operation):
+        expected = [
+            {
+                "field_string": "test1",
+                "field_int": 123,
+                "field_dict": {"nested_string": "test2", "nested_int": 789},
+                "field_array": ["foo", "bar"],
+            },
+            {"field_int": 456, "field_dict": {"nested_string": "test3"}},
+        ]
+
+        result = create_operation.parse_args(
+            ["--object_list", json.dumps(expected)]
+        )
+
+        assert result.object_list == expected
+
+    def test_parse_args_conflicting_parent_child(self, create_operation):
+        stderr_buf = io.StringIO()
+
+        try:
+            with contextlib.redirect_stderr(stderr_buf):
+                create_operation.parse_args(
+                    [
+                        "--object_list",
+                        "[]",
+                        "--object_list.field_string",
+                        "test",
+                        "--object_list.field_int",
+                        "123",
+                        "--object_list.field_dict.nested_string",
+                        "cool",
+                    ]
+                )
+        except SystemExit as sys_exit:
+            assert sys_exit.code == 2
+        else:
+            raise RuntimeError("Expected system exit, got none")
+
+        stderr_result = stderr_buf.getvalue()
+        assert (
+            "Argument(s) --object_list.field_dict.nested_string, --object_list.field_string, "
+            "--object_list.field_int cannot be specified when --object_list is specified."
+            in stderr_result
+        )
 
     def test_array_arg_action_basic(self):
         """

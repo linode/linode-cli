@@ -10,7 +10,7 @@ import re
 import sys
 from getpass import getpass
 from os import environ, path
-from typing import List, Tuple
+from typing import Any, List, Tuple
 
 from openapi3.paths import Operation
 
@@ -427,14 +427,14 @@ class OpenAPIOperation:
                     action=ArrayAction,
                     type=arg_type_handler,
                 )
-            elif arg.list_item:
+            elif arg.is_child:
                 parser.add_argument(
                     "--" + arg.path,
                     metavar=arg.name,
                     action=ListArgumentAction,
                     type=arg_type_handler,
                 )
-                list_items.append((arg.path, arg.list_parent))
+                list_items.append((arg.path, arg.parent))
             else:
                 if arg.datatype == "string" and arg.format == "password":
                     # special case - password input
@@ -463,10 +463,55 @@ class OpenAPIOperation:
 
         return list_items
 
+    def _validate_parent_child_conflicts(self, parsed: argparse.Namespace):
+        """
+        This method validates that no child arguments (e.g. --interfaces.purpose) are
+        specified alongside their parent (e.g. --interfaces).
+        """
+        conflicts = {}
+
+        for arg in self.args:
+            parent = arg.parent
+            arg_value = getattr(parsed, arg.path, None)
+
+            if parent is None or arg_value is None:
+                print(arg.path, parent, arg_value)
+                continue
+
+            # Special case to ignore child arguments that are not specified
+            # but are implicitly populated by ListArgumentAction.
+            if isinstance(arg_value, list) and arg_value.count(None) == len(
+                arg_value
+            ):
+                continue
+
+            # If the parent isn't defined, we can
+            # skip this one
+            if getattr(parsed, parent) is None:
+                continue
+
+            if parent not in conflicts:
+                conflicts[parent] = []
+
+            # We found a conflict
+            conflicts[parent].append(arg)
+
+        # No conflicts found
+        if len(conflicts) < 1:
+            return
+
+        for parent, args in conflicts.items():
+            arg_format = ", ".join([f"--{v.path}" for v in args])
+            print(
+                f"Argument(s) {arg_format} cannot be specified when --{parent} is specified.",
+                file=sys.stderr,
+            )
+
+        sys.exit(2)
+
     @staticmethod
     def _handle_list_items(
-        list_items,
-        parsed,
+        list_items: List[Tuple[str, str]], parsed: Any
     ):  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
         lists = {}
 
@@ -563,4 +608,9 @@ class OpenAPIOperation:
         elif self.method in ("post", "put"):
             list_items = self._add_args_post_put(parser)
 
-        return self._handle_list_items(list_items, parser.parse_args(args))
+        parsed = parser.parse_args(args)
+
+        if self.method in ("post", "put"):
+            self._validate_parent_child_conflicts(parsed)
+
+        return self._handle_list_items(list_items, parsed)
