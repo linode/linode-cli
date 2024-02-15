@@ -8,6 +8,7 @@ import json
 import platform
 import re
 import sys
+from collections import defaultdict
 from getpass import getpass
 from os import environ, path
 from typing import Any, List, Tuple
@@ -468,7 +469,7 @@ class OpenAPIOperation:
         This method validates that no child arguments (e.g. --interfaces.purpose) are
         specified alongside their parent (e.g. --interfaces).
         """
-        conflicts = {}
+        conflicts = defaultdict(list)
 
         for arg in self.args:
             parent = arg.parent
@@ -488,9 +489,6 @@ class OpenAPIOperation:
             # skip this one
             if getattr(parsed, parent) is None:
                 continue
-
-            if parent not in conflicts:
-                conflicts[parent] = []
 
             # We found a conflict
             conflicts[parent].append(arg)
