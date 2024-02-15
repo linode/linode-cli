@@ -475,7 +475,6 @@ class OpenAPIOperation:
             arg_value = getattr(parsed, arg.path, None)
 
             if parent is None or arg_value is None:
-                print(arg.path, parent, arg_value)
                 continue
 
             # Special case to ignore child arguments that are not specified
