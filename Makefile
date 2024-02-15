@@ -20,8 +20,12 @@ install: check-prerequisites requirements build
 
 .PHONY: bake
 bake: clean
+ifeq ($(SKIP_BAKE), 1)
+	@echo Skipping bake stage
+else
 	python3 -m linodecli bake ${SPEC} --skip-config
 	cp data-3 linodecli/
+endif
 
 .PHONY: build
 build: clean bake
