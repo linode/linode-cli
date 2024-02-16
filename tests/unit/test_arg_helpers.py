@@ -220,7 +220,7 @@ class TestArgParsing:
         assert "test description" in captured.out
         assert "test description 2" in captured.out
         assert "(required)" in captured.out
-        assert "(JSON, nullable)" in captured.out
+        assert "(JSON, nullable, conflicts with children)" in captured.out
         assert "filter results" not in captured.out
 
     def test_action_help_get_method(self, capsys, mocker, mock_cli):
