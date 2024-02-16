@@ -95,6 +95,13 @@ class OpenAPIRequestArg:
         if self.datatype == "array" and schema.items:
             self.item_type = schema.items.type
 
+        # make sure we're not doing something wrong
+        if self.item_type == "object":
+            raise ValueError(
+                "Invalid OpenAPIRequestArg creation; created arg for base object "
+                "instead of object's properties!  This is a programming error."
+            )
+
 
 def _parse_request_model(schema, prefix=None, parent=None):
     """
@@ -119,22 +126,10 @@ def _parse_request_model(schema, prefix=None, parent=None):
                 # nested objects receive a prefix and are otherwise parsed normally
                 pref = prefix + "." + k if prefix else k
 
-                # Support specifying this object as JSON
-                args.append(
-                    OpenAPIRequestArg(
-                        k,
-                        v,
-                        False,
-                        prefix=prefix,
-                        is_parent=True,
-                        parent=parent,
-                    )
-                )
-
                 args += _parse_request_model(
                     v,
                     prefix=pref,
-                    parent=parent if parent is not None else pref,
+                    parent=parent,
                 )
             elif (
                 v.type == "array"
