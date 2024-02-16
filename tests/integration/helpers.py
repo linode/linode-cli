@@ -1,4 +1,3 @@
-import os
 import random
 import subprocess
 import time
@@ -10,8 +9,6 @@ INVALID_HOST = "https://wrongapi.linode.com"
 SUCCESS_STATUS_CODE = 0
 FAILED_STATUS_CODE = 256
 COMMAND_JSON_OUTPUT = ["--suppress-warnings", "--no-defaults", "--json"]
-TEST_COMMAND_ENV = os.environ.copy()
-TEST_COMMAND_ENV["LINODE_CLI_API_VERSION"] = "v4beta"
 
 
 def get_random_text(length: int = 10):
@@ -32,13 +29,13 @@ def wait_for_condition(interval: int, timeout: int, condition: Callable):
 
 
 def exec_test_command(args: List[str]):
-    process = subprocess.run(args, stdout=subprocess.PIPE, env=TEST_COMMAND_ENV)
+    process = subprocess.run(args, stdout=subprocess.PIPE)
     assert process.returncode == 0
     return process
 
 
 def exec_failing_test_command(args: List[str], expected_code: int = 1):
-    process = subprocess.run(args, stderr=subprocess.PIPE, env=TEST_COMMAND_ENV)
+    process = subprocess.run(args, stderr=subprocess.PIPE)
     assert process.returncode == expected_code
     return process
 
