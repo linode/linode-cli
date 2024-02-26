@@ -199,4 +199,8 @@ class CLI:  # pylint: disable=too-many-instance-attributes
         """
         Returns the User-Agent to use when making API requests.
         """
-        return f"linode-cli/{self.version} linode-api-docs/{self.spec_version} python/{version_info[0]}.{version_info[1]}.{version_info[2]}"
+        return (
+            f"linode-cli/{self.version} "
+            f"linode-api-docs/{self.spec_version} "
+            f"python/{version_info[0]}.{version_info[1]}.{version_info[2]}"
+        )
