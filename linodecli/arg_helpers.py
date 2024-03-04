@@ -341,7 +341,7 @@ def help_with_ops(ops, config):
     )
 
 
-def action_help(cli, command, action):
+def action_help(cli, command, action):  # pylint: disable=too-many-branches
     """
     Prints help relevant to the command and action
     """
@@ -398,10 +398,23 @@ def action_help(cli, command, action):
                 if op.method in {"post", "put"} and arg.required
                 else ""
             )
-            nullable_fmt = " (nullable)" if arg.nullable else ""
-            print(
-                f"  --{arg.path}: {is_required}{arg.description}{nullable_fmt}"
+
+            extensions = []
+
+            if arg.format == "json":
+                extensions.append("JSON")
+
+            if arg.nullable:
+                extensions.append("nullable")
+
+            if arg.is_parent:
+                extensions.append("conflicts with children")
+
+            suffix = (
+                f" ({', '.join(extensions)})" if len(extensions) > 0 else ""
             )
+
+            print(f"  --{arg.path}: {is_required}{arg.description}{suffix}")
 
 
 def bake_command(cli, spec_loc):

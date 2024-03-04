@@ -9,7 +9,13 @@ class OpenAPIRequestArg:
     """
 
     def __init__(
-        self, name, schema, required, prefix=None, list_parent=None
+        self,
+        name,
+        schema,
+        required,
+        prefix=None,
+        is_parent=False,
+        parent=None,
     ):  # pylint: disable=too-many-arguments
         """
         Parses a single Schema node into a argument the CLI can use when making
@@ -23,6 +29,10 @@ class OpenAPIRequestArg:
         :param prefix: The prefix for this arg's path, used in the actual argument
                        to the CLI to ensure unique arg names
         :type prefix: str
+        :param is_parent: Whether this argument is a parent to child fields.
+        :type is_parent: bool
+        :param parent: If applicable, the path to the parent list for this argument.
+        :type parent: Optional[str]
         """
         #: The name of this argument, mostly used for display and docs
         self.name = name
@@ -50,6 +60,11 @@ class OpenAPIRequestArg:
             schema.extensions.get("linode-cli-format") or schema.format or None
         )
 
+        # If this is a deeply nested array we should treat it as JSON.
+        # This allows users to specify fields like --interfaces.ip_ranges.
+        if is_parent or (schema.type == "array" and parent is not None):
+            self.format = "json"
+
         #: The type accepted for this argument. This will ultimately determine what
         #: we accept in the ArgumentParser
         self.datatype = (
@@ -59,13 +74,16 @@ class OpenAPIRequestArg:
         #: The type of item accepted in this list; if None, this is not a list
         self.item_type = None
 
-        #: Whether the argument is a field in a nested list.
-        self.list_item = list_parent is not None
+        #: Whether the argument is a parent to child fields.
+        self.is_parent = is_parent
+
+        #: Whether the argument is a nested field.
+        self.is_child = parent is not None
 
         #: The name of the list this argument falls under.
         #: This allows nested dictionaries to be specified in lists of objects.
         #: e.g. --interfaces.ipv4.nat_1_1
-        self.list_parent = list_parent
+        self.parent = parent
 
         #: The path of the path element in the schema.
         self.prefix = prefix
@@ -85,7 +103,7 @@ class OpenAPIRequestArg:
             )
 
 
-def _parse_request_model(schema, prefix=None, list_parent=None):
+def _parse_request_model(schema, prefix=None, parent=None):
     """
     Parses a schema into a list of OpenAPIRequest objects
     :param schema: The schema to parse as a request model
@@ -107,8 +125,11 @@ def _parse_request_model(schema, prefix=None, list_parent=None):
             if v.type == "object" and not v.readOnly and v.properties:
                 # nested objects receive a prefix and are otherwise parsed normally
                 pref = prefix + "." + k if prefix else k
+
                 args += _parse_request_model(
-                    v, prefix=pref, list_parent=list_parent
+                    v,
+                    prefix=pref,
+                    parent=parent,
                 )
             elif (
                 v.type == "array"
@@ -119,9 +140,20 @@ def _parse_request_model(schema, prefix=None, list_parent=None):
                 # handle lists of objects as a special case, where each property
                 # of the object in the list is its own argument
                 pref = prefix + "." + k if prefix else k
-                args += _parse_request_model(
-                    v.items, prefix=pref, list_parent=pref
+
+                # Support specifying this list as JSON
+                args.append(
+                    OpenAPIRequestArg(
+                        k,
+                        v.items,
+                        False,
+                        prefix=prefix,
+                        is_parent=True,
+                        parent=parent,
+                    )
                 )
+
+                args += _parse_request_model(v.items, prefix=pref, parent=pref)
             else:
                 # required fields are defined in the schema above the property, so
                 # we have to check here if required fields are defined/if this key
@@ -131,7 +163,7 @@ def _parse_request_model(schema, prefix=None, list_parent=None):
                     required = k in schema.required
                 args.append(
                     OpenAPIRequestArg(
-                        k, v, required, prefix=prefix, list_parent=list_parent
+                        k, v, required, prefix=prefix, parent=parent
                     )
                 )
 
