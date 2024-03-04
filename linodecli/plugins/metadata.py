@@ -194,7 +194,7 @@ def get_metadata_parser():
     return parser
 
 
-def call(args, _):
+def call(args, context):
     """
     The entrypoint for this plugin
     """
@@ -209,7 +209,7 @@ def call(args, _):
     # make a client, but only if we weren't printing help and endpoint is valid
     if "--help" not in args:
         try:
-            client = MetadataClient()
+            client = MetadataClient(user_agent=context.client.user_agent)
         except ConnectTimeout as exc:
             raise ConnectionError(
                 "Can't access Metadata service. Please verify that you are inside a Linode."

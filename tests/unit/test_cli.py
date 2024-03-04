@@ -73,6 +73,11 @@ class TestCLI:
             mock_cli.find_operation("foo", "cool")
             mock_cli.find_operation("cool", "cool")
 
+    def test_user_agent(self, mock_cli: CLI):
+        assert re.compile(
+            r"linode-cli/[0-9]+\.[0-9]+\.[0-9]+ linode-api-docs/[0-9]+\.[0-9]+\.[0-9]+ python/[0-9]+\.[0-9]+\.[0-9]+"
+        ).match(mock_cli.user_agent)
+
 
 def test_get_all_pages(
     mock_cli: CLI, list_operation: OpenAPIOperation, monkeypatch: MonkeyPatch

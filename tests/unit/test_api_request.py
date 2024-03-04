@@ -337,6 +337,7 @@ class TestAPIRequest:
                     ]
                 }
             )
+            assert headers["User-Agent"] == mock_cli.user_agent
             assert "Authorization" in headers
             assert data is None
 
