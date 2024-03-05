@@ -1,3 +1,8 @@
+"""
+This module contains various helper functions related to outputting
+help pages.
+"""
+
 import re
 import textwrap
 from collections import defaultdict
@@ -10,6 +15,7 @@ from rich.padding import Padding
 from rich.table import Table
 
 from linodecli import plugins
+from linodecli.baked import OpenAPIOperation
 from linodecli.baked.request import OpenAPIRequestArg
 
 HELP_ENV_VARS = {
@@ -24,101 +30,6 @@ HELP_ENV_VARS = {
     "LINODE_CLI_API_SCHEME": "Overrides the target scheme used for API requests. "
     "(e.g. 'https')",
 }
-
-
-def print_help_action(
-    cli: "CLI", command: Optional[str], action: Optional[str]
-):
-    """
-    Prints help relevant to the command and action
-    """
-    try:
-        op = cli.find_operation(command, action)
-    except ValueError:
-        return
-
-    console = Console(highlight=False)
-
-    console.print(f"[bold]linode-cli {command} {action}[/]", end="")
-
-    for param in op.params:
-        pname = param.name.upper()
-        console.print(f" [{pname}]", end="")
-
-    console.print()
-    console.print(f"[bold]{op.summary}[/]")
-
-    if op.docs_url:
-        console.print(
-            f"[bold]API Documentation: [link={op.docs_url}]{op.docs_url}[/link][/]"
-        )
-
-    if len(op.samples) > 0:
-        console.print()
-        console.print(
-            f"[bold]Example Usage{'s' if len(op.samples) > 1 else ''}: [/]"
-        )
-
-        console.print(
-            *[
-                # Indent all samples for readability; strip and trailing newlines
-                textwrap.indent(v.get("source").rstrip(), "  ")
-                for v in op.samples
-            ],
-            sep="\n\n",
-            highlight=True,
-        )
-
-    console.print()
-    if op.method == "get" and op.action == "list":
-        filterable_attrs = [
-            attr for attr in op.response_model.attrs if attr.filterable
-        ]
-
-        if filterable_attrs:
-            console.print("[bold]You may filter results with:[/]")
-            for attr in filterable_attrs:
-                console.print(f"  [bold magenta]--{attr.name}[/]")
-
-            console.print(
-                "\nAdditionally, you may order results using --order-by and --order."
-            )
-        return
-
-    if op.args:
-        console.print("[bold]Arguments:[/]")
-
-        for group in _help_group_arguments(op.args):
-            for arg in group:
-                metadata = []
-
-                if op.method in {"post", "put"} and arg.required:
-                    metadata.append("required")
-
-                if arg.format == "json":
-                    metadata.append("JSON")
-
-                if arg.nullable:
-                    metadata.append("nullable")
-
-                if arg.is_parent:
-                    metadata.append("conflicts with children")
-
-                prefix = (
-                    f" ({', '.join(metadata)})" if len(metadata) > 0 else ""
-                )
-
-                description = _markdown_links_to_rich(
-                    arg.description.replace("\n", " ").replace("\r", " ")
-                )
-
-                arg_str = f"[bold magenta]--{arg.path}[/][bold]{prefix}[/]: {description}"
-
-                console.print(
-                    Padding.indent(arg_str.rstrip(), (arg.depth * 2) + 2)
-                )
-
-            console.print()
 
 
 # pylint: disable=too-many-locals
@@ -201,6 +112,117 @@ def print_help_default(ops, config):
         "For comprehensive documentation, "
         "visit https://www.linode.com/docs/api/"
     )
+
+
+def print_help_action(
+    cli: "CLI", command: Optional[str], action: Optional[str]
+):
+    """
+    Prints help relevant to the command and action
+    """
+    try:
+        op = cli.find_operation(command, action)
+    except ValueError:
+        return
+
+    console = Console(highlight=False)
+
+    console.print(f"[bold]linode-cli {command} {action}[/]", end="")
+
+    for param in op.params:
+        pname = param.name.upper()
+        console.print(f" [{pname}]", end="")
+
+    console.print()
+    console.print(f"[bold]{op.summary}[/]")
+
+    if op.docs_url:
+        console.print(
+            f"[bold]API Documentation: [link={op.docs_url}]{op.docs_url}[/link][/]"
+        )
+
+    if len(op.samples) > 0:
+        console.print()
+        console.print(
+            f"[bold]Example Usage{'s' if len(op.samples) > 1 else ''}: [/]"
+        )
+
+        console.print(
+            *[
+                # Indent all samples for readability; strip and trailing newlines
+                textwrap.indent(v.get("source").rstrip(), "  ")
+                for v in op.samples
+            ],
+            sep="\n\n",
+            highlight=True,
+        )
+
+    console.print()
+
+    if op.method == "get" and op.action == "list":
+        return _help_action_print_filter_args(console, op)
+
+    if op.args:
+        _help_action_print_body_args(console, op)
+
+
+def _help_action_print_filter_args(console: Console, op: OpenAPIOperation):
+    """
+    Pretty-prints all the filter (GET) arguments for this operation.
+    """
+
+    filterable_attrs = [
+        attr for attr in op.response_model.attrs if attr.filterable
+    ]
+
+    if filterable_attrs:
+        console.print("[bold]You may filter results with:[/]")
+        for attr in filterable_attrs:
+            console.print(f"  [bold magenta]--{attr.name}[/]")
+
+        console.print(
+            "\nAdditionally, you may order results using --order-by and --order."
+        )
+
+
+def _help_action_print_body_args(
+    console: Console,
+    op: OpenAPIOperation,
+):
+    """
+    Pretty-prints all the body (POST/PUT) arguments for this operation.
+    """
+    console.print("[bold]Arguments:[/]")
+
+    for group in _help_group_arguments(op.args):
+        for arg in group:
+            metadata = []
+
+            if op.method in {"post", "put"} and arg.required:
+                metadata.append("required")
+
+            if arg.format == "json":
+                metadata.append("JSON")
+
+            if arg.nullable:
+                metadata.append("nullable")
+
+            if arg.is_parent:
+                metadata.append("conflicts with children")
+
+            prefix = f" ({', '.join(metadata)})" if len(metadata) > 0 else ""
+
+            description = _markdown_links_to_rich(
+                arg.description.replace("\n", " ").replace("\r", " ")
+            )
+
+            arg_str = (
+                f"[bold magenta]--{arg.path}[/][bold]{prefix}[/]: {description}"
+            )
+
+            console.print(Padding.indent(arg_str.rstrip(), (arg.depth * 2) + 2))
+
+        console.print()
 
 
 def _help_group_arguments(
