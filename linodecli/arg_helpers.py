@@ -12,6 +12,8 @@ import requests
 import yaml
 from rich import box
 from rich import print as rprint
+from rich.console import Console
+from rich.padding import Padding
 from rich.table import Table
 
 from linodecli import plugins
@@ -340,8 +342,7 @@ def help_with_ops(ops, config):
         "visit https://www.linode.com/docs/api/"
     )
 
-
-def action_help(cli, command, action):  # pylint: disable=too-many-branches
+def action_help(cli, command, action):
     """
     Prints help relevant to the command and action
     """
@@ -349,72 +350,112 @@ def action_help(cli, command, action):  # pylint: disable=too-many-branches
         op = cli.find_operation(command, action)
     except ValueError:
         return
-    print(f"linode-cli {command} {action}", end="")
+
+    console = Console(highlight=False)
+
+    console.print(f"[bold]linode-cli {command} {action}[/]", end="")
 
     for param in op.params:
         pname = param.name.upper()
-        print(f" [{pname}]", end="")
+        console.print(f" [{pname}]", end="")
 
-    print()
-    print(op.summary)
+    console.print()
+    console.print(f"[bold]{op.summary}[/]")
 
     if op.docs_url:
-        rprint(f"API Documentation: [link={op.docs_url}]{op.docs_url}[/link]")
+        console.print(
+            f"[bold]API Documentation: [link={op.docs_url}]{op.docs_url}[/link][/]"
+        )
 
     if len(op.samples) > 0:
-        print()
-        print(f"Example Usage{'s' if len(op.samples) > 1 else ''}: ")
+        console.print()
+        console.print(
+            f"[bold]Example Usage{'s' if len(op.samples) > 1 else ''}: [/]"
+        )
 
-        rprint(
+        console.print(
             *[
                 # Indent all samples for readability; strip and trailing newlines
                 textwrap.indent(v.get("source").rstrip(), "  ")
                 for v in op.samples
             ],
             sep="\n\n",
+            highlight=True,
         )
 
-    print()
+    console.print()
     if op.method == "get" and op.action == "list":
         filterable_attrs = [
             attr for attr in op.response_model.attrs if attr.filterable
         ]
 
         if filterable_attrs:
-            print("You may filter results with:")
+            console.print("[bold]You may filter results with:[/]")
             for attr in filterable_attrs:
-                print(f"  --{attr.name}")
-            print(
-                "Additionally, you may order results using --order-by and --order."
+                console.print(f"  [bold magenta]--{attr.name}[/]")
+
+            console.print(
+                "\nAdditionally, you may order results using --order-by and --order."
             )
         return
+
     if op.args:
-        print("Arguments:")
-        for arg in sorted(op.args, key=lambda s: not s.required):
+        console.print("[bold]Arguments:[/]")
+
+        groups = {}
+
+        # Group arguments by parent
+        for arg in op.args:
             if arg.read_only:
                 continue
-            is_required = (
-                "(required) "
-                if op.method in {"post", "put"} and arg.required
-                else ""
-            )
 
-            extensions = []
+            prefix = arg.path.split(".", 1)[0]
 
-            if arg.format == "json":
-                extensions.append("JSON")
+            if prefix not in groups:
+                groups[prefix] = []
 
-            if arg.nullable:
-                extensions.append("nullable")
+            groups[prefix].append(arg)
 
-            if arg.is_parent:
-                extensions.append("conflicts with children")
+        independent_group = [
+            group[0] for group in groups.values() if len(group) == 1
+        ]
 
-            suffix = (
-                f" ({', '.join(extensions)})" if len(extensions) > 0 else ""
-            )
+        for group in [independent_group] + list(groups.values()):
+            if len(group) <= 1:
+                continue
 
-            print(f"  --{arg.path}: {is_required}{arg.description}{suffix}")
+            for arg in sorted(group, key=lambda v: not v.required):
+                metadata = []
+
+                if op.method in {"post", "put"} and arg.required:
+                    metadata.append("required")
+
+                if arg.format == "json":
+                    metadata.append("JSON")
+
+                if arg.nullable:
+                    metadata.append("nullable")
+
+                if arg.is_parent:
+                    metadata.append("conflicts with children")
+
+                prefix = (
+                    f" ({', '.join(metadata)})" if len(metadata) > 0 else ""
+                )
+
+                description = arg.description.replace("\n", " ").replace(
+                    "\r", " "
+                )
+
+                arg_str = f"[bold magenta]--{arg.path}[/][bold]{prefix}[/]: {description}"
+
+                console.print(
+                    Padding.indent(
+                        arg_str.rstrip(), (arg.depth * 4) + 2
+                    )
+                )
+
+            console.print()
 
 
 def bake_command(cli, spec_loc):
