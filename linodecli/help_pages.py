@@ -160,7 +160,8 @@ def print_help_action(
     console.print()
 
     if op.method == "get" and op.action == "list":
-        return _help_action_print_filter_args(console, op)
+        _help_action_print_filter_args(console, op)
+        return
 
     if op.args:
         _help_action_print_body_args(console, op)
