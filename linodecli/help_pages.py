@@ -1,3 +1,4 @@
+import re
 import textwrap
 from collections import defaultdict
 from typing import List
@@ -105,8 +106,8 @@ def print_help_action(cli: "CLI", command: str, action: str):
                     f" ({', '.join(metadata)})" if len(metadata) > 0 else ""
                 )
 
-                description = arg.description.replace("\n", " ").replace(
-                    "\r", " "
+                description = _markdown_links_to_rich(
+                    arg.description.replace("\n", " ").replace("\r", " ")
                 )
 
                 arg_str = f"[bold magenta]--{arg.path}[/][bold]{prefix}[/]: {description}"
@@ -244,3 +245,28 @@ def _help_group_arguments(
         ungrouped.append(target_arg)
 
     return [group_required, ungrouped] + groups
+
+
+def _markdown_links_to_rich(text):
+    """
+    Returns the given text with Markdown links converted to Rich-compatible links.
+    """
+
+    result = text
+
+    # Find all Markdown links
+    r = re.compile(r"\[(?P<text>.*?)]\((?P<link>.*?)\)")
+
+    for match in r.finditer(text):
+        url = match.group("link")
+
+        # Expand the URL if necessary
+        if url.startswith("/"):
+            url = f"https://linode.com{url}"
+
+        # Replace with more readable text
+        result = result.replace(
+            match.group(), f"{match.group('text')} ([link={url}]{url}[/link])"
+        )
+
+    return result
