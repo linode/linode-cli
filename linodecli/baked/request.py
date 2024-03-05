@@ -137,7 +137,6 @@ def _parse_request_model(schema, prefix=None, parent=None, depth=0):
                     v,
                     prefix=pref,
                     parent=parent,
-
                     # NOTE: We do not increment the depth because dicts do not have
                     # parent arguments.
                     depth=depth,
@@ -161,7 +160,7 @@ def _parse_request_model(schema, prefix=None, parent=None, depth=0):
                         prefix=prefix,
                         is_parent=True,
                         parent=parent,
-                        depth=depth
+                        depth=depth,
                     )
                 )
 
@@ -169,7 +168,7 @@ def _parse_request_model(schema, prefix=None, parent=None, depth=0):
                     v.items,
                     prefix=pref,
                     parent=pref,
-                    depth=depth+1,
+                    depth=depth + 1,
                 )
             else:
                 # required fields are defined in the schema above the property, so
@@ -180,7 +179,12 @@ def _parse_request_model(schema, prefix=None, parent=None, depth=0):
                     required = k in schema.required
                 args.append(
                     OpenAPIRequestArg(
-                        k, v, required, prefix=prefix, parent=parent, depth=depth
+                        k,
+                        v,
+                        required,
+                        prefix=prefix,
+                        parent=parent,
+                        depth=depth,
                     )
                 )
 

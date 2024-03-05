@@ -151,7 +151,7 @@ class TestArgParsing:
         assert "not a registered plugin" in msg
         assert code == 14
 
-    # arg_helpers.help_with_ops(ops, config)
+    # arg_helpers.print_help_default(ops, config)
     def test_help_with_ops(self, capsys, mocked_config):
         mock_ops = {"testkey1": "testvalue1"}
         arg_helpers.help_with_ops(mock_ops, mocked_config)
@@ -168,7 +168,7 @@ class TestArgParsing:
         captured = capsys.readouterr()
         assert "testing.plugin" in captured.out
 
-    # arg_helpers.action_help(cli, command, action)
+    # arg_helpers.print_help_action(cli, command, action)
     def test_action_help_value_error(self, capsys, mock_cli):
         arg_helpers.action_help(mock_cli, None, None)
         captured = capsys.readouterr()
