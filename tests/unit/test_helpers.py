@@ -1,25 +1,12 @@
 from argparse import ArgumentParser
 
-from linodecli.helpers import (
-    filter_markdown_links,
-    pagination_args_shared,
-    register_args_shared,
-)
+from linodecli.helpers import pagination_args_shared, register_args_shared
 
 
 class TestHelpers:
     """
     Unit tests for linodecli.helpers
     """
-
-    def test_markdown_links(self):
-        original_text = "Here's [a relative link](/docs/cool) and [an absolute link](https://cloud.linode.com)."
-        expected_text = (
-            "Here's a relative link (https://linode.com/docs/cool) "
-            "and an absolute link (https://cloud.linode.com)."
-        )
-
-        assert filter_markdown_links(original_text) == expected_text
 
     def test_pagination_args_shared(self):
         parser = ArgumentParser()

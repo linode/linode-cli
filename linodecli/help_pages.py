@@ -1,7 +1,7 @@
 import re
 import textwrap
 from collections import defaultdict
-from typing import List
+from typing import List, Optional
 
 from rich import box
 from rich import print as rprint
@@ -26,7 +26,9 @@ HELP_ENV_VARS = {
 }
 
 
-def print_help_action(cli: "CLI", command: str, action: str):
+def print_help_action(
+    cli: "CLI", command: Optional[str], action: Optional[str]
+):
     """
     Prints help relevant to the command and action
     """
@@ -222,6 +224,8 @@ def _help_group_arguments(
     groups = []
     ungrouped = []
 
+    print(groups_tmp)
+
     for group in groups_tmp.values():
         # If the group has more than one element,
         # leave it as is in the result
@@ -244,7 +248,17 @@ def _help_group_arguments(
         # "ungrouped" group.
         ungrouped.append(target_arg)
 
-    return [group_required, ungrouped] + groups
+    result = []
+
+    if len(group_required) > 0:
+        result.append(group_required)
+
+    if len(ungrouped) > 0:
+        result.append(ungrouped)
+
+    result += groups
+
+    return result
 
 
 def _markdown_links_to_rich(text):
