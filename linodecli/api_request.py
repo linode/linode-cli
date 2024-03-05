@@ -6,7 +6,6 @@ import itertools
 import json
 import sys
 import time
-from sys import version_info
 from typing import Any, Iterable, List, Optional
 
 import requests
@@ -69,10 +68,7 @@ def do_request(
     headers = {
         "Authorization": f"Bearer {ctx.config.get_token()}",
         "Content-Type": "application/json",
-        "User-Agent": (
-            f"linode-cli:{ctx.version} "
-            f"python/{version_info[0]}.{version_info[1]}.{version_info[2]}"
-        ),
+        "User-Agent": ctx.user_agent,
     }
 
     parsed_args = operation.parse_args(args)
@@ -257,11 +253,15 @@ def _build_request_body(ctx, operation, parsed_args) -> Optional[str]:
 
     # expand paths
     for k, v in vars(parsed_args).items():
+        if v is None:
+            continue
+
         cur = expanded_json
         for part in k.split(".")[:-1]:
             if part not in cur:
                 cur[part] = {}
             cur = cur[part]
+
         cur[k.split(".")[-1]] = v
 
     return json.dumps(_traverse_request_body(expanded_json))

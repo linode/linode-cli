@@ -114,6 +114,11 @@ components:
                   nested_int:
                     type: number
                     description: A deeply nested integer.
+              field_array:
+                type: array
+                description: An arbitrary deeply nested array.
+                items:
+                  type: string
               field_string:
                 type: string
                 description: An arbitrary field.

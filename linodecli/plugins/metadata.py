@@ -57,11 +57,16 @@ def print_ssh_keys_table(data):
     """
     table = Table(show_lines=True)
 
-    table.add_column("ssh keys")
+    table.add_column("user")
+    table.add_column("ssh key")
 
-    if data.users.root is not None:
-        for key in data.users.root:
-            table.add_row(key)
+    for name, keys in data.users.items():
+        # Keys will be None if no keys are configured for the user
+        if keys is None:
+            continue
+
+        for key in keys:
+            table.add_row(name, key)
 
     rprint(table)
 
@@ -189,7 +194,7 @@ def get_metadata_parser():
     return parser
 
 
-def call(args, _):
+def call(args, context):
     """
     The entrypoint for this plugin
     """
@@ -204,7 +209,7 @@ def call(args, _):
     # make a client, but only if we weren't printing help and endpoint is valid
     if "--help" not in args:
         try:
-            client = MetadataClient()
+            client = MetadataClient(user_agent=context.client.user_agent)
         except ConnectTimeout as exc:
             raise ConnectionError(
                 "Can't access Metadata service. Please verify that you are inside a Linode."

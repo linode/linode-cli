@@ -61,7 +61,7 @@ def _get_parsed_spec(filename):
 
 @pytest.fixture
 def mock_cli(
-    version="DEVELOPMENT",
+    version="0.0.0",
     url="http://localhost",
     defaults=True,
 ):

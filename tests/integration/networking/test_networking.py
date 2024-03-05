@@ -2,6 +2,7 @@ import json
 import re
 
 import pytest
+from _pytest.monkeypatch import MonkeyPatch
 
 from tests.integration.helpers import delete_target_id, exec_test_command
 from tests.integration.linodes.helpers_linodes import (
@@ -121,8 +122,11 @@ def test_allocate_additional_private_ipv4_address(test_linode_id):
     )
 
 
-def test_share_ipv4_address(test_linode_id_shared_ipv4):
+def test_share_ipv4_address(
+    test_linode_id_shared_ipv4, monkeypatch: MonkeyPatch
+):
     target_linode, parent_linode = test_linode_id_shared_ipv4
+    monkeypatch.setenv("LINODE_CLI_API_VERSION", "v4beta")
 
     # Allocate an IPv4 address on the parent Linode
     ip_address = json.loads(

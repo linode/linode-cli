@@ -193,3 +193,14 @@ class CLI:  # pylint: disable=too-many-instance-attributes
 
         # Fail if no matching alias was found
         raise ValueError(f"No action {action} for command {command}")
+
+    @property
+    def user_agent(self) -> str:
+        """
+        Returns the User-Agent to use when making API requests.
+        """
+        return (
+            f"linode-cli/{self.version} "
+            f"linode-api-docs/{self.spec_version} "
+            f"python/{version_info[0]}.{version_info[1]}.{version_info[2]}"
+        )
