@@ -224,8 +224,6 @@ def _help_group_arguments(
     groups = []
     ungrouped = []
 
-    print(groups_tmp)
-
     for group in groups_tmp.values():
         # If the group has more than one element,
         # leave it as is in the result
