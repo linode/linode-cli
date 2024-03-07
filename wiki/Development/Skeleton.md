@@ -29,4 +29,4 @@ The following section outlines the purpose of each file in the CLI.
 
 ## Next Steps
 
-To continue to the next step of this guide, continue to the [Setup page](./Setup.md).
+To continue to the next step of this guide, continue to the [Setup page](./Setup).

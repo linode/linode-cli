@@ -4,10 +4,10 @@ This guide is intended to be used by contributors looking to make changes to the
 
 ## Index
 
-1. [Overview](./Overview.md)
-2. [Project Skeleton](./Skeleton.md)
-3. [Setup](./Setup.md)
-4. [Testing](./Testing.md)
+1. [Overview](./Overview)
+2. [Project Skeleton](./Skeleton)
+3. [Setup](./Setup)
+4. [Testing](./Testing)
 
 ## Contributing
 

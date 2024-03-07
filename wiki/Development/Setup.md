@@ -85,4 +85,4 @@ make SPEC=$PWD/openapi.yaml install
 
 ## Next Steps
 
-To continue to the next step of this guide, continue to the [Testing page](./Testing.md).
+To continue to the next step of this guide, continue to the [Testing page](./Testing).

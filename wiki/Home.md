@@ -5,4 +5,4 @@ Welcome to the linode-cli wiki!
 - [Usage](./Usage)
 - [Output](./Output)
 - [Plugins](./Plugins)
-- [Development Guide](./development/index.md)
+- [Development Guide](./Development/Index)

@@ -98,4 +98,4 @@ These overrides are specified using the `@output_override` decorator and can be 
 
 ## Next Steps
 
-To continue to the next step of this guide, continue to the [Skeleton page](./Skeleton.md).
+To continue to the next step of this guide, continue to the [Skeleton page](./Skeleton).
