@@ -35,7 +35,7 @@ source .venv/bin/activate
 
 ## Installing Project Dependencies
 
-All Linode CLI Python requirements be installed by running the following command:
+All Linode CLI Python requirements can be installed by running the following command:
 
 ```bash
 make requirements
