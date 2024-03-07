@@ -57,9 +57,15 @@ In addition to allowing users to configure a token manually, they can automatica
 an OAuth workflow. This workflow uses the [Linode OAuth API](https://www.linode.com/docs/api/#oauth) to generate a temporary token,
 which is then used to generate a long-term token stored in the CLI config file.
 
- TODO: Mention opening browser, hosting local webserver
-
 The OAuth client ID is hardcoded and references a client under an officially managed Linode account.
+
+The rough steps of this OAuth workflow are as follows:
+
+1. The CLI checks whether a browser can be opened. If not, manually prompt the user for a token and skip.
+2. Open a local HTTP server on an arbitrary port that exposes `oauth-landing-page.html`. This will also extract the token from the callback.
+3. Open the user's browser to the OAuth URL with the hardcoded client ID and the callback URL pointing to the local webserver.
+4. Once the user authorizes the OAuth application, they will be redirected to the local webserver where the temporary token will be extracted.
+5. With the extracted token, a new token is generated with the default callback and a name similar to `Linode CLI @ localhost`.
 
 All the logic for OAuth token generation is stored in the `configuration/auth.py` file.
 
@@ -75,6 +81,18 @@ These overrides are specified using the `@output_override` decorator and can be 
 The following section outlines the purpose of each file in the CLI.
 
 * `linode-cli`
+  * `baked`
+    * `__init__.py` - Contains imports for certain classes in this package
+    * `colors.py` - Contains logic for colorizing strings in CLI outputs (deprecated)
+    * `operation.py` - Contains the logic to parse an `OpenAPIOperation` from the OpenAPI spec and generate/execute a corresponding argparse parser
+    * `request.py` - Contains the `OpenAPIRequest` and `OpenAPIRequestArg` classes
+    * `response.py` - Contains `OpenAPIResponse` and `OpenAPIResponseAttr` classes
+  * `configuration`
+    * `__init__.py` - Contains the `CLIConfig` class and the logic for the interactive configuration prompt
+    * `auth.py` - Contains all the logic for the token generation OAuth workflow
+    * `helpers.py` - Contains various config-related helpers
+  * `plugins`
+    * `__init__.py` - Contains the shared wrapper that allows plugins to access CLI functionality
   * `__init__.py` -  Contains the main entrypoint for the CLI; routes top-level commands to their corresponding functions
   * `__main__.py` - Calls the project entrypoint in `__init__.py`
   * `api_request.py` - Contains logic for building API request bodies, making API requests, and handling API responses/errors

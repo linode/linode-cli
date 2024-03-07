@@ -178,8 +178,8 @@ def _get_token_web(base_url):
 
 def _handle_oauth_callback():
     """
-    Sends the user to a URL to perform an OAuth login for the CLI, then redirets
-    them to a locally-hosted page that captures teh token
+    Sends the user to a URL to perform an OAuth login for the CLI, then redirects
+    them to a locally-hosted page that captures the token
     """
     # load up landing page HTML
     landing_page_path = Path(__file__).parent.parent / "oauth-landing-page.html"
