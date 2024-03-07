@@ -95,3 +95,7 @@ For special cases where the desired output may not be possible using OpenAPI spe
 can implement special override functions that are given the output JSON and print a custom output to stdout.
 
 These overrides are specified using the `@output_override` decorator and can be found in the `overrides.py` file.
+
+## Next Steps
+
+To continue to the next step of this guide, continue to the [Skeleton page](./Skeleton.md).

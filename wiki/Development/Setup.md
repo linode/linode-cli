@@ -82,3 +82,7 @@ curl -o openapi.yaml https://raw.githubusercontent.com/linode/linode-api-docs/de
 # Build & install the CLI using the modified spec
 make SPEC=$PWD/openapi.yaml install
 ```
+
+## Next Steps
+
+To continue to the next step of this guide, continue to the [Testing page](./Testing.md).

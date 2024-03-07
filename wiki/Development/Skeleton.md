@@ -25,3 +25,8 @@ The following section outlines the purpose of each file in the CLI.
   * `oauth-landing-page.html` - The page to show users in their browser when the OAuth workflow is complete.
   * `output.py` - Contains all the logic for handling generated command outputs, including formatting tables, filtering JSON, etc.
   * `overrides.py` - Contains hardcoded output override functions for select CLI commands.
+
+
+## Next Steps
+
+To continue to the next step of this guide, continue to the [Setup page](./Setup.md).
