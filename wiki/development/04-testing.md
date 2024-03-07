@@ -1,4 +1,4 @@
-# Testing
+# Testing the CLI
 
 **WARNING!** Running the CLI tests will remove all linodes and data associated
 with the account. It is only recommended to run these tests if you are an advanced
