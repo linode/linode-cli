@@ -7,3 +7,4 @@ Welcome to the linode-cli wiki!
 - [Plugins](./Plugins)
 - [Testing](./Testing)
 - [Usage](./Usage)
+- [Development](./Development)
