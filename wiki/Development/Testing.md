@@ -1,9 +1,5 @@
 # Testing the CLI
 
-**WARNING!** Running the CLI tests will remove all linodes and data associated
-with the account. It is only recommended to run these tests if you are an advanced
-user.
-
 ## Running the Tests
 
 Running the tests locally is simple. The only requirements are that you export Linode API token as `LINODE_CLI_TOKEN`::
