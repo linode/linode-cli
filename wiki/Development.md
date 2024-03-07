@@ -57,8 +57,31 @@ In addition to allowing users to configure a token manually, they can automatica
 an OAuth workflow. This workflow uses the [Linode OAuth API](https://www.linode.com/docs/api/#oauth) to generate a temporary token,
 which is then used to generate a long-term token stored in the CLI config file.
 
+ TODO: Mention opening browser, hosting local webserver
+
 The OAuth client ID is hardcoded and references a client under an officially managed Linode account.
 
 All the logic for OAuth token generation is stored in the `configuration/auth.py` file.
 
+### Overrides
 
+For special cases where the desired output may not be possible using OpenAPI spec extensions alone, developers
+can implement special override functions that are given the output JSON and print a custom output to stdout.
+
+These overrides are specified using the `@output_override` decorator and can be found in the `overrides.py` file.
+
+## Project Skeleton
+
+The following section outlines the purpose of each file in the CLI.
+
+* `linode-cli`
+  * `__init__.py` -  Contains the main entrypoint for the CLI; routes top-level commands to their corresponding functions
+  * `__main__.py` - Calls the project entrypoint in `__init__.py`
+  * `api_request.py` - Contains logic for building API request bodies, making API requests, and handling API responses/errors
+  * `arg_helpers.py` - Contains miscellaneous logic for registering common argparse arguments and loading the OpenAPI spec
+  * `cli.py` - Contains the `CLI` class, which routes all the logic baking, loading, executing, and outputting generated CLI commands
+  * `completion.py` - Contains all the logic for generating shell completion files (`linode-cli completion`)
+  * `helpers.py` - Contains various miscellaneous helpers, especially relating to string manipulation, etc.
+  * `oauth-landing-page.html` - The page to show users in their browser when the OAuth workflow is complete.
+  * `output.py` - Contains all the logic for handling generated command outputs, including formatting tables, filtering JSON, etc.
+  * `overrides.py` - Contains hardcoded output override functions for select CLI commands.
