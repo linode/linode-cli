@@ -54,7 +54,10 @@ The logic for the interactive prompt and the logic for storing the CLI configura
 ### OAuth Authentication
 
 In addition to allowing users to configure a token manually, they can automatically generate a CLI token under their account using
-an OAuth workflow. 
+an OAuth workflow. This workflow uses the [Linode OAuth API](https://www.linode.com/docs/api/#oauth) to generate a temporary token,
+which is then used to generate a long-term token stored in the CLI config file.
+
+The OAuth client ID is hardcoded and references a client under an officially managed Linode account.
 
 All the logic for OAuth token generation is stored in the `configuration/auth.py` file.
 
