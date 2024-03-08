@@ -1,5 +1,3 @@
-# Linode CLI Skeleton
-
 The following section outlines the purpose of each file in the CLI.
 
 * `linode-cli`
@@ -29,4 +27,4 @@ The following section outlines the purpose of each file in the CLI.
 
 ## Next Steps
 
-To continue to the next step of this guide, continue to the [Setup page](./Setup).
+To continue to the next step of this guide, continue to the [Setup page](./Development%20-%20Setup).

@@ -1,8 +1,4 @@
-Welcome to the linode-cli wiki!
+Welcome to the linode-cli wiki! 
 
-- [Installation](./Installation)
-- [Configuration](./Configuration)
-- [Usage](./Usage)
-- [Output](./Output)
-- [Plugins](./Plugins)
-- [Development Guide](./Development/Index)
+For installation instructions and usage guides, please
+refer to the sidebar of this page.

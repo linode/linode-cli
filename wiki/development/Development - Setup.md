@@ -1,5 +1,3 @@
-# Linode CLI Development Setup Guide
-
 The following guide outlines to the process for setting up the Linode CLI for development.
 
 ## Cloning the Repository
@@ -85,4 +83,4 @@ make SPEC=$PWD/openapi.yaml install
 
 ## Next Steps
 
-To continue to the next step of this guide, continue to the [Testing page](./Testing).
+To continue to the next step of this guide, continue to the [Testing page](./Development%20-%20Testing).

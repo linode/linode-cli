@@ -1,10 +1,6 @@
-# Linode CLI Development Overview
-
-## Overview
-
 The following section outlines the core functions of the Linode CLI.
 
-### OpenAPI Specification Parsing
+## OpenAPI Specification Parsing
 
 Most Linode CLI commands (excluding [plugin commands](https://github.com/linode/linode-cli/tree/dev/linodecli/plugins)) 
 are generated dynamically at build-time from the [Linode OpenAPI Specification](https://github.com/linode/linode-api-docs),
@@ -18,7 +14,7 @@ each `OpenAPIResponseAttr` to an outputtable column. It can also manage complex 
 nested objects and lists, resulting in commands and outputs that may not 
 exactly match the OpenAPI specification.
 
-### OpenAPI Specification Extensions
+## OpenAPI Specification Extensions
 
 In order to better support the Linode CLI, the following [Specification Extensions](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.1.md#specificationExtensions) have been added to Linode's OpenAPI spec:
 
@@ -35,7 +31,7 @@ In order to better support the Linode CLI, the following [Specification Extensio
 | x-linode-cli-use-schema | content-type| Overrides the normal schema for the object and uses this instead. Especially useful when paired with ``x-linode-cli-nested-list``, allowing a schema to describe the flattened object instead of the original object. |
 | x-linode-cli-subtables | content-type| Indicates that certain response attributes should be printed in a separate "sub"-table. This allows certain endpoints with nested structures in the response to be displayed correctly. |
 
-### Baking
+## Baking
 
 The "baking" process is run with `make bake`, `make install`, and `make build` targets, 
 wrapping the `linode-cli bake` command.
@@ -44,7 +40,7 @@ Objects representing each command are serialized into the `data-3` file via the 
 package, and are included in release artifacts as a [data file](https://setuptools.pypa.io/en/latest/userguide/datafiles.html). 
 This enables quick command loading at runtime and eliminates the need for runtime parsing logic.
 
-### Configuration
+## Configuration
 
 The Linode CLI can be configured using the `linode-cli configure` command, which allows users to
 configure the following:
@@ -66,7 +62,7 @@ This object allows various parts of the CLI to access the current user, the conf
 The logic for the interactive prompt and the logic for storing the CLI configuration can be found in the
 `configuration` package. 
 
-### OAuth Authentication
+## OAuth Authentication
 
 In addition to allowing users to configure a token manually, they can automatically generate a CLI token under their account using
 an OAuth workflow. This workflow uses the [Linode OAuth API](https://www.linode.com/docs/api/#oauth) to generate a temporary token,
@@ -84,7 +80,7 @@ The rough steps of this OAuth workflow are as follows:
 
 All the logic for OAuth token generation is stored in the `configuration/auth.py` file.
 
-### Outputs
+## Outputs
 
 The Linode CLI uses the [Rich Python package](https://rich.readthedocs.io/en/latest/) to render tables, colorize text,
 and handle other complex terminal output operations.
@@ -98,4 +94,4 @@ These overrides are specified using the `@output_override` decorator and can be 
 
 ## Next Steps
 
-To continue to the next step of this guide, continue to the [Skeleton page](./Skeleton).
+To continue to the next step of this guide, continue to the [Skeleton page](./Development%20-%20Skeleton).
