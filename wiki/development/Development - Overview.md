@@ -85,12 +85,19 @@ All the logic for OAuth token generation is stored in the `configuration/auth.py
 The Linode CLI uses the [Rich Python package](https://rich.readthedocs.io/en/latest/) to render tables, colorize text,
 and handle other complex terminal output operations.
 
-### Overrides
+## Output Overrides
 
 For special cases where the desired output may not be possible using OpenAPI spec extensions alone, developers
 can implement special override functions that are given the output JSON and print a custom output to stdout.
 
 These overrides are specified using the `@output_override` decorator and can be found in the `overrides.py` file.
+
+## Command Completions
+
+The Linode CLI allows users to dynamically generate shell completions for the Bash and Fish shells.
+This works by rendering hardcoded templates for each baked/generated command. 
+
+See `completion.py` for more details.
 
 ## Next Steps
 
