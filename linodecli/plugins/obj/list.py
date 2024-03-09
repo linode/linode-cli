@@ -1,3 +1,7 @@
+"""
+The module for list things in the object storage service.
+"""
+
 import sys
 from argparse import ArgumentParser
 
