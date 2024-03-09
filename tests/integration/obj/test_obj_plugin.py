@@ -7,11 +7,8 @@ import pytest
 import requests
 from pytest import MonkeyPatch
 
-from linodecli.plugins.obj import (
-    ENV_ACCESS_KEY_NAME,
-    ENV_SECRET_KEY_NAME,
-    TRUNCATED_MSG,
-)
+from linodecli.plugins.obj import ENV_ACCESS_KEY_NAME, ENV_SECRET_KEY_NAME
+from linodecli.plugins.obj.list import TRUNCATED_MSG
 from tests.integration.fixture_types import GetTestFilesType, GetTestFileType
 from tests.integration.helpers import count_lines, exec_test_command
 
