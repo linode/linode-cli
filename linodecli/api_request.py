@@ -6,7 +6,6 @@ import itertools
 import json
 import sys
 import time
-from sys import version_info
 from typing import Any, Iterable, List, Optional
 
 import requests
@@ -69,10 +68,7 @@ def do_request(
     headers = {
         "Authorization": f"Bearer {ctx.config.get_token()}",
         "Content-Type": "application/json",
-        "User-Agent": (
-            f"linode-cli:{ctx.version} "
-            f"python/{version_info[0]}.{version_info[1]}.{version_info[2]}"
-        ),
+        "User-Agent": ctx.user_agent,
     }
 
     parsed_args = operation.parse_args(args)
