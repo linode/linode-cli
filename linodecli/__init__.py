@@ -15,9 +15,7 @@ from rich.table import Table
 from linodecli import plugins
 
 from .arg_helpers import (
-    action_help,
     bake_command,
-    help_with_ops,
     register_args,
     register_plugin,
     remove_plugin,
@@ -25,6 +23,7 @@ from .arg_helpers import (
 from .cli import CLI
 from .completion import bake_completions, get_completions
 from .configuration import ENV_TOKEN_NAME
+from .help_pages import print_help_action, print_help_default
 from .helpers import handle_url_overrides
 from .output import OutputMode
 
@@ -155,7 +154,7 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
     # handle a help for the CLI
     if parsed.command is None or (parsed.command is None and parsed.help):
         parser.print_help()
-        help_with_ops(cli.ops, cli.config)
+        print_help_default(cli.ops, cli.config)
         sys.exit(0)
 
     # configure
@@ -257,6 +256,6 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
 
     if parsed.command is not None and parsed.action is not None:
         if parsed.help:
-            action_help(cli, parsed.command, parsed.action)
+            print_help_action(cli, parsed.command, parsed.action)
             sys.exit(0)
         cli.handle_command(parsed.command, parsed.action, args)
