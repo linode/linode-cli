@@ -16,6 +16,7 @@ class OpenAPIRequestArg:
         prefix=None,
         is_parent=False,
         parent=None,
+        depth=0,
     ):  # pylint: disable=too-many-arguments
         """
         Parses a single Schema node into a argument the CLI can use when making
@@ -33,6 +34,8 @@ class OpenAPIRequestArg:
         :type is_parent: bool
         :param parent: If applicable, the path to the parent list for this argument.
         :type parent: Optional[str]
+        :param depth: The depth of this argument, or how many parent arguments this argument has.
+        :type depth: int
         """
         #: The name of this argument, mostly used for display and docs
         self.name = name
@@ -85,6 +88,10 @@ class OpenAPIRequestArg:
         #: e.g. --interfaces.ipv4.nat_1_1
         self.parent = parent
 
+        #: The depth of this argument, or how many parent arguments this argument has.
+        #: This is useful when formatting help pages.
+        self.depth = depth
+
         #: The path of the path element in the schema.
         self.prefix = prefix
 
@@ -103,7 +110,7 @@ class OpenAPIRequestArg:
             )
 
 
-def _parse_request_model(schema, prefix=None, parent=None):
+def _parse_request_model(schema, prefix=None, parent=None, depth=0):
     """
     Parses a schema into a list of OpenAPIRequest objects
     :param schema: The schema to parse as a request model
@@ -130,6 +137,9 @@ def _parse_request_model(schema, prefix=None, parent=None):
                     v,
                     prefix=pref,
                     parent=parent,
+                    # NOTE: We do not increment the depth because dicts do not have
+                    # parent arguments.
+                    depth=depth,
                 )
             elif (
                 v.type == "array"
@@ -150,10 +160,16 @@ def _parse_request_model(schema, prefix=None, parent=None):
                         prefix=prefix,
                         is_parent=True,
                         parent=parent,
+                        depth=depth,
                     )
                 )
 
-                args += _parse_request_model(v.items, prefix=pref, parent=pref)
+                args += _parse_request_model(
+                    v.items,
+                    prefix=pref,
+                    parent=pref,
+                    depth=depth + 1,
+                )
             else:
                 # required fields are defined in the schema above the property, so
                 # we have to check here if required fields are defined/if this key
@@ -163,7 +179,12 @@ def _parse_request_model(schema, prefix=None, parent=None):
                     required = k in schema.required
                 args.append(
                     OpenAPIRequestArg(
-                        k, v, required, prefix=prefix, parent=parent
+                        k,
+                        v,
+                        required,
+                        prefix=prefix,
+                        parent=parent,
+                        depth=depth,
                     )
                 )
 

@@ -33,7 +33,7 @@ build: clean bake
 
 .PHONY: requirements
 requirements:
-	pip3 install -r requirements.txt -r requirements-dev.txt
+	pip3 install --upgrade -r requirements.txt -r requirements-dev.txt
 
 .PHONY: lint
 lint: build
