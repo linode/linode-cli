@@ -2,13 +2,17 @@
 The helper functions for the object storage plugin.
 """
 
+import sys
 from argparse import ArgumentTypeError
+from collections.abc import Iterable
 from datetime import datetime
 
 from rich.table import Table
 from rich.text import Text
 
 from linodecli.plugins.obj.config import DATE_FORMAT
+
+INVALID_PAGE_MSG = "No result to show in this page."
 
 
 class ProgressPercentage:  # pylint: disable=too-few-public-methods
@@ -126,3 +130,16 @@ def _borderless_table(data):
         tab.add_row(*row)
 
     return tab
+
+
+def flip_to_page(iterable: Iterable, page: int = 1):
+    """Given a iterable object and return a specific iteration (page)"""
+    iterable = iter(iterable)
+    for _ in range(page - 1):
+        try:
+            next(iterable)
+        except StopIteration:
+            print(INVALID_PAGE_MSG)
+            sys.exit(2)
+
+    return next(iterable)

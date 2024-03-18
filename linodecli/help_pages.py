@@ -159,7 +159,7 @@ def print_help_action(
 
     console.print()
 
-    if op.method == "get" and op.action == "list":
+    if op.method == "get" and op.response_model.is_paginated:
         _help_action_print_filter_args(console, op)
         return
 
