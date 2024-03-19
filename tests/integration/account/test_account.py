@@ -202,16 +202,52 @@ def test_user_view():
         assert header in lines[0]
 
 
-def test_beta_list():
+def test_payment_method_list():
     res = (
         exec_test_command(
-            ["linode-cli", "betas", "list", "--text", "--delimiter=,"]
+            ["linode-cli", "payment-methods", "list", "--text", "--delimiter=,"]
         )
         .stdout.decode()
         .rstrip()
     )
     lines = res.splitlines()
 
-    headers = ["label", "description"]
+    headers = ["type", "is_default"]
+    for header in headers:
+        assert header in lines[0]
+
+
+def test_payment_list():
+    res = (
+        exec_test_command(
+            BASE_CMD + ["payments-list", "--text", "--delimiter=,"]
+        )
+        .stdout.decode()
+        .rstrip()
+    )
+    lines = res.splitlines()
+
+    headers = ["date", "usd"]
+    for header in headers:
+        assert header in lines[0]
+
+
+def test_service_transfers():
+    res = (
+        exec_test_command(
+            [
+                "linode-cli",
+                "service-transfers",
+                "list",
+                "--text",
+                "--delimiter=,",
+            ]
+        )
+        .stdout.decode()
+        .rstrip()
+    )
+    lines = res.splitlines()
+
+    headers = ["token", "expiry", "is_sender"]
     for header in headers:
         assert header in lines[0]
