@@ -93,13 +93,17 @@ linode-cli linodes create --region us-east --type g6-nanode-1 --tags tag1 --tags
 ```
 
 Lists consisting of nested structures can also be expressed through the command line.
+Duplicated attribute will signal a different object.
 For example, to create a Linode with a public interface on `eth0` and a VLAN interface
 on `eth1` you can execute the following::
 ```bash
 linode-cli linodes create \
     --region us-east --type g6-nanode-1 --image linode/ubuntu22.04 \
     --root_pass "myr00tp4ss123" \
+    # The first interface (index 0) is defined with the public purpose
     --interfaces.purpose public \
+    # The second interface (index 1) is defined with the vlan purpose. 
+    # The duplicate `interfaces.purpose` here tells the CLI to start building a new interface object.
     --interfaces.purpose vlan --interfaces.label my-vlan
 ```
 
