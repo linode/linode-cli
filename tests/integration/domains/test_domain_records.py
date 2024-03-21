@@ -195,3 +195,21 @@ def test_delete_a_domain_record(test_domain_and_record):
 
     # Assert on status code returned from deleting domain
     assert process.returncode == SUCCESS_STATUS_CODE
+
+
+def test_help_records_list(test_domain_and_record):
+    process = exec_test_command(
+        BASE_CMD
+        + [
+            "records-list",
+            "--help",
+        ]
+    )
+    output = process.stdout.decode()
+
+    assert "Domain Records List" in output
+    assert "You may filter results with:" in output
+    assert "--type" in output
+    assert "--name" in output
+    assert "--target" in output
+    assert "--tag" in output
