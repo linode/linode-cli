@@ -1,4 +1,8 @@
-from tests.integration.helpers import exec_test_command
+import pytest
+from tests.integration.helpers import (
+    exec_test_command,
+    assert_headers_in_lines
+)
 
 BASE_CMD = ["linode-cli", "betas"]
 
@@ -11,28 +15,28 @@ def test_beta_list():
     )
     lines = res.splitlines()
 
-    beta_id = lines[1].split(",")[0]
-
-    headers = ["label", "description"]
-    for header in headers:
-        assert header in lines[0]
-    return beta_id
+    if len(lines) < 2 or len(lines[1].split(",")) == 0:
+        pytest.skip("No beta program available to test")
+    else:
+        beta_id = lines[1].split(",")[0]
+        headers = ["label", "description"]
+        assert_headers_in_lines(headers, lines)
+        return beta_id
 
 
 def test_beta_view():
     beta_id = test_beta_list()
-    res = (
-        exec_test_command(
-            BASE_CMD + ["view", beta_id, "--text", "--delimiter=,"]
+    if beta_id is None:
+        pytest.skip("No beta program available to test")
+    else:
+        res = (
+            exec_test_command(BASE_CMD + ["view", beta_id, "--text", "--delimiter=,"])
+            .stdout.decode()
+            .rstrip()
         )
-        .stdout.decode()
-        .rstrip()
-    )
-    lines = res.splitlines()
-
-    headers = ["label", "description"]
-    for header in headers:
-        assert header in lines[0]
+        lines = res.splitlines()
+        headers = ["label", "description"]
+        assert_headers_in_lines(headers, lines)
 
 
 def test_beta_enrolled():
@@ -44,5 +48,5 @@ def test_beta_enrolled():
     lines = res.splitlines()
 
     headers = ["label", "enrolled"]
-    for header in headers:
-        assert header in lines[0]
+    assert_headers_in_lines(headers, lines)
+

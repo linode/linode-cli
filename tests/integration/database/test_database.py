@@ -1,5 +1,7 @@
-from tests.integration.helpers import exec_test_command
-
+from tests.integration.helpers import (
+    exec_test_command,
+    assert_headers_in_lines
+)
 BASE_CMD = ["linode-cli", "databases"]
 
 
@@ -14,8 +16,7 @@ def test_engines_list():
     engine_id = lines[1].split(",")[0]
 
     headers = ["id", "engine", "version"]
-    for header in headers:
-        assert header in lines[0]
+    assert_headers_in_lines(headers, lines)
     return engine_id
 
 
@@ -32,8 +33,7 @@ def test_engines_view():
     lines = res.splitlines()
 
     headers = ["id", "engine", "version"]
-    for header in headers:
-        assert header in lines[0]
+    assert_headers_in_lines(headers, lines)
 
 
 def test_databases_list():
@@ -46,8 +46,7 @@ def test_databases_list():
     lines = res.splitlines()
 
     headers = ["id", "label", "region"]
-    for header in headers:
-        assert header in lines[0]
+    assert_headers_in_lines(headers, lines)
 
 
 def test_mysql_list():
@@ -61,8 +60,7 @@ def test_mysql_list():
 
     headers = ["id", "label", "region"]
 
-    for header in headers:
-        assert header in lines[0]
+    assert_headers_in_lines(headers, lines)
 
 
 def test_postgresql_list():
@@ -78,8 +76,7 @@ def test_postgresql_list():
 
     headers = ["id", "label", "region"]
 
-    for header in headers:
-        assert header in lines[0]
+    assert_headers_in_lines(headers, lines)
 
 
 def test_databases_types():
@@ -93,8 +90,7 @@ def test_databases_types():
     node_id = lines[1].split(",")[0]
 
     headers = ["id", "label", "_split"]
-    for header in headers:
-        assert header in lines[0]
+    assert_headers_in_lines(headers, lines)
     return node_id
 
 
@@ -110,5 +106,4 @@ def test_databases_type_view():
     lines = res.splitlines()
 
     headers = ["id", "label", "_split"]
-    for header in headers:
-        assert header in lines[0]
+    assert_headers_in_lines(headers, lines)

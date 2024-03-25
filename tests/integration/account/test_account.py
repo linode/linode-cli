@@ -1,5 +1,7 @@
-from tests.integration.helpers import exec_test_command
-
+from tests.integration.helpers import (
+    exec_test_command,
+    assert_headers_in_lines
+)
 BASE_CMD = ["linode-cli", "account"]
 
 
@@ -12,8 +14,7 @@ def test_account_transfer():
     lines = res.splitlines()
 
     headers = ["billable", "quota", "used"]
-    for header in headers:
-        assert header in lines[0]
+    assert_headers_in_lines(headers, lines)
 
 
 def test_region_availability():
@@ -28,8 +29,7 @@ def test_region_availability():
     lines = res.splitlines()
 
     headers = ["region", "unavailable"]
-    for header in headers:
-        assert header in lines[0]
+    assert_headers_in_lines(headers, lines)
 
 
 def test_event_list():
@@ -45,8 +45,7 @@ def test_event_list():
     event_id = lines[1].split(",")[0]
 
     headers = ["entity.label", "username"]
-    for header in headers:
-        assert header in lines[0]
+    assert_headers_in_lines(headers, lines)
     return event_id
 
 
@@ -69,8 +68,7 @@ def test_event_view():
     lines = res.splitlines()
 
     headers = ["id", "action"]
-    for header in headers:
-        assert header in lines[0]
+    assert_headers_in_lines(headers, lines)
 
 
 def test_account_invoice_list():
@@ -86,8 +84,7 @@ def test_account_invoice_list():
     invoice_id = lines[1].split(",")[0]
 
     headers = ["billing_source", "tax", "subtotal"]
-    for header in headers:
-        assert header in lines[0]
+    assert_headers_in_lines(headers, lines)
     return invoice_id
 
 
@@ -103,8 +100,7 @@ def test_account_invoice_view():
     lines = res.splitlines()
 
     headers = ["billing_source", "tax", "subtotal"]
-    for header in headers:
-        assert header in lines[0]
+    assert_headers_in_lines(headers, lines)
 
 
 def test_account_invoice_items():
@@ -119,8 +115,7 @@ def test_account_invoice_items():
     lines = res.splitlines()
 
     headers = ["label", "from", "to"]
-    for header in headers:
-        assert header in lines[0]
+    assert_headers_in_lines(headers, lines)
 
 
 def test_account_logins_list():
@@ -134,8 +129,7 @@ def test_account_logins_list():
     login_id = lines[1].split(",")[0]
 
     headers = ["ip", "username", "status"]
-    for header in headers:
-        assert header in lines[0]
+    assert_headers_in_lines(headers, lines)
     return login_id
 
 
@@ -151,8 +145,7 @@ def test_account_login_view():
     lines = res.splitlines()
 
     headers = ["ip", "username", "status"]
-    for header in headers:
-        assert header in lines[0]
+    assert_headers_in_lines(headers, lines)
 
 
 def test_account_setting_view():
@@ -164,8 +157,7 @@ def test_account_setting_view():
     lines = res.splitlines()
 
     headers = ["longview_subscription", "network_helper"]
-    for header in headers:
-        assert header in lines[0]
+    assert_headers_in_lines(headers, lines)
 
 
 def test_user_list():
@@ -181,8 +173,7 @@ def test_user_list():
     user_id = lines[1].split(",")[0]
 
     headers = ["email", "username"]
-    for header in headers:
-        assert header in lines[0]
+    assert_headers_in_lines(headers, lines)
     return user_id
 
 
@@ -198,8 +189,7 @@ def test_user_view():
     lines = res.splitlines()
 
     headers = ["email", "username"]
-    for header in headers:
-        assert header in lines[0]
+    assert_headers_in_lines(headers, lines)
 
 
 def test_payment_method_list():
@@ -213,8 +203,7 @@ def test_payment_method_list():
     lines = res.splitlines()
 
     headers = ["type", "is_default"]
-    for header in headers:
-        assert header in lines[0]
+    assert_headers_in_lines(headers, lines)
 
 
 def test_payment_list():
@@ -228,8 +217,7 @@ def test_payment_list():
     lines = res.splitlines()
 
     headers = ["date", "usd"]
-    for header in headers:
-        assert header in lines[0]
+    assert_headers_in_lines(headers, lines)
 
 
 def test_service_transfers():
@@ -249,5 +237,4 @@ def test_service_transfers():
     lines = res.splitlines()
 
     headers = ["token", "expiry", "is_sender"]
-    for header in headers:
-        assert header in lines[0]
+    assert_headers_in_lines(headers, lines)
