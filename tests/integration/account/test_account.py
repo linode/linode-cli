@@ -1,7 +1,5 @@
-from tests.integration.helpers import (
-    exec_test_command,
-    assert_headers_in_lines
-)
+from tests.integration.helpers import assert_headers_in_lines, exec_test_command
+
 BASE_CMD = ["linode-cli", "account"]
 
 
