@@ -2,7 +2,7 @@ import time
 
 import pytest
 
-from tests.integration.helpers import exec_test_command, remove_lke_clusters
+from tests.integration.helpers import exec_test_command, remove_lke_clusters, assert_headers_in_lines
 
 BASE_CMD = ["linode-cli", "lke"]
 
@@ -64,3 +64,45 @@ def test_deploy_an_lke_cluster():
     time.sleep(15)
 
     remove_lke_clusters()
+
+
+def test_lke_cluster_list():
+    res = (
+        exec_test_command(
+            BASE_CMD + ["clusters-list", "--text", "--delimiter=,"]
+        )
+        .stdout.decode()
+        .rstrip()
+    )
+    lines = res.splitlines()
+
+    headers = ["label", "k8s_version"]
+    assert_headers_in_lines(headers, lines)
+
+
+@pytest.fixture(scope="function")
+def version_id():
+    res = (
+        exec_test_command(
+            BASE_CMD + ["versions-list", "--text", "--delimiter=,"]
+        )
+        .stdout.decode()
+        .rstrip()
+    )
+    lines = res.splitlines()
+    version_id = lines[1].split(",")[0]
+    yield version_id
+
+
+def test_beta_view(version_id):
+    res = (
+        exec_test_command(
+            BASE_CMD + ["version-view", version_id, "--text", "--delimiter=,"]
+        )
+        .stdout.decode()
+        .rstrip()
+    )
+    lines = res.splitlines()
+
+    headers = ["id"]
+    assert_headers_in_lines(headers, lines)
