@@ -136,3 +136,8 @@ def remove_all(target: str):
 
 def count_lines(text: str):
     return len(list(filter(len, text.split("\n"))))
+
+
+def assert_headers_in_lines(headers, lines):
+    for header in headers:
+        assert header in lines[0]
