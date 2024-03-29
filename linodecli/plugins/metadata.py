@@ -6,8 +6,8 @@ Usage:
    linode-cli metadata [ENDPOINT]
 """
 
-import argparse
 import sys
+from argparse import ArgumentParser
 
 from linode_metadata import MetadataClient
 from linode_metadata.objects.error import ApiError
@@ -15,6 +15,8 @@ from linode_metadata.objects.instance import ResponseBase
 from requests import ConnectTimeout
 from rich import print as rprint
 from rich.table import Table
+
+from linodecli.helpers import register_debug_arg
 
 PLUGIN_BASE = "linode-cli metadata"
 
@@ -156,7 +158,7 @@ COMMAND_MAP = {
 }
 
 
-def print_help(parser: argparse.ArgumentParser):
+def print_help(parser: ArgumentParser):
     """
     Print out the help info to the standard output
     """
@@ -181,7 +183,9 @@ def get_metadata_parser():
     """
     Builds argparser for Metadata plug-in
     """
-    parser = argparse.ArgumentParser(PLUGIN_BASE, add_help=False)
+    parser = ArgumentParser(PLUGIN_BASE, add_help=False)
+
+    register_debug_arg(parser)
 
     parser.add_argument(
         "endpoint",
@@ -209,7 +213,9 @@ def call(args, context):
     # make a client, but only if we weren't printing help and endpoint is valid
     if "--help" not in args:
         try:
-            client = MetadataClient(user_agent=context.client.user_agent)
+            client = MetadataClient(
+                user_agent=context.client.user_agent, debug=parsed.debug
+            )
         except ConnectTimeout as exc:
             raise ConnectionError(
                 "Can't access Metadata service. Please verify that you are inside a Linode."
