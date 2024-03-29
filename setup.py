@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import os
 import pathlib
 import subprocess
 import sys
@@ -9,6 +10,8 @@ from os import path
 
 here = pathlib.Path().absolute()
 
+
+ENV_LINODE_CLI_VERSION = "LINODE_CLI_VERSION"
 
 # get the long description from the README.md
 with open(here / "README.md", encoding="utf-8") as f:
@@ -30,16 +33,6 @@ def get_baked_files():
 
     return data_files
 
-
-def get_version():
-    """
-    Uses the version file to calculate this package's version
-    """
-    return (
-        subprocess.check_output([sys.executable, "./version"])
-        .decode("utf-8")
-        .rstrip()
-    )
 
 
 def get_baked_version():
@@ -71,7 +64,7 @@ if path.isfile("baked_version"):
     version = get_baked_version()
 else:
     # Otherwise, retrieve and bake the version as normal
-    version = get_version()
+    version = os.getenv(ENV_LINODE_CLI_VERSION) or "0.0.0"
     bake_version(version)
 
 with open("requirements.txt") as f:
