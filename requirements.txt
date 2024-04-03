@@ -4,6 +4,4 @@ PyYAML
 packaging
 rich
 urllib3<3
-
-# unpin from git when newer metadata client released
-linode-metadata @ git+https://github.com/linode/py-metadata@main
+linode-metadata>=0.3.0
