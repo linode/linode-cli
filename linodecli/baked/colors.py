@@ -1,11 +1,24 @@
 """
-Applies shell color escapes for pretty printing
+Applies shell color escapes for pretty printing.
+
+TODO: Update to use Rich tags rather than escape characters.
 """
 
 import os
 import platform
 
+CLEAR_COLOR = "\x1b[0m"
+COLOR_CODE_MAP = {
+    "red": "\x1b[31m",
+    "green": "\x1b[32m",
+    "yellow": "\x1b[33m",
+    "black": "\x1b[30m",
+    "white": "\x1b[40m",
+}
+
+
 DO_COLORS = True
+
 # !! Windows compatibility for ANSI color codes !!
 #
 # If we're running on windows, we need to run the "color" command to enable
@@ -30,21 +43,20 @@ if platform.system() == "Windows":
         DO_COLORS = False
 
 
-CLEAR_COLOR = "\x1b[0m"
-COLOR_CODE_MAP = {
-    "red": "\x1b[31m",
-    "green": "\x1b[32m",
-    "yellow": "\x1b[33m",
-    "black": "\x1b[30m",
-    "white": "\x1b[40m",
-}
-
-
-def colorize_string(string, color):
+def colorize_string(string: str, color: str) -> str:
     """
     Returns the requested string, wrapped in ANSI color codes to colorize it as
     requested.  On platforms where colors are not supported, this just returns
     the string passed into it.
+
+    :param string: The content to colorize.
+    :type string: str
+    :param color: The color to colorize the string with.
+                  (one of red, green, yellow, black, white)
+    :type color: str
+
+    :returns: The colorized string.
+    :rtype: string
     """
     if not DO_COLORS:
         return string
