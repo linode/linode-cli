@@ -5,7 +5,7 @@ Contains logic for loading, updating, and saving Linode CLI configurations.
 import argparse
 import os
 import sys
-from typing import Dict
+from typing import Any, Dict, List, Optional
 
 from .auth import (
     _check_full_access,
@@ -32,7 +32,19 @@ class CLIConfig:
     Generates the necessary config for the Linode CLI
     """
 
-    def __init__(self, base_url, username=None, skip_config=False):
+    def __init__(
+        self, base_url: str, username: str = None, skip_config: bool = False
+    ):
+        """
+        Initializes a new instance of the CLIConfig class.
+
+        :param base_url: The base URL for the Linode API.
+        :type base_url: str
+        :param username: (optional) The username to use for authentication. Defaults to None.
+        :type: username: str
+        :param skip_config: (optional) If True, skip loading the configuration file. Defaults to False.
+        :type skip_config: bool
+        """
         self.base_url = base_url
         self.username = username
         self.config = _get_config(load=not skip_config)
@@ -61,18 +73,25 @@ class CLIConfig:
         elif environ_token is not None:
             self.used_env_token = True
 
-    def default_username(self):
+    def default_username(self) -> str:
         """
-        Returns the default-user Username
+        Returns the `default-user` username.
+
+        :returns: The `default-user` username or an empty string.
+        :rtype: str
         """
         if self.config.has_option("DEFAULT", "default-user"):
             return self.config.get("DEFAULT", "default-user")
+
         return ""
 
-    def set_user(self, username):
+    def set_user(self, username: str):
         """
         Sets the acting username.  If this username is not in the config, this is
         an error.  This overrides the default username
+
+        :param username: The username to set.
+        :type username: str
         """
         if not self.config.has_section(username):
             print(f"User {username} is not configured!")
@@ -80,10 +99,13 @@ class CLIConfig:
 
         self.username = username
 
-    def remove_user(self, username):
+    def remove_user(self, username: str):
         """
         Removes the requested user from the config.  If the user is the default,
-        this exits with error
+        this exits with error.
+
+        :param username: The username to remove.
+        :type username: str
         """
         if self.default_username() == username:
             print(
@@ -98,7 +120,7 @@ class CLIConfig:
 
     def print_users(self):
         """
-        Prints all users available and exits
+        Prints all users available to stdout and exits.
         """
         print("Configured Users: ")
         default_user = self.default_username()
@@ -109,7 +131,7 @@ class CLIConfig:
 
         sys.exit(0)
 
-    def set_default_user(self, username):
+    def set_default_user(self, username: str):
         """
         Sets the default user.  If that user isn't in the config, exits with error
         """
@@ -120,9 +142,12 @@ class CLIConfig:
         self.config.set("DEFAULT", "default-user", username)
         self.write_config()
 
-    def get_token(self):
+    def get_token(self) -> str:
         """
-        Returns the token for a configured user
+        Returns the token for a configured user.
+
+        :returns: The token retrieved from the environment or config.
+        :rtype: str
         """
         if self.used_env_token:
             return os.environ.get(ENV_TOKEN_NAME, None)
@@ -135,7 +160,7 @@ class CLIConfig:
             )
         return ""
 
-    def get_value(self, key):
+    def get_value(self, key: str) -> Optional[Any]:
         """
         Retrieves and returns an existing config value for the current user.  This
         is intended for plugins to use instead of having to deal with figuring out
@@ -161,7 +186,7 @@ class CLIConfig:
 
     # plugin methods - these are intended for plugins to utilize to store their
     # own persistent config information
-    def plugin_set_value(self, key, value):
+    def plugin_set_value(self, key: str, value: Any):
         """
         Sets a new config value for a plugin for the current user.  Plugin config
         keys are set in the following format::
@@ -184,7 +209,7 @@ class CLIConfig:
         username = self.username or self.default_username()
         self.config.set(username, f"plugin-{self.running_plugin}-{key}", value)
 
-    def plugin_get_value(self, key):
+    def plugin_get_value(self, key: str) -> Optional[Any]:
         """
         Retrieves and returns a config value previously set for a plugin.  Your
         plugin should have set this value in the past.  If this value does not
@@ -215,14 +240,23 @@ class CLIConfig:
     # might be better to move this to argparsing during refactor and just have
     # configuration return defaults or keys or something
     def update(
-        self, namespace, allowed_defaults
-    ):  # pylint: disable=too-many-branches
+        self, namespace: argparse.Namespace, allowed_defaults: List[str]
+    ) -> argparse.Namespace:  # pylint: disable=too-many-branches
         """
         This updates a Namespace (as returned by ArgumentParser) with config values
         if they aren't present in the Namespace already.
+
+        :param namespace: The argparse namespace parsed from the user's input
+        :type namespace: argparse.Namespace
+        :param allowed_defaults: A list of allowed default keys to pull from the config.
+        :type allowed_defaults: List[str]
+
+        :returns: The updated namespace.
+        :rtype: argparse.Namespace
         """
         if self.used_env_token and self.config is None:
             return None
+
         username = self.username or self.default_username()
         if not self.config.has_option(username, "token") and not os.environ.get(
             ENV_TOKEN_NAME, None
@@ -263,8 +297,8 @@ class CLIConfig:
             x in ["--suppress-warnings", "--no-headers"] for x in sys.argv
         ):
             print(
-                f"using default values: {warn_dict}, "
-                "use --no-defaults flag to disable defaults"
+                f"Using default values: {warn_dict}; "
+                "use the --no-defaults flag to disable defaults"
             )
         return argparse.Namespace(**ns_dict)
 
@@ -274,8 +308,12 @@ class CLIConfig:
         to save values they've set, and is used internally to update the config
         on disk when a new user if configured.
         """
-        if not os.path.exists(f"{os.path.expanduser('~')}/.config"):
-            os.makedirs(f"{os.path.expanduser('~')}/.config")
+
+        # Create the config path isf necessary
+        config_path = f"{os.path.expanduser('~')}/.config"
+        if not os.path.exists(config_path):
+            os.makedirs(config_path)
+
         with open(_get_config_path(), "w", encoding="utf-8") as f:
             self.config.write(f)
 
@@ -285,15 +323,18 @@ class CLIConfig:
         """
         This assumes we're running interactively, and prompts the user
         for a series of defaults in order to make future CLI calls
-        easier.  This also sets up the config file.
+        easier. This also sets up the config file.
         """
         # If configuration has already been done in this run, don't do it again.
         if self._configured:
             return
+
         config = {}
+
         # we're configuring the default user if there is no default user configured
         # yet
         is_default = not self.config.has_option("DEFAULT", "default-user")
+
         username = None
         token = None
 
@@ -330,7 +371,6 @@ class CLIConfig:
         print(f"\nConfiguring {username}\n")
 
         # Configuring Defaults
-
         regions = [
             r["id"] for r in _do_get_request(self.base_url, "/regions")["data"]
         ]
@@ -440,7 +480,13 @@ class CLIConfig:
         self._configured = True
 
     @staticmethod
-    def _configure_api_target(config: Dict[str, str]):
+    def _configure_api_target(config: Dict[str, Any]):
+        """
+        Configure the API target with custom parameters.
+
+        :param config: A dictionary containing the configuration parameters for the API target.
+        :type config: Dict[str, Any]
+        """
         config["api_host"] = _default_text_input(
             "NOTE: Skipping this field will use the default Linode API host.\n"
             'API host override (e.g. "api.dev.linode.com")',

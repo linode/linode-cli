@@ -5,7 +5,7 @@ General helper functions for configuraiton
 import configparser
 import os
 import webbrowser
-from typing import Any, Callable, Optional
+from typing import Any, Callable, List, Optional
 
 from .auth import _do_get_request
 
@@ -33,9 +33,12 @@ KNOWN_GOOD_BROWSERS = {
 }
 
 
-def _get_config_path():
+def _get_config_path() -> str:
     """
     Returns the path to the config file.
+
+    :returns: The path to the local config file.
+    :rtype: str
     """
     path = f"{LEGACY_CONFIG_DIR}/{LEGACY_CONFIG_NAME}"
     if os.path.exists(path):
@@ -44,7 +47,7 @@ def _get_config_path():
     return f"{CONFIG_DIR}/{CONFIG_NAME}"
 
 
-def _get_config(load=True):
+def _get_config(load: bool = True):
     """
     Returns a new ConfigParser object that represents the CLI's configuration.
     If load is false, we won't load the config from disk.
@@ -52,6 +55,9 @@ def _get_config(load=True):
     :param load: If True, load the config from the default path.  Otherwise,
                     don't (and just return an empty ConfigParser)
     :type load: bool
+
+    :returns: The loaded config parser.
+    :rtype: configparser.ConfigParser
     """
     conf = configparser.ConfigParser()
 
@@ -61,7 +67,13 @@ def _get_config(load=True):
     return conf
 
 
-def _check_browsers():
+def _check_browsers() -> bool:
+    """
+    Checks if any browsers on the local machine are installed and usable.
+
+    :returns: Whether at least one known-working browser is found.
+    :rtype: bool
+    """
     # let's see if we _can_ use web
     try:
         webbrowser.get()
@@ -84,12 +96,34 @@ however no known-working browsers were found."""
 
 
 def _default_thing_input(
-    ask, things, prompt, error, optional=True, current_value=None
+    ask: str,
+    things: List[Any],
+    prompt: str,
+    error: str,
+    optional: bool = True,
+    current_value: Optional[Any] = None,
 ):  # pylint: disable=too-many-arguments
     """
     Requests the user choose from a list of things with the given prompt and
-    error if they choose something invalid.  If optional, the user may hit
+    error if they choose something invalid. If optional, the user may hit
     enter to not configure this option.
+
+    :param ask: The initial question to ask the user.
+    :type ask: str
+    :param things: A list of options for the user to choose from.
+    :type things: List[Any]
+    :param prompt: The prompt to show before the user input.
+    :type prompt: str
+    :param error: The error to display if a user's input is invalid.
+    :type error: str
+    :param optional: Whether this prompt is optional. Defaults to True.
+    :type optional: bool
+    :param current_value: The current value of the corresponding field,
+                          allowing users to leave a config value unchanged.
+    :type current_value: str
+
+    :returns: The user's selected option.
+    :rtype: Any
     """
     print(f"\n{ask}  Choices are:")
 
