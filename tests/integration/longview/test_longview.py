@@ -117,4 +117,3 @@ def test_longview_subscriptions_list_view():
     lines = res.splitlines()
     headers = ["id", "label", "clients_included"]
     assert_headers_in_lines(headers, lines)
-

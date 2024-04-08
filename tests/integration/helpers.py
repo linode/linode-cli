@@ -63,11 +63,8 @@ def delete_tag(arg: str):
     assert result.returncode == SUCCESS_STATUS_CODE
 
 
-def delete_target_id(target: str, id: str, subcommand: str = None):
-    if subcommand is None:
-        command = ["linode-cli", target, "delete", id]
-    else:
-        command = ["linode-cli", target, subcommand, id]
+def delete_target_id(target: str, id: str, subcommand: str = "delete"):
+    command = ["linode-cli", target, subcommand, id]
     result = exec_test_command(command)
     assert result.returncode == SUCCESS_STATUS_CODE
 

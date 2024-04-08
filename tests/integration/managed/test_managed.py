@@ -209,4 +209,3 @@ def test_managed_linode_service_list():
 
     headers = ["service_type", "consultation_group"]
     assert_headers_in_lines(headers, lines)
-
