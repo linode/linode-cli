@@ -21,7 +21,6 @@ from .helpers import (
     _default_thing_input,
     _get_config,
     _get_config_path,
-    _handle_no_default_user,
 )
 
 ENV_TOKEN_NAME = "LINODE_CLI_TOKEN"
@@ -60,7 +59,7 @@ class CLIConfig:
             and not self.config.has_option("DEFAULT", "default-user")
             and self.config.has_option("DEFAULT", "token")
         ):
-            _handle_no_default_user(self)
+            self._handle_no_default_user()
 
         environ_token = os.getenv(ENV_TOKEN_NAME, None)
 
@@ -504,3 +503,80 @@ class CLIConfig:
             'API scheme override (e.g. "https")',
             optional=True,
         )
+
+    def _handle_no_default_user(self):  # pylint: disable=too-many-branches
+        """
+        Handles the case where there is no default user in the config.
+        """
+        users = [c for c in self.config.sections() if c != "DEFAULT"]
+
+        if len(users) == 1:
+            # only one user configured - they're the default
+            self.config.set("DEFAULT", "default-user", users[0])
+            self.write_config()
+            return
+
+        if len(users) == 0:
+            # config is new or _really_ old
+            token = self.config.get("DEFAULT", "token")
+
+            if token is not None:
+                # there's a token in the config - configure that user
+                u = _do_get_request(
+                    self.base_url, "/profile", token=token, exit_on_error=False
+                )
+
+                if "errors" in u:
+                    # this token was bad - reconfigure
+                    self.configure()
+                    return
+
+                # setup config for this user
+                username = u["username"]
+
+                self.config.set("DEFAULT", "default-user", username)
+                self.config.add_section(username)
+                self.config.set(username, "token", token)
+
+                config_keys = (
+                    "region",
+                    "type",
+                    "image",
+                    "mysql_engine",
+                    "postgresql_engine",
+                    "authorized_keys",
+                    "api_host",
+                    "api_version",
+                    "api_scheme",
+                )
+
+                for key in config_keys:
+                    if not self.config.has_option("DEFAULT", key):
+                        continue
+
+                    self.config.set(
+                        username, key, self.config.get("DEFAULT", key)
+                    )
+
+                self.write_config()
+            else:
+                # got nothin', reconfigure
+                self.configure()
+
+            # this should be handled
+            return
+
+        # more than one user - prompt for the default
+        print("Please choose the active user.  Configured users are:")
+        for u in users:
+            print(f" {u}")
+        print()
+
+        while True:
+            username = input("Active user: ")
+
+            if username in users:
+                self.config.set("DEFAULT", "default-user", username)
+                self.write_config()
+                return
+            print(f"No user {username}")
