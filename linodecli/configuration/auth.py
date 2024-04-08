@@ -8,15 +8,19 @@ import sys
 import webbrowser
 from http import server
 from pathlib import Path
+from typing import Any, Callable, Dict, Optional, Tuple
 
 import requests
 
 from linodecli.helpers import API_CA_PATH
 
 TOKEN_GENERATION_URL = "https://cloud.linode.com/profile/tokens"
-# This is used for web-based configuration
+
+# The hardcoded OAuth client ID for use in web authentication.
+# This client object exists under an official Linode account.
 OAUTH_CLIENT_ID = "5823b4627e45411d18e9"
-# in the event that we can't load the styled landing page from file, this will
+
+# Un the event that we can't load the styled landing page from file, this will
 # do as a landing page
 DEFAULT_LANDING_PAGE = """
 <h2>Success</h2><br/><p>You may return to your terminal to continue..</p>
@@ -30,8 +34,21 @@ r.send();
 
 
 def _handle_response_status(
-    response, exit_on_error=None, status_validator=None
+    response: requests.Response,
+    exit_on_error: bool = False,
+    status_validator: Optional[Callable[[int], bool]] = None,
 ):
+    """
+    Handle the response status code and handle errors if necessary.
+
+    :param response: The response object from the API call.
+    :type response: requests.Response
+    :param exit_on_error: If true, the CLI should exit if the response contains an error. Defaults to False.
+    :type exit_on_error: bool
+    :param status_validator: A custom response validator function to run before the default validation.
+    :type status_validator: Optional[Callable[int], bool]
+    """
+
     if status_validator is not None and status_validator(response.status_code):
         return
 
@@ -45,15 +62,33 @@ def _handle_response_status(
 
 # TODO: merge config do_request and cli do_request
 def _do_get_request(
-    base_url, url, token=None, exit_on_error=True, status_validator=None
-):
+    base_url: str,
+    path: str,
+    token: Optional[str] = None,
+    exit_on_error: bool = True,
+    status_validator: Optional[Callable[[int], bool]] = None,
+) -> Dict[str, Any]:
     """
-    Does helper get requests during configuration
+    Runs an HTTP GET request.
+
+    :param base_url: The base URL of the API.
+    :type base_url: str
+    :param path: The path of the API endpoint.
+    :type path: str
+    :param token: The authentication token to be used for this request.
+    :type token: Optional[str]
+    :param exit_on_error: If true, the CLI should exit if the response contains an error. Defaults to False.
+    :type exit_on_error: bool
+    :param status_validator: A custom response validator function to run before the default validation.
+    :type status_validator: Optional[Callable[int], bool]
+
+    :returns: The response from the API request.
+    :rtype: Dict[str, Any]
     """
     return _do_request(
         base_url,
         requests.get,
-        url,
+        path,
         token=token,
         exit_on_error=exit_on_error,
         status_validator=status_validator,
@@ -61,16 +96,34 @@ def _do_get_request(
 
 
 def _do_request(
-    base_url,
-    method,
-    url,
-    token=None,
-    exit_on_error=None,
-    body=None,
-    status_validator=None,
+    base_url: str,
+    method: Callable,
+    path: str,
+    token: Optional[str] = None,
+    exit_on_error: bool = False,
+    body: Optional[Dict[str, Any]] = None,
+    status_validator: Optional[Callable[[int], bool]] = None,
 ):  # pylint: disable=too-many-arguments
     """
-    Does helper requests during configuration
+    Runs an HTTP request.
+
+    :param base_url: The base URL of the API.
+    :type base_url: str
+    :param method: The request method function to use.
+    :type method: Callable
+    :param path: The path of the API endpoint.
+    :type path: str
+    :param token: The authentication token to be used for this request.
+    :type token: Optional[str]
+    :param exit_on_error: If true, the CLI should exit if the response contains an error. Defaults to False.
+    :type exit_on_error: bool
+    :param body: The body of this request.
+    :type body: Optional[Dict[str, Any]]
+    :param status_validator: A custom response validator function to run before the default validation.
+    :type status_validator: Optional[Callable[int], bool]
+
+    :returns: The response body as a JSON object.
+    :rtype: Dict[str, Any]
     """
     headers = {}
 
@@ -79,7 +132,7 @@ def _do_request(
         headers["Content-type"] = "application/json"
 
     result = method(
-        base_url + url, headers=headers, json=body, verify=API_CA_PATH
+        base_url + path, headers=headers, json=body, verify=API_CA_PATH
     )
 
     _handle_response_status(
@@ -89,7 +142,18 @@ def _do_request(
     return result.json()
 
 
-def _check_full_access(base_url, token):
+def _check_full_access(base_url: str, token: str) -> bool:
+    """
+    Checks whether the given token has full-access permissions.
+
+    :param base_url: The base URL for the API.
+    :type base_url: str
+    :param token: The access token to use.
+    :type token :str
+
+    :returns: Whether the user has full access.
+    :rtype: bool
+    """
     headers = {
         "Authorization": f"Bearer {token}",
         "Content-Type": "application/json",
@@ -107,10 +171,18 @@ def _check_full_access(base_url, token):
     return result.status_code == 204
 
 
-def _username_for_token(base_url, token):
+def _username_for_token(base_url: str, token: str) -> str:
     """
     A helper function that returns the username associated with a token by
-    requesting it from the API
+    requesting it from the API.
+
+    :param base_url: The base URL for the API.
+    :type base_url: str
+    :param token: The access token to use.
+    :type token :str
+
+    :returns: The username for this token.
+    :rtype: str
     """
     u = _do_get_request(base_url, "/profile", token=token, exit_on_error=False)
     if "errors" in u:
@@ -121,10 +193,16 @@ def _username_for_token(base_url, token):
     return u["username"]
 
 
-def _get_token_terminal(base_url):
+def _get_token_terminal(base_url: str) -> Tuple[str, str]:
     """
     Handles prompting the user for a Personal Access Token and checking it
     to ensure it works.
+
+    :param base_url: The base URL for the API.
+    :type base_url: str
+
+    :returns: A tuple containing the user's username and token.
+    :rtype: Tuple[str, str]
     """
     print(
         f"""
@@ -144,12 +222,15 @@ on your account to work correctly."""
     return username, token
 
 
-def _get_token_web(base_url):
+def _get_token_web(base_url: str) -> Tuple[str, str]:
     """
-    Handles OAuth authentication for the CLI.  This requires us to get a temporary
-    token over OAuth and then use it to create a permanent token for the CLI.
-    This function returns the token the CLI should use, or exits if anything
-    goes wrong.
+    Generates a token using OAuth/web authentication..
+
+    :param base_url: The base URL of the API.
+    :type base_url: str
+
+    :return: A tuple containing the username and web token.
+    :rtype: Tuple[str, str]
     """
     temp_token = _handle_oauth_callback()
     username = _username_for_token(base_url, temp_token)
@@ -176,10 +257,13 @@ def _get_token_web(base_url):
     return username, result["token"]
 
 
-def _handle_oauth_callback():
+def _handle_oauth_callback() -> str:
     """
     Sends the user to a URL to perform an OAuth login for the CLI, then redirects
-    them to a locally-hosted page that captures the token
+    them to a locally-hosted page that captures the token.
+
+    :returns: The temporary OAuth token.
+    :rtype: str
     """
     # load up landing page HTML
     landing_page_path = Path(__file__).parent.parent / "oauth-landing-page.html"

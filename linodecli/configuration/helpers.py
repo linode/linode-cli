@@ -7,7 +7,6 @@ import os
 import webbrowser
 from typing import Any, Callable, List, Optional
 
-
 LEGACY_CONFIG_NAME = ".linode-cli"
 LEGACY_CONFIG_DIR = os.path.expanduser("~")
 
