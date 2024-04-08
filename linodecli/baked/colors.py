@@ -1,7 +1,5 @@
 """
 Applies shell color escapes for pretty printing.
-
-TODO: Update to use Rich tags rather than escape characters.
 """
 
 import os
