@@ -17,7 +17,7 @@ from rich import print as rprint
 from rich.table import Table
 
 from linodecli.cli import CLI
-from linodecli.configuration.auth import _do_get_request
+from linodecli.configuration import _do_get_request
 from linodecli.configuration.helpers import _default_thing_input
 from linodecli.plugins import PluginContext, inherit_plugin_args
 from linodecli.plugins.obj.buckets import create_bucket, delete_bucket
