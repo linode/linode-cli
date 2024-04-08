@@ -41,7 +41,8 @@ class CLIConfig:
         :type base_url: str
         :param username: (optional) The username to use for authentication. Defaults to None.
         :type: username: str
-        :param skip_config: (optional) If True, skip loading the configuration file. Defaults to False.
+        :param skip_config: (optional) If True, skip loading the configuration file.
+                            Defaults to False.
         :type skip_config: bool
         """
         self.base_url = base_url
@@ -240,7 +241,8 @@ class CLIConfig:
     # configuration return defaults or keys or something
     def update(
         self, namespace: argparse.Namespace, allowed_defaults: List[str]
-    ) -> argparse.Namespace:  # pylint: disable=too-many-branches
+    ) -> argparse.Namespace:
+        # pylint: disable=too-many-branches
         """
         This updates a Namespace (as returned by ArgumentParser) with config values
         if they aren't present in the Namespace already.

@@ -43,9 +43,11 @@ def _handle_response_status(
 
     :param response: The response object from the API call.
     :type response: requests.Response
-    :param exit_on_error: If true, the CLI should exit if the response contains an error. Defaults to False.
+    :param exit_on_error: If true, the CLI should exit if the response contains an error.
+                          Defaults to False.
     :type exit_on_error: bool
-    :param status_validator: A custom response validator function to run before the default validation.
+    :param status_validator: A custom response validator function to run before
+                             the default validation.
     :type status_validator: Optional[Callable[int], bool]
     """
 
@@ -77,9 +79,11 @@ def _do_get_request(
     :type path: str
     :param token: The authentication token to be used for this request.
     :type token: Optional[str]
-    :param exit_on_error: If true, the CLI should exit if the response contains an error. Defaults to False.
+    :param exit_on_error: If true, the CLI should exit if the response contains an error.
+                          Defaults to False.
     :type exit_on_error: bool
-    :param status_validator: A custom response validator function to run before the default validation.
+    :param status_validator: A custom response validator function to run
+                             before the default validation.
     :type status_validator: Optional[Callable[int], bool]
 
     :returns: The response from the API request.
@@ -115,11 +119,13 @@ def _do_request(
     :type path: str
     :param token: The authentication token to be used for this request.
     :type token: Optional[str]
-    :param exit_on_error: If true, the CLI should exit if the response contains an error. Defaults to False.
+    :param exit_on_error: If true, the CLI should exit if the response contains an error.
+                          Defaults to False.
     :type exit_on_error: bool
     :param body: The body of this request.
     :type body: Optional[Dict[str, Any]]
-    :param status_validator: A custom response validator function to run before the default validation.
+    :param status_validator: A custom response validator function to run before
+                             the default validation.
     :type status_validator: Optional[Callable[int], bool]
 
     :returns: The response body as a JSON object.
