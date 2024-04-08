@@ -4,4 +4,4 @@ PyYAML
 packaging
 rich
 urllib3<3
-linode-metadata
+linode-metadata>=0.3.0

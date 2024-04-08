@@ -93,6 +93,16 @@ def register_args_shared(parser: ArgumentParser):
     return parser
 
 
+def register_debug_arg(parser: ArgumentParser):
+    """
+    Add the debug argument to the given
+    ArgumentParser that may be shared across the CLI and plugins.
+    """
+    parser.add_argument(
+        "--debug", action="store_true", help="Enable verbose HTTP debug output."
+    )
+
+
 def expand_globs(pattern: str):
     """
     Expand glob pattern (for example, '/some/path/*.txt')
