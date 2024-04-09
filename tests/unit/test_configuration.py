@@ -278,7 +278,9 @@ mysql_engine = mysql/8.0.26"""
             patch("linodecli.configuration.open", mock_open()),
             patch("builtins.input", mock_input),
             contextlib.redirect_stdout(io.StringIO()),
-            patch("linodecli.configuration.config._check_browsers", lambda: False),
+            patch(
+                "linodecli.configuration.config._check_browsers", lambda: False
+            ),
             patch.dict(os.environ, {}, clear=True),
             requests_mock.Mocker() as m,
         ):
