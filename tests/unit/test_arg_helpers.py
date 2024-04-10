@@ -70,7 +70,7 @@ class TestArgParsing:
             "linodecli.arg_helpers.import_module", return_value=module_mocker
         )
         mocker.patch(
-            "linodecli.arg_helpers.plugins.available_local", ["testing.plugin"]
+            "linodecli.arg_helpers.plugins.AVAILABLE_LOCAL", ["testing.plugin"]
         )
         msg, code = arg_helpers.register_plugin("a", mocked_config, {})
         assert "conflicts with internal CLI plugin" in msg
@@ -140,7 +140,7 @@ class TestArgParsing:
 
     def test_remove_plugin_in_available_local(self, mocker, mocked_config):
         mocker.patch(
-            "linodecli.arg_helpers.plugins.available_local", ["testing.plugin"]
+            "linodecli.arg_helpers.plugins.AVAILABLE_LOCAL", ["testing.plugin"]
         )
         msg, code = arg_helpers.remove_plugin("testing.plugin", mocked_config)
         assert "cannot be removed" in msg
