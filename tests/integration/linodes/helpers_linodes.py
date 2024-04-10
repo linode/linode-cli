@@ -99,6 +99,38 @@ def create_linode(test_region=DEFAULT_REGION):
     return linode_id
 
 
+def create_linode_backup_disabled(test_region=DEFAULT_REGION):
+    result = set_backups_enabled_in_account_settings(toggle=False)
+
+    # create linode
+    linode_id = (
+        exec_test_command(
+            [
+                "linode-cli",
+                "linodes",
+                "create",
+                "--type",
+                DEFAULT_LINODE_TYPE,
+                "--region",
+                test_region,
+                "--image",
+                DEFAULT_TEST_IMAGE,
+                "--root_pass",
+                DEFAULT_RANDOM_PASS,
+                "--format=id",
+                "--text",
+                "--no-headers",
+                "--backups_enabled",
+                "false",
+            ]
+        )
+        .stdout.decode()
+        .rstrip()
+    )
+
+    return linode_id
+
+
 def shutdown_linodes():
     linode_ids = (
         exec_test_command(
@@ -205,10 +237,30 @@ def create_linode_and_wait(
         )
     linode_id = output
 
-    # wait until linode is running
-    assert (
-        wait_until(linode_id=linode_id, timeout=240, status="running"),
-        "linode failed to change status to running",
-    )
+    # wait until linode is running, wait_until returns True when it is in running state
+    result = (wait_until(linode_id=linode_id, timeout=240, status="running"),)
+
+    assert result, "linode failed to change status to running"
 
     return linode_id
+
+
+def set_backups_enabled_in_account_settings(toggle: "bool"):
+    command = [
+        "linode-cli",
+        "account",
+        "settings-update",
+        "--format",
+        "backups_enabled",
+        "--text",
+        "--no-headers",
+    ]
+
+    if toggle:
+        command.extend(["--backups_enabled", "true"])
+    else:
+        command.extend(["--backups_enabled", "false"])
+
+    result = exec_test_command(command).stdout.decode().rstrip()
+
+    return result

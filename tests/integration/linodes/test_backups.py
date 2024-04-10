@@ -8,6 +8,8 @@ from tests.integration.linodes.helpers_linodes import (
     BASE_CMD,
     create_linode,
     create_linode_and_wait,
+    create_linode_backup_disabled,
+    set_backups_enabled_in_account_settings,
 )
 
 # ##################################################################
@@ -26,12 +28,32 @@ def create_linode_setup():
     delete_target_id("linodes", linode_id)
 
 
-def test_create_linode_with_backup_disabled(create_linode_setup):
-    linode_id = create_linode_setup
+@pytest.fixture
+def create_linode_backup_disabled_setup():
+    res = set_backups_enabled_in_account_settings(toggle=False)
+
+    if res == "True":
+        raise ValueError(
+            "Backups are unexpectedly enabled before setting up the test."
+        )
+
+    linode_id = create_linode_backup_disabled()
+
+    yield linode_id
+
+    delete_target_id("linodes", linode_id)
+
+
+def test_create_linode_with_backup_disabled(
+    create_linode_backup_disabled_setup,
+):
+    linode_id = create_linode_backup_disabled_setup
     result = exec_test_command(
         BASE_CMD
         + [
             "list",
+            "--id",
+            linode_id,
             "--format=id,enabled",
             "--delimiter",
             ",",
@@ -41,6 +63,10 @@ def test_create_linode_with_backup_disabled(create_linode_setup):
     ).stdout.decode()
 
     assert re.search(linode_id + ",False", result)
+
+    result = set_backups_enabled_in_account_settings(toggle=True)
+
+    assert "True" in result
 
 
 @pytest.mark.smoke
