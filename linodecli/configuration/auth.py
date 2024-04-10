@@ -20,7 +20,7 @@ TOKEN_GENERATION_URL = "https://cloud.linode.com/profile/tokens"
 # This client object exists under an official Linode account.
 OAUTH_CLIENT_ID = "5823b4627e45411d18e9"
 
-# Un the event that we can't load the styled landing page from file, this will
+# In the event that we can't load the styled landing page from file, this will
 # do as a landing page
 DEFAULT_LANDING_PAGE = """
 <h2>Success</h2><br/><p>You may return to your terminal to continue..</p>
