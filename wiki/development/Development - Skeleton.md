@@ -13,7 +13,8 @@ The following section outlines the purpose of each file in the CLI.
     * `config.py` - Contains all the logic for loading, updating, and saving CLI configs
     * `helpers.py` - Contains various config-related helpers
   * `plugins`
-    * `__init__.py` - Contains the shared wrapper that allows plugins to access CLI functionality
+    * `__init__.py` - Contains imports for certain classes in this package
+    * `plugins.py` - Contains the shared wrapper that allows plugins to access CLI functionality
   * `__init__.py` -  Contains the main entrypoint for the CLI; routes top-level commands to their corresponding functions
   * `__main__.py` - Calls the project entrypoint in `__init__.py`
   * `api_request.py` - Contains logic for building API request bodies, making API requests, and handling API responses/errors
