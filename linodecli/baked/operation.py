@@ -24,6 +24,12 @@ def parse_boolean(value):
     """
     A helper to allow accepting booleans in from argparse.  This is intended to
     be passed to the `type=` kwarg for ArgumentParser.add_argument.
+
+    :param value: The value to be parsed into boolean.
+    :type value: str
+
+    :returns: The boolean value of the input.
+    :rtype: bool
     """
     if value.lower() in ("yes", "true", "y", "1"):
         return True
@@ -36,6 +42,12 @@ def parse_dict(value):
     """
     A helper function to decode incoming JSON data as python dicts.  This is
     intended to be passed to the `type=` kwarg for ArgumentParaser.add_argument.
+
+    :param value: The json string to be parsed into dict.
+    :type value: str
+
+    :returns: The dict value of the input.
+    :rtype: dict
     """
     if not isinstance(value, str):
         raise argparse.ArgumentTypeError("Expected a JSON string")
@@ -72,6 +84,12 @@ def wrap_parse_nullable_value(arg_type):
     """
     A helper function to parse `null` as None for nullable CLI args.
     This is intended to be called and passed to the `type=` kwarg for ArgumentParser.add_argument.
+
+    :param arg_type: The arg type.
+    :type arg_type: str
+
+    :returns: The nullable value of the type.
+    :rtype: TYPES
     """
 
     def type_func(value):
@@ -254,7 +272,7 @@ class OpenAPIOperation:
         """
         Wraps an openapi3.Operation object and handles pulling out values relevant
         to the Linode CLI.
-        .. note::
+         note::
            This function runs _before pickling!  As such, this is the only place
            where the OpenAPI3 objects can be accessed safely (as they are not
            usable when unpickled!)
@@ -344,6 +362,12 @@ class OpenAPIOperation:
     def _flatten_url_path(tag):
         """
         Returns the lowercase of the tag to build up url path. Replace space with hyphen.
+
+        :param tag: The tag value to be flattened.
+        :type tag: str
+
+        :returns: The flattened tag.
+        :rtype: str
         """
 
         new_tag = tag.lower()
@@ -354,7 +378,13 @@ class OpenAPIOperation:
         self, json, handler
     ):  # pylint: disable=redefined-outer-name
         """
-        Processes the response as JSON and prints
+        Processes the response as JSON and prints.
+
+        :param json: The json response.
+        :type json: dict
+
+        :param handler: The CLI output handler.
+        :type handler: OutputHandler
         """
         if self.response_model is None:
             return
@@ -373,6 +403,9 @@ class OpenAPIOperation:
     def _add_args_filter(self, parser):
         """
         Builds up filter args for GET operation.
+
+        :param parser: The parser to use.
+        :type parser: ArgumentParser
         """
 
         # build args for filtering
@@ -415,6 +448,9 @@ class OpenAPIOperation:
     def _add_args_post_put(self, parser) -> List[Tuple[str, str]]:
         """
         Builds up args for POST and PUT operations.
+
+        :param parser: The parser to use.
+        :type parser: ArgumentParser
         """
 
         list_items = []
@@ -480,6 +516,9 @@ class OpenAPIOperation:
         """
         This method validates that no child arguments (e.g. --interfaces.purpose) are
         specified alongside their parent (e.g. --interfaces).
+
+        :param parsed: The parsed arguments.
+        :type parsed: Namespace
         """
         conflicts = defaultdict(list)
 
@@ -524,6 +563,15 @@ class OpenAPIOperation:
     ):  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
         """
         Groups list items and parses nested list.
+
+        :param list_items: The list items to be handled.
+        :type list_items: List[Tuple[str, str]]
+
+        :param parsed: The parsed arguments.
+        :type parsed: Any
+
+        :returns: The parsed arguments updated with the list items.
+        :rtype: Any
         """
 
         lists = {}
@@ -602,6 +650,12 @@ class OpenAPIOperation:
         """
         Given sys.argv after the operation name, parse args based on the params
         and args of this operation
+
+        :param args: The arguments to be parsed.
+        :type args: Any
+
+        :returns: The parsed arguments.
+        :rtype: Any
         """
 
         #  build an argparse
