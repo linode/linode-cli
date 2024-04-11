@@ -149,7 +149,7 @@ class ListArgumentAction(argparse.Action):
 
         adjacent_items = {k: getattr(namespace, k) for k in adjacent_keys}
 
-        # Find the deepest field so we can know if
+        # Find the deepest field, so we can know if
         # we're starting a new object.
         deepest_length = max(len(x) for x in adjacent_items.values())
 
@@ -342,6 +342,10 @@ class OpenAPIOperation:
 
     @staticmethod
     def _flatten_url_path(tag):
+        """
+        Returns the lowercase of the tag to build up url path. Replace space with hyphen.
+        """
+
         new_tag = tag.lower()
         new_tag = re.sub(r"[^a-z ]", "", new_tag).replace(" ", "-")
         return new_tag
@@ -367,6 +371,10 @@ class OpenAPIOperation:
         handler.print_response(self.response_model, json)
 
     def _add_args_filter(self, parser):
+        """
+        Builds up filter args for GET operation.
+        """
+
         # build args for filtering
         filterable_args = []
         for attr in self.response_model.attrs:
@@ -405,6 +413,10 @@ class OpenAPIOperation:
         )
 
     def _add_args_post_put(self, parser) -> List[Tuple[str, str]]:
+        """
+        Builds up args for POST and PUT operations.
+        """
+
         list_items = []
 
         # build args for body JSON
@@ -510,6 +522,10 @@ class OpenAPIOperation:
     def _handle_list_items(
         list_items: List[Tuple[str, str]], parsed: Any
     ):  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
+        """
+        Groups list items and parses nested list.
+        """
+
         lists = {}
 
         # group list items as expected
