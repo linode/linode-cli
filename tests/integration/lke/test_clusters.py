@@ -84,21 +84,31 @@ def test_lke_cluster_list():
     assert_headers_in_lines(headers, lines)
 
 
-@pytest.fixture(scope="function")
-def version_id():
-    res = (
+@pytest.fixture
+def test_version_id():
+    version_id = (
         exec_test_command(
-            BASE_CMD + ["versions-list", "--text", "--delimiter=,"]
+            BASE_CMD
+            + [
+                "versions-list",
+                "--text",
+                "--no-headers",
+                "--delimiter",
+                ",",
+                "--format",
+                "id",
+            ]
         )
         .stdout.decode()
         .rstrip()
+        .splitlines()
     )
-    lines = res.splitlines()
-    version_id = lines[1].split(",")[0]
-    yield version_id
+    first_id = version_id[0]
+    yield first_id
 
 
-def test_beta_view(version_id):
+def test_beta_view(test_version_id):
+    version_id = test_version_id
     res = (
         exec_test_command(
             BASE_CMD + ["version-view", version_id, "--text", "--delimiter=,"]

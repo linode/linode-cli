@@ -16,14 +16,35 @@ def test_beta_list():
     if len(lines) < 2 or len(lines[1].split(",")) == 0:
         pytest.skip("No beta program available to test")
     else:
-        beta_id = lines[1].split(",")[0]
         headers = ["label", "description"]
         assert_headers_in_lines(headers, lines)
-        return beta_id
 
 
-def test_beta_view():
-    beta_id = test_beta_list()
+@pytest.fixture
+def test_beta_id():
+    beta_id = (
+        exec_test_command(
+            BASE_CMD
+            + [
+                "list",
+                "--text",
+                "--no-headers",
+                "--delimiter",
+                ",",
+                "--format",
+                "id",
+            ]
+        )
+        .stdout.decode()
+        .rstrip()
+        .splitlines()
+    )
+    first_id = beta_id[0]
+    yield first_id
+
+
+def test_beta_view(test_beta_id):
+    beta_id = test_beta_id
     if beta_id is None:
         pytest.skip("No beta program available to test")
     else:

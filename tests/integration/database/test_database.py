@@ -16,16 +16,35 @@ def test_engines_list():
         .rstrip()
     )
     lines = res.splitlines()
-
-    engine_id = lines[1].split(",")[0]
-
     headers = ["id", "engine", "version"]
     assert_headers_in_lines(headers, lines)
-    return engine_id
 
 
-def test_engines_view():
-    engine_id = test_engines_list()
+@pytest.fixture
+def test_engine_id():
+    engine_id = (
+        exec_test_command(
+            BASE_CMD
+            + [
+                "engines",
+                "--text",
+                "--no-headers",
+                "--delimiter",
+                ",",
+                "--format",
+                "id",
+            ]
+        )
+        .stdout.decode()
+        .rstrip()
+        .splitlines()
+    )
+    first_id = engine_id[0]
+    yield first_id
+
+
+def test_engines_view(test_engine_id):
+    engine_id = test_engine_id
     res = (
         exec_test_command(
             BASE_CMD + ["engine-view", engine_id, "--text", "--delimiter=,"]
@@ -98,8 +117,31 @@ def test_databases_types():
     return node_id
 
 
-def test_databases_type_view():
-    node_id = test_databases_types()
+@pytest.fixture
+def test_node_id():
+    node_id = (
+        exec_test_command(
+            BASE_CMD
+            + [
+                "types",
+                "--text",
+                "--no-headers",
+                "--delimiter",
+                ",",
+                "--format",
+                "id",
+            ]
+        )
+        .stdout.decode()
+        .rstrip()
+        .splitlines()
+    )
+    first_id = node_id[0]
+    yield first_id
+
+
+def test_databases_type_view(test_node_id):
+    node_id = test_node_id
     res = (
         exec_test_command(
             BASE_CMD + ["type-view", node_id, "--text", "--delimiter=,"]

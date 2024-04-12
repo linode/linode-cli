@@ -1,6 +1,8 @@
 import secrets
 import time
 
+import pytest
+
 from tests.integration.helpers import (
     assert_headers_in_lines,
     delete_target_id,
@@ -36,14 +38,35 @@ def test_managed_contact_list():
         .rstrip()
     )
     lines = res.splitlines()
-    contact_id = lines[1].split(",")[0]
     headers = ["name", "email", "group"]
     assert_headers_in_lines(headers, lines)
-    return contact_id
 
 
-def test_managed_contact_view():
-    contact_id = test_managed_contact_list()
+@pytest.fixture
+def test_contact_id():
+    contact_id = (
+        exec_test_command(
+            BASE_CMD
+            + [
+                "contacts-list",
+                "--text",
+                "--no-headers",
+                "--delimiter",
+                ",",
+                "--format",
+                "id",
+            ]
+        )
+        .stdout.decode()
+        .rstrip()
+        .splitlines()
+    )
+    first_id = contact_id[0]
+    yield first_id
+
+
+def test_managed_contact_view(test_contact_id):
+    contact_id = test_contact_id
     res = (
         exec_test_command(
             BASE_CMD + ["contact-view", contact_id, "--text", "--delimiter=,"]
@@ -57,8 +80,8 @@ def test_managed_contact_view():
     assert_headers_in_lines(headers, lines)
 
 
-def test_managed_contact_update():
-    contact_id = test_managed_contact_list()
+def test_managed_contact_update(test_contact_id):
+    contact_id = test_contact_id
     unique_name1 = str(time.time_ns()) + "test"
     update_name = (
         exec_test_command(
@@ -116,8 +139,31 @@ def test_managed_credentials_list():
     return credential_id
 
 
-def test_managed_credentials_view():
-    credential_id = test_managed_credentials_list()
+@pytest.fixture
+def test_credential_id():
+    credential_id = (
+        exec_test_command(
+            BASE_CMD
+            + [
+                "credentials-list",
+                "--text",
+                "--no-headers",
+                "--delimiter",
+                ",",
+                "--format",
+                "id",
+            ]
+        )
+        .stdout.decode()
+        .rstrip()
+        .splitlines()
+    )
+    first_id = credential_id[0]
+    yield first_id
+
+
+def test_managed_credentials_view(test_credential_id):
+    credential_id = test_credential_id
     res = (
         exec_test_command(
             BASE_CMD
@@ -132,8 +178,8 @@ def test_managed_credentials_view():
     assert_headers_in_lines(headers, lines)
 
 
-def test_managed_credentials_update():
-    credential_id = test_managed_credentials_list()
+def test_managed_credentials_update(test_credential_id):
+    credential_id = test_credential_id
     new_label = "test-label" + secrets.token_hex(4)
     update_label = (
         exec_test_command(

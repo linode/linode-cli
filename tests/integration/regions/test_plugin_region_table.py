@@ -2,6 +2,8 @@ import os
 import subprocess
 from typing import List
 
+import pytest
+
 from tests.integration.helpers import assert_headers_in_lines, exec_test_command
 
 BASE_CMD = ["linode-cli", "regions"]
@@ -49,14 +51,35 @@ def test_regions_list_avail():
         .rstrip()
     )
     lines = res.splitlines()
-    region_id = lines[1].split(",")[0]
     headers = ["region", "plan", "available"]
     assert_headers_in_lines(headers, lines)
-    return region_id
 
 
-def test_regions_view():
-    region_id = test_regions_list_avail()
+@pytest.fixture
+def test_region_id():
+    region_id = (
+        exec_test_command(
+            BASE_CMD
+            + [
+                "list-avail",
+                "--text",
+                "--no-headers",
+                "--delimiter",
+                ",",
+                "--format",
+                "region",
+            ]
+        )
+        .stdout.decode()
+        .rstrip()
+        .splitlines()
+    )
+    first_id = region_id[0]
+    yield first_id
+
+
+def test_regions_view(test_region_id):
+    region_id = test_region_id
     res = (
         exec_test_command(
             BASE_CMD + ["view", region_id, "--text", "--delimiter=,"]
@@ -69,8 +92,8 @@ def test_regions_view():
     assert_headers_in_lines(headers, lines)
 
 
-def test_regions_view_avail():
-    region_id = test_regions_list_avail()
+def test_regions_view_avail(test_region_id):
+    region_id = test_region_id
     res = (
         exec_test_command(
             BASE_CMD + ["view-avail", region_id, "--text", "--delimiter=,"]
