@@ -109,12 +109,8 @@ def test_databases_types():
         .rstrip()
     )
     lines = res.splitlines()
-
-    node_id = lines[1].split(",")[0]
-
     headers = ["id", "label", "_split"]
     assert_headers_in_lines(headers, lines)
-    return node_id
 
 
 @pytest.fixture

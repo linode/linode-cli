@@ -133,10 +133,8 @@ def test_managed_credentials_list():
         .rstrip()
     )
     lines = res.splitlines()
-    credential_id = lines[1].split(",")[0]
     headers = ["label", "last_decrypted"]
     assert_headers_in_lines(headers, lines)
-    return credential_id
 
 
 @pytest.fixture
