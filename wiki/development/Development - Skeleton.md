@@ -8,8 +8,9 @@ The following section outlines the purpose of each file in the CLI.
     * `request.py` - Contains the `OpenAPIRequest` and `OpenAPIRequestArg` classes
     * `response.py` - Contains `OpenAPIResponse` and `OpenAPIResponseAttr` classes
   * `configuration`
-    * `__init__.py` - Contains the `CLIConfig` class and the logic for the interactive configuration prompt
+    * `__init__.py` - Contains imports for certain classes in this package
     * `auth.py` - Contains all the logic for the token generation OAuth workflow
+    * `config.py` - Contains all the logic for loading, updating, and saving CLI configs
     * `helpers.py` - Contains various config-related helpers
   * `plugins`
     * `__init__.py` - Contains the shared wrapper that allows plugins to access CLI functionality
