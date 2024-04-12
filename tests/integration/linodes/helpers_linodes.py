@@ -245,7 +245,7 @@ def create_linode_and_wait(
     return linode_id
 
 
-def set_backups_enabled_in_account_settings(toggle: "bool"):
+def set_backups_enabled_in_account_settings(toggle: bool):
     command = [
         "linode-cli",
         "account",
