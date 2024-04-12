@@ -11,9 +11,12 @@ import requests
 import yaml
 
 from linodecli import plugins
-
-from .completion import bake_completions
-from .helpers import pagination_args_shared, register_args_shared
+from linodecli.completion import bake_completions
+from linodecli.helpers import (
+    pagination_args_shared,
+    register_args_shared,
+    register_debug_arg,
+)
 
 
 def register_args(parser):
@@ -137,12 +140,10 @@ def register_args(parser):
         action="store_true",
         help="Prints version information and exits.",
     )
-    parser.add_argument(
-        "--debug", action="store_true", help="Enable verbose HTTP debug output."
-    )
 
     pagination_args_shared(parser)
     register_args_shared(parser)
+    register_debug_arg(parser)
 
     return parser
 
