@@ -1,7 +1,7 @@
 #
 # Makefile for more convenient building of the Linode CLI and its baked content
 #
-INTEGRATION_TEST_PATH :=
+MODULE :=
 TEST_CASE_COMMAND :=
 
 ifdef TEST_CASE
@@ -62,7 +62,7 @@ testunit:
 
 .PHONY: testint
 testint:
-	pytest tests/integration/${INTEGRATION_TEST_PATH} ${TEST_CASE_COMMAND} --disable-warnings
+	pytest tests/integration/${MODULE} ${TEST_CASE_COMMAND}
 
 .PHONY: testall
 testall:
@@ -89,4 +89,4 @@ format: black isort autoflake
 
 @PHONEY: smoketest
 smoketest:
-	pytest -m smoke tests/integration --disable-warnings
+	pytest -m smoke tests/integration
