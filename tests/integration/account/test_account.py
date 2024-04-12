@@ -49,22 +49,23 @@ def test_event_list():
 def test_event_id():
     event_id = (
         exec_test_command(
-            ["linode-cli",
-             "events",
-             "list",
-             "--text",
-             "--no-headers",
-             "--delimiter",
-             ",",
-             "--format",
-             "id",
-             ]
+            [
+                "linode-cli",
+                "events",
+                "list",
+                "--text",
+                "--no-headers",
+                "--delimiter",
+                ",",
+                "--format",
+                "id",
+            ]
         )
         .stdout.decode()
         .rstrip()
         .splitlines()
     )
-    first_id = event_id[0].split(',')[0]
+    first_id = event_id[0].split(",")[0]
     print(event_id)
     print(first_id)
     yield first_id
@@ -236,22 +237,23 @@ def test_user_list():
 def test_user_id():
     user_id = (
         exec_test_command(
-            ["linode-cli",
-             "users",
-             "list",
-             "--text",
-             "--no-headers",
-             "--delimiter",
-             ",",
-             "--format",
-             "id",
-             ]
+            [
+                "linode-cli",
+                "users",
+                "list",
+                "--text",
+                "--no-headers",
+                "--delimiter",
+                ",",
+                "--format",
+                "id",
+            ]
         )
         .stdout.decode()
         .rstrip()
         .splitlines()
     )
-    first_id = user_id[0].split(',')[0]
+    first_id = user_id[0].split(",")[0]
     yield first_id
 
 
