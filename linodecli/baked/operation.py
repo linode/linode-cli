@@ -11,16 +11,18 @@ import sys
 from collections import defaultdict
 from getpass import getpass
 from os import environ, path
-from typing import Any, List, Tuple
+from typing import Any, List, Tuple, Dict
 
+import openapi3.paths
 from openapi3.paths import Operation
 
 from linodecli.baked.request import OpenAPIFilteringRequest, OpenAPIRequest
 from linodecli.baked.response import OpenAPIResponse
+from linodecli.output import OutputHandler
 from linodecli.overrides import OUTPUT_OVERRIDES
 
 
-def parse_boolean(value):
+def parse_boolean(value: str) -> bool:
     """
     A helper to allow accepting booleans in from argparse.  This is intended to
     be passed to the `type=` kwarg for ArgumentParser.add_argument.
@@ -38,7 +40,7 @@ def parse_boolean(value):
     raise argparse.ArgumentTypeError("Expected a boolean value")
 
 
-def parse_dict(value):
+def parse_dict(value: str) -> dict:
     """
     A helper function to decode incoming JSON data as python dicts.  This is
     intended to be passed to the `type=` kwarg for ArgumentParaser.add_argument.
@@ -80,7 +82,7 @@ class ExplicitEmptyListValue:
     """
 
 
-def wrap_parse_nullable_value(arg_type):
+def wrap_parse_nullable_value(arg_type: str) -> TYPES:
     """
     A helper function to parse `null` as None for nullable CLI args.
     This is intended to be called and passed to the `type=` kwarg for ArgumentParser.add_argument.
@@ -111,7 +113,13 @@ class ArrayAction(argparse.Action):
     empty lists using a singular "[]" argument value.
     """
 
-    def __call__(self, parser, namespace, values, option_string=None):
+    def __call__(
+        self,
+        parser: argparse.ArgumentParser,
+        namespace: argparse.Namespace,
+        values: List,
+        option_string: str = None,
+    ):
         if getattr(namespace, self.dest) is None:
             setattr(namespace, self.dest, [])
 
@@ -139,7 +147,13 @@ class ListArgumentAction(argparse.Action):
     lists in the output namespace.
     """
 
-    def __call__(self, parser, namespace, values, option_string=None):
+    def __call__(
+        self,
+        parser: argparse.ArgumentParser,
+        namespace: argparse.Namespace,
+        values: List,
+        option_string: str = None,
+    ):
         if getattr(namespace, self.dest) is None:
             setattr(namespace, self.dest, [])
 
@@ -193,7 +207,13 @@ class PasswordPromptAction(argparse.Action):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def __call__(self, parser, namespace, values, option_string=None):
+    def __call__(
+        self,
+        parser: argparse.ArgumentParser,
+        namespace: argparse.Namespace,
+        values: str,
+        option_string: str = None,
+    ):
         # if not provided on the command line, pull from the environment if it
         # exists at this key
         environ_key = f"LINODE_CLI_{self.dest.upper()}"
@@ -220,7 +240,13 @@ class OptionalFromFileAction(argparse.Action):
     the file exists, otherwise it will fall back to using the provided value.
     """
 
-    def __call__(self, parser, namespace, values, option_string=None):
+    def __call__(
+        self,
+        parser: argparse.ArgumentParser,
+        namespace: argparse.Namespace,
+        values: str,
+        option_string: str = None,
+    ):
         if isinstance(values, str):
             input_path = path.expanduser(values)
 
@@ -250,7 +276,7 @@ class OpenAPIOperationParameter:
     A parameter is a variable element of the URL path, generally an ID or slug
     """
 
-    def __init__(self, parameter):
+    def __init__(self, parameter: openapi3.paths.Parameter):
         """
         :param parameter: The Parameter object this is parsing values from
         :type parameter: openapi3.Parameter
@@ -359,7 +385,7 @@ class OpenAPIOperation:
         return self.request.attrs if self.request else []
 
     @staticmethod
-    def _flatten_url_path(tag):
+    def _flatten_url_path(tag: str) -> str:
         """
         Returns the lowercase of the tag to build up url path. Replace space with hyphen.
 
@@ -375,13 +401,13 @@ class OpenAPIOperation:
         return new_tag
 
     def process_response_json(
-        self, json, handler
+        self, json: Dict[str, Any], handler: OutputHandler
     ):  # pylint: disable=redefined-outer-name
         """
         Processes the response as JSON and prints.
 
         :param json: The json response.
-        :type json: dict
+        :type json: Dict[str, Any]
 
         :param handler: The CLI output handler.
         :type handler: OutputHandler
@@ -400,7 +426,7 @@ class OpenAPIOperation:
         json = self.response_model.fix_json(json)
         handler.print_response(self.response_model, json)
 
-    def _add_args_filter(self, parser):
+    def _add_args_filter(self, parser: argparse.ArgumentParser):
         """
         Builds up filter args for GET operation.
 
@@ -445,12 +471,17 @@ class OpenAPIOperation:
             help="Either “asc” or “desc”. Defaults to “asc”. Requires +order_by",
         )
 
-    def _add_args_post_put(self, parser) -> List[Tuple[str, str]]:
+    def _add_args_post_put(
+        self, parser: argparse.ArgumentParser
+    ) -> List[Tuple[str, str]]:
         """
         Builds up args for POST and PUT operations.
 
         :param parser: The parser to use.
         :type parser: ArgumentParser
+
+        :returns: A list of arguments.
+        :rtype: List[Tuple[str, str]]
         """
 
         list_items = []
@@ -559,7 +590,9 @@ class OpenAPIOperation:
 
     @staticmethod
     def _handle_list_items(
-        list_items: List[Tuple[str, str]], parsed: Any
+        list_items: List[Tuple[str, str]], parsed: argparse.Namespace
+    ) -> (
+        argparse.Namespace
     ):  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
         """
         Groups list items and parses nested list.
@@ -568,10 +601,10 @@ class OpenAPIOperation:
         :type list_items: List[Tuple[str, str]]
 
         :param parsed: The parsed arguments.
-        :type parsed: Any
+        :type parsed: argparse.Namespace
 
         :returns: The parsed arguments updated with the list items.
-        :rtype: Any
+        :rtype: argparse.Namespace
         """
 
         lists = {}
@@ -646,7 +679,7 @@ class OpenAPIOperation:
 
         return parsed
 
-    def parse_args(self, args):
+    def parse_args(self, args: Any) -> argparse.Namespace:
         """
         Given sys.argv after the operation name, parse args based on the params
         and args of this operation
@@ -655,7 +688,7 @@ class OpenAPIOperation:
         :type args: Any
 
         :returns: The parsed arguments.
-        :rtype: Any
+        :rtype: Namespace
         """
 
         #  build an argparse
