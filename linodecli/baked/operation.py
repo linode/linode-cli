@@ -11,7 +11,7 @@ import sys
 from collections import defaultdict
 from getpass import getpass
 from os import environ, path
-from typing import Any, List, Tuple, Dict
+from typing import Any, Dict, List, Tuple
 
 import openapi3.paths
 from openapi3.paths import Operation
