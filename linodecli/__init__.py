@@ -21,7 +21,7 @@ from .arg_helpers import (
     remove_plugin,
 )
 from .cli import CLI
-from .completion import bake_completions, get_completions
+from .completion import get_completions
 from .configuration import ENV_TOKEN_NAME
 from .help_pages import print_help_action, print_help_default
 from .helpers import handle_url_overrides
@@ -206,11 +206,6 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
             )
         else:
             cli.config.remove_user(parsed.action)
-        sys.exit(0)
-
-    # special command to bake shell completion script
-    if parsed.command == "bake-bash":
-        bake_completions(cli.ops)
         sys.exit(0)
 
     # check for plugin invocation

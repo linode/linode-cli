@@ -11,7 +11,6 @@ import requests
 import yaml
 
 from linodecli import plugins
-from linodecli.completion import bake_completions
 from linodecli.helpers import (
     pagination_args_shared,
     register_args_shared,
@@ -263,4 +262,3 @@ def bake_command(cli, spec_loc):
         sys.exit(2)
 
     cli.bake(spec)
-    bake_completions(cli.ops)

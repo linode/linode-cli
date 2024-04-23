@@ -46,7 +46,7 @@ In order to successfully build the CLI, your system will require the following:
 
 - The `make` command
 - `python3`
-- `pip3` (to install `requirements.txt`)
+- `pip3` (to install project dependencies)
 
 Before attempting a build, install python dependencies like this::
 ```bash
