@@ -16,7 +16,7 @@ dependencies = [
     "PyYAML",
     "packaging",
     "rich",
-    "urllib<3",
+    "urllib3<3",
     "linode-metadata>=0.3.0"
 ]
 dynamic = ["version"]

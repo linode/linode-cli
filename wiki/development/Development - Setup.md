@@ -60,7 +60,7 @@ linode-cli --version
 
 # Output:
 # linode-cli 0.0.0
-# Built off spec version 4.173.0
+# Built from spec version 4.173.0
 #
 # The 0.0.0 implies this is a locally built version of the CLI
 ```

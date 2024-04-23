@@ -112,7 +112,7 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
         if not parsed.command:
             # print version info and exit - but only if no command was given
             print(f"linode-cli {VERSION}")
-            print(f"Built off spec version {cli.spec_version}")
+            print(f"Built from spec version {cli.spec_version}")
             sys.exit(0)
         else:
             # something else might want to parse version

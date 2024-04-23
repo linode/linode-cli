@@ -1,4 +1,0 @@
-library 'cli-builder'
-
-buildCli()
-

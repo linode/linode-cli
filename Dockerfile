@@ -10,6 +10,8 @@ RUN apt-get update && \
 
 COPY . .
 
+RUN make requirements
+
 RUN LINODE_CLI_VERSION=$linode_cli_version GITHUB_TOKEN=$github_token make build
 
 FROM python:3.11-slim
