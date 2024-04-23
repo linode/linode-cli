@@ -26,12 +26,9 @@ from .configuration import ENV_TOKEN_NAME
 from .help_pages import print_help_action, print_help_default
 from .helpers import handle_url_overrides
 from .output import OutputMode
+from .version import __version__
 
-# this might not be installed at the time of building
-try:
-    VERSION = version("linode-cli")
-except:
-    VERSION = "building"
+VERSION = __version__
 
 BASE_URL = "https://api.linode.com/v4"
 
