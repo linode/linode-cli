@@ -38,7 +38,7 @@ jobs:
         id: cli_version
         with:
           script: |
-            let tag_name = github.event.release.tag_name;
+            let tag_name = '${{ github.event.release.tag_name }}';
             
             if (tag_name.startsWith("v")) {
               tag_name = tag_name.slice(1);
