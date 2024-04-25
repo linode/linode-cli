@@ -21,7 +21,7 @@ def test_beta_list():
 
 
 @pytest.fixture
-def test_beta_id():
+def get_beta_id():
     beta_id = (
         exec_test_command(
             BASE_CMD
@@ -43,8 +43,8 @@ def test_beta_id():
     yield first_id
 
 
-def test_beta_view(test_beta_id):
-    beta_id = test_beta_id
+def test_beta_view(get_beta_id):
+    beta_id = get_beta_id
     if beta_id is None:
         pytest.skip("No beta program available to test")
     else:

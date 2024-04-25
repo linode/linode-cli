@@ -43,7 +43,7 @@ def test_managed_contact_list():
 
 
 @pytest.fixture
-def test_contact_id():
+def get_contact_id():
     contact_id = (
         exec_test_command(
             BASE_CMD
@@ -65,8 +65,8 @@ def test_contact_id():
     yield first_id
 
 
-def test_managed_contact_view(test_contact_id):
-    contact_id = test_contact_id
+def test_managed_contact_view(get_contact_id):
+    contact_id = get_contact_id
     res = (
         exec_test_command(
             BASE_CMD + ["contact-view", contact_id, "--text", "--delimiter=,"]
@@ -80,8 +80,8 @@ def test_managed_contact_view(test_contact_id):
     assert_headers_in_lines(headers, lines)
 
 
-def test_managed_contact_update(test_contact_id):
-    contact_id = test_contact_id
+def test_managed_contact_update(get_contact_id):
+    contact_id = get_contact_id
     unique_name1 = str(time.time_ns()) + "test"
     update_name = (
         exec_test_command(
@@ -138,7 +138,7 @@ def test_managed_credentials_list():
 
 
 @pytest.fixture
-def test_credential_id():
+def get_credential_id():
     credential_id = (
         exec_test_command(
             BASE_CMD
@@ -160,8 +160,8 @@ def test_credential_id():
     yield first_id
 
 
-def test_managed_credentials_view(test_credential_id):
-    credential_id = test_credential_id
+def test_managed_credentials_view(get_credential_id):
+    credential_id = get_credential_id
     res = (
         exec_test_command(
             BASE_CMD
@@ -176,8 +176,8 @@ def test_managed_credentials_view(test_credential_id):
     assert_headers_in_lines(headers, lines)
 
 
-def test_managed_credentials_update(test_credential_id):
-    credential_id = test_credential_id
+def test_managed_credentials_update(get_credential_id):
+    credential_id = get_credential_id
     new_label = "test-label" + secrets.token_hex(4)
     update_label = (
         exec_test_command(

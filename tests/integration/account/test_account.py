@@ -46,7 +46,7 @@ def test_event_list():
 
 
 @pytest.fixture
-def test_event_id():
+def get_event_id():
     event_id = (
         exec_test_command(
             [
@@ -66,13 +66,11 @@ def test_event_id():
         .splitlines()
     )
     first_id = event_id[0].split(",")[0]
-    print(event_id)
-    print(first_id)
     yield first_id
 
 
-def test_event_view(test_event_id):
-    event_id = test_event_id
+def test_event_view(get_event_id):
+    event_id = get_event_id
     res = (
         exec_test_command(
             [
@@ -107,7 +105,7 @@ def test_account_invoice_list():
 
 
 @pytest.fixture
-def test_invoice_id():
+def get_invoice_id():
     invoice_id = (
         exec_test_command(
             BASE_CMD
@@ -129,8 +127,8 @@ def test_invoice_id():
     yield first_id
 
 
-def test_account_invoice_view(test_invoice_id):
-    invoice_id = test_invoice_id
+def test_account_invoice_view(get_invoice_id):
+    invoice_id = get_invoice_id
     res = (
         exec_test_command(
             BASE_CMD + ["invoice-view", invoice_id, "--text", "--delimiter=,"]
@@ -144,8 +142,8 @@ def test_account_invoice_view(test_invoice_id):
     assert_headers_in_lines(headers, lines)
 
 
-def test_account_invoice_items(test_invoice_id):
-    invoice_id = test_invoice_id
+def test_account_invoice_items(get_invoice_id):
+    invoice_id = get_invoice_id
     res = (
         exec_test_command(
             BASE_CMD + ["invoice-items", invoice_id, "--text", "--delimiter=,"]
@@ -171,7 +169,7 @@ def test_account_logins_list():
 
 
 @pytest.fixture
-def test_login_id():
+def get_login_id():
     login_id = (
         exec_test_command(
             BASE_CMD
@@ -193,8 +191,8 @@ def test_login_id():
     yield first_id
 
 
-def test_account_login_view(test_login_id):
-    login_id = test_login_id
+def test_account_login_view(get_login_id):
+    login_id = get_login_id
     res = (
         exec_test_command(
             BASE_CMD + ["login-view", login_id, "--text", "--delimiter=,"]
@@ -234,7 +232,7 @@ def test_user_list():
 
 
 @pytest.fixture
-def test_user_id():
+def get_user_id():
     user_id = (
         exec_test_command(
             [
@@ -257,8 +255,8 @@ def test_user_id():
     yield first_id
 
 
-def test_user_view(test_user_id):
-    user_id = test_user_id
+def test_user_view(get_user_id):
+    user_id = get_user_id
     res = (
         exec_test_command(
             ["linode-cli", "users", "view", user_id, "--text", "--delimiter=,"]
