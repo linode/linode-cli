@@ -3,8 +3,6 @@
 Unit tests for linodecli.completion
 """
 
-pass
-
 from linodecli import completion
 
 

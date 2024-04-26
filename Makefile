@@ -37,7 +37,7 @@ create-version:
 	@printf "${VERSION_MODULE_DOCSTRING}__version__ = \"${LINODE_CLI_VERSION}\"\n" > $(VERSION_FILE)
 
 .PHONY: build
-build: clean  create-version bake
+build: clean create-version bake
 	python3 -m build --wheel --sdist
 
 .PHONY: requirements
