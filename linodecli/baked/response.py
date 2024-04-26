@@ -112,12 +112,7 @@ class OpenAPIResponseAttr:
         """
         Given the model returned from the API, returns the correctly rendered
         version of it.  This can transform text based on various rules
-        configured in the spec using custom tags.  Currently supported tags:
-
-        x-linode-cli-color
-          A list of key-value pairs that represent the value, and its ideal color.
-          The key "default_" is used to colorize anything that is not included.
-          If omitted, no color is applied.
+        configured in the spec using custom tags.
         """
         value = self._get_value(model)
         if isinstance(value, list):

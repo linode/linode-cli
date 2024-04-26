@@ -21,7 +21,6 @@ In order to better support the Linode CLI, the following [Specification Extensio
 | Attribute | Location | Purpose |
 | --- | --- | --- |
 | x-linode-cli-action | method | The action name for operations under this path. If not present, operationId is used. |
-| x-linode-cli-color | property | If present, defines key-value pairs of property value: color.  Colors must be one of "red", "green", "yellow", "white", and "black".  Must include a default. |
 | x-linode-cli-command | path | The command name for operations under this path. If not present, "default" is used. |
 | x-linode-cli-display | property | If truthy, displays this as a column in output.  If a number, determines the ordering (left to right). |
 | x-linode-cli-format | property | Overrides the "format" given in this property for the CLI only.  Valid values are `file` and `json`. |
