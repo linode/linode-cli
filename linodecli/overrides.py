@@ -6,11 +6,11 @@ large changes to the OpenAPI spec.
 
 from typing import Dict
 
-from rich.align import Align
 from rich import box
+from rich import print as rprint
+from rich.align import Align
 from rich.console import Console
 from rich.table import Table
-from rich import print as rprint
 
 from linodecli.output import OutputMode
 
@@ -68,9 +68,7 @@ def linode_types_with_region_prices(
         return True
 
     output = Table(
-        header_style="bold",
-        show_lines=True,
-        row_styles=["", "cyan"]
+        header_style="bold", show_lines=True, row_styles=["", "cyan"]
     )
 
     # To ensure the order of the headers and make sure we have region_prices as the last column
@@ -103,7 +101,8 @@ def linode_types_with_region_prices(
     console.print(output)
 
     rprint(
-        "[cyan]See our [Pricing Page](https://www.linode.com/pricing/) for Region-specific pricing, "
+        "[cyan]See our [Pricing Page](https://www.linode.com/pricing/) "
+        "for Region-specific pricing, "
         "which applies after migration is complete."
     )
     return False

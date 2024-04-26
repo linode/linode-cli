@@ -97,7 +97,13 @@ class TestOutputHandler:
 
         mock_table = io.StringIO()
         tab = Table(
-            "h1", "h2", header_style="", box=box.SQUARE, title_justify="left", show_lines=True, row_styles=["", "cyan"]
+            "h1",
+            "h2",
+            header_style="",
+            box=box.SQUARE,
+            title_justify="left",
+            show_lines=True,
+            row_styles=["", "cyan"],
         )
         for row in [["foo", "bar"], ["oof", "rab"]]:
             tab.add_row(*row)
