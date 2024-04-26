@@ -97,7 +97,7 @@ class TestOutputHandler:
 
         mock_table = io.StringIO()
         tab = Table(
-            "h1", "h2", header_style="", box=box.SQUARE, title_justify="left"
+            "h1", "h2", header_style="", box=box.SQUARE, title_justify="left", show_lines=True, row_styles=["", "cyan"]
         )
         for row in [["foo", "bar"], ["oof", "rab"]]:
             tab.add_row(*row)
@@ -135,6 +135,8 @@ class TestOutputHandler:
             title_justify="left",
             title=title,
             min_width=len(title),
+            show_lines=True,
+            row_styles=["", "cyan"],
         )
         for row in [["foo"], ["bar"]]:
             tab.add_row(*row)
@@ -169,6 +171,8 @@ class TestOutputHandler:
             show_header=False,
             box=box.SQUARE,
             title_justify="left",
+            show_lines=True,
+            row_styles=["", "cyan"],
         )
         for row in [["foo"], ["bar"]]:
             tab.add_row(*row)
@@ -204,6 +208,7 @@ class TestOutputHandler:
             "| h1     |\n"
             "|--------|\n"
             "| foo    |\n"
+            "|--------|\n"
             "| bar    |\n"
             "+--------+\n"
         )

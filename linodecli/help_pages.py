@@ -39,9 +39,9 @@ def print_help_default(ops, config):
     """
 
     # Environment variables overrides
-    print("\nEnvironment variables:")
+    rprint("\n[bold cyan]Environment variables:")
 
-    table = Table(show_header=True, header_style="", box=box.SQUARE)
+    table = Table(show_header=True, header_style="bold", box=box.SQUARE)
     table.add_column("Name")
     table.add_column("Description")
 
@@ -51,7 +51,7 @@ def print_help_default(ops, config):
     rprint(table)
 
     # commands to manage CLI users (don't call out to API)
-    print("\nCLI user management commands:")
+    rprint("\n[bold cyan]CLI user management commands:")
     um_commands = [["configure", "set-user", "show-users"], ["remove-user"]]
     table = Table(show_header=False)
     for cmd in um_commands:
@@ -59,7 +59,7 @@ def print_help_default(ops, config):
     rprint(table)
 
     # commands to manage plugins (don't call out to API)
-    print("\nCLI Plugin management commands:")
+    rprint("\n[bold cyan]CLI Plugin management commands:")
     pm_commands = [["register-plugin", "remove-plugin"]]
     table = Table(show_header=False)
     for cmd in pm_commands:
@@ -67,7 +67,7 @@ def print_help_default(ops, config):
     rprint(table)
 
     # other CLI commands
-    print("\nOther CLI commands:")
+    rprint("\n[bold cyan]Other CLI commands:")
     other_commands = [["completion"]]
     table = Table(show_header=False)
     for cmd in other_commands:
@@ -75,7 +75,7 @@ def print_help_default(ops, config):
     rprint(table)
 
     # commands generated from the spec (call the API directly)
-    print("\nAvailable commands:")
+    rprint("\n[bold cyan]Available commands:")
 
     content = list(sorted(ops.keys()))
     proc = []
@@ -92,7 +92,7 @@ def print_help_default(ops, config):
     # plugins registered to the CLI (do arbitrary things)
     if plugins.available(config):
         # only show this if there are any available plugins
-        print("Available plugins:")
+        rprint("[bold cyan]Available plugins:")
 
         plugin_content = list(plugins.available(config))
         plugin_proc = []
@@ -107,7 +107,7 @@ def print_help_default(ops, config):
             plugin_table.add_row(*plugin)
         rprint(plugin_table)
 
-    print("\nTo reconfigure, call `linode-cli configure`")
+    rprint("\n[bold]To reconfigure[/], call `linode-cli configure`")
     print(
         "For comprehensive documentation, "
         "visit https://www.linode.com/docs/api/"
@@ -134,11 +134,11 @@ def print_help_action(
         console.print(f" [{pname}]", end="")
 
     console.print()
-    console.print(f"[bold]{op.summary}[/]")
+    console.print(f"[cyan]{op.summary}[/]")
 
     if op.docs_url:
         console.print(
-            f"[bold]API Documentation: [link={op.docs_url}]{op.docs_url}[/link][/]"
+            f"[bold]API Documentation[/]: [link={op.docs_url}]{op.docs_url}[/link]"
         )
 
     if len(op.samples) > 0:

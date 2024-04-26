@@ -288,10 +288,12 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
 
         tab = Table(
             *header_columns,
-            header_style="",
+            header_style="bold",
             box=box_style,
             show_header=self.headers,
             title_justify="left",
+            show_lines=True,
+            row_styles=["", "cyan"]
         )
         for row in content:
             row = [Text.from_ansi(item) for item in row]

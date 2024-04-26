@@ -1,6 +1,3 @@
-from linodecli.baked.response import colorize_string
-
-
 class TestOutputHandler:
     """
     Unit tests for linodecli.response
@@ -23,11 +20,6 @@ class TestOutputHandler:
             {"_split": "cool", "foo": 123},
             {"_split": "cool", "foo": 321},
         ]
-
-    def test_colorize_string(self):
-        result = colorize_string("cool", "yellow")
-
-        assert result == "\x1b[33mcool\x1b[0m"
 
     def test_attr_get_value(self, list_operation_for_response_test):
         model = {"foo": {"bar": "cool"}}
@@ -52,4 +44,4 @@ class TestOutputHandler:
 
         result = attr.render_value(model)
 
-        assert result == "\x1b[33mcool1, cool2\x1b[0m"
+        assert result == "cool1, cool2"

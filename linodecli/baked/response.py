@@ -4,8 +4,6 @@ Converting the processed OpenAPI Responses into something the CLI can work with
 
 from openapi3.paths import MediaType
 
-from .colors import colorize_string
-
 
 def _is_paginated(response):
     """
@@ -110,9 +108,9 @@ class OpenAPIResponseAttr:
             value = value[part]
         return value
 
-    def render_value(self, model, colorize=True):
+    def render_value(self, model):
         """
-        Given the model returned from the API, returns the correctly- rendered
+        Given the model returned from the API, returns the correctly rendered
         version of it.  This can transform text based on various rules
         configured in the spec using custom tags.  Currently supported tags:
 
@@ -124,11 +122,6 @@ class OpenAPIResponseAttr:
         value = self._get_value(model)
         if isinstance(value, list):
             value = ", ".join([str(c) for c in value])
-        if colorize and self.color_map is not None:
-            # Add color
-            value = str(value)
-            color = self.color_map.get(value) or self.color_map["default_"]
-            value = colorize_string(value, color)
         if value is None:
             # Prints the word None if you don't change it
             value = ""

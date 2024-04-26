@@ -10,7 +10,7 @@ from importlib.metadata import version
 from sys import argv
 
 from rich import print as rprint
-from rich.table import Table
+from rich.table import Table, Column
 
 from linodecli import plugins
 
@@ -248,9 +248,10 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
             for action, op in cli.ops[parsed.command].items()
         ]
 
-        table = Table("action", "summary")
+        table = Table(Column(header="action", no_wrap=True), Column(header="summary", style="cyan"))
         for row in content:
             table.add_row(*row)
+
         rprint(table)
         sys.exit(0)
 
