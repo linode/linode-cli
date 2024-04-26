@@ -157,28 +157,3 @@ class TestArgParsing:
         captured = capsys.readouterr()
         assert ex.value.code == 2
         assert "Request failed to https://website.com" in captured.out
-
-    def test_bake_command_good_website(self, capsys, mocker, mock_cli):
-        mock_cli.bake = print
-        mocker.patch("linodecli.completion.bake_completions")
-
-        mock_res = mocker.MagicMock()
-        mock_res.status_code = 200
-        mock_res.content = "yaml loaded"
-        mocker.patch("requests.get", return_value=mock_res)
-        mocker.patch("yaml.safe_load", return_value=mock_res.content)
-
-        arg_helpers.bake_command(mock_cli, "realwebsite")
-        captured = capsys.readouterr()
-        assert "yaml loaded" in captured.out
-
-    def test_bake_command_good_file(self, capsys, mocker, mock_cli):
-        mock_cli.bake = print
-        mocker.patch("linodecli.completion.bake_completions")
-        mocker.patch("os.path.exists", return_value=True)
-        mocker.patch("builtins.open", mocker.mock_open())
-        mocker.patch("yaml.safe_load", return_value="yaml loaded")
-
-        arg_helpers.bake_command(mock_cli, "real/file")
-        captured = capsys.readouterr()
-        assert "yaml loaded" in captured.out

@@ -7,19 +7,6 @@ from string import Template
 from openapi3 import OpenAPI
 
 
-def bake_completions(ops):
-    """
-    Given a baked CLI, generates and saves a bash completion file
-    """
-    if "_base_url" in ops:
-        del ops["_base_url"]
-    if "_spec_version" in ops:
-        del ops["_spec_version"]
-    rendered = get_bash_completions(ops)
-    with open("linode-cli.sh", "w", encoding="utf-8") as bash_f:
-        bash_f.write(rendered)
-
-
 def get_completions(ops, help_flag, action):
     """
     Handle shell completions based on `linode-cli completion ____`

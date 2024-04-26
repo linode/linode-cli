@@ -34,13 +34,18 @@ jobs:
       # This is necessary as we want to ensure that version tags
       # are properly formatted before passing them into the
       # DockerFile.
-      - name: Get CLI version
-        run: |
-          export CLI_VERSION=$(./version)
-          echo "CLI_VERSION=$CLI_VERSION" >> $GITHUB_OUTPUT
-        env:
-          LINODE_CLI_VERSION: ${{ github.event.release.tag_name }}
+      - uses: actions/github-script@v7
         id: cli_version
+        with:
+          script: |
+            let tag_name = '${{ github.event.release.tag_name }}';
+            
+            if (tag_name.startsWith("v")) {
+              tag_name = tag_name.slice(1);
+            }
+            
+            return tag_name;
+          result-encoding: string
 
       - name: Build and push to DockerHub
         uses: docker/build-push-action@2eb1c1961a95fc15694676618e422e8ba1d63825 # pin@v4.1.1
@@ -49,7 +54,7 @@ jobs:
           file: Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: linode/cli:${{ steps.cli_version.outputs.CLI_VERSION }},linode/cli:latest
+          tags: linode/cli:${{ steps.cli_version.outputs.result }},linode/cli:latest
           build-args: |
-            linode_cli_version=${{ steps.cli_version.outputs.CLI_VERSION }}
+            linode_cli_version=${{ steps.cli_version.outputs.result }}
             github_token=${{ secrets.GITHUB_TOKEN }}

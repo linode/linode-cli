@@ -33,7 +33,7 @@ jobs:
         run: pip install certifi -U
 
       - name: Install deps
-        run: pip install -r requirements.txt -r requirements-dev.txt
+        run: pip install .[obj,dev]
 
       - name: Install Package
         run: make install

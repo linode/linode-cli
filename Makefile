@@ -14,6 +14,11 @@ ifndef SPEC
 override SPEC = $(shell ./resolve_spec_url ${SPEC_VERSION})
 endif
 
+# Version-related variables
+VERSION_FILE := ./linodecli/version.py
+VERSION_MODULE_DOCSTRING ?= \"\"\"\nThe version of the Linode CLI.\n\"\"\"\n\n
+LINODE_CLI_VERSION ?= "0.0.0.dev"
+
 .PHONY: install
 install: check-prerequisites requirements build
 	pip3 install --force dist/*.whl
@@ -27,13 +32,17 @@ else
 	cp data-3 linodecli/
 endif
 
+.PHONY: create-version
+create-version:
+	@printf "${VERSION_MODULE_DOCSTRING}__version__ = \"${LINODE_CLI_VERSION}\"\n" > $(VERSION_FILE)
+
 .PHONY: build
-build: clean bake
+build: clean create-version bake
 	python3 -m build --wheel --sdist
 
 .PHONY: requirements
 requirements:
-	pip3 install --upgrade -r requirements.txt -r requirements-dev.txt
+	pip3 install --upgrade .[dev,obj]
 
 .PHONY: lint
 lint: build

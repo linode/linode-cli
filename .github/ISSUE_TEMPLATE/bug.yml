@@ -8,7 +8,7 @@ body:
     attributes:
       label: CLI Version
       description: What version of linode-cli are you running? `linode-cli -v`
-      placeholder: linode-cli 5.24.0 Built off spec version 4.138.0
+      placeholder: linode-cli 5.24.0 Built from spec version 4.138.0
     validations:
       required: true
   - type: textarea
