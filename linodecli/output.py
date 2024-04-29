@@ -12,7 +12,6 @@ from rich import box
 from rich import print as rprint
 from rich.console import OverflowMethod
 from rich.table import Column, Table
-from rich.text import Text
 
 from linodecli.baked.response import OpenAPIResponse, OpenAPIResponseAttr
 

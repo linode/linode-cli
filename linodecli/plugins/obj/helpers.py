@@ -8,7 +8,6 @@ from collections.abc import Iterable
 from datetime import datetime
 
 from rich.table import Table
-from rich.text import Text
 
 from linodecli.plugins.obj.config import DATE_FORMAT
 
