@@ -443,3 +443,10 @@ def create_vpc_w_subnet():
     )[0]
 
     return vpc_json
+
+
+@pytest.mark.smoke
+def pytest_configure(config):
+    config.addinivalue_line(
+        "markers", "smoke: mark test as part of smoke test suite"
+    )

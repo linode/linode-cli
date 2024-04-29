@@ -11,7 +11,6 @@ import requests
 import yaml
 
 from linodecli import plugins
-from linodecli.completion import bake_completions
 from linodecli.helpers import (
     pagination_args_shared,
     register_args_shared,
@@ -177,7 +176,7 @@ def register_plugin(module, config, ops):
         msg = "Plugin name conflicts with CLI operation - registration failed."
         return msg, 12
 
-    if plugin_name in plugins.available_local:
+    if plugin_name in plugins.AVAILABLE_LOCAL:
         msg = "Plugin name conflicts with internal CLI plugin - registration failed."
         return msg, 13
 
@@ -219,7 +218,7 @@ def remove_plugin(plugin_name, config):
     """
     Remove a plugin
     """
-    if plugin_name in plugins.available_local:
+    if plugin_name in plugins.AVAILABLE_LOCAL:
         msg = f"{plugin_name} is bundled with the CLI and cannot be removed"
         return msg, 13
 
@@ -263,4 +262,3 @@ def bake_command(cli, spec_loc):
         sys.exit(2)
 
     cli.bake(spec)
-    bake_completions(cli.ops)

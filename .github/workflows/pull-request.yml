@@ -16,7 +16,7 @@ jobs:
       - name: install boto3
         run: pip3 install boto3
       - name: install dependencies
-        run: pip3 install -r requirements-dev.txt -r requirements.txt
+        run: pip install .[obj,dev]
 
       - name: run linter
         run: make lint

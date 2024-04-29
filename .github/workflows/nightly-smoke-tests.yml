@@ -21,7 +21,7 @@ jobs:
           python-version: '3.x'
 
       - name: Install Python deps
-        run: pip install -r requirements.txt -r requirements-dev.txt wheel boto3
+        run: pip install .[obj,dev]
 
       - name: Install Linode CLI
         run: make install

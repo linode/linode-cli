@@ -5,14 +5,12 @@ ARG github_token
 
 WORKDIR /src
 
-COPY requirements.txt .
-
 RUN apt-get update && \
-    apt-get install -y make git && \
-    pip3 install -r requirements.txt && \
-    pip3 install build
+    apt-get install -y make git
 
 COPY . .
+
+RUN make requirements
 
 RUN LINODE_CLI_VERSION=$linode_cli_version GITHUB_TOKEN=$github_token make build
 

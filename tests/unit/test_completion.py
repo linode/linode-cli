@@ -3,8 +3,6 @@
 Unit tests for linodecli.completion
 """
 
-from unittest.mock import mock_open, patch
-
 from linodecli import completion
 
 
@@ -77,21 +75,3 @@ complete -F _linode_cli lin"""
 
         actual = completion.get_completions(self.ops, True, "")
         assert "[SHELL]" in actual
-
-    def test_bake_completions(self, mocker):
-        """
-        Test bake_completions write to file
-        """
-        m = mock_open()
-        with patch("linodecli.completion.open", m, create=True):
-            new_ops = self.ops
-            new_ops["_base_url"] = "bloo"
-            new_ops["_spec_version"] = "berry"
-
-            completion.bake_completions(new_ops)
-
-            assert "_base_url" not in new_ops
-            assert "_spec_version" not in new_ops
-
-        m.assert_called_with("linode-cli.sh", "w", encoding="utf-8")
-        m.return_value.write.assert_called_once_with(self.bash_expected)
