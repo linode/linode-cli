@@ -295,7 +295,6 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
             show_lines=True,
         )
         for row in content:
-            row = [Text.from_ansi(item) for item in row]
             tab.add_row(*row)
 
         if title is not None and self.headers:

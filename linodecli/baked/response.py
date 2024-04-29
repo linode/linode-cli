@@ -108,15 +108,25 @@ class OpenAPIResponseAttr:
             value = value[part]
         return value
 
-    def render_value(self, model):
+    def render_value(self, model, colorize=True):
         """
         Given the model returned from the API, returns the correctly rendered
         version of it.  This can transform text based on various rules
-        configured in the spec using custom tags.
+        configured in the spec using custom tags. Currently supported tags:
+
+        x-linode-cli-color
+          A list of key-value pairs that represent the value, and its ideal color.
+          The key "default_" is used to colorize anything that is not included.
+          If omitted, no color is applied.
         """
         value = self._get_value(model)
         if isinstance(value, list):
             value = ", ".join([str(c) for c in value])
+        if colorize and self.color_map is not None:
+            # Add color using rich tags
+            value = str(value)
+            color = self.color_map.get(value) or self.color_map["default_"]
+            value = f"[{color}]{value}[/]"
         if value is None:
             # Prints the word None if you don't change it
             value = ""

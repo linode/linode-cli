@@ -44,4 +44,4 @@ class TestOutputHandler:
 
         result = attr.render_value(model)
 
-        assert result == "cool1, cool2"
+        assert result == "[yellow]cool1, cool2[/]"
