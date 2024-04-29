@@ -292,6 +292,7 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
             show_header=self.headers,
             title_justify="left",
             show_lines=True,
+            row_styles=["", "blue"],
         )
         for row in content:
             tab.add_row(*row)
