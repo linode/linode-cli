@@ -68,7 +68,7 @@ def linode_types_with_region_prices(
         return True
 
     output = Table(
-        header_style="bold", show_lines=True, row_styles=["", "cyan"]
+        header_style="bold", show_lines=True,
     )
 
     # To ensure the order of the headers and make sure we have region_prices as the last column

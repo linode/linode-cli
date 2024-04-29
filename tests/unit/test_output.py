@@ -103,7 +103,6 @@ class TestOutputHandler:
             box=box.SQUARE,
             title_justify="left",
             show_lines=True,
-            row_styles=["", "cyan"],
         )
         for row in [["foo", "bar"], ["oof", "rab"]]:
             tab.add_row(*row)
@@ -142,7 +141,6 @@ class TestOutputHandler:
             title=title,
             min_width=len(title),
             show_lines=True,
-            row_styles=["", "cyan"],
         )
         for row in [["foo"], ["bar"]]:
             tab.add_row(*row)
@@ -178,7 +176,6 @@ class TestOutputHandler:
             box=box.SQUARE,
             title_justify="left",
             show_lines=True,
-            row_styles=["", "cyan"],
         )
         for row in [["foo"], ["bar"]]:
             tab.add_row(*row)
