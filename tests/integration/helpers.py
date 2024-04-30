@@ -63,8 +63,9 @@ def delete_tag(arg: str):
     assert result.returncode == SUCCESS_STATUS_CODE
 
 
-def delete_target_id(target: str, id: str):
-    result = exec_test_command(["linode-cli", target, "delete", id])
+def delete_target_id(target: str, id: str, subcommand: str = "delete"):
+    command = ["linode-cli", target, subcommand, id]
+    result = exec_test_command(command)
     assert result.returncode == SUCCESS_STATUS_CODE
 
 
@@ -87,11 +88,6 @@ def remove_lke_clusters():
     )
     for id in cluster_ids:
         exec_test_command(["linode-cli", "lke", "cluster-delete", id])
-
-
-def delete_target_id(target: str, id: str):
-    result = exec_test_command(["linode-cli", target, "delete", id])
-    assert result.returncode == SUCCESS_STATUS_CODE
 
 
 def remove_all(target: str):

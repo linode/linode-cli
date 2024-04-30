@@ -1,3 +1,5 @@
+import pytest
+
 from tests.integration.helpers import assert_headers_in_lines, exec_test_command
 
 BASE_CMD = ["linode-cli", "account"]
@@ -39,16 +41,36 @@ def test_event_list():
         .rstrip()
     )
     lines = res.splitlines()
-
-    event_id = lines[1].split(",")[0]
-
     headers = ["entity.label", "username"]
     assert_headers_in_lines(headers, lines)
-    return event_id
 
 
-def test_event_view():
-    event_id = test_event_list()
+@pytest.fixture
+def get_event_id():
+    event_id = (
+        exec_test_command(
+            [
+                "linode-cli",
+                "events",
+                "list",
+                "--text",
+                "--no-headers",
+                "--delimiter",
+                ",",
+                "--format",
+                "id",
+            ]
+        )
+        .stdout.decode()
+        .rstrip()
+        .splitlines()
+    )
+    first_id = event_id[0].split(",")[0]
+    yield first_id
+
+
+def test_event_view(get_event_id):
+    event_id = get_event_id
     res = (
         exec_test_command(
             [
@@ -78,16 +100,35 @@ def test_account_invoice_list():
         .rstrip()
     )
     lines = res.splitlines()
-
-    invoice_id = lines[1].split(",")[0]
-
     headers = ["billing_source", "tax", "subtotal"]
     assert_headers_in_lines(headers, lines)
-    return invoice_id
 
 
-def test_account_invoice_view():
-    invoice_id = test_account_invoice_list()
+@pytest.fixture
+def get_invoice_id():
+    invoice_id = (
+        exec_test_command(
+            BASE_CMD
+            + [
+                "invoices-list",
+                "--text",
+                "--no-headers",
+                "--delimiter",
+                ",",
+                "--format",
+                "id",
+            ]
+        )
+        .stdout.decode()
+        .rstrip()
+        .splitlines()
+    )
+    first_id = invoice_id[0]
+    yield first_id
+
+
+def test_account_invoice_view(get_invoice_id):
+    invoice_id = get_invoice_id
     res = (
         exec_test_command(
             BASE_CMD + ["invoice-view", invoice_id, "--text", "--delimiter=,"]
@@ -101,8 +142,8 @@ def test_account_invoice_view():
     assert_headers_in_lines(headers, lines)
 
 
-def test_account_invoice_items():
-    invoice_id = test_account_invoice_list()
+def test_account_invoice_items(get_invoice_id):
+    invoice_id = get_invoice_id
     res = (
         exec_test_command(
             BASE_CMD + ["invoice-items", invoice_id, "--text", "--delimiter=,"]
@@ -123,16 +164,35 @@ def test_account_logins_list():
         .rstrip()
     )
     lines = res.splitlines()
-
-    login_id = lines[1].split(",")[0]
-
     headers = ["ip", "username", "status"]
     assert_headers_in_lines(headers, lines)
-    return login_id
 
 
-def test_account_login_view():
-    login_id = test_account_logins_list()
+@pytest.fixture
+def get_login_id():
+    login_id = (
+        exec_test_command(
+            BASE_CMD
+            + [
+                "logins-list",
+                "--text",
+                "--no-headers",
+                "--delimiter",
+                ",",
+                "--format",
+                "id",
+            ]
+        )
+        .stdout.decode()
+        .rstrip()
+        .splitlines()
+    )
+    first_id = login_id[0]
+    yield first_id
+
+
+def test_account_login_view(get_login_id):
+    login_id = get_login_id
     res = (
         exec_test_command(
             BASE_CMD + ["login-view", login_id, "--text", "--delimiter=,"]
@@ -167,16 +227,36 @@ def test_user_list():
         .rstrip()
     )
     lines = res.splitlines()
-
-    user_id = lines[1].split(",")[0]
-
     headers = ["email", "username"]
     assert_headers_in_lines(headers, lines)
-    return user_id
 
 
-def test_user_view():
-    user_id = test_user_list()
+@pytest.fixture
+def get_user_id():
+    user_id = (
+        exec_test_command(
+            [
+                "linode-cli",
+                "users",
+                "list",
+                "--text",
+                "--no-headers",
+                "--delimiter",
+                ",",
+                "--format",
+                "id",
+            ]
+        )
+        .stdout.decode()
+        .rstrip()
+        .splitlines()
+    )
+    first_id = user_id[0].split(",")[0]
+    yield first_id
+
+
+def test_user_view(get_user_id):
+    user_id = get_user_id
     res = (
         exec_test_command(
             ["linode-cli", "users", "view", user_id, "--text", "--delimiter=,"]
