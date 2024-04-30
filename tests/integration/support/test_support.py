@@ -1,5 +1,3 @@
-import pytest
-
 from tests.integration.helpers import assert_headers_in_lines, exec_test_command
 from tests.integration.linodes.test_linodes import setup_linodes
 
