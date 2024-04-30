@@ -31,14 +31,19 @@ HELP_ENV_VARS = {
     "(e.g. 'https')",
 }
 
+HELP_TOPICS = {
+    "env-vars": "Environment variables that can be used",
+    "commands": "Learn about all available commands with linode-cli",
+    "plugins": " Learn about all available plugins registered to linode-cli",
+}
 
-# pylint: disable=too-many-locals
-def print_help_default(ops, config):
-    """
-    Prints help output with options from the API spec
-    """
 
-    # Environment variables overrides
+def print_help_env_vars():
+    """
+    Print Environment variables overrides. Usage:
+
+        linode-cli env-vars
+    """
     rprint("\n[bold cyan]Environment variables:")
 
     table = Table(show_header=True, header_style="bold", box=box.SQUARE)
@@ -50,6 +55,13 @@ def print_help_default(ops, config):
 
     rprint(table)
 
+
+def print_help_commands(ops):
+    """
+    Prints available commands. Usage:
+
+        linode-cli commands
+    """
     # commands to manage CLI users (don't call out to API)
     rprint("\n[bold cyan]CLI user management commands:")
     um_commands = [["configure", "set-user", "show-users"], ["remove-user"]]
@@ -89,10 +101,16 @@ def print_help_default(ops, config):
         table.add_row(*cmd)
     rprint(table)
 
-    # plugins registered to the CLI (do arbitrary things)
+
+def print_help_plugins(config):
+    """
+    Print available plugins registered to the CLI (do arbitrary things). Usage:
+
+        linode-cli plugins
+    """
     if plugins.available(config):
         # only show this if there are any available plugins
-        rprint("[bold cyan]Available plugins:")
+        rprint("\n[bold cyan]Available plugins:")
 
         plugin_content = list(plugins.available(config))
         plugin_proc = []
@@ -107,6 +125,14 @@ def print_help_default(ops, config):
             plugin_table.add_row(*plugin)
         rprint(plugin_table)
 
+
+def print_help_default():
+    """
+    Prints help output with options from the API spec
+    """
+    rprint("\n[bold cyan]Help Topics")
+    for k, v in HELP_TOPICS.items():
+        print("  " + k + ": " + v)
     rprint("\n[bold]To reconfigure[/], call `linode-cli configure`")
     print(
         "For comprehensive documentation, "
