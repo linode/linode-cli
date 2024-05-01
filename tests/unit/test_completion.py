@@ -44,6 +44,32 @@ esac
 complete -F _linode_cli linode-cli
 complete -F _linode_cli linode
 complete -F _linode_cli lin"""
+    zsh_expected = """#compdef linode-cli linode lin
+
+# This is a generated file by Linode-CLI! Do not modify!
+local -a subcommands
+subcommands=(
+'temp_key --help'
+)
+
+local -a command
+local -a opts
+
+_arguments -C \\
+  "1: :(temp_key)" \\
+  '*:: :->subcmds' && return 0
+
+if (( CURRENT == 2 )); then
+  case $words[1] in
+    temp_key)
+      command=(
+          'temp_action --help'
+      )
+      _describe -t commands "temp_key command" command
+      ;;
+  esac
+fi
+"""
 
     def test_fish_completion(self, mocker):
         """
@@ -60,6 +86,13 @@ complete -F _linode_cli lin"""
         actual = completion.get_bash_completions(self.ops)
         assert actual == self.bash_expected
 
+    def test_zsh_completion(self):
+        """
+        Test if the Zsh completion renders correctly
+        """
+        actual = completion.get_zsh_completions(self.ops)
+        assert actual == self.zsh_expected
+
     def test_get_completions(self):
         """
         Test get_completions for arg parse
@@ -69,6 +102,9 @@ complete -F _linode_cli lin"""
 
         actual = completion.get_completions(self.ops, False, "fish")
         assert actual == self.fish_expected
+
+        actual = completion.get_completions(self.ops, False, "zsh")
+        assert actual == self.zsh_expected
 
         actual = completion.get_completions(self.ops, False, "notrealshell")
         assert "invoke" in actual
