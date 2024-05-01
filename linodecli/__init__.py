@@ -15,24 +15,20 @@ from rich.table import Table
 from linodecli import plugins
 
 from .arg_helpers import (
-    action_help,
     bake_command,
-    help_with_ops,
     register_args,
     register_plugin,
     remove_plugin,
 )
 from .cli import CLI
-from .completion import bake_completions, get_completions
+from .completion import get_completions
 from .configuration import ENV_TOKEN_NAME
+from .help_pages import print_help_action, print_help_default
 from .helpers import handle_url_overrides
 from .output import OutputMode
+from .version import __version__
 
-# this might not be installed at the time of building
-try:
-    VERSION = version("linode-cli")
-except:
-    VERSION = "building"
+VERSION = __version__
 
 BASE_URL = "https://api.linode.com/v4"
 
@@ -113,7 +109,7 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
         if not parsed.command:
             # print version info and exit - but only if no command was given
             print(f"linode-cli {VERSION}")
-            print(f"Built off spec version {cli.spec_version}")
+            print(f"Built from spec version {cli.spec_version}")
             sys.exit(0)
         else:
             # something else might want to parse version
@@ -155,7 +151,7 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
     # handle a help for the CLI
     if parsed.command is None or (parsed.command is None and parsed.help):
         parser.print_help()
-        help_with_ops(cli.ops, cli.config)
+        print_help_default(cli.ops, cli.config)
         sys.exit(0)
 
     # configure
@@ -209,11 +205,6 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
             cli.config.remove_user(parsed.action)
         sys.exit(0)
 
-    # special command to bake shell completion script
-    if parsed.command == "bake-bash":
-        bake_completions(cli.ops)
-        sys.exit(0)
-
     # check for plugin invocation
     if parsed.command not in cli.ops and parsed.command in plugins.available(
         cli.config
@@ -257,6 +248,6 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
 
     if parsed.command is not None and parsed.action is not None:
         if parsed.help:
-            action_help(cli, parsed.command, parsed.action)
+            print_help_action(cli, parsed.command, parsed.action)
             sys.exit(0)
         cli.handle_command(parsed.command, parsed.action, args)

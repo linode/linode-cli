@@ -5,19 +5,17 @@ Argument parser for the linode CLI
 
 import os
 import sys
-import textwrap
 from importlib import import_module
 
 import requests
 import yaml
-from rich import box
-from rich import print as rprint
-from rich.table import Table
 
 from linodecli import plugins
-
-from .completion import bake_completions
-from .helpers import pagination_args_shared, register_args_shared
+from linodecli.helpers import (
+    pagination_args_shared,
+    register_args_shared,
+    register_debug_arg,
+)
 
 
 def register_args(parser):
@@ -141,12 +139,10 @@ def register_args(parser):
         action="store_true",
         help="Prints version information and exits.",
     )
-    parser.add_argument(
-        "--debug", action="store_true", help="Enable verbose HTTP debug output."
-    )
 
     pagination_args_shared(parser)
     register_args_shared(parser)
+    register_debug_arg(parser)
 
     return parser
 
@@ -180,7 +176,7 @@ def register_plugin(module, config, ops):
         msg = "Plugin name conflicts with CLI operation - registration failed."
         return msg, 12
 
-    if plugin_name in plugins.available_local:
+    if plugin_name in plugins.AVAILABLE_LOCAL:
         msg = "Plugin name conflicts with internal CLI plugin - registration failed."
         return msg, 13
 
@@ -222,7 +218,7 @@ def remove_plugin(plugin_name, config):
     """
     Remove a plugin
     """
-    if plugin_name in plugins.available_local:
+    if plugin_name in plugins.AVAILABLE_LOCAL:
         msg = f"{plugin_name} is bundled with the CLI and cannot be removed"
         return msg, 13
 
@@ -247,176 +243,6 @@ def remove_plugin(plugin_name, config):
     return f"Plugin {plugin_name} removed", 0
 
 
-# pylint: disable=too-many-locals
-def help_with_ops(ops, config):
-    """
-    Prints help output with options from the API spec
-    """
-
-    # Environment variables overrides
-    print("\nEnvironment variables:")
-    env_variables = {
-        "LINODE_CLI_TOKEN": "A Linode Personal Access Token for the CLI to make requests with. "
-        "If specified, the configuration step will be skipped.",
-        "LINODE_CLI_CA": "The path to a custom Certificate Authority file to verify "
-        "API requests against.",
-        "LINODE_CLI_API_HOST": "Overrides the target host for API requests. "
-        "(e.g. 'api.linode.com')",
-        "LINODE_CLI_API_VERSION": "Overrides the target Linode API version for API requests. "
-        "(e.g. 'v4beta')",
-        "LINODE_CLI_API_SCHEME": "Overrides the target scheme used for API requests. "
-        "(e.g. 'https')",
-    }
-
-    table = Table(show_header=True, header_style="", box=box.SQUARE)
-    table.add_column("Name")
-    table.add_column("Description")
-
-    for k, v in env_variables.items():
-        table.add_row(k, v)
-
-    rprint(table)
-
-    # commands to manage CLI users (don't call out to API)
-    print("\nCLI user management commands:")
-    um_commands = [["configure", "set-user", "show-users"], ["remove-user"]]
-    table = Table(show_header=False)
-    for cmd in um_commands:
-        table.add_row(*cmd)
-    rprint(table)
-
-    # commands to manage plugins (don't call out to API)
-    print("\nCLI Plugin management commands:")
-    pm_commands = [["register-plugin", "remove-plugin"]]
-    table = Table(show_header=False)
-    for cmd in pm_commands:
-        table.add_row(*cmd)
-    rprint(table)
-
-    # other CLI commands
-    print("\nOther CLI commands:")
-    other_commands = [["completion"]]
-    table = Table(show_header=False)
-    for cmd in other_commands:
-        table.add_row(*cmd)
-    rprint(table)
-
-    # commands generated from the spec (call the API directly)
-    print("\nAvailable commands:")
-
-    content = list(sorted(ops.keys()))
-    proc = []
-    for i in range(0, len(content), 3):
-        proc.append(content[i : i + 3])
-    if content[i + 3 :]:
-        proc.append(content[i + 3 :])
-
-    table = Table(show_header=False)
-    for cmd in proc:
-        table.add_row(*cmd)
-    rprint(table)
-
-    # plugins registered to the CLI (do arbitrary things)
-    if plugins.available(config):
-        # only show this if there are any available plugins
-        print("Available plugins:")
-
-        plugin_content = list(plugins.available(config))
-        plugin_proc = []
-
-        for i in range(0, len(plugin_content), 3):
-            plugin_proc.append(plugin_content[i : i + 3])
-        if plugin_content[i + 3 :]:
-            plugin_proc.append(plugin_content[i + 3 :])
-
-        plugin_table = Table(show_header=False)
-        for plugin in plugin_proc:
-            plugin_table.add_row(*plugin)
-        rprint(plugin_table)
-
-    print("\nTo reconfigure, call `linode-cli configure`")
-    print(
-        "For comprehensive documentation,"
-        "visit https://www.linode.com/docs/api/"
-    )
-
-
-def action_help(cli, command, action):  # pylint: disable=too-many-branches
-    """
-    Prints help relevant to the command and action
-    """
-    try:
-        op = cli.find_operation(command, action)
-    except ValueError:
-        return
-    print(f"linode-cli {command} {action}", end="")
-
-    for param in op.params:
-        pname = param.name.upper()
-        print(f" [{pname}]", end="")
-
-    print()
-    print(op.summary)
-
-    if op.docs_url:
-        rprint(f"API Documentation: [link={op.docs_url}]{op.docs_url}[/link]")
-
-    if len(op.samples) > 0:
-        print()
-        print(f"Example Usage{'s' if len(op.samples) > 1 else ''}: ")
-
-        rprint(
-            *[
-                # Indent all samples for readability; strip and trailing newlines
-                textwrap.indent(v.get("source").rstrip(), "  ")
-                for v in op.samples
-            ],
-            sep="\n\n",
-        )
-
-    print()
-    if op.method == "get" and op.action == "list":
-        filterable_attrs = [
-            attr for attr in op.response_model.attrs if attr.filterable
-        ]
-
-        if filterable_attrs:
-            print("You may filter results with:")
-            for attr in filterable_attrs:
-                print(f"  --{attr.name}")
-            print(
-                "Additionally, you may order results using --order-by and --order."
-            )
-        return
-    if op.args:
-        print("Arguments:")
-        for arg in sorted(op.args, key=lambda s: not s.required):
-            if arg.read_only:
-                continue
-            is_required = (
-                "(required) "
-                if op.method in {"post", "put"} and arg.required
-                else ""
-            )
-
-            extensions = []
-
-            if arg.format == "json":
-                extensions.append("JSON")
-
-            if arg.nullable:
-                extensions.append("nullable")
-
-            if arg.is_parent:
-                extensions.append("conflicts with children")
-
-            suffix = (
-                f" ({', '.join(extensions)})" if len(extensions) > 0 else ""
-            )
-
-            print(f"  --{arg.path}: {is_required}{arg.description}{suffix}")
-
-
 def bake_command(cli, spec_loc):
     """
     Handle a bake command from args
@@ -436,4 +262,3 @@ def bake_command(cli, spec_loc):
         sys.exit(2)
 
     cli.bake(spec)
-    bake_completions(cli.ops)

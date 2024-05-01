@@ -3,10 +3,7 @@
 CLI Plugin for handling OBJ
 """
 import getpass
-import glob
-import math
 import os
-import platform
 import socket
 import sys
 import time
@@ -14,7 +11,7 @@ from argparse import ArgumentParser
 from contextlib import suppress
 from datetime import datetime
 from math import ceil
-from typing import Iterable, List
+from typing import List
 
 from rich import print as rprint
 from rich.table import Table
@@ -22,7 +19,6 @@ from rich.table import Table
 from linodecli.cli import CLI
 from linodecli.configuration import _do_get_request
 from linodecli.configuration.helpers import _default_thing_input
-from linodecli.helpers import expand_globs, pagination_args_shared
 from linodecli.plugins import PluginContext, inherit_plugin_args
 from linodecli.plugins.obj.buckets import create_bucket, delete_bucket
 from linodecli.plugins.obj.config import (
@@ -42,12 +38,10 @@ from linodecli.plugins.obj.config import (
 from linodecli.plugins.obj.helpers import (
     ProgressPercentage,
     _borderless_table,
-    _convert_datetime,
     _denominate,
     _pad_to,
-    _progress,
-    restricted_int_arg_type,
 )
+from linodecli.plugins.obj.list import list_all_objects, list_objects_or_buckets
 from linodecli.plugins.obj.objects import (
     delete_object,
     get_object,
@@ -61,21 +55,11 @@ from linodecli.plugins.obj.website import (
 
 try:
     import boto3
-    from boto3.exceptions import S3UploadFailedError
-    from boto3.s3.transfer import MB, TransferConfig
     from botocore.exceptions import ClientError
 
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
-
-TRUNCATED_MSG = (
-    "Notice: Not all results were shown. If your would "
-    "like to get more results, you can add the '--all-row' "
-    "flag to the command or use the built-in pagination flags."
-)
-
-INVALID_PAGE_MSG = "No result to show in this page."
 
 
 def get_available_cluster(cli: CLI):
@@ -88,117 +72,6 @@ def get_available_cluster(cli: CLI):
             token=cli.config.get_token(),
         )["data"]
     ]
-
-
-def flip_to_page(iterable: Iterable, page: int = 1):
-    """Given a iterable object and return a specific iteration (page)"""
-    iterable = iter(iterable)
-    for _ in range(page - 1):
-        try:
-            next(iterable)
-        except StopIteration:
-            print(INVALID_PAGE_MSG)
-            sys.exit(2)
-
-    return next(iterable)
-
-
-def list_objects_or_buckets(
-    get_client, args, **kwargs
-):  # pylint: disable=too-many-locals,unused-argument,too-many-branches
-    """
-    Lists buckets or objects
-    """
-    parser = inherit_plugin_args(ArgumentParser(PLUGIN_BASE + " ls"))
-    pagination_args_shared(parser)
-
-    parser.add_argument(
-        "bucket",
-        metavar="NAME",
-        type=str,
-        nargs="?",
-        help=(
-            "Optional.  If not given, lists all buckets.  If given, "
-            "lists the contents of the given bucket.  May contain a "
-            "/ followed by a directory path to show the contents of "
-            "a directory within the named bucket."
-        ),
-    )
-
-    parsed = parser.parse_args(args)
-    client = get_client()
-
-    if parsed.bucket:
-        # list objects
-        if "/" in parsed.bucket:
-            bucket_name, prefix = parsed.bucket.split("/", 1)
-            if not prefix.endswith("/"):
-                prefix += "/"
-        else:
-            bucket_name = parsed.bucket
-            prefix = ""
-
-        data = []
-        objects = []
-        sub_directories = []
-        pages = client.get_paginator("list_objects_v2").paginate(
-            Prefix=prefix,
-            Bucket=bucket_name,
-            Delimiter="/",
-            PaginationConfig={"PageSize": parsed.page_size},
-        )
-        try:
-            if parsed.all_rows:
-                results = pages
-            else:
-                page = flip_to_page(pages, parsed.page)
-                if page.get("IsTruncated", False):
-                    print(TRUNCATED_MSG)
-
-                results = [page]
-        except client.exceptions.NoSuchBucket:
-            print("No bucket named " + bucket_name)
-            sys.exit(2)
-
-        for item in results:
-            objects.extend(item.get("Contents", []))
-            sub_directories.extend(item.get("CommonPrefixes", []))
-
-        for d in sub_directories:
-            data.append((" " * 16, "DIR", d.get("Prefix")))
-        for obj in objects:
-            key = obj.get("Key")
-
-            # This is to remove the dir itself from the results
-            # when the the files list inside a directory (prefix) are desired.
-            if key == prefix:
-                continue
-
-            data.append(
-                (
-                    _convert_datetime(obj.get("LastModified")),
-                    obj.get("Size"),
-                    key,
-                )
-            )
-
-        if data:
-            tab = _borderless_table(data)
-            rprint(tab)
-
-        sys.exit(0)
-    else:
-        # list buckets
-        buckets = client.list_buckets().get("Buckets", [])
-        data = [
-            [_convert_datetime(b.get("CreationDate")), b.get("Name")]
-            for b in buckets
-        ]
-
-        tab = _borderless_table(data)
-        rprint(tab)
-
-        sys.exit(0)
 
 
 def generate_url(get_client, args, **kwargs):  # pylint: disable=unused-argument
@@ -364,52 +237,6 @@ def show_usage(get_client, args, **kwargs):  # pylint: disable=unused-argument
     if len(bucket_names) > 1:
         print("--------")
         print(f"{_denominate(grand_total)} Total")
-
-    sys.exit(0)
-
-
-def list_all_objects(
-    get_client, args, **kwargs
-):  # pylint: disable=unused-argument
-    """
-    Lists all objects in all buckets
-    """
-    # this is for printing help when --help is in the args
-    parser = inherit_plugin_args(ArgumentParser(PLUGIN_BASE + " la"))
-    pagination_args_shared(parser)
-
-    parsed = parser.parse_args(args)
-
-    client = get_client()
-
-    buckets = [b["Name"] for b in client.list_buckets().get("Buckets", [])]
-
-    for b in buckets:
-        print()
-        objects = []
-        pages = client.get_paginator("list_objects_v2").paginate(
-            Bucket=b, PaginationConfig={"PageSize": parsed.page_size}
-        )
-        if parsed.all_rows:
-            results = pages
-        else:
-            page = flip_to_page(pages, parsed.page)
-            if page.get("IsTruncated", False):
-                print(TRUNCATED_MSG)
-
-            results = [page]
-
-        for page in results:
-            objects.extend(page.get("Contents", []))
-
-        for obj in objects:
-            size = obj.get("Size", 0)
-
-            print(
-                f"{_convert_datetime(obj['LastModified'])} "
-                f"{_pad_to(size, 9, right_align=True)}   "
-                f"{b}/{obj['Key']}"
-            )
 
     sys.exit(0)
 

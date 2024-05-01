@@ -1,5 +1,2 @@
 include linodecli/data-3
 include linodecli/oauth-landing-page.html
-include linode-cli.sh
-include baked_version
-include requirements.txt

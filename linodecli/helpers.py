@@ -4,7 +4,6 @@ Various helper functions shared across multiple CLI components.
 
 import glob
 import os
-import re
 from argparse import ArgumentParser
 from pathlib import Path
 from urllib.parse import urlparse
@@ -38,29 +37,6 @@ def handle_url_overrides(
     return parsed_url._replace(
         **{k: v for k, v in overrides.items() if v is not None}
     ).geturl()
-
-
-def filter_markdown_links(text):
-    """
-    Returns the given text with Markdown links converted to human-readable links.
-    """
-
-    result = text
-
-    # Find all Markdown links
-    r = re.compile(r"\[(?P<text>.*?)]\((?P<link>.*?)\)")
-
-    for match in r.finditer(text):
-        url = match.group("link")
-
-        # Expand the URL if necessary
-        if url.startswith("/"):
-            url = f"https://linode.com{url}"
-
-        # Replace with more readable text
-        result = result.replace(match.group(), f"{match.group('text')} ({url})")
-
-    return result
 
 
 def pagination_args_shared(parser: ArgumentParser):
@@ -115,6 +91,16 @@ def register_args_shared(parser: ArgumentParser):
     )
 
     return parser
+
+
+def register_debug_arg(parser: ArgumentParser):
+    """
+    Add the debug argument to the given
+    ArgumentParser that may be shared across the CLI and plugins.
+    """
+    parser.add_argument(
+        "--debug", action="store_true", help="Enable verbose HTTP debug output."
+    )
 
 
 def expand_globs(pattern: str):

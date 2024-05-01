@@ -1,10 +1,12 @@
-# Testing
+This page gives an overview of how to run the various test suites for the Linode CLI.
 
-**WARNING!** Running the CLI tests will remove all linodes and data associated
-with the account. It is only recommended to run these tests if you are an advanced
-user.
+Before running any tests, built and installed the Linode CLI with your changes using `make install`.
 
-## Running the Tests
+## Running Unit Tests
+
+Unit tests can be run using the `make testunit` Makefile target.
+
+## Running Integration Tests
 
 Running the tests locally is simple. The only requirements are that you export Linode API token as `LINODE_CLI_TOKEN`::
 ```bash

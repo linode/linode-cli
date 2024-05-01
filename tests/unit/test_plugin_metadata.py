@@ -7,6 +7,7 @@ from linode_metadata.objects.ssh_keys import SSHKeysResponse
 from pytest import CaptureFixture
 
 from linodecli.plugins.metadata import (
+    get_metadata_parser,
     print_instance_table,
     print_networking_tables,
     print_ssh_keys_table,
@@ -129,3 +130,12 @@ def test_empty_ssh_key_table(capsys: CaptureFixture):
 
     assert "user" in captured_text.out
     assert "ssh key" in captured_text.out
+
+
+def test_arg_parser():
+    parser = get_metadata_parser()
+    parsed, args = parser.parse_known_args(["--debug"])
+    assert parsed.debug
+
+    parsed, args = parser.parse_known_args(["--something-else"])
+    assert not parsed.debug

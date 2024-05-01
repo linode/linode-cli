@@ -1,7 +1,7 @@
 #
 # Makefile for more convenient building of the Linode CLI and its baked content
 #
-INTEGRATION_TEST_PATH :=
+MODULE :=
 TEST_CASE_COMMAND :=
 
 ifdef TEST_CASE
@@ -13,6 +13,11 @@ SPEC_VERSION ?= latest
 ifndef SPEC
 override SPEC = $(shell ./resolve_spec_url ${SPEC_VERSION})
 endif
+
+# Version-related variables
+VERSION_FILE := ./linodecli/version.py
+VERSION_MODULE_DOCSTRING ?= \"\"\"\nThe version of the Linode CLI.\n\"\"\"\n\n
+LINODE_CLI_VERSION ?= "0.0.0.dev"
 
 .PHONY: install
 install: check-prerequisites requirements build
@@ -27,13 +32,17 @@ else
 	cp data-3 linodecli/
 endif
 
+.PHONY: create-version
+create-version:
+	@printf "${VERSION_MODULE_DOCSTRING}__version__ = \"${LINODE_CLI_VERSION}\"\n" > $(VERSION_FILE)
+
 .PHONY: build
-build: clean bake
+build: clean create-version bake
 	python3 -m build --wheel --sdist
 
 .PHONY: requirements
 requirements:
-	pip3 install -r requirements.txt -r requirements-dev.txt
+	pip3 install --upgrade .[dev,obj]
 
 .PHONY: lint
 lint: build
@@ -62,7 +71,7 @@ testunit:
 
 .PHONY: testint
 testint:
-	pytest tests/integration/${INTEGRATION_TEST_PATH} ${TEST_CASE_COMMAND} --disable-warnings
+	pytest tests/integration/${MODULE} ${TEST_CASE_COMMAND}
 
 .PHONY: testall
 testall:
@@ -89,4 +98,4 @@ format: black isort autoflake
 
 @PHONEY: smoketest
 smoketest:
-	pytest -m smoke tests/integration --disable-warnings
+	pytest -m smoke tests/integration

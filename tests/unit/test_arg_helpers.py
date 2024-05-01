@@ -70,7 +70,7 @@ class TestArgParsing:
             "linodecli.arg_helpers.import_module", return_value=module_mocker
         )
         mocker.patch(
-            "linodecli.arg_helpers.plugins.available_local", ["testing.plugin"]
+            "linodecli.arg_helpers.plugins.AVAILABLE_LOCAL", ["testing.plugin"]
         )
         msg, code = arg_helpers.register_plugin("a", mocked_config, {})
         assert "conflicts with internal CLI plugin" in msg
@@ -140,7 +140,7 @@ class TestArgParsing:
 
     def test_remove_plugin_in_available_local(self, mocker, mocked_config):
         mocker.patch(
-            "linodecli.arg_helpers.plugins.available_local", ["testing.plugin"]
+            "linodecli.arg_helpers.plugins.AVAILABLE_LOCAL", ["testing.plugin"]
         )
         msg, code = arg_helpers.remove_plugin("testing.plugin", mocked_config)
         assert "cannot be removed" in msg
@@ -151,134 +151,9 @@ class TestArgParsing:
         assert "not a registered plugin" in msg
         assert code == 14
 
-    # arg_helpers.help_with_ops(ops, config)
-    def test_help_with_ops(self, capsys, mocked_config):
-        mock_ops = {"testkey1": "testvalue1"}
-        arg_helpers.help_with_ops(mock_ops, mocked_config)
-        captured = capsys.readouterr()
-        assert "testkey1" in captured.out
-
-    def test_help_with_ops_with_plugins(self, capsys, mocker, mocked_config):
-        mock_ops = {"testkey1": "testvalue1"}
-        mocker.patch(
-            "linodecli.arg_helpers.plugins.available",
-            return_value=["testing.plugin"],
-        )
-        arg_helpers.help_with_ops(mock_ops, mocked_config)
-        captured = capsys.readouterr()
-        assert "testing.plugin" in captured.out
-
-    # arg_helpers.action_help(cli, command, action)
-    def test_action_help_value_error(self, capsys, mock_cli):
-        arg_helpers.action_help(mock_cli, None, None)
-        captured = capsys.readouterr()
-        assert not captured.out
-
-    def test_action_help_post_method(self, capsys, mocker, mock_cli):
-        mocked_ops = mocker.MagicMock()
-        mocked_ops.summary = "test summary"
-        mocked_ops.docs_url = "https://website.com/endpoint"
-        mocked_ops.method = "post"
-        mocked_ops.samples = [
-            {"lang": "CLI", "source": "linode-cli command action\n  --foo=bar"},
-            {"lang": "CLI", "source": "linode-cli command action\n  --bar=foo"},
-        ]
-
-        mocked_ops.args = [
-            mocker.MagicMock(
-                read_only=False,
-                required=True,
-                path="path",
-                description="test description",
-            ),
-            mocker.MagicMock(
-                read_only=False,
-                required=False,
-                path="path2",
-                description="test description 2",
-                format="json",
-                nullable=True,
-            ),
-        ]
-
-        mock_cli.find_operation = mocker.Mock(return_value=mocked_ops)
-
-        arg_helpers.action_help(mock_cli, "command", "action")
-        captured = capsys.readouterr()
-
-        assert "test summary" in captured.out
-        assert "API Documentation" in captured.out
-        assert "https://website.com/endpoint" in captured.out
-        assert (
-            "Example Usages: \n"
-            "  linode-cli command action\n"
-            "    --foo=bar\n\n"
-            "  linode-cli command action\n"
-            "    --bar=foo\n\n"
-        ) in captured.out
-        assert "Arguments" in captured.out
-        assert "test description" in captured.out
-        assert "test description 2" in captured.out
-        assert "(required)" in captured.out
-        assert "(JSON, nullable, conflicts with children)" in captured.out
-        assert "filter results" not in captured.out
-
-    def test_action_help_get_method(self, capsys, mocker, mock_cli):
-        mocked_ops = mocker.MagicMock()
-        mocked_ops.summary = "test summary"
-        mocked_ops.docs_url = "https://website.com/endpoint"
-        mocked_ops.method = "get"
-        mocked_ops.action = "list"
-        mocked_ops.args = None
-        mocked_ops.samples = [
-            {"lang": "CLI", "source": "linode-cli command action"}
-        ]
-
-        mock_attr = mocker.MagicMock()
-        mock_attr.filterable = True
-        mock_attr.name = "filtername"
-        mocked_ops.response_model.attrs = [mock_attr]
-
-        mock_cli.find_operation = mocker.Mock(return_value=mocked_ops)
-
-        arg_helpers.action_help(mock_cli, "command", "action")
-        captured = capsys.readouterr()
-        assert "test summary" in captured.out
-        assert "API Documentation" in captured.out
-        assert "https://website.com/endpoint" in captured.out
-        assert "Example Usage: \n  linode-cli command action" in captured.out
-        assert "Arguments" not in captured.out
-        assert "filter results" in captured.out
-        assert "filtername" in captured.out
-
     def test_bake_command_bad_website(self, capsys, mock_cli):
         with pytest.raises(SystemExit) as ex:
             arg_helpers.bake_command(mock_cli, "https://website.com")
         captured = capsys.readouterr()
         assert ex.value.code == 2
         assert "Request failed to https://website.com" in captured.out
-
-    def test_bake_command_good_website(self, capsys, mocker, mock_cli):
-        mock_cli.bake = print
-        mocker.patch("linodecli.completion.bake_completions")
-
-        mock_res = mocker.MagicMock()
-        mock_res.status_code = 200
-        mock_res.content = "yaml loaded"
-        mocker.patch("requests.get", return_value=mock_res)
-        mocker.patch("yaml.safe_load", return_value=mock_res.content)
-
-        arg_helpers.bake_command(mock_cli, "realwebsite")
-        captured = capsys.readouterr()
-        assert "yaml loaded" in captured.out
-
-    def test_bake_command_good_file(self, capsys, mocker, mock_cli):
-        mock_cli.bake = print
-        mocker.patch("linodecli.completion.bake_completions")
-        mocker.patch("os.path.exists", return_value=True)
-        mocker.patch("builtins.open", mocker.mock_open())
-        mocker.patch("yaml.safe_load", return_value="yaml loaded")
-
-        arg_helpers.bake_command(mock_cli, "real/file")
-        captured = capsys.readouterr()
-        assert "yaml loaded" in captured.out

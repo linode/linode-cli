@@ -1,3 +1,4 @@
+# PR Labels
 - name: new-feature
   description: for new features in the changelog.
   color: 225fee
@@ -13,6 +14,9 @@
 - name: documentation
   description: for updates to the documentation in the changelog.
   color: d3e1e6
+- name: dependencies
+  description: dependency updates usually from dependabot
+  color: 5c9dff
 - name: testing
   description: for updates to the testing suite in the changelog.
   color: 933ac9
@@ -22,3 +26,13 @@
 - name: ignore-for-release
   description: PRs you do not want to render in the changelog
   color: 7b8eac
+- name: do-not-merge
+  description: PRs that should not be merged until the commented issue is resolved
+  color: eb1515
+# Issue Labels
+- name: enhancement
+  description: issues that request a enhancement
+  color: 22ee47
+- name: bug
+  description: issues that report a bug
+  color: ed8e21
