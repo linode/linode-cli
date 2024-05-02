@@ -216,10 +216,10 @@ def linode_with_label():
         .rstrip()
     )
 
-    yield result
-
     res_arr = result.split(",")
     linode_id = res_arr[4]
+    yield result, linode_id
+
     delete_target_id(target="linodes", id=linode_id)
 
 

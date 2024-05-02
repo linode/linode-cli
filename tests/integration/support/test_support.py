@@ -1,12 +1,13 @@
+import pytest
+
 from tests.integration.helpers import assert_headers_in_lines, exec_test_command
-from tests.integration.linodes.test_linodes import setup_linodes
 
 BASE_CMD = ["linode-cli", "tickets"]
 
 
 # this will create a support ticket on your account
-def test_create_support_ticket(setup_linodes):
-    linode_id = setup_linodes
+def test_create_support_ticket(linode_with_label):
+    linode_id = linode_with_label[1]
     exec_test_command(
         BASE_CMD
         + [
