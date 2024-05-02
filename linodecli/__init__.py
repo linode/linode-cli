@@ -36,7 +36,10 @@ TEST_MODE = os.getenv("LINODE_CLI_TEST_MODE") == "1"
 
 # if any of these arguments are given, we don't need to prompt for configuration
 skip_config = (
-    any(c in argv for c in ["--skip-config", "--help", "--version", "completion"])
+    any(
+        c in argv
+        for c in ["--skip-config", "--help", "--version", "completion"]
+    )
     or TEST_MODE
 )
 
