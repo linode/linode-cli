@@ -14,9 +14,9 @@ jobs:
         run: sudo apt-get update -y
 
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
+          python-version-file: '.python-version'
 
       - name: Install Python wheel
         run: pip install wheel boto3
@@ -42,9 +42,9 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
+          python-version-file: '.python-version'
 
       - name: Install Python wheel
         run: pip install wheel boto3
@@ -57,7 +57,7 @@ jobs:
 
       - name: Install Package
         shell: pwsh
-        run: | 
+        run: |
           make install
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
