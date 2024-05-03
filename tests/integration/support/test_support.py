@@ -6,8 +6,8 @@ BASE_CMD = ["linode-cli", "tickets"]
 
 
 # this will create a support ticket on your account
-def test_create_support_ticket(linode_with_label):
-    linode_id = linode_with_label[1]
+def test_create_support_ticket(create_linode):
+    linode_id = create_linode
     exec_test_command(
         BASE_CMD
         + [

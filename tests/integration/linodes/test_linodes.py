@@ -65,7 +65,7 @@ def test_update_linode_with_a_image():
 
 @pytest.mark.smoke
 def test_create_linodes_with_a_label(linode_with_label):
-    result = linode_with_label[0]
+    result = linode_with_label
 
     assert re.search(
         "^cli(.*),us-ord,g6-nanode-1," + DEFAULT_TEST_IMAGE, result
