@@ -10,7 +10,7 @@ from importlib.metadata import version
 from sys import argv
 
 from rich import print as rprint
-from rich.table import Table
+from rich.table import Column, Table
 
 from linodecli import plugins
 
@@ -23,7 +23,14 @@ from .arg_helpers import (
 from .cli import CLI
 from .completion import get_completions
 from .configuration import ENV_TOKEN_NAME
-from .help_pages import print_help_action, print_help_default
+from .help_pages import (
+    HELP_TOPICS,
+    print_help_action,
+    print_help_commands,
+    print_help_default,
+    print_help_env_vars,
+    print_help_plugins,
+)
 from .helpers import handle_url_overrides
 from .output import OutputMode
 from .version import __version__
@@ -36,7 +43,10 @@ TEST_MODE = os.getenv("LINODE_CLI_TEST_MODE") == "1"
 
 # if any of these arguments are given, we don't need to prompt for configuration
 skip_config = (
-    any(c in argv for c in ["--skip-config", "--help", "--version"])
+    any(
+        c in argv
+        for c in ["--skip-config", "--help", "--version", "completion"]
+    )
     or TEST_MODE
 )
 
@@ -151,7 +161,19 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
     # handle a help for the CLI
     if parsed.command is None or (parsed.command is None and parsed.help):
         parser.print_help()
-        print_help_default(cli.ops, cli.config)
+        print_help_default()
+        sys.exit(0)
+
+    if parsed.command == "env-vars":
+        print_help_env_vars()
+        sys.exit(0)
+
+    if parsed.command == "commands":
+        print_help_commands(cli.ops)
+        sys.exit(0)
+
+    if parsed.command == "plugins":
+        print_help_plugins(cli.config)
         sys.exit(0)
 
     # configure
@@ -221,6 +243,7 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
     if (
         parsed.command not in cli.ops
         and parsed.command not in plugins.available(cli.config)
+        and parsed.command not in HELP_TOPICS
     ):
         print(f"Unrecognized command {parsed.command}")
         sys.exit(1)
@@ -240,9 +263,13 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
             for action, op in cli.ops[parsed.command].items()
         ]
 
-        table = Table("action", "summary")
+        table = Table(
+            Column(header="action", no_wrap=True),
+            Column(header="summary", style="cyan"),
+        )
         for row in content:
             table.add_row(*row)
+
         rprint(table)
         sys.exit(0)
 

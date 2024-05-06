@@ -89,19 +89,30 @@ class TestHelpPages:
 
     def test_help_with_ops(self, capsys, mocked_config):
         mock_ops = {"testkey1": "testvalue1"}
-        help_pages.print_help_default(mock_ops, mocked_config)
+        help_pages.print_help_commands(mock_ops)
         captured = capsys.readouterr()
         assert "testkey1" in captured.out
 
     def test_help_with_ops_with_plugins(self, capsys, mocker, mocked_config):
-        mock_ops = {"testkey1": "testvalue1"}
         mocker.patch(
             "linodecli.arg_helpers.plugins.available",
             return_value=["testing.plugin"],
         )
-        help_pages.print_help_default(mock_ops, mocked_config)
+        help_pages.print_help_plugins(mocked_config)
         captured = capsys.readouterr()
         assert "testing.plugin" in captured.out
+
+    def test_help_with_env_vars(self, capsys):
+        help_pages.print_help_env_vars()
+        captured = capsys.readouterr()
+        for var in help_pages.HELP_ENV_VARS:
+            assert var in captured.out
+
+    def test_help_topics(self, capsys):
+        help_pages.print_help_default()
+        captured = capsys.readouterr()
+        for topic in help_pages.HELP_TOPICS:
+            assert topic in captured.out
 
     # arg_helpers.print_help_action(cli, command, action)
     def test_action_help_value_error(self, capsys, mock_cli):

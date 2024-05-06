@@ -6,6 +6,8 @@ large changes to the OpenAPI spec.
 
 from typing import Dict
 
+from rich import box
+from rich import print as rprint
 from rich.align import Align
 from rich.console import Console
 from rich.table import Table
@@ -65,7 +67,10 @@ def linode_types_with_region_prices(
     if len(json_data["data"]) < 1:
         return True
 
-    output = Table()
+    output = Table(
+        header_style="bold",
+        show_lines=True,
+    )
 
     # To ensure the order of the headers and make sure we have region_prices as the last column
     headers = sorted(
@@ -96,11 +101,11 @@ def linode_types_with_region_prices(
     console = Console()
     console.print(output)
 
-    print(
-        "See our [Pricing Page](https://www.linode.com/pricing/) for Region-specific pricing, "
-        + "which applies after migration is complete."
+    rprint(
+        "[cyan]See our [Pricing Page](https://www.linode.com/pricing/) "
+        "for Region-specific pricing, "
+        "which applies after migration is complete."
     )
-
     return False
 
 
@@ -119,7 +124,7 @@ def format_region_prices(data: Dict[str, any]) -> any:
     """
     subheaders = ["id", "hourly", "monthly"]
 
-    sub_table = Table()
+    sub_table = Table(box=box.SIMPLE_HEAVY)
 
     for header in subheaders:
         sub_table.add_column(header, justify="center")
