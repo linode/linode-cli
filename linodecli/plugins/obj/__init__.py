@@ -269,7 +269,7 @@ def print_help(parser: ArgumentParser):
 
     # additional help
     print()
-    print("Available commands: ")
+    rprint("[bold cyan]Available commands: ")
 
     command_help_map = [
         [name, func.__doc__.strip()]

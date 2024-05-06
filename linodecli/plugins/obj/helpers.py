@@ -8,7 +8,6 @@ from collections.abc import Iterable
 from datetime import datetime
 
 from rich.table import Table
-from rich.text import Text
 
 from linodecli.plugins.obj.config import DATE_FORMAT
 
@@ -126,7 +125,6 @@ def _borderless_table(data):
     """
     tab = Table.grid(padding=(0, 2, 0, 2))
     for row in data:
-        row = [Text.from_ansi(str(item)) for item in row]
         tab.add_row(*row)
 
     return tab
