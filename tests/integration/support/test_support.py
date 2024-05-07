@@ -35,7 +35,7 @@ def test_tickets_list():
 
 
 @pytest.fixture
-def get_ticket_id():
+def ticket_id():
     ticket_ids = (
         exec_test_command(
             BASE_CMD

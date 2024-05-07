@@ -41,7 +41,7 @@ def test_profile_devices_list():
 
 
 @pytest.fixture
-def get_login_id():
+def login_id():
     login_id = (
         exec_test_command(
             BASE_CMD
