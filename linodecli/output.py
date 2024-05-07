@@ -12,7 +12,6 @@ from rich import box
 from rich import print as rprint
 from rich.console import OverflowMethod
 from rich.table import Column, Table
-from rich.text import Text
 
 from linodecli.baked.response import OpenAPIResponse, OpenAPIResponseAttr
 
@@ -288,13 +287,13 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
 
         tab = Table(
             *header_columns,
-            header_style="",
+            header_style="bold",
             box=box_style,
             show_header=self.headers,
             title_justify="left",
+            show_lines=True,
         )
         for row in content:
-            row = [Text.from_ansi(item) for item in row]
             tab.add_row(*row)
 
         if title is not None and self.headers:
