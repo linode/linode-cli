@@ -41,7 +41,7 @@ def test_profile_devices_list():
 
 
 @pytest.fixture
-def login_id():
+def login_ids():
     login_id = (
         exec_test_command(
             BASE_CMD
@@ -74,8 +74,8 @@ def test_profile_login_list():
     assert_headers_in_lines(headers, lines)
 
 
-def test_profile_login_view(get_login_id):
-    login_id = get_login_id
+def test_profile_login_view(login_ids):
+    login_id = login_ids
     res = (
         exec_test_command(
             BASE_CMD + ["login-view", login_id, "--text", "--delimiter=,"]

@@ -6,6 +6,7 @@ BASE_CMD = ["linode-cli", "tickets"]
 
 
 # this will create a support ticket on your account
+@pytest.mark.skip(reason="this will create a support ticket")
 def test_create_support_ticket(create_linode):
     linode_id = create_linode
     exec_test_command(
@@ -35,7 +36,7 @@ def test_tickets_list():
 
 
 @pytest.fixture
-def ticket_id():
+def tickets_id():
     ticket_ids = (
         exec_test_command(
             BASE_CMD
@@ -57,8 +58,8 @@ def ticket_id():
     yield first_id
 
 
-def test_tickets_view(get_ticket_id):
-    ticket_id = get_ticket_id
+def test_tickets_view(tickets_id):
+    ticket_id = tickets_id
     res = (
         exec_test_command(
             BASE_CMD + ["view", ticket_id, "--text", "--delimiter=,"]
@@ -71,8 +72,9 @@ def test_tickets_view(get_ticket_id):
     assert_headers_in_lines(headers, lines)
 
 
-def test_reply_support_ticket(get_ticket_id):
-    ticket_id = get_ticket_id
+@pytest.mark.skip(reason="Creation of tickets are skipped no way of currently testing this")
+def test_reply_support_ticket(tickets_id):
+    ticket_id = tickets_id
     exec_test_command(
         BASE_CMD
         + [
@@ -86,8 +88,8 @@ def test_reply_support_ticket(get_ticket_id):
     )
 
 
-def test_view_replies_support_ticket(get_ticket_id):
-    ticket_id = get_ticket_id
+def test_view_replies_support_ticket(tickets_id):
+    ticket_id = tickets_id
     res = (
         exec_test_command(
             BASE_CMD + ["replies", ticket_id, "--text", "--delimiter=,"]
