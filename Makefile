@@ -3,6 +3,7 @@
 #
 MODULE :=
 TEST_CASE_COMMAND :=
+TEST_ARGS :=
 
 ifdef TEST_CASE
 TEST_CASE_COMMAND = -k $(TEST_CASE)
@@ -71,7 +72,7 @@ testunit:
 
 .PHONY: testint
 testint:
-	pytest tests/integration/${MODULE} ${TEST_CASE_COMMAND}
+	pytest tests/integration/${MODULE} ${TEST_CASE_COMMAND} ${TEST_ARGS}
 
 .PHONY: testall
 testall:
