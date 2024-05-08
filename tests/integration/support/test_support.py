@@ -72,7 +72,9 @@ def test_tickets_view(tickets_id):
     assert_headers_in_lines(headers, lines)
 
 
-@pytest.mark.skip(reason="Creation of tickets are skipped no way of currently testing this")
+@pytest.mark.skip(
+    reason="Creation of tickets are skipped no way of currently testing this"
+)
 def test_reply_support_ticket(tickets_id):
     ticket_id = tickets_id
     exec_test_command(
