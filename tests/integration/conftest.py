@@ -452,7 +452,7 @@ def pytest_configure(config):
 
 
 @pytest.fixture
-def create_linode():
+def created_linode_id():
     timestamp = str(time.time_ns())
     label = "cli" + timestamp
     result = (
