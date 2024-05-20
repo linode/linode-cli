@@ -217,7 +217,6 @@ def linode_with_label():
     )
 
     yield result
-
     res_arr = result.split(",")
     linode_id = res_arr[4]
     delete_target_id(target="linodes", id=linode_id)
@@ -450,3 +449,41 @@ def pytest_configure(config):
     config.addinivalue_line(
         "markers", "smoke: mark test as part of smoke test suite"
     )
+
+
+@pytest.fixture
+def created_linode_id():
+    timestamp = str(time.time_ns())
+    label = "cli" + timestamp
+    result = (
+        exec_test_command(
+            LINODE_BASE_CMD
+            + [
+                "create",
+                "--type",
+                "g6-nanode-1",
+                "--region",
+                "us-ord",
+                "--image",
+                DEFAULT_TEST_IMAGE,
+                "--label",
+                label,
+                "--root_pass",
+                DEFAULT_RANDOM_PASS,
+                "--text",
+                "--delimiter",
+                ",",
+                "--no-headers",
+                "--format",
+                "label,region,type,image,id",
+                "--no-defaults",
+            ]
+        )
+        .stdout.decode()
+        .rstrip()
+    )
+
+    res_arr = result.split(",")
+    linode_id = res_arr[4]
+    yield linode_id
+    delete_target_id(target="linodes", id=linode_id)
