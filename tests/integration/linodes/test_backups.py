@@ -61,7 +61,7 @@ def check_account_settings():
 
 
 @pytest.mark.skipif(
-    check_account_settings(), reason="Condition is true, skipping the test."
+    check_account_settings(), reason="Account is managed, skipping the test.."
 )
 def test_create_linode_with_backup_disabled(
     create_linode_backup_disabled_setup,
