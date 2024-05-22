@@ -4,7 +4,7 @@ Handles formatting the output of commands used in Linode CLI
 
 import copy
 import json
-from enum import Enum
+from enum import Enum, auto
 from sys import stdout
 from typing import IO, Any, Dict, List, Optional, Union, cast
 
@@ -21,11 +21,11 @@ class OutputMode(Enum):
     Enum for output modes
     """
 
-    table = 1
-    delimited = 2
-    json = 3
-    markdown = 4
-    ascii_table = 5
+    table = auto()
+    delimited = auto()
+    json = auto()
+    markdown = auto()
+    ascii_table = auto()
 
 
 class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance-attributes
