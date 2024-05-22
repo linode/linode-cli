@@ -11,7 +11,10 @@ def test_cli_command_fails_to_access_invalid_host(monkeypatch: MonkeyPatch):
     process = exec_failing_test_command(["linode-cli", "linodes", "ls"])
     output = process.stderr.decode()
 
-    assert "Max retries exceeded with url: //wrongapi.linode.com" in output
+    expected_output = ["Max retries exceeded with url:", "wrongapi.linode.com"]
+
+    for eo in expected_output:
+        assert eo in output
 
 
 def test_cli_uses_v4beta_when_override_is_set(monkeypatch: MonkeyPatch):
