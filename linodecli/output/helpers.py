@@ -1,9 +1,15 @@
+"""
+Helpers for CLI output arguments and OutputHandler.
+"""
 from argparse import ArgumentParser, Namespace
 
 from linodecli.output.output_handler import OutputHandler, OutputMode
 
 
 def register_output_args_shared(parser: ArgumentParser):
+    """
+    Add output formatting related arguments to the ArgumentParser.
+    """
     parser.add_argument(
         "--text",
         action="store_true",
@@ -89,6 +95,9 @@ def register_output_args_shared(parser: ArgumentParser):
 
 
 def get_output_handler(parsed: Namespace, suppress_warnings: bool = False):
+    """
+    Create a new OutputHandler and configure it with the parsed arguments.
+    """
     output_handler = OutputHandler()
     configure_output_handler(parsed, output_handler, suppress_warnings)
 
@@ -98,6 +107,9 @@ def configure_output_handler(
     output_handler: OutputHandler,
     suppress_warnings: bool = False,
 ):
+    """
+    Configure the given OutputHandler with the parsed arguments.
+    """
     if parsed.text:
         output_handler.mode = OutputMode.delimited
     elif parsed.json:

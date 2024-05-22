@@ -1,3 +1,7 @@
+"""
+Output formatting module for CLI and plugins.
+"""
+
 from .helpers import (
     configure_output_handler,
     get_output_handler,
