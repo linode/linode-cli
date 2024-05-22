@@ -13,7 +13,6 @@ from rich import print as rprint
 from rich.table import Column, Table
 
 from linodecli import plugins
-from linodecli.output.helpers import configure_output_handler
 
 from .arg_helpers import (
     bake_command,
@@ -65,7 +64,7 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
     )
     parsed, args = register_args(parser).parse_known_args()
 
-    configure_output_handler(parsed, cli.output_handler, cli.suppress_warnings)
+    cli.output_handler.configure(parsed, cli.suppress_warnings)
 
     if parsed.all_rows:
         cli.pagination = False

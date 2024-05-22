@@ -1,9 +1,10 @@
 """
 Helpers for CLI output arguments and OutputHandler.
 """
+
 from argparse import ArgumentParser, Namespace
 
-from linodecli.output.output_handler import OutputHandler, OutputMode
+from linodecli.output.output_handler import OutputHandler
 
 
 def register_output_args_shared(parser: ArgumentParser):
@@ -99,49 +100,4 @@ def get_output_handler(parsed: Namespace, suppress_warnings: bool = False):
     Create a new OutputHandler and configure it with the parsed arguments.
     """
     output_handler = OutputHandler()
-    configure_output_handler(parsed, output_handler, suppress_warnings)
-
-
-def configure_output_handler(
-    parsed: Namespace,
-    output_handler: OutputHandler,
-    suppress_warnings: bool = False,
-):
-    """
-    Configure the given OutputHandler with the parsed arguments.
-    """
-    if parsed.text:
-        output_handler.mode = OutputMode.delimited
-    elif parsed.json:
-        output_handler.mode = OutputMode.json
-        output_handler.columns = "*"
-    elif parsed.markdown:
-        output_handler.mode = OutputMode.markdown
-    elif parsed.ascii_table:
-        output_handler.mode = OutputMode.ascii_table
-
-    if parsed.delimiter:
-        output_handler.delimiter = parsed.delimiter
-    if parsed.pretty:
-        output_handler.mode = OutputMode.json
-        output_handler.pretty_json = True
-        output_handler.columns = "*"
-    if parsed.no_headers:
-        output_handler.headers = False
-
-    output_handler.suppress_warnings = parsed.suppress_warnings
-    output_handler.disable_truncation = parsed.no_truncation
-    output_handler.column_width = parsed.column_width
-    output_handler.single_table = parsed.single_table
-    output_handler.tables = parsed.table
-
-    if parsed.all_columns or parsed.all:
-        if parsed.all and not suppress_warnings:
-            print(
-                "WARNING: '--all' is a deprecated flag, "
-                "and will be removed in a future version. "
-                "Please consider use '--all-columns' instead."
-            )
-        output_handler.columns = "*"
-    elif parsed.format:
-        output_handler.columns = parsed.format
+    output_handler.configure(parsed, suppress_warnings)
