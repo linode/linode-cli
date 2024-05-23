@@ -33,6 +33,39 @@ LINODE_BASE_CMD = ["linode-cli", "linodes"]
 NODEBALANCER_BASE_CMD = ["linode-cli", "nodebalancers"]
 
 
+@pytest.fixture(autouse=True, scope="session")
+def cloud_init_firewall():
+    label = "cloud_firewall_" + str(int(time.time()))
+
+    firewall_id = (
+        exec_test_command(
+            [
+                "linode-cli",
+                "firewalls",
+                "create",
+                "--label",
+                label,
+                "--rules.outbound_policy",
+                "ACCEPT",
+                "--rules.inbound_policy",
+                "DROP",
+                "--rules.inbound",
+                '[{"protocol": "TCP", "ports": "22", "addresses": {"ipv4": ["0.0.0.0/0"], "ipv6": ["::/0"]}, "action": "ACCEPT"}]',
+                "--text",
+                "--no-headers",
+                "--format",
+                "id",
+            ]
+        )
+        .stdout.decode()
+        .rstrip()
+    )
+
+    yield firewall_id
+
+    delete_target_id(target="firewalls", id=firewall_id)
+
+
 @pytest.fixture(scope="session")
 def _id_generators():
     return defaultdict(lambda: count(randint(0, 1000000)))
@@ -185,7 +218,7 @@ def slave_domain():
 
 # Test helpers specific to Linodes test suite
 @pytest.fixture
-def linode_with_label():
+def linode_with_label(cloud_init_firewall):
     timestamp = str(time.time_ns())
     label = "cli" + timestamp
     result = (
@@ -203,6 +236,8 @@ def linode_with_label():
                 label,
                 "--root_pass",
                 DEFAULT_RANDOM_PASS,
+                "--firewall_id",
+                cloud_init_firewall,
                 "--text",
                 "--delimiter",
                 ",",
@@ -223,7 +258,7 @@ def linode_with_label():
 
 
 @pytest.fixture
-def linode_min_req():
+def linode_min_req(cloud_init_firewall):
     result = (
         exec_test_command(
             LINODE_BASE_CMD
@@ -235,6 +270,8 @@ def linode_min_req():
                 "us-ord",
                 "--root_pass",
                 DEFAULT_RANDOM_PASS,
+                "--firewall_id",
+                cloud_init_firewall,
                 "--no-defaults",
                 "--text",
                 "--delimiter",
@@ -256,7 +293,7 @@ def linode_min_req():
 
 
 @pytest.fixture
-def linode_wo_image():
+def linode_wo_image(cloud_init_firewall):
     label = "cli" + str(int(time.time()) + randint(10, 1000))
     linode_id = (
         exec_test_command(
@@ -272,6 +309,8 @@ def linode_wo_image():
                 DEFAULT_REGION,
                 "--root_pass",
                 DEFAULT_RANDOM_PASS,
+                "--firewall_id",
+                cloud_init_firewall,
                 "--format",
                 "id",
                 "--no-headers",
@@ -288,7 +327,7 @@ def linode_wo_image():
 
 
 @pytest.fixture
-def linode_backup_enabled():
+def linode_backup_enabled(cloud_init_firewall):
     # create linode with backups enabled
     linode_id = (
         exec_test_command(
@@ -306,6 +345,8 @@ def linode_backup_enabled():
                 DEFAULT_TEST_IMAGE,
                 "--root_pass",
                 DEFAULT_RANDOM_PASS,
+                "--firewall_id",
+                cloud_init_firewall,
                 "--text",
                 "--no-headers",
                 "--format=id",
@@ -348,7 +389,7 @@ def snapshot_of_linode():
 
 # Test helpers specific to Nodebalancers test suite
 @pytest.fixture
-def nodebalancer_with_default_conf():
+def nodebalancer_with_default_conf(cloud_init_firewall):
     result = (
         exec_test_command(
             NODEBALANCER_BASE_CMD
@@ -356,6 +397,8 @@ def nodebalancer_with_default_conf():
                 "create",
                 "--region",
                 "us-ord",
+                "--firewall_id",
+                cloud_init_firewall,
                 "--text",
                 "--delimiter",
                 ",",
@@ -452,10 +495,11 @@ def pytest_configure(config):
 
 
 @pytest.fixture
-def created_linode_id():
+def support_test_linode_id(cloud_init_firewall):
     timestamp = str(time.time_ns())
     label = "cli" + timestamp
-    result = (
+
+    res = (
         exec_test_command(
             LINODE_BASE_CMD
             + [
@@ -470,12 +514,14 @@ def created_linode_id():
                 label,
                 "--root_pass",
                 DEFAULT_RANDOM_PASS,
+                "--firewall_id",
+                cloud_init_firewall,
                 "--text",
                 "--delimiter",
                 ",",
                 "--no-headers",
                 "--format",
-                "label,region,type,image,id",
+                "id",
                 "--no-defaults",
             ]
         )
@@ -483,7 +529,8 @@ def created_linode_id():
         .rstrip()
     )
 
-    res_arr = result.split(",")
-    linode_id = res_arr[4]
+    linode_id = res
+
     yield linode_id
+
     delete_target_id(target="linodes", id=linode_id)

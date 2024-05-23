@@ -14,8 +14,8 @@ BASE_CMD = ["linode-cli", "networking"]
 
 
 @pytest.fixture(scope="package")
-def test_linode_id():
-    linode_id = create_linode_and_wait()
+def test_linode_id(cloud_init_firewall):
+    linode_id = create_linode_and_wait(firewall_id=cloud_init_firewall)
 
     yield linode_id
 
@@ -23,12 +23,16 @@ def test_linode_id():
 
 
 @pytest.fixture(scope="package")
-def test_linode_id_shared_ipv4():
+def test_linode_id_shared_ipv4(cloud_init_firewall):
     target_region = "us-mia"
 
     linode_ids = (
-        create_linode(test_region=target_region),
-        create_linode(test_region=target_region),
+        create_linode(
+            test_region=target_region, firewall_id=cloud_init_firewall
+        ),
+        create_linode(
+            test_region=target_region, firewall_id=cloud_init_firewall
+        ),
     )
 
     yield linode_ids

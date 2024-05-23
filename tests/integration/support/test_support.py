@@ -7,8 +7,8 @@ BASE_CMD = ["linode-cli", "tickets"]
 
 # this will create a support ticket on your account
 @pytest.mark.skip(reason="this will create a support ticket")
-def test_create_support_ticket(created_linode_id):
-    linode_id = created_linode_id
+def test_create_support_ticket(support_test_linode_id):
+    linode_id = support_test_linode_id
     exec_test_command(
         BASE_CMD
         + [

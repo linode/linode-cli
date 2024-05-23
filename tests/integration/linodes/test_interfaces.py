@@ -18,7 +18,7 @@ linode_label = DEFAULT_LABEL + timestamp
 
 
 @pytest.fixture
-def linode_with_vpc_interface():
+def linode_with_vpc_interface(cloud_init_firewall):
     vpc_json = create_vpc_w_subnet()
 
     vpc_region = vpc_json["region"]
@@ -38,6 +38,8 @@ def linode_with_vpc_interface():
                 DEFAULT_TEST_IMAGE,
                 "--root_pass",
                 DEFAULT_RANDOM_PASS,
+                "--firewall_id",
+                cloud_init_firewall,
                 "--interfaces.purpose",
                 "vpc",
                 "--interfaces.primary",
@@ -67,7 +69,7 @@ def linode_with_vpc_interface():
 
 
 @pytest.fixture
-def linode_with_vpc_interface_as_json():
+def linode_with_vpc_interface_as_json(cloud_init_firewall):
     vpc_json = create_vpc_w_subnet()
 
     vpc_region = vpc_json["region"]
@@ -87,6 +89,8 @@ def linode_with_vpc_interface_as_json():
                 DEFAULT_TEST_IMAGE,
                 "--root_pass",
                 DEFAULT_RANDOM_PASS,
+                "--firewall_id",
+                cloud_init_firewall,
                 "--interfaces",
                 json.dumps(
                     [

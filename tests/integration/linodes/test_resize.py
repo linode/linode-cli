@@ -15,7 +15,7 @@ from tests.integration.linodes.helpers_linodes import (
 
 
 @pytest.fixture(scope="session")
-def test_linode_id():
+def test_linode_id(cloud_init_firewall):
     plan = (
         exec_test_command(
             [
@@ -32,7 +32,9 @@ def test_linode_id():
         .rstrip()
         .splitlines()[1]
     )
-    linode_id = create_linode_and_wait(test_plan=plan)
+    linode_id = create_linode_and_wait(
+        firewall_id=cloud_init_firewall, test_plan=plan
+    )
 
     yield linode_id
 

@@ -20,8 +20,8 @@ snapshot_label = "test_snapshot1"
 
 
 @pytest.fixture
-def create_linode_setup():
-    linode_id = create_linode()
+def create_linode_setup(cloud_init_firewall):
+    linode_id = create_linode(firewall_id=cloud_init_firewall)
 
     yield linode_id
 
@@ -29,7 +29,7 @@ def create_linode_setup():
 
 
 @pytest.fixture
-def create_linode_backup_disabled_setup():
+def create_linode_backup_disabled_setup(cloud_init_firewall):
     res = set_backups_enabled_in_account_settings(toggle=False)
 
     if res == "True":
@@ -37,7 +37,7 @@ def create_linode_backup_disabled_setup():
             "Backups are unexpectedly enabled before setting up the test."
         )
 
-    linode_id = create_linode_backup_disabled()
+    linode_id = create_linode_backup_disabled(firewall_id=cloud_init_firewall)
 
     yield linode_id
 
