@@ -13,6 +13,7 @@ from random import randint
 from typing import Callable, Optional
 
 import pytest
+import requests
 
 from linodecli import ENV_TOKEN_NAME
 from tests.integration.helpers import (
@@ -34,7 +35,36 @@ NODEBALANCER_BASE_CMD = ["linode-cli", "nodebalancers"]
 
 
 @pytest.fixture(autouse=True, scope="session")
-def cloud_init_firewall():
+def linode_cloud_firewall():
+    def get_public_ip(ip_version="ipv4"):
+        url = (
+            f"https://api64.ipify.org?format=json"
+            if ip_version == "ipv6"
+            else f"https://api.ipify.org?format=json"
+        )
+        response = requests.get(url)
+        return str(response.json()["ip"])
+
+    def create_inbound_rule(ipv4_address, ipv6_address):
+        rule = [
+            {
+                "protocol": "TCP",
+                "ports": "22",
+                "addresses": {
+                    "ipv4": [f"{ipv4_address}/32"],
+                    "ipv6": [f"{ipv6_address}/128"],
+                },
+                "action": "ACCEPT",
+            }
+        ]
+        return json.dumps(rule, indent=4)
+
+    # Fetch the public IP addresses
+    ipv4_address = get_public_ip("ipv4")
+    ipv6_address = get_public_ip("ipv6")
+
+    inbound_rule = create_inbound_rule(ipv4_address, ipv6_address)
+
     label = "cloud_firewall_" + str(int(time.time()))
 
     firewall_id = (
@@ -50,7 +80,7 @@ def cloud_init_firewall():
                 "--rules.inbound_policy",
                 "DROP",
                 "--rules.inbound",
-                '[{"protocol": "TCP", "ports": "22", "addresses": {"ipv4": ["0.0.0.0/0"], "ipv6": ["::/0"]}, "action": "ACCEPT"}]',
+                inbound_rule,
                 "--text",
                 "--no-headers",
                 "--format",
@@ -218,7 +248,7 @@ def slave_domain():
 
 # Test helpers specific to Linodes test suite
 @pytest.fixture
-def linode_with_label(cloud_init_firewall):
+def linode_with_label(linode_cloud_firewall):
     timestamp = str(time.time_ns())
     label = "cli" + timestamp
     result = (
@@ -237,7 +267,7 @@ def linode_with_label(cloud_init_firewall):
                 "--root_pass",
                 DEFAULT_RANDOM_PASS,
                 "--firewall_id",
-                cloud_init_firewall,
+                linode_cloud_firewall,
                 "--text",
                 "--delimiter",
                 ",",
@@ -258,7 +288,7 @@ def linode_with_label(cloud_init_firewall):
 
 
 @pytest.fixture
-def linode_min_req(cloud_init_firewall):
+def linode_min_req(linode_cloud_firewall):
     result = (
         exec_test_command(
             LINODE_BASE_CMD
@@ -271,7 +301,7 @@ def linode_min_req(cloud_init_firewall):
                 "--root_pass",
                 DEFAULT_RANDOM_PASS,
                 "--firewall_id",
-                cloud_init_firewall,
+                linode_cloud_firewall,
                 "--no-defaults",
                 "--text",
                 "--delimiter",
@@ -293,7 +323,7 @@ def linode_min_req(cloud_init_firewall):
 
 
 @pytest.fixture
-def linode_wo_image(cloud_init_firewall):
+def linode_wo_image(linode_cloud_firewall):
     label = "cli" + str(int(time.time()) + randint(10, 1000))
     linode_id = (
         exec_test_command(
@@ -310,7 +340,7 @@ def linode_wo_image(cloud_init_firewall):
                 "--root_pass",
                 DEFAULT_RANDOM_PASS,
                 "--firewall_id",
-                cloud_init_firewall,
+                linode_cloud_firewall,
                 "--format",
                 "id",
                 "--no-headers",
@@ -327,7 +357,7 @@ def linode_wo_image(cloud_init_firewall):
 
 
 @pytest.fixture
-def linode_backup_enabled(cloud_init_firewall):
+def linode_backup_enabled(linode_cloud_firewall):
     # create linode with backups enabled
     linode_id = (
         exec_test_command(
@@ -346,7 +376,7 @@ def linode_backup_enabled(cloud_init_firewall):
                 "--root_pass",
                 DEFAULT_RANDOM_PASS,
                 "--firewall_id",
-                cloud_init_firewall,
+                linode_cloud_firewall,
                 "--text",
                 "--no-headers",
                 "--format=id",
@@ -389,7 +419,7 @@ def snapshot_of_linode():
 
 # Test helpers specific to Nodebalancers test suite
 @pytest.fixture
-def nodebalancer_with_default_conf(cloud_init_firewall):
+def nodebalancer_with_default_conf(linode_cloud_firewall):
     result = (
         exec_test_command(
             NODEBALANCER_BASE_CMD
@@ -398,7 +428,7 @@ def nodebalancer_with_default_conf(cloud_init_firewall):
                 "--region",
                 "us-ord",
                 "--firewall_id",
-                cloud_init_firewall,
+                linode_cloud_firewall,
                 "--text",
                 "--delimiter",
                 ",",
@@ -495,7 +525,7 @@ def pytest_configure(config):
 
 
 @pytest.fixture
-def support_test_linode_id(cloud_init_firewall):
+def support_test_linode_id(linode_cloud_firewall):
     timestamp = str(time.time_ns())
     label = "cli" + timestamp
 
@@ -515,7 +545,7 @@ def support_test_linode_id(cloud_init_firewall):
                 "--root_pass",
                 DEFAULT_RANDOM_PASS,
                 "--firewall_id",
-                cloud_init_firewall,
+                linode_cloud_firewall,
                 "--text",
                 "--delimiter",
                 ",",

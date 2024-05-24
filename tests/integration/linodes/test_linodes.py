@@ -21,7 +21,7 @@ linode_label = DEFAULT_LABEL + timestamp
 
 
 @pytest.fixture(scope="package", autouse=True)
-def setup_linodes(cloud_init_firewall):
+def setup_linodes(linode_cloud_firewall):
     linode_id = (
         exec_test_command(
             BASE_CMD
@@ -38,7 +38,7 @@ def setup_linodes(cloud_init_firewall):
                 "--root_pass",
                 DEFAULT_RANDOM_PASS,
                 "--firewall_id",
-                cloud_init_firewall,
+                linode_cloud_firewall,
                 "--text",
                 "--delimiter",
                 ",",

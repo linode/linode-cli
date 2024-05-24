@@ -26,7 +26,7 @@ POLL_INTERVAL = 5
 
 @pytest.mark.skipif(platform == "win32", reason="Test N/A on Windows")
 @pytest.fixture
-def target_instance(ssh_key_pair_generator, cloud_init_firewall):
+def target_instance(ssh_key_pair_generator, linode_cloud_firewall):
     instance_label = f"cli-test-{get_random_text(length=6)}"
 
     pubkey_file, privkey_file = ssh_key_pair_generator
@@ -52,7 +52,7 @@ def target_instance(ssh_key_pair_generator, cloud_init_firewall):
             "--authorized_keys",
             pubkey,
             "--firewall_id",
-            cloud_init_firewall,
+            linode_cloud_firewall,
         ]
         + COMMAND_JSON_OUTPUT
     )

@@ -14,7 +14,7 @@ nodebalancer_created = "[0-9]+,balancer[0-9]+,us-ord,[0-9]+-[0-9]+-[0-9]+-[0-9]+
 
 
 @pytest.fixture(scope="package")
-def test_node_balancers(cloud_init_firewall):
+def test_node_balancers(linode_cloud_firewall):
     # create a default nodebalancer
     nodebalancer_id = (
         exec_test_command(
@@ -24,7 +24,7 @@ def test_node_balancers(cloud_init_firewall):
                 "--region",
                 "us-ord",
                 "--firewall_id",
-                cloud_init_firewall,
+                linode_cloud_firewall,
                 "--text",
                 "--delimiter",
                 ",",
@@ -74,7 +74,7 @@ def test_node_balancers(cloud_init_firewall):
                 "--image",
                 DEFAULT_TEST_IMAGE,
                 "--firewall_id",
-                cloud_init_firewall,
+                linode_cloud_firewall,
                 "--text",
                 "--delimiter",
                 ",",
@@ -125,7 +125,7 @@ def test_node_balancers(cloud_init_firewall):
 
 
 @pytest.fixture
-def create_linode_to_add(cloud_init_firewall):
+def create_linode_to_add(linode_cloud_firewall):
     linode = (
         exec_test_command(
             [
@@ -145,7 +145,7 @@ def create_linode_to_add(cloud_init_firewall):
                 "--image",
                 DEFAULT_TEST_IMAGE,
                 "--firewall_id",
-                cloud_init_firewall,
+                linode_cloud_firewall,
                 "--text",
                 "--delimiter",
                 ",",
