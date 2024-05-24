@@ -63,6 +63,8 @@ def linode_cloud_firewall():
     ipv4_address = get_public_ip("ipv4")
     ipv6_address = get_public_ip("ipv6")
 
+    print("IP:::", ipv4_address, ipv6_address)
+
     inbound_rule = create_inbound_rule(ipv4_address, ipv6_address)
 
     label = "cloud_firewall_" + str(int(time.time()))
