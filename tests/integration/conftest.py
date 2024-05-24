@@ -69,10 +69,10 @@ def linode_cloud_firewall():
                 "action": "ACCEPT",
             }
         ]
-        if is_valid_ipv4(ipv4_address):  # Check if ipv6_address is not empty
+        if is_valid_ipv4(ipv4_address):
             rule[0]["addresses"]["ipv4"] = [f"{ipv4_address}/32"]
 
-        if is_valid_ipv6(ipv6_address):  # Check if ipv6_address is not empty
+        if is_valid_ipv6(ipv6_address):
             rule[0]["addresses"]["ipv6"] = [f"{ipv6_address}/128"]
 
         return json.dumps(rule, indent=4)
@@ -85,29 +85,27 @@ def linode_cloud_firewall():
 
     label = "cloud_firewall_" + str(int(time.time()))
 
-    firewall_id = (
-        exec_test_command(
-            [
-                "linode-cli",
-                "firewalls",
-                "create",
-                "--label",
-                label,
-                "--rules.outbound_policy",
-                "ACCEPT",
-                "--rules.inbound_policy",
-                "DROP",
-                "--rules.inbound",
-                inbound_rule,
-                "--text",
-                "--no-headers",
-                "--format",
-                "id",
-            ]
-        )
-        .stdout.decode()
-        .rstrip()
-    )
+    # Base command list
+    command = [
+        "linode-cli",
+        "firewalls",
+        "create",
+        "--label",
+        label,
+        "--rules.outbound_policy",
+        "ACCEPT",
+        "--rules.inbound_policy",
+        "DROP",
+        "--text",
+        "--no-headers",
+        "--format",
+        "id",
+    ]
+
+    if is_valid_ipv4(ipv4_address) or is_valid_ipv6(ipv6_address):
+        command.extend(["--rules.inbound", inbound_rule])
+
+    firewall_id = exec_test_command(command).stdout.decode().rstrip()
 
     yield firewall_id
 
