@@ -12,7 +12,7 @@ from rich.align import Align
 from rich.console import Console
 from rich.table import Table
 
-from linodecli.output import OutputMode
+from linodecli.output.output_handler import OutputMode
 
 OUTPUT_OVERRIDES = {}
 
