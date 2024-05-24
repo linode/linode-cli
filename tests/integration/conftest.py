@@ -53,7 +53,7 @@ def linode_cloud_firewall():
 
     def get_public_ip(ip_version="ipv4"):
         url = (
-            f"https://api6.ipify.org?format=json"
+            f"https://api64.ipify.org?format=json"
             if ip_version == "ipv6"
             else f"https://api.ipify.org?format=json"
         )
