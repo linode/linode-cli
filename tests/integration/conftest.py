@@ -1,5 +1,6 @@
 # Use random integer as the start point here to avoid
 # id conflicts when multiple testings are running.
+import ipaddress
 import json
 import logging
 import os
@@ -36,9 +37,23 @@ NODEBALANCER_BASE_CMD = ["linode-cli", "nodebalancers"]
 
 @pytest.fixture(autouse=True, scope="session")
 def linode_cloud_firewall():
+    def is_valid_ipv4(address):
+        try:
+            ipaddress.IPv4Address(address)
+            return True
+        except ipaddress.AddressValueError:
+            return False
+
+    def is_valid_ipv6(address):
+        try:
+            ipaddress.IPv6Address(address)
+            return True
+        except ipaddress.AddressValueError:
+            return False
+
     def get_public_ip(ip_version="ipv4"):
         url = (
-            f"https://api64.ipify.org?format=json"
+            f"https://api6.ipify.org?format=json"
             if ip_version == "ipv6"
             else f"https://api.ipify.org?format=json"
         )
@@ -50,20 +65,21 @@ def linode_cloud_firewall():
             {
                 "protocol": "TCP",
                 "ports": "22",
-                "addresses": {
-                    "ipv4": [f"{ipv4_address}/32"],
-                    "ipv6": [f"{ipv6_address}/128"],
-                },
+                "addresses": {},
                 "action": "ACCEPT",
             }
         ]
+        if is_valid_ipv4(ipv4_address):  # Check if ipv6_address is not empty
+            rule[0]["addresses"]["ipv4"] = [f"{ipv4_address}/32"]
+
+        if is_valid_ipv6(ipv6_address):  # Check if ipv6_address is not empty
+            rule[0]["addresses"]["ipv6"] = [f"{ipv6_address}/128"]
+
         return json.dumps(rule, indent=4)
 
     # Fetch the public IP addresses
     ipv4_address = get_public_ip("ipv4")
     ipv6_address = get_public_ip("ipv6")
-
-    print("IP:::", ipv4_address, ipv6_address)
 
     inbound_rule = create_inbound_rule(ipv4_address, ipv6_address)
 

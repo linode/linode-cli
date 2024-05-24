@@ -75,7 +75,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - run: make INTEGRATION_TEST_PATH="${{ inputs.test_path }}" TEST_ARGS="-s" MODULE="ssh" testint
+      - run: make INTEGRATION_TEST_PATH="${{ inputs.test_path }}" testint
         if: ${{ steps.validate-tests.outputs.match == '' }}
         env:
           LINODE_CLI_TOKEN: ${{ secrets.LINODE_TOKEN }}
