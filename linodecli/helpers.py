@@ -39,7 +39,7 @@ def handle_url_overrides(
     ).geturl()
 
 
-def pagination_args_shared(parser: ArgumentParser):
+def register_pagination_args_shared(parser: ArgumentParser):
     """
     Add pagination related arguments to the given
     ArgumentParser that may be shared across the CLI and plugins.

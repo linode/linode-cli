@@ -44,6 +44,25 @@ def create_linode_backup_disabled_setup():
     delete_target_id("linodes", linode_id)
 
 
+def check_account_settings():
+    result = exec_test_command(
+        [
+            "linode-cli",
+            "account",
+            "settings",
+            "--text",
+            "--format",
+            "managed",
+            "--no-headers",
+        ]
+    ).stdout.decode()
+
+    return result
+
+
+@pytest.mark.skipif(
+    check_account_settings(), reason="Account is managed, skipping the test.."
+)
 def test_create_linode_with_backup_disabled(
     create_linode_backup_disabled_setup,
 ):
