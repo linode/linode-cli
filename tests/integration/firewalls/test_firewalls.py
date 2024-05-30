@@ -15,7 +15,6 @@ FIREWALL_LABEL = "label-fw-test" + str(int(time.time()))
 
 @pytest.fixture
 def test_firewall_id():
-    # Create one domain for some tests in this suite
     firewall_id = (
         exec_test_command(
             BASE_CMD
@@ -38,7 +37,7 @@ def test_firewall_id():
     )
 
     yield firewall_id
-    # teardown - delete all firewalls
+
     delete_target_id(target="firewalls", id=firewall_id)
 
 

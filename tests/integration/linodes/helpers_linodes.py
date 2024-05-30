@@ -71,7 +71,7 @@ def wait_until(linode_id: "str", timeout, status: "str", period=5):
     return False
 
 
-def create_linode(test_region=DEFAULT_REGION):
+def create_linode(firewall_id: "str", test_region=DEFAULT_REGION):
     # create linode
     linode_id = (
         exec_test_command(
@@ -87,6 +87,8 @@ def create_linode(test_region=DEFAULT_REGION):
                 DEFAULT_TEST_IMAGE,
                 "--root_pass",
                 DEFAULT_RANDOM_PASS,
+                "--firewall_id",
+                firewall_id,
                 "--format=id",
                 "--text",
                 "--no-headers",
@@ -99,7 +101,9 @@ def create_linode(test_region=DEFAULT_REGION):
     return linode_id
 
 
-def create_linode_backup_disabled(test_region=DEFAULT_REGION):
+def create_linode_backup_disabled(
+    firewall_id: "str", test_region=DEFAULT_REGION
+):
     result = set_backups_enabled_in_account_settings(toggle=False)
 
     # create linode
@@ -117,6 +121,8 @@ def create_linode_backup_disabled(test_region=DEFAULT_REGION):
                 DEFAULT_TEST_IMAGE,
                 "--root_pass",
                 DEFAULT_RANDOM_PASS,
+                "--firewall_id",
+                firewall_id,
                 "--format=id",
                 "--text",
                 "--no-headers",
@@ -172,9 +178,10 @@ def remove_linodes():
 
 
 def create_linode_and_wait(
+    firewall_id: "str",
+    ssh_key="",
     test_plan=DEFAULT_LINODE_TYPE,
     test_image=DEFAULT_TEST_IMAGE,
-    ssh_key="",
     test_region=DEFAULT_REGION,
 ):
     linode_type = test_plan
@@ -200,6 +207,8 @@ def create_linode_and_wait(
                     DEFAULT_RANDOM_PASS,
                     "--authorized_keys",
                     ssh_key,
+                    "--firewall_id",
+                    firewall_id,
                     "--format=id",
                     "--backups_enabled",
                     "true",
@@ -225,6 +234,8 @@ def create_linode_and_wait(
                     test_image,
                     "--root_pass",
                     DEFAULT_RANDOM_PASS,
+                    "--firewall_id",
+                    firewall_id,
                     "--format=id",
                     "--backups_enabled",
                     "true",
