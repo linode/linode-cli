@@ -125,7 +125,7 @@ def _borderless_table(data):
     """
     tab = Table.grid(padding=(0, 2, 0, 2))
     for row in data:
-        tab.add_row(*row)
+        tab.add_row(*[str(v) for v in row])
 
     return tab
 
