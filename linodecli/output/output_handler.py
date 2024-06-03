@@ -4,7 +4,8 @@ Handles formatting the output of commands used in Linode CLI
 
 import copy
 import json
-from enum import Enum
+from argparse import Namespace
+from enum import Enum, auto
 from sys import stdout
 from typing import IO, Any, Dict, List, Optional, Union, cast
 
@@ -12,7 +13,6 @@ from rich import box
 from rich import print as rprint
 from rich.console import OverflowMethod
 from rich.table import Column, Table
-from rich.text import Text
 
 from linodecli.baked.response import OpenAPIResponse, OpenAPIResponseAttr
 
@@ -22,11 +22,11 @@ class OutputMode(Enum):
     Enum for output modes
     """
 
-    table = 1
-    delimited = 2
-    json = 3
-    markdown = 4
-    ascii_table = 5
+    table = auto()
+    delimited = auto()
+    json = auto()
+    markdown = auto()
+    ascii_table = auto()
 
 
 class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance-attributes
@@ -288,13 +288,13 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
 
         tab = Table(
             *header_columns,
-            header_style="",
+            header_style="bold",
             box=box_style,
             show_header=self.headers,
             title_justify="left",
+            show_lines=True,
         )
         for row in content:
-            row = [Text.from_ansi(item) for item in row]
             tab.add_row(*row)
 
         if title is not None and self.headers:
@@ -405,3 +405,47 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
             content.append([value_transform(attr, model) for attr in columns])
 
         return content
+
+    def configure(
+        self,
+        parsed: Namespace,
+        suppress_warnings: bool = False,
+    ):
+        """
+        Configure the given OutputHandler with the parsed arguments.
+        """
+        if parsed.text:
+            self.mode = OutputMode.delimited
+        elif parsed.json:
+            self.mode = OutputMode.json
+            self.columns = "*"
+        elif parsed.markdown:
+            self.mode = OutputMode.markdown
+        elif parsed.ascii_table:
+            self.mode = OutputMode.ascii_table
+
+        if parsed.delimiter:
+            self.delimiter = parsed.delimiter
+        if parsed.pretty:
+            self.mode = OutputMode.json
+            self.pretty_json = True
+            self.columns = "*"
+        if parsed.no_headers:
+            self.headers = False
+
+        self.suppress_warnings = parsed.suppress_warnings
+        self.disable_truncation = parsed.no_truncation
+        self.column_width = parsed.column_width
+        self.single_table = parsed.single_table
+        self.tables = parsed.table
+
+        if parsed.all_columns or parsed.all:
+            if parsed.all and not suppress_warnings:
+                print(
+                    "WARNING: '--all' is a deprecated flag, "
+                    "and will be removed in a future version. "
+                    "Please consider use '--all-columns' instead."
+                )
+            self.columns = "*"
+        elif parsed.format:
+            self.columns = parsed.format

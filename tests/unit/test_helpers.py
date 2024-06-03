@@ -1,6 +1,9 @@
 from argparse import ArgumentParser
 
-from linodecli.helpers import pagination_args_shared, register_args_shared
+from linodecli.helpers import (
+    register_args_shared,
+    register_pagination_args_shared,
+)
 
 
 class TestHelpers:
@@ -10,7 +13,7 @@ class TestHelpers:
 
     def test_pagination_args_shared(self):
         parser = ArgumentParser()
-        pagination_args_shared(parser)
+        register_pagination_args_shared(parser)
 
         args = parser.parse_args(
             ["--page", "2", "--page-size", "50", "--all-rows"]

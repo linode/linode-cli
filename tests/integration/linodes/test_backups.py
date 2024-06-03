@@ -20,8 +20,8 @@ snapshot_label = "test_snapshot1"
 
 
 @pytest.fixture
-def create_linode_setup():
-    linode_id = create_linode()
+def create_linode_setup(linode_cloud_firewall):
+    linode_id = create_linode(firewall_id=linode_cloud_firewall)
 
     yield linode_id
 
@@ -29,7 +29,7 @@ def create_linode_setup():
 
 
 @pytest.fixture
-def create_linode_backup_disabled_setup():
+def create_linode_backup_disabled_setup(linode_cloud_firewall):
     res = set_backups_enabled_in_account_settings(toggle=False)
 
     if res == "True":
@@ -37,13 +37,32 @@ def create_linode_backup_disabled_setup():
             "Backups are unexpectedly enabled before setting up the test."
         )
 
-    linode_id = create_linode_backup_disabled()
+    linode_id = create_linode_backup_disabled(firewall_id=linode_cloud_firewall)
 
     yield linode_id
 
     delete_target_id("linodes", linode_id)
 
 
+def check_account_settings():
+    result = exec_test_command(
+        [
+            "linode-cli",
+            "account",
+            "settings",
+            "--text",
+            "--format",
+            "managed",
+            "--no-headers",
+        ]
+    ).stdout.decode()
+
+    return result
+
+
+@pytest.mark.skipif(
+    check_account_settings(), reason="Account is managed, skipping the test.."
+)
 def test_create_linode_with_backup_disabled(
     create_linode_backup_disabled_setup,
 ):
