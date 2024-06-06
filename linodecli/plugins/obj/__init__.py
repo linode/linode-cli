@@ -541,7 +541,7 @@ def _configure_plugin(client: CLI):
     """
 
     cluster = _default_text_input(  # pylint: disable=protected-access
-        "Configure a default Cluster for operations.",
+        "Default cluster for operations (e.g. `us-mia-1`)",
         optional=True,
     )
 
