@@ -18,7 +18,7 @@ from openapi3.paths import Operation
 
 from linodecli.baked.request import OpenAPIFilteringRequest, OpenAPIRequest
 from linodecli.baked.response import OpenAPIResponse
-from linodecli.output import OutputHandler
+from linodecli.output.output_handler import OutputHandler
 from linodecli.overrides import OUTPUT_OVERRIDES
 
 

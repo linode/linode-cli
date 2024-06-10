@@ -32,7 +32,7 @@ from .help_pages import (
     print_help_plugins,
 )
 from .helpers import handle_url_overrides
-from .output import OutputMode
+from .output.output_handler import OutputMode
 from .version import __version__
 
 VERSION = __version__
@@ -64,53 +64,18 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
     )
     parsed, args = register_args(parser).parse_known_args()
 
-    # output/formatting settings
-    if parsed.text:
-        cli.output_handler.mode = OutputMode.delimited
-    elif parsed.json:
-        cli.output_handler.mode = OutputMode.json
-        cli.output_handler.columns = "*"
-    elif parsed.markdown:
-        cli.output_handler.mode = OutputMode.markdown
-    elif parsed.ascii_table:
-        cli.output_handler.mode = OutputMode.ascii_table
+    cli.output_handler.configure(parsed, cli.suppress_warnings)
 
-    if parsed.delimiter:
-        cli.output_handler.delimiter = parsed.delimiter
-    if parsed.pretty:
-        cli.output_handler.mode = OutputMode.json
-        cli.output_handler.pretty_json = True
-        cli.output_handler.columns = "*"
-    if parsed.no_headers:
-        cli.output_handler.headers = False
     if parsed.all_rows:
         cli.pagination = False
-    elif parsed.format:
-        cli.output_handler.columns = parsed.format
 
     cli.defaults = not parsed.no_defaults
     cli.retry_count = 0
     cli.no_retry = parsed.no_retry
     cli.suppress_warnings = parsed.suppress_warnings
-
-    if parsed.all_columns or parsed.all:
-        if parsed.all and not cli.suppress_warnings:
-            print(
-                "WARNING: '--all' is a deprecated flag, "
-                "and will be removed in a future version. "
-                "Please consider use '--all-columns' instead."
-            )
-        cli.output_handler.columns = "*"
-
     cli.page = parsed.page
     cli.page_size = parsed.page_size
     cli.debug_request = parsed.debug
-
-    cli.output_handler.suppress_warnings = parsed.suppress_warnings
-    cli.output_handler.disable_truncation = parsed.no_truncation
-    cli.output_handler.column_width = parsed.column_width
-    cli.output_handler.single_table = parsed.single_table
-    cli.output_handler.tables = parsed.table
 
     if parsed.as_user and not skip_config:
         cli.config.set_user(parsed.as_user)

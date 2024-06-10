@@ -15,7 +15,7 @@ SSH_SLEEP_PERIOD = 50
 
 @pytest.mark.skipif(platform == "win32", reason="Test N/A on Windows")
 @pytest.fixture(scope="package")
-def linode_in_running_state(ssh_key_pair_generator):
+def linode_in_running_state(ssh_key_pair_generator, linode_cloud_firewall):
     pubkey_file, privkey_file = ssh_key_pair_generator
 
     with open(pubkey_file, "r") as f:
@@ -57,7 +57,10 @@ def linode_in_running_state(ssh_key_pair_generator):
     )
 
     linode_id = create_linode_and_wait(
-        test_plan=plan, test_image=alpine_image, ssh_key=pubkey
+        test_plan=plan,
+        test_image=alpine_image,
+        ssh_key=pubkey,
+        firewall_id=linode_cloud_firewall,
     )
 
     yield linode_id

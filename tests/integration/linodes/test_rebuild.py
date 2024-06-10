@@ -16,8 +16,8 @@ from tests.integration.linodes.helpers_linodes import (
 
 
 @pytest.fixture
-def test_linode_id():
-    linode_id = create_linode_and_wait()
+def test_linode_id(linode_cloud_firewall):
+    linode_id = create_linode_and_wait(firewall_id=linode_cloud_firewall)
 
     yield linode_id
 

@@ -44,34 +44,21 @@ jobs:
         run: |
           timestamp=$(date +'%Y%m%d%H%M')
           report_filename="${timestamp}_cli_test_report.xml"
-          if ! pytest tests/integration --disable-warnings --junitxml="${report_filename}"; then
-            echo "EXIT_STATUS=1" >> $GITHUB_ENV
-          fi
+          make testint TEST_ARGS="--junitxml=${report_filename}"
         env:
           LINODE_CLI_TOKEN: ${{ secrets.LINODE_TOKEN }}
 
-      - name: Add additional information to XML report
+      - name: Upload test results
+        if: always()
         run: |
-          filename=$(ls | grep -E '^[0-9]{12}_cli_test_report\.xml$') 
+          filename=$(ls | grep -E '^[0-9]{12}_cli_test_report\.xml$')
           python tod_scripts/add_to_xml_test_report.py \
           --branch_name "${GITHUB_REF#refs/*/}" \
           --gha_run_id "$GITHUB_RUN_ID" \
           --gha_run_number "$GITHUB_RUN_NUMBER" \
           --xmlfile "${filename}"
-
-      - name: Upload test results
-        run: |
-          filename=$(ls | grep -E '^[0-9]{12}_cli_test_report\.xml$')
+          sync
           python tod_scripts/test_report_upload_script.py "${filename}"
         env:
           LINODE_CLI_OBJ_ACCESS_KEY: ${{ secrets.LINODE_CLI_OBJ_ACCESS_KEY }}
           LINODE_CLI_OBJ_SECRET_KEY: ${{ secrets.LINODE_CLI_OBJ_SECRET_KEY }}
-
-      - name: Test Execution Status Handler
-        run: |
-          if [[ "$EXIT_STATUS" != 0 ]]; then
-            echo "Test execution contains failure(s)"
-            exit $EXIT_STATUS 
-          else
-            echo "Tests passed!"
-          fi

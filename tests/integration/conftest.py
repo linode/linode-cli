@@ -1,5 +1,6 @@
 # Use random integer as the start point here to avoid
 # id conflicts when multiple testings are running.
+import ipaddress
 import json
 import logging
 import os
@@ -13,6 +14,7 @@ from random import randint
 from typing import Callable, Optional
 
 import pytest
+import requests
 
 from linodecli import ENV_TOKEN_NAME
 from tests.integration.helpers import (
@@ -31,6 +33,83 @@ from tests.integration.linodes.helpers_linodes import (
 DOMAIN_BASE_CMD = ["linode-cli", "domains"]
 LINODE_BASE_CMD = ["linode-cli", "linodes"]
 NODEBALANCER_BASE_CMD = ["linode-cli", "nodebalancers"]
+
+
+@pytest.fixture(autouse=True, scope="session")
+def linode_cloud_firewall():
+    def is_valid_ipv4(address):
+        try:
+            ipaddress.IPv4Address(address)
+            return True
+        except ipaddress.AddressValueError:
+            return False
+
+    def is_valid_ipv6(address):
+        try:
+            ipaddress.IPv6Address(address)
+            return True
+        except ipaddress.AddressValueError:
+            return False
+
+    def get_public_ip(ip_version="ipv4"):
+        url = (
+            f"https://api64.ipify.org?format=json"
+            if ip_version == "ipv6"
+            else f"https://api.ipify.org?format=json"
+        )
+        response = requests.get(url)
+        return str(response.json()["ip"])
+
+    def create_inbound_rule(ipv4_address, ipv6_address):
+        rule = [
+            {
+                "protocol": "TCP",
+                "ports": "22",
+                "addresses": {},
+                "action": "ACCEPT",
+            }
+        ]
+        if is_valid_ipv4(ipv4_address):
+            rule[0]["addresses"]["ipv4"] = [f"{ipv4_address}/32"]
+
+        if is_valid_ipv6(ipv6_address):
+            rule[0]["addresses"]["ipv6"] = [f"{ipv6_address}/128"]
+
+        return json.dumps(rule, indent=4)
+
+    # Fetch the public IP addresses
+    ipv4_address = get_public_ip("ipv4")
+    ipv6_address = get_public_ip("ipv6")
+
+    inbound_rule = create_inbound_rule(ipv4_address, ipv6_address)
+
+    label = "cloud_firewall_" + str(int(time.time()))
+
+    # Base command list
+    command = [
+        "linode-cli",
+        "firewalls",
+        "create",
+        "--label",
+        label,
+        "--rules.outbound_policy",
+        "ACCEPT",
+        "--rules.inbound_policy",
+        "DROP",
+        "--text",
+        "--no-headers",
+        "--format",
+        "id",
+    ]
+
+    if is_valid_ipv4(ipv4_address) or is_valid_ipv6(ipv6_address):
+        command.extend(["--rules.inbound", inbound_rule])
+
+    firewall_id = exec_test_command(command).stdout.decode().rstrip()
+
+    yield firewall_id
+
+    delete_target_id(target="firewalls", id=firewall_id)
 
 
 @pytest.fixture(scope="session")
@@ -185,7 +264,7 @@ def slave_domain():
 
 # Test helpers specific to Linodes test suite
 @pytest.fixture
-def linode_with_label():
+def linode_with_label(linode_cloud_firewall):
     timestamp = str(time.time_ns())
     label = "cli" + timestamp
     result = (
@@ -203,6 +282,8 @@ def linode_with_label():
                 label,
                 "--root_pass",
                 DEFAULT_RANDOM_PASS,
+                "--firewall_id",
+                linode_cloud_firewall,
                 "--text",
                 "--delimiter",
                 ",",
@@ -217,14 +298,13 @@ def linode_with_label():
     )
 
     yield result
-
     res_arr = result.split(",")
     linode_id = res_arr[4]
     delete_target_id(target="linodes", id=linode_id)
 
 
 @pytest.fixture
-def linode_min_req():
+def linode_min_req(linode_cloud_firewall):
     result = (
         exec_test_command(
             LINODE_BASE_CMD
@@ -236,6 +316,8 @@ def linode_min_req():
                 "us-ord",
                 "--root_pass",
                 DEFAULT_RANDOM_PASS,
+                "--firewall_id",
+                linode_cloud_firewall,
                 "--no-defaults",
                 "--text",
                 "--delimiter",
@@ -257,7 +339,7 @@ def linode_min_req():
 
 
 @pytest.fixture
-def linode_wo_image():
+def linode_wo_image(linode_cloud_firewall):
     label = "cli" + str(int(time.time()) + randint(10, 1000))
     linode_id = (
         exec_test_command(
@@ -273,6 +355,8 @@ def linode_wo_image():
                 DEFAULT_REGION,
                 "--root_pass",
                 DEFAULT_RANDOM_PASS,
+                "--firewall_id",
+                linode_cloud_firewall,
                 "--format",
                 "id",
                 "--no-headers",
@@ -289,7 +373,7 @@ def linode_wo_image():
 
 
 @pytest.fixture
-def linode_backup_enabled():
+def linode_backup_enabled(linode_cloud_firewall):
     # create linode with backups enabled
     linode_id = (
         exec_test_command(
@@ -307,6 +391,8 @@ def linode_backup_enabled():
                 DEFAULT_TEST_IMAGE,
                 "--root_pass",
                 DEFAULT_RANDOM_PASS,
+                "--firewall_id",
+                linode_cloud_firewall,
                 "--text",
                 "--no-headers",
                 "--format=id",
@@ -349,7 +435,7 @@ def snapshot_of_linode():
 
 # Test helpers specific to Nodebalancers test suite
 @pytest.fixture
-def nodebalancer_with_default_conf():
+def nodebalancer_with_default_conf(linode_cloud_firewall):
     result = (
         exec_test_command(
             NODEBALANCER_BASE_CMD
@@ -357,6 +443,8 @@ def nodebalancer_with_default_conf():
                 "create",
                 "--region",
                 "us-ord",
+                "--firewall_id",
+                linode_cloud_firewall,
                 "--text",
                 "--delimiter",
                 ",",
@@ -450,3 +538,45 @@ def pytest_configure(config):
     config.addinivalue_line(
         "markers", "smoke: mark test as part of smoke test suite"
     )
+
+
+@pytest.fixture
+def support_test_linode_id(linode_cloud_firewall):
+    timestamp = str(time.time_ns())
+    label = "cli" + timestamp
+
+    res = (
+        exec_test_command(
+            LINODE_BASE_CMD
+            + [
+                "create",
+                "--type",
+                "g6-nanode-1",
+                "--region",
+                "us-ord",
+                "--image",
+                DEFAULT_TEST_IMAGE,
+                "--label",
+                label,
+                "--root_pass",
+                DEFAULT_RANDOM_PASS,
+                "--firewall_id",
+                linode_cloud_firewall,
+                "--text",
+                "--delimiter",
+                ",",
+                "--no-headers",
+                "--format",
+                "id",
+                "--no-defaults",
+            ]
+        )
+        .stdout.decode()
+        .rstrip()
+    )
+
+    linode_id = res
+
+    yield linode_id
+
+    delete_target_id(target="linodes", id=linode_id)
