@@ -18,7 +18,7 @@ from rich.table import Table
 
 from linodecli.cli import CLI
 from linodecli.configuration import _do_get_request
-from linodecli.configuration.helpers import _default_thing_input
+from linodecli.configuration.helpers import _default_text_input
 from linodecli.plugins import PluginContext, inherit_plugin_args
 from linodecli.plugins.obj.buckets import create_bucket, delete_bucket
 from linodecli.plugins.obj.config import (
@@ -60,18 +60,6 @@ try:
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
-
-
-def get_available_cluster(cli: CLI):
-    """Get list of possible clusters for the account"""
-    return [
-        c["id"]
-        for c in _do_get_request(  # pylint: disable=protected-access
-            cli.config.base_url,
-            "/object-storage/clusters",
-            token=cli.config.get_token(),
-        )["data"]
-    ]
 
 
 def generate_url(get_client, args, **kwargs):  # pylint: disable=unused-argument
@@ -290,7 +278,7 @@ def print_help(parser: ArgumentParser):
     print("See --help for individual commands for more information")
 
 
-def get_obj_args_parser(clusters: List[str]):
+def get_obj_args_parser():
     """
     Initialize and return the argument parser for the obj plug-in.
     """
@@ -307,7 +295,6 @@ def get_obj_args_parser(clusters: List[str]):
         "--cluster",
         metavar="CLUSTER",
         type=str,
-        choices=clusters,
         help="The cluster to use for the operation",
     )
 
@@ -369,8 +356,7 @@ def call(
 
         sys.exit(2)  # requirements not met - we can't go on
 
-    clusters = get_available_cluster(context.client) if not is_help else None
-    parser = get_obj_args_parser(clusters)
+    parser = get_obj_args_parser()
     parsed, args = parser.parse_known_args(args)
 
     # don't mind --no-defaults if it's there; the top-level parser already took care of it
@@ -553,15 +539,12 @@ def _configure_plugin(client: CLI):
     """
     Configures a default cluster value.
     """
-    clusters = get_available_cluster(client)
 
-    cluster = _default_thing_input(  # pylint: disable=protected-access
-        "Configure a default Cluster for operations.",
-        clusters,
-        "Default Cluster: ",
-        "Please select a valid Cluster",
-        optional=False,  # this is the only configuration right now
+    cluster = _default_text_input(  # pylint: disable=protected-access
+        "Default cluster for operations (e.g. `us-mia-1`)",
+        optional=True,
     )
 
-    client.config.plugin_set_value("cluster", cluster)
+    if cluster:
+        client.config.plugin_set_value("cluster", cluster)
     client.config.write_config()
