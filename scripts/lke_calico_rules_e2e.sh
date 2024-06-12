@@ -22,9 +22,9 @@ for ID in $CLUSTER_IDS; do
     export KUBECONFIG="$(pwd)/${ID}_config.yaml"
 
     echo "Applying Calico Rules to Nodes:"
-    ./kubectl get nodes
+    kubectl get nodes
 
-    ./calicoctl-linux-amd64 patch kubecontrollersconfiguration default --patch='{"spec": {"controllers": {"node": {"hostEndpoint": {"autoCreate": "Enabled"}}}}}'
+    calicoctl patch kubecontrollersconfiguration default --patch='{"spec": {"controllers": {"node": {"hostEndpoint": {"autoCreate": "Enabled"}}}}}'
 
-    ./calicoctl-linux-amd64 apply -f "$(pwd)/lke-policy.yaml"
+    calicoctl apply -f "$(pwd)/lke-policy.yaml"
 done
