@@ -59,8 +59,7 @@ jobs:
           cd scripts && ./lke_calico_rules_e2e.sh
         env:
           LINODE_TOKEN: ${{ secrets.LINODE_TOKEN }}
-        needs:
-          - calico_dependencies
+        needs: calico_dependencies
 
       - name: Upload test results
         if: always()
