@@ -39,7 +39,6 @@ jobs:
           chmod +x calicoctl-linux-amd64 kubectl
           mv calicoctl-linux-amd64 /usr/local/bin/calicoctl
           mv kubectl /usr/local/bin/kubectl
-        id: calico_dependencies
 
       - name: Install Package
         run: make install
@@ -59,7 +58,6 @@ jobs:
           cd scripts && ./lke_calico_rules_e2e.sh
         env:
           LINODE_TOKEN: ${{ secrets.LINODE_TOKEN }}
-        needs: calico_dependencies
 
       - name: Upload test results
         if: always()
