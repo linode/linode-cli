@@ -27,7 +27,7 @@ CLUSTER_IDS=$(curl -s -H "Authorization: Bearer $LINODE_TOKEN" \
 
 # Check if CLUSTER_IDS is empty
 if [ -z "$CLUSTER_IDS" ]; then
-    echo "No clusters are present."
+    echo "All clusters have been cleaned and properly destroyed. No need to apply inbound or outbound rules"
     exit 0
 fi
 
