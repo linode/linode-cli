@@ -61,7 +61,7 @@ def test_deploy_an_lke_cluster():
     # Sleep needed here for proper deletion of linodes that are related to lke cluster
     time.sleep(15)
 
-    remove_lke_clusters()
+    # remove_lke_clusters()
 
 
 def test_lke_cluster_list():
