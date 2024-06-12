@@ -46,7 +46,7 @@ for ID in $CLUSTER_IDS; do
     done
 
     if [[ $config_response == *"kubeconfig is not yet available"* ]]; then
-        echo "Cluster $ID not available after $RETRIES attempts. Skipping..."
+        echo "kubeconfig for cluster id:$ID not available after $RETRIES attempts, mostly likely it is an empty cluster. Skipping..."
     else
         # Export downloaded config file
         export KUBECONFIG="$(pwd)/${ID}_config.yaml"
