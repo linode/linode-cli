@@ -54,6 +54,7 @@ jobs:
           LINODE_CLI_TOKEN: ${{ secrets.LINODE_TOKEN }}
 
       - name: Apply Calico Rules to LKE
+        if: always()
         run: |
           cd scripts && ./lke_calico_rules_e2e.sh
         env:
