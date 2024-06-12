@@ -35,11 +35,11 @@ jobs:
       - name: Download kubectl and calicoctl for LKE clusters
         run: |
           curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl"
-          chmod +x kubectl
-          mv kubectl scripts/
           curl -LO "https://github.com/projectcalico/calico/releases/download/v3.25.0/calicoctl-linux-amd64"
-          chmod +x calicoctl-linux-amd64
-          mv calicoctl-linux-amd64 scripts/
+          chmod +x calicoctl-linux-amd64 kubectl
+          mv calicoctl-linux-amd64 /usr/local/bin/calicoctl
+          mv kubectl /usr/local/bin/kubectl
+        id: calico_dependencies
 
       - name: Install Package
         run: make install
@@ -59,6 +59,8 @@ jobs:
           cd scripts && ./lke_calico_rules_e2e.sh
         env:
           LINODE_TOKEN: ${{ secrets.LINODE_TOKEN }}
+        needs:
+          - calico_dependencies
 
       - name: Upload test results
         if: always()
