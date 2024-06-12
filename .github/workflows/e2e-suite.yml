@@ -38,7 +38,7 @@ jobs:
           chmod +x kubectl
           mv kubectl scripts/
           curl -LO "https://github.com/projectcalico/calico/releases/download/v3.25.0/calicoctl-linux-amd64"
-          chmod +x calicoctl
+          chmod +x calicoctl-linux-amd64
           mv calicoctl-linux-amd64 scripts/
 
       - name: Install Package
