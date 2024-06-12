@@ -38,7 +38,7 @@ for ID in $CLUSTER_IDS; do
     for ((i=1; i<=RETRIES; i++)); do
         config_response=$(curl -sH "Authorization: Bearer $LINODE_TOKEN" "https://api.linode.com/v4/lke/clusters/$ID/kubeconfig")
         if [[ $config_response != *"kubeconfig is not yet available"* ]]; then
-            echo $config_response | jq -r '.[] | @base64d' > "${ID}_config.yaml"
+            echo $config_response | jq -r '.[] | @base64d' > "/tmp/${ID}_config.yaml"
             break
         fi
         echo "Attempt $i to download kubeconfig for cluster $ID failed. Retrying in $DELAY seconds..."
@@ -49,12 +49,12 @@ for ID in $CLUSTER_IDS; do
         echo "kubeconfig for cluster id:$ID not available after $RETRIES attempts, mostly likely it is an empty cluster. Skipping..."
     else
         # Export downloaded config file
-        export KUBECONFIG="$(pwd)/${ID}_config.yaml"
+        export KUBECONFIG="/tmp/${ID}_config.yaml"
 
         retry_command $RETRIES kubectl get nodes
 
-        retry_command $RETRIES calicoctl patch kubecontrollersconfiguration default --patch='{"spec": {"controllers": {"node": {"hostEndpoint": {"autoCreate": "Enabled"}}}}}'
+        retry_command $RETRIES calicoctl patch kubecontrollersconfiguration default --allow-version-mismatch --patch='{"spec": {"controllers": {"node": {"hostEndpoint": {"autoCreate": "Enabled"}}}}}'
 
-        retry_command $RETRIES calicoctl apply -f "$(pwd)/lke-policy.yaml"
+        retry_command $RETRIES calicoctl apply --allow-version-mismatch -f "$(pwd)/lke-policy.yaml"
     fi
 done
