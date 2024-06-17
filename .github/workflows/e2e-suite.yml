@@ -26,14 +26,19 @@ jobs:
         with:
           python-version: '3.x'
 
-      - name: Install Python deps
-        run: pip install wheel boto3
+      - name: Install Python dependencies and update cert
+        run: |
+          pip install wheel boto3 && \
+          pip install certifi -U && \
+          pip install .[obj,dev]
 
-      - name: Update cert
-        run: pip install certifi -U
-
-      - name: Install deps
-        run: pip install .[obj,dev]
+      - name: Download kubectl and calicoctl for LKE clusters
+        run: |
+          curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl"
+          curl -LO "https://github.com/projectcalico/calico/releases/download/v3.25.0/calicoctl-linux-amd64"
+          chmod +x calicoctl-linux-amd64 kubectl
+          mv calicoctl-linux-amd64 /usr/local/bin/calicoctl
+          mv kubectl /usr/local/bin/kubectl
 
       - name: Install Package
         run: make install
@@ -47,6 +52,13 @@ jobs:
           make testint TEST_ARGS="--junitxml=${report_filename}"
         env:
           LINODE_CLI_TOKEN: ${{ secrets.LINODE_TOKEN }}
+
+      - name: Apply Calico Rules to LKE
+        if: always()
+        run: |
+          cd scripts && ./lke_calico_rules_e2e.sh
+        env:
+          LINODE_TOKEN: ${{ secrets.LINODE_TOKEN }}
 
       - name: Upload test results
         if: always()

@@ -1,0 +1,78 @@
+apiVersion: projectcalico.org/v3
+kind: GlobalNetworkPolicy
+metadata:
+  name: lke-rules
+spec:
+  preDNAT: true
+  applyOnForward: true
+  order: 100
+  # Remember to run calicoctl patch command for this to work
+  selector: ""
+  ingress:
+  # Allow ICMP
+  - action: Allow
+    protocol: ICMP
+  - action: Allow
+    protocol: ICMPv6
+
+  # Allow LKE-required ports
+  - action: Allow
+    protocol: TCP
+    destination:
+      nets:
+      - 192.168.128.0/17
+      - 10.0.0.0/8
+      ports:
+      - 10250
+      - 10256
+      - 179
+  - action: Allow
+    protocol: UDP
+    destination:
+      nets:
+      - 192.168.128.0/17
+      - 10.2.0.0/16
+      ports:
+      - 51820
+
+  # Allow NodeBalancer ingress to the Node Ports & Allow DNS
+  - action: Allow
+    protocol: TCP
+    source:
+      nets:
+      - 192.168.255.0/24
+      - 10.0.0.0/8
+    destination:
+      ports:
+      - 53
+      - 30000:32767
+  - action: Allow
+    protocol: UDP
+    source:
+      nets:
+      - 192.168.255.0/24
+      - 10.0.0.0/8
+    destination:
+      ports:
+      - 53
+      - 30000:32767
+
+  # Allow cluster internal communication
+  - action: Allow
+    destination:
+      nets:
+      - 10.0.0.0/8
+  - action: Allow
+    source:
+      nets:
+      - 10.0.0.0/8
+
+  # 127.0.0.1/32 is needed for kubectl exec and node-shell
+  - action: Allow
+    destination:
+      nets:
+      - 127.0.0.1/32
+
+  # Block everything else
+  - action: Deny
+  - action: Log
