@@ -2,9 +2,9 @@
 This is an enumeration of the various exit codes in Linode CLI
 """
 
-from enum import Enum
+from enum import IntEnum
 
-class ExitCodes(Enum):
+class ExitCodes(IntEnum):
     SUCCESS = 0
     UNRECOGNIZED_COMMAND = 1
     REQUEST_FAILED = 2
