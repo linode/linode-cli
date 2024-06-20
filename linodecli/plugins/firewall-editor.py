@@ -10,6 +10,7 @@ import termios
 from ipaddress import IPv4Address, ip_address
 from typing import Callable
 
+from linodecli.exit_codes import ExitCodes
 from rich import box
 from rich import print as rprint
 from rich.table import Table
@@ -204,7 +205,7 @@ def _get_firewall(firewall_id, client):
 
     if code != 200:
         print(f"Error retrieving firewall: {code}")
-        sys.exit(1)
+        sys.exit(ExitCodes.FIREWALL_ERROR)
 
     code, rules = client.call_operation(
         "firewalls", "rules-list", args=[firewall_id]
@@ -212,7 +213,7 @@ def _get_firewall(firewall_id, client):
 
     if code != 200:
         print(f"Error retrieving firewall rules: {code}")
-        sys.exit(2)
+        sys.exit(ExitCodes.FIREWALL_ERROR)
 
     return firewall, rules
 

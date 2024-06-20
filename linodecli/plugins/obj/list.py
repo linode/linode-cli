@@ -5,6 +5,7 @@ The module for list things in the object storage service.
 import sys
 from argparse import ArgumentParser
 
+from linodecli.exit_codes import ExitCodes
 from rich import print as rprint
 
 from linodecli.helpers import register_pagination_args_shared
@@ -79,7 +80,7 @@ def list_objects_or_buckets(
                 results = [page]
         except client.exceptions.NoSuchBucket:
             print("No bucket named " + bucket_name)
-            sys.exit(2)
+            sys.exit(ExitCodes.REQUEST_FAILED)
 
         for item in results:
             objects.extend(item.get("Contents", []))
@@ -107,7 +108,7 @@ def list_objects_or_buckets(
             tab = _borderless_table(data)
             rprint(tab)
 
-        sys.exit(0)
+        sys.exit(ExitCodes.SUCCESS)
     else:
         # list buckets
         buckets = client.list_buckets().get("Buckets", [])
@@ -119,7 +120,7 @@ def list_objects_or_buckets(
         tab = _borderless_table(data)
         rprint(tab)
 
-        sys.exit(0)
+        sys.exit(ExitCodes.SUCCESS)
 
 
 def list_all_objects(
@@ -165,4 +166,4 @@ def list_all_objects(
                 f"{b}/{obj['Key']}"
             )
 
-    sys.exit(0)
+    sys.exit(ExitCodes.SUCCESS)

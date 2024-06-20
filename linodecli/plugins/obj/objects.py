@@ -16,6 +16,7 @@ except:
     # by print an error message
     pass
 
+from linodecli.exit_codes import ExitCodes
 from linodecli.helpers import expand_globs
 from linodecli.plugins import inherit_plugin_args
 from linodecli.plugins.obj.config import (
@@ -80,7 +81,7 @@ def upload_object(
     for f in files:
         file_path = Path(f).resolve()
         if not file_path.is_file():
-            sys.exit(f"No file {file_path}")
+            sys.exit(ExitCodes.FILE_ERROR)
 
         to_upload.append(file_path)
 
@@ -112,7 +113,7 @@ def upload_object(
         try:
             client.upload_file(**upload_options)
         except S3UploadFailedError as e:
-            sys.exit(e)
+            sys.exit(ExitCodes.REQUEST_FAILED)
 
     print("Done.")
 
@@ -175,7 +176,7 @@ def get_object(
         print(
             f"ERROR: Output directory {destination_parent} does not exist locally."
         )
-        sys.exit(1)
+        sys.exit(ExitCodes.REQUEST_FAILED)
 
     response = client.head_object(
         Bucket=bucket,

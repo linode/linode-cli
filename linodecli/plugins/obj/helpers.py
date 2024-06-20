@@ -7,6 +7,7 @@ from argparse import ArgumentTypeError
 from collections.abc import Iterable
 from datetime import datetime
 
+from linodecli.exit_codes import ExitCodes
 from rich.table import Table
 
 from linodecli.plugins.obj.config import DATE_FORMAT
@@ -138,6 +139,6 @@ def flip_to_page(iterable: Iterable, page: int = 1):
             next(iterable)
         except StopIteration:
             print(INVALID_PAGE_MSG)
-            sys.exit(2)
+            sys.exit(ExitCodes.REQUEST_FAILED)
 
     return next(iterable)

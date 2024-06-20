@@ -5,6 +5,7 @@ The bucket manipulation module of CLI Plugin for handling object storage
 import sys
 from argparse import ArgumentParser
 
+from linodecli.exit_codes import ExitCodes
 from linodecli.plugins import inherit_plugin_args
 from linodecli.plugins.obj.config import PLUGIN_BASE
 
@@ -30,7 +31,7 @@ def create_bucket(
     client.create_bucket(Bucket=parsed.name)
 
     print(f"Bucket {parsed.name} created")
-    sys.exit(0)
+    sys.exit(ExitCodes.SUCCESS)
 
 
 def delete_bucket(
@@ -79,4 +80,4 @@ def delete_bucket(
 
     print(f"Bucket {parsed.name} removed")
 
-    sys.exit(0)
+    sys.exit(ExitCodes.SUCCESS)

@@ -13,6 +13,7 @@ from getpass import getpass
 from os import environ, path
 from typing import Any, Dict, List, Tuple
 
+from linodecli.exit_codes import ExitCodes
 import openapi3.paths
 from openapi3.paths import Operation
 
@@ -586,7 +587,7 @@ class OpenAPIOperation:
                 file=sys.stderr,
             )
 
-        sys.exit(2)
+        sys.exit(ExitCodes.ARGUMENT_ERROR)
 
     @staticmethod
     def _handle_list_items(

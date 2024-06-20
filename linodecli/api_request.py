@@ -9,6 +9,7 @@ import time
 from typing import Any, Iterable, List, Optional
 
 import requests
+from linodecli.exit_codes import ExitCodes
 from packaging import version
 from requests import Response
 
@@ -394,7 +395,7 @@ def _handle_error(ctx, response):
             title="errors",
             to=sys.stderr,
         )
-    sys.exit(1)
+    sys.exit(ExitCodes.REQUEST_FAILED)
 
 
 def _check_retry(response):

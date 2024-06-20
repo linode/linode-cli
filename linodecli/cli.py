@@ -7,6 +7,7 @@ import pickle
 import sys
 from sys import version_info
 
+from linodecli.exit_codes import ExitCodes
 from openapi3 import OpenAPI
 
 from linodecli.api_request import do_request, get_all_pages
@@ -123,7 +124,7 @@ class CLI:  # pylint: disable=too-many-instance-attributes
             operation = self.find_operation(command, action)
         except ValueError as e:
             print(e, file=sys.stderr)
-            sys.exit(1)
+            sys.exit(ExitCodes.REQUEST_FAILED)
 
         if not self.pagination:
             result = get_all_pages(self, operation, args)
