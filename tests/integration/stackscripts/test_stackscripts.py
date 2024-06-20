@@ -33,7 +33,7 @@ def get_linode_image_lists():
         .rstrip()
     )
 
-    images = re.findall("linode/[^\s]+", all_images)
+    images = re.findall(r"linode/[^\s]+", all_images)
 
     return images
 
