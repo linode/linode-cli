@@ -1,10 +1,16 @@
 """
 This is an enumeration of the various exit codes in Linode CLI
+
 """
 
 from enum import IntEnum
 
+
 class ExitCodes(IntEnum):
+    """
+    An enumeration of the various exit codes in Linode CLI
+    """
+
     SUCCESS = 0
     UNRECOGNIZED_COMMAND = 1
     REQUEST_FAILED = 2

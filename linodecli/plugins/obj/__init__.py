@@ -13,13 +13,13 @@ from datetime import datetime
 from math import ceil
 from typing import List
 
-from linodecli.exit_codes import ExitCodes
 from rich import print as rprint
 from rich.table import Table
 
 from linodecli.cli import CLI
 from linodecli.configuration import _do_get_request
 from linodecli.configuration.helpers import _default_thing_input
+from linodecli.exit_codes import ExitCodes
 from linodecli.plugins import PluginContext, inherit_plugin_args
 from linodecli.plugins.obj.buckets import create_bucket, delete_bucket
 from linodecli.plugins.obj.config import (
@@ -181,7 +181,7 @@ def set_acl(get_client, args, **kwargs):  # pylint: disable=unused-argument
 
     try:
         set_acl_func(**set_acl_options)
-    except ClientError as e:
+    except ClientError:
         sys.exit(ExitCodes.REQUEST_FAILED)
     print("ACL updated")
 
@@ -211,14 +211,14 @@ def show_usage(get_client, args, **kwargs):  # pylint: disable=unused-argument
             bucket_names = [
                 b["Name"] for b in client.list_buckets().get("Buckets", [])
             ]
-        except ClientError as e:
+        except ClientError:
             sys.exit(ExitCodes.REQUEST_FAILED)
 
     grand_total = 0
     for b in bucket_names:
         try:
             objects = client.list_objects_v2(Bucket=b).get("Contents", [])
-        except ClientError as e:
+        except ClientError:
             sys.exit(ExitCodes.REQUEST_FAILED)
         total = 0
         obj_count = 0
@@ -368,7 +368,9 @@ def call(
             "'pip3 install boto3' or 'pip install boto3'"
         )
 
-        sys.exit(ExitCodes.REQUEST_FAILED)  # requirements not met - we can't go on
+        sys.exit(
+            ExitCodes.REQUEST_FAILED
+        )  # requirements not met - we can't go on
 
     clusters = get_available_cluster(context.client) if not is_help else None
     parser = get_obj_args_parser(clusters)
@@ -424,7 +426,7 @@ def call(
             COMMAND_MAP[parsed.command](
                 get_client, args, suppress_warnings=parsed.suppress_warnings
             )
-        except ClientError as e:
+        except ClientError:
             sys.exit(ExitCodes.REQUEST_FAILED)
     elif parsed.command == "regenerate-keys":
         regenerate_s3_credentials(

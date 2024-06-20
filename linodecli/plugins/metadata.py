@@ -13,10 +13,10 @@ from linode_metadata import MetadataClient
 from linode_metadata.objects.error import ApiError
 from linode_metadata.objects.instance import ResponseBase
 from requests import ConnectTimeout
-from linodecli.exit_codes import ExitCodes
 from rich import print as rprint
 from rich.table import Table
 
+from linodecli.exit_codes import ExitCodes
 from linodecli.helpers import register_debug_arg
 
 PLUGIN_BASE = "linode-cli metadata"
@@ -227,5 +227,5 @@ def call(args, context):
 
     try:
         COMMAND_MAP[parsed.endpoint](client)
-    except ApiError as e:
+    except ApiError:
         sys.exit(ExitCodes.REQUEST_FAILED)

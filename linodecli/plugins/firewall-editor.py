@@ -10,11 +10,11 @@ import termios
 from ipaddress import IPv4Address, ip_address
 from typing import Callable
 
-from linodecli.exit_codes import ExitCodes
 from rich import box
 from rich import print as rprint
 from rich.table import Table
 
+from linodecli.exit_codes import ExitCodes
 from linodecli.plugins import inherit_plugin_args
 
 BOLD = "\033[1m"

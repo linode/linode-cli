@@ -7,12 +7,12 @@ import pickle
 import sys
 from sys import version_info
 
-from linodecli.exit_codes import ExitCodes
 from openapi3 import OpenAPI
 
 from linodecli.api_request import do_request, get_all_pages
 from linodecli.baked import OpenAPIOperation
 from linodecli.configuration import CLIConfig
+from linodecli.exit_codes import ExitCodes
 from linodecli.output.output_handler import OutputHandler, OutputMode
 
 METHODS = ("get", "post", "put", "delete")

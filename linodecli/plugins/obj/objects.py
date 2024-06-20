@@ -112,7 +112,7 @@ def upload_object(
         )
         try:
             client.upload_file(**upload_options)
-        except S3UploadFailedError as e:
+        except S3UploadFailedError:
             sys.exit(ExitCodes.REQUEST_FAILED)
 
     print("Done.")

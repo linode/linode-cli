@@ -13,12 +13,12 @@ from getpass import getpass
 from os import environ, path
 from typing import Any, Dict, List, Tuple
 
-from linodecli.exit_codes import ExitCodes
 import openapi3.paths
 from openapi3.paths import Operation
 
 from linodecli.baked.request import OpenAPIFilteringRequest, OpenAPIRequest
 from linodecli.baked.response import OpenAPIResponse
+from linodecli.exit_codes import ExitCodes
 from linodecli.output.output_handler import OutputHandler
 from linodecli.overrides import OUTPUT_OVERRIDES
 

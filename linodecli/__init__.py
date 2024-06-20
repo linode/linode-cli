@@ -9,11 +9,11 @@ import sys
 from importlib.metadata import version
 from sys import argv
 
-from linodecli.exit_codes import ExitCodes
 from rich import print as rprint
 from rich.table import Column, Table
 
 from linodecli import plugins
+from linodecli.exit_codes import ExitCodes
 
 from .arg_helpers import (
     bake_command,

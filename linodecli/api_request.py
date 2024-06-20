@@ -9,10 +9,10 @@ import time
 from typing import Any, Iterable, List, Optional
 
 import requests
-from linodecli.exit_codes import ExitCodes
 from packaging import version
 from requests import Response
 
+from linodecli.exit_codes import ExitCodes
 from linodecli.helpers import API_CA_PATH
 
 from .baked.operation import (

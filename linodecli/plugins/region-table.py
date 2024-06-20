@@ -5,10 +5,11 @@ for the capabilities of each region.
 
 import sys
 
-from linodecli.exit_codes import ExitCodes
 from rich.align import Align
 from rich.console import Console
 from rich.table import Table
+
+from linodecli.exit_codes import ExitCodes
 
 
 def call(_, ctx):

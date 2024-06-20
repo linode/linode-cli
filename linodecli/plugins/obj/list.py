@@ -5,9 +5,9 @@ The module for list things in the object storage service.
 import sys
 from argparse import ArgumentParser
 
-from linodecli.exit_codes import ExitCodes
 from rich import print as rprint
 
+from linodecli.exit_codes import ExitCodes
 from linodecli.helpers import register_pagination_args_shared
 from linodecli.plugins import inherit_plugin_args
 from linodecli.plugins.obj.config import PLUGIN_BASE

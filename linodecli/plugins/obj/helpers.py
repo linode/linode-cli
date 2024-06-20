@@ -7,9 +7,9 @@ from argparse import ArgumentTypeError
 from collections.abc import Iterable
 from datetime import datetime
 
-from linodecli.exit_codes import ExitCodes
 from rich.table import Table
 
+from linodecli.exit_codes import ExitCodes
 from linodecli.plugins.obj.config import DATE_FORMAT
 
 INVALID_PAGE_MSG = "No result to show in this page."
