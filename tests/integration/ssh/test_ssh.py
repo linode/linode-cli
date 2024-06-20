@@ -13,7 +13,6 @@ NUM_OF_RETRIES = 10
 SSH_SLEEP_PERIOD = 50
 
 
-@pytest.mark.skipif(platform == "win32", reason="Test N/A on Windows")
 @pytest.fixture(scope="package")
 def linode_in_running_state(ssh_key_pair_generator, linode_cloud_firewall):
     pubkey_file, privkey_file = ssh_key_pair_generator
@@ -37,7 +36,7 @@ def linode_in_running_state(ssh_key_pair_generator, linode_cloud_firewall):
         .rstrip()
     )
 
-    alpine_image = re.findall("linode/alpine[^\s]+", res)[0]
+    alpine_image = re.findall(r"linode/alpine[^\s]+", res)[0]
 
     plan = (
         exec_test_command(
@@ -118,7 +117,7 @@ def test_ssh_to_linode_and_get_kernel_version(
         + " -o StrictHostKeyChecking=no -o IdentitiesOnly=yes uname -r"
     ).read()
 
-    assert re.search("[0-9]\.[0-9]*\.[0-9]*-.*-virt", output)
+    assert re.search(r"[0-9]\.[0-9]*\.[0-9]*-.*-virt", output)
 
 
 @pytest.mark.skipif(platform == "win32", reason="Test N/A on Windows")
