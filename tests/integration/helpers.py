@@ -4,6 +4,8 @@ import time
 from string import ascii_lowercase
 from typing import Callable, List
 
+from linodecli import ExitCodes
+
 BASE_URL = "https://api.linode.com/v4/"
 INVALID_HOST = "https://wrongapi.linode.com"
 SUCCESS_STATUS_CODE = 0
@@ -34,7 +36,7 @@ def exec_test_command(args: List[str]):
     return process
 
 
-def exec_failing_test_command(args: List[str], expected_code: int = 1):
+def exec_failing_test_command(args: List[str], expected_code: ExitCodes = ExitCodes.REQUEST_FAILED):
     process = subprocess.run(args, stderr=subprocess.PIPE)
     assert process.returncode == expected_code
     return process
