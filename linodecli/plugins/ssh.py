@@ -15,6 +15,7 @@ import sys
 from sys import platform
 from typing import Any, Dict, Optional, Tuple
 
+from linodecli.exit_codes import ExitCodes
 from linodecli.plugins import inherit_plugin_args
 
 
@@ -28,7 +29,7 @@ def call(args, context):  # pylint: disable=too-many-branches
             "information or to suggest a fix, please visit "
             "https://github.com/linode/linode-cli"
         )
-        sys.exit(1)
+        sys.exit(ExitCodes.REQUEST_FAILED)
 
     parser = inherit_plugin_args(
         argparse.ArgumentParser("linode-cli ssh", add_help=True)
@@ -53,7 +54,7 @@ def call(args, context):  # pylint: disable=too-many-branches
 
     if not parsed.label:
         parser.print_help()
-        sys.exit(0)
+        sys.exit(ExitCodes.SUCCESS)
 
     username, label = parse_target_components(parsed.label)
 
@@ -63,7 +64,7 @@ def call(args, context):  # pylint: disable=too-many-branches
         print(
             f"{label} is not running (status is {target['status']}); operation aborted."
         )
-        sys.exit(2)
+        sys.exit(ExitCodes.REQUEST_FAILED)
 
     # find a public IP Address to use
     address = parse_target_address(parsed, target)
@@ -95,7 +96,7 @@ def find_linode_with_label(context, label: str) -> str:
 
     if result != 200:
         print(f"Could not retrieve Linode: {result} error")
-        sys.exit(2)
+        sys.exit(ExitCodes.REQUEST_FAILED)
 
     potential_matches = potential_matches["data"]
 
@@ -111,7 +112,7 @@ def find_linode_with_label(context, label: str) -> str:
         print("Did you mean: ")
         print("\n".join([f" {p['label']}" for p in potential_matches]))
 
-    sys.exit(1)
+    sys.exit(ExitCodes.REQUEST_FAILED)
 
 
 def parse_target_components(label: str) -> Tuple[Optional[str], str]:

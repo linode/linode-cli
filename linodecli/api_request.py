@@ -12,6 +12,7 @@ import requests
 from packaging import version
 from requests import Response
 
+from linodecli.exit_codes import ExitCodes
 from linodecli.helpers import API_CA_PATH
 
 from .baked.operation import (
@@ -394,7 +395,7 @@ def _handle_error(ctx, response):
             title="errors",
             to=sys.stderr,
         )
-    sys.exit(1)
+    sys.exit(ExitCodes.REQUEST_FAILED)
 
 
 def _check_retry(response):

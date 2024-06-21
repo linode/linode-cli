@@ -9,6 +9,7 @@ from datetime import datetime
 
 from rich.table import Table
 
+from linodecli.exit_codes import ExitCodes
 from linodecli.plugins.obj.config import DATE_FORMAT
 
 INVALID_PAGE_MSG = "No result to show in this page."
@@ -138,6 +139,6 @@ def flip_to_page(iterable: Iterable, page: int = 1):
             next(iterable)
         except StopIteration:
             print(INVALID_PAGE_MSG)
-            sys.exit(2)
+            sys.exit(ExitCodes.REQUEST_FAILED)
 
     return next(iterable)

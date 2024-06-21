@@ -230,7 +230,7 @@ class TestOperation:
                     ]
                 )
         except SystemExit as sys_exit:
-            assert sys_exit.code == 2
+            assert sys_exit.code == 7
         else:
             raise RuntimeError("Expected system exit, got none")
 

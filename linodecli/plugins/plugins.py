@@ -10,6 +10,7 @@ from typing import List
 
 from linodecli.cli import CLI
 from linodecli.configuration import CLIConfig
+from linodecli.exit_codes import ExitCodes
 from linodecli.helpers import register_args_shared
 
 THIS_FILE = Path(__file__)
@@ -128,7 +129,7 @@ def invoke(name: str, args: List[str], context: PluginContext):
             )
         except KeyError:
             print(f"Plugin {name} is misconfigured - please re-register it")
-            sys.exit(9)
+            sys.exit(ExitCodes.REQUEST_FAILED)
 
         try:
             plugin = import_module(plugin_module_name)
@@ -137,7 +138,7 @@ def invoke(name: str, args: List[str], context: PluginContext):
                 f"Expected module '{plugin_module_name}' not found.  "
                 "Either {name} is misconfigured, or the backing module was uninstalled."
             )
-            sys.exit(10)
+            sys.exit(ExitCodes.REQUEST_FAILED)
     else:
         raise ValueError("No plugin named {name}")
 
