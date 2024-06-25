@@ -6,6 +6,10 @@ on:
         description: 'Use minimal test account'
         required: false
         default: 'false'
+      sha:
+        description: 'The hash value of the commit.'
+        required: false
+        default: ''
   push:
     branches:
       - main
@@ -14,11 +18,18 @@ jobs:
   integration-tests:
     name: Run integration tests
     runs-on: ubuntu-latest
-    env:
-      EXIT_STATUS: 0
     steps:
-      - name: Clone Repository
-        uses: actions/checkout@v3
+      - name: Clone Repository with SHA
+        if: ${{ inputs.sha != '' }}
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: 'recursive'
+          ref: ${{ inputs.sha }}
+
+      - name: Clone Repository without SHA
+        if: ${{ inputs.sha == '' }}
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
           submodules: 'recursive'
