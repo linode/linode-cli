@@ -309,16 +309,25 @@ class OpenAPIOperation:
         self.response_model = None
         self.allowed_defaults = None
 
+        # The legacy spec uses "200" (str) in response keys
+        # while the new spec uses 200 (int).
+        response_key = "200" if "200" in operation.responses else 200
+
         if (
-            "200" in operation.responses
-            and "application/json" in operation.responses["200"].content
+            response_key in operation.responses
+            and "application/json" in operation.responses[response_key].content
         ):
             self.response_model = OpenAPIResponse(
-                operation.responses["200"].content["application/json"]
+                operation.responses[response_key].content["application/json"]
             )
 
         if method in ("post", "put") and operation.requestBody:
-            if "application/json" in operation.requestBody.content:
+            content = operation.requestBody.content
+
+            if (
+                "application/json" in content
+                and content["application/json"].schema is not None
+            ):
                 self.request = OpenAPIRequest(
                     operation.requestBody.content["application/json"]
                 )
@@ -437,6 +446,7 @@ class OpenAPIOperation:
 
         # build args for filtering
         filterable_args = []
+
         for attr in self.response_model.attrs:
             if not attr.filterable:
                 continue
