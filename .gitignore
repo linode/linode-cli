@@ -13,3 +13,4 @@ test/.env
 .tmp*
 MANIFEST
 venv
+openapi*.yaml
