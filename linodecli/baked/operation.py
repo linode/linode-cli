@@ -11,10 +11,11 @@ import sys
 from collections import defaultdict
 from getpass import getpass
 from os import environ, path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
+from urllib.parse import urlparse
 
 import openapi3.paths
-from openapi3.paths import Operation
+from openapi3.paths import Operation, Parameter
 
 from linodecli.baked.request import OpenAPIFilteringRequest, OpenAPIRequest
 from linodecli.baked.response import OpenAPIResponse
@@ -295,7 +296,9 @@ class OpenAPIOperation:
     This is the class that should be pickled when building the CLI.
     """
 
-    def __init__(self, command, operation: Operation, method, params):
+    def __init__(
+        self, command, operation: Operation, method, params
+    ):  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
         """
         Wraps an openapi3.Operation object and handles pulling out values relevant
         to the Linode CLI.
@@ -355,18 +358,17 @@ class OpenAPIOperation:
 
         self.summary = operation.summary
         self.description = operation.description.split(".")[0]
-        self.params = [OpenAPIOperationParameter(c) for c in params]
 
-        # These fields must be stored separately
-        # to allow them to be easily modified
-        # at runtime.
-        self.url_base = (
-            operation.servers[0].url
-            if operation.servers
-            else operation._root.servers[0].url
+        # The apiVersion attribute should not be specified as a positional argument
+        self.params = [
+            OpenAPIOperationParameter(param)
+            for param in params
+            if param.name not in {"apiVersion"}
+        ]
+
+        self.url_base, self.url_path, self.default_api_version = (
+            self._get_api_url_components(operation, params)
         )
-
-        self.url_path = operation.path[-2]
 
         self.url = self.url_base + self.url_path
 
@@ -409,6 +411,85 @@ class OpenAPIOperation:
         new_tag = tag.lower()
         new_tag = re.sub(r"[^a-z ]", "", new_tag).replace(" ", "-")
         return new_tag
+
+    @staticmethod
+    def _resolve_api_version(
+        params: List[Parameter], server_url: str
+    ) -> Optional[str]:
+        """
+        Returns the API version for a given list of params and target URL.
+
+        :param params: The params for this operation's endpoint path.
+        :type params: List[Parameter]
+        :param server_url: The URL of server for this operation.
+        :type server_url: str
+
+        :returns: The default API version if the URL has a version, else None.
+        :rtype: Optional[str]
+        """
+
+        # Remove empty segments from the URL path, stripping the first,
+        # last and any duplicate slashes if necessary.
+        # There shouldn't be a case where this is needed, but it's
+        # always good to make things more resilient :)
+        url_path_segments = [
+            seg for seg in urlparse(server_url).path.split("/") if len(seg) > 0
+        ]
+        if len(url_path_segments) > 0:
+            return "/".join(url_path_segments)
+
+        version_param = next(
+            (
+                param
+                for param in params
+                if param.name == "apiVersion" and param.in_ == "path"
+            ),
+            None,
+        )
+        if version_param is not None:
+            return version_param.schema.default
+
+        return None
+
+    @staticmethod
+    def _get_api_url_components(
+        operation: Operation, params: List[Parameter]
+    ) -> Tuple[str, str, str]:
+        """
+        Returns the URL components for a given operation.
+
+        :param operation: The operation to get the URL components for.
+        :type operation: Operation
+        :param params: The parameters for this operation's route.
+        :type params: List[Parameter]
+
+        :returns: The base URL, path, and default API version of the operation.
+        :rtype: Tuple[str, str, str]
+        """
+
+        url_server = (
+            operation.servers[0].url
+            if operation.servers
+            # pylint: disable-next=protected-access
+            else operation._root.servers[0].url
+        )
+
+        url_base = urlparse(url_server)._replace(path="").geturl()
+        url_path = operation.path[-2]
+
+        api_version = OpenAPIOperation._resolve_api_version(params, url_server)
+        if api_version is None:
+            raise ValueError(
+                f"Failed to resolve API version for operation {operation}"
+            )
+
+        # The apiVersion is only specified in the new-style OpenAPI spec,
+        # so we need to manually insert it into the path to maintain
+        # backwards compatibility
+        if "{apiVersion}" not in url_path:
+            url_path = "/{apiVersion}" + url_path
+
+        return url_base, url_path, api_version
 
     def process_response_json(
         self, json: Dict[str, Any], handler: OutputHandler

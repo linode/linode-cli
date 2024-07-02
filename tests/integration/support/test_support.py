@@ -52,7 +52,7 @@ def tickets_id():
         )
         .stdout.decode()
         .rstrip()
-        .split(",")
+        .splitlines()
     )
     first_id = ticket_ids[0]
     yield first_id

@@ -19,17 +19,23 @@ API_CA_PATH = os.getenv("LINODE_CLI_CA", None) or True
 
 
 def handle_url_overrides(
-    url: str, host: str = None, version: str = None, scheme: str = None
+    url: str,
+    host: str = None,
+    version: str = None,
+    scheme: str = None,
+    override_path=False,
 ):
     """
     Returns the URL with the API URL environment overrides applied.
+    If override_path is True and the API version env var is specified,
+    the URL path will be updated accordingly.
     """
 
     parsed_url = urlparse(url)
 
     overrides = {
         "netloc": API_HOST_OVERRIDE or host,
-        "path": API_VERSION_OVERRIDE or version,
+        "path": (API_VERSION_OVERRIDE or version) if override_path else None,
         "scheme": API_SCHEME_OVERRIDE or scheme,
     }
 

@@ -244,7 +244,7 @@ def get_user_id():
                 "--delimiter",
                 ",",
                 "--format",
-                "id",
+                "username",
             ]
         )
         .stdout.decode()

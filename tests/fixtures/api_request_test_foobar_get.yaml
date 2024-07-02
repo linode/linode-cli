@@ -4,7 +4,6 @@ info:
   version: 1.0.0
 servers:
   - url: http://localhost/v4
-
 paths:
   /foo/bar:
     get:
