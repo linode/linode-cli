@@ -36,7 +36,9 @@ def exec_test_command(args: List[str]):
     return process
 
 
-def exec_failing_test_command(args: List[str], expected_code: int = ExitCodes.REQUEST_FAILED):
+def exec_failing_test_command(
+    args: List[str], expected_code: int = ExitCodes.REQUEST_FAILED
+):
     process = subprocess.run(args, stderr=subprocess.PIPE)
     assert process.returncode == expected_code
     return process
