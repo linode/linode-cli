@@ -8,7 +8,6 @@ from typing import List
 
 import pytest
 
-from linodecli import ExitCodes
 from tests.integration.helpers import get_random_text
 
 REGION = "us-iad"
@@ -58,7 +57,7 @@ def test_invalid_file(
     )
     output = process.stdout.decode()
 
-    assert process.returncode == ExitCodes.FILE_ERROR
+    assert process.returncode == 8
     assert f"No file at {file_path}" in output
 
 
