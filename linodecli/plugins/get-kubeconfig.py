@@ -13,6 +13,8 @@ from pathlib import Path
 
 import yaml
 
+from linodecli.exit_codes import ExitCodes
+
 PLUGIN_BASE = "linode-cli get-kubeconfig"
 
 
@@ -61,14 +63,14 @@ def call(args, context):
 
         if code != 200:
             print(f"Error retrieving kubeconfig: {code}", file=sys.stderr)
-            sys.exit(1)
+            sys.exit(ExitCodes.KUBECONFIG_ERROR)
 
     # If --label was used, fetch the kubeconfig using the provided label
     elif parsed.label:
         kubeconfig = _get_kubeconfig_by_label(parsed.label, context.client)
     else:
         print("Either --label or --id must be used.", file=sys.stderr)
-        sys.exit(1)
+        sys.exit(ExitCodes.KUBECONFIG_ERROR)
 
     # Load the specified cluster's kubeconfig and the current kubeconfig
     cluster_config = yaml.safe_load(
@@ -105,14 +107,14 @@ def _get_kubeconfig_by_label(cluster_label, client):
 
     if code != 200:
         print(f"Error retrieving cluster: {code}", file=sys.stderr)
-        sys.exit(1)
+        sys.exit(ExitCodes.KUBECONFIG_ERROR)
 
     if len(cluster["data"]) == 0:
         print(
             f"Cluster with label {cluster_label} does not exist.",
             file=sys.stderr,
         )
-        sys.exit(1)
+        sys.exit(ExitCodes.KUBECONFIG_ERROR)
 
     code, kubeconfig = client.call_operation(
         "lke", "kubeconfig-view", args=[str(cluster["data"][0]["id"])]
@@ -120,7 +122,7 @@ def _get_kubeconfig_by_label(cluster_label, client):
 
     if code != 200:
         print(f"Error retrieving kubeconfig: {code}", file=sys.stderr)
-        sys.exit(1)
+        sys.exit(ExitCodes.KUBECONFIG_ERROR)
 
     return kubeconfig
 
@@ -132,7 +134,7 @@ def _load_config(filepath):
 
     if not data:
         print(f"Could not load file at {filepath}", file=sys.stderr)
-        sys.exit(1)
+        sys.exit(ExitCodes.KUBECONFIG_ERROR)
 
     return data
 

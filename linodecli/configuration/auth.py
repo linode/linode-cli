@@ -12,6 +12,7 @@ from typing import Any, Callable, Dict, Optional, Tuple
 
 import requests
 
+from linodecli.exit_codes import ExitCodes
 from linodecli.helpers import API_CA_PATH
 
 TOKEN_GENERATION_URL = "https://cloud.linode.com/profile/tokens"
@@ -59,7 +60,7 @@ def _handle_response_status(
 
     print(f"Could not contact {response.url} - Error: {response.status_code}")
     if exit_on_error:
-        sys.exit(4)
+        sys.exit(ExitCodes.REQUEST_FAILED)
 
 
 # TODO: merge config do_request and cli do_request
@@ -243,7 +244,7 @@ def _get_token_web(base_url: str) -> Tuple[str, str]:
 
     if username is None:
         print("OAuth failed.  Please try again of use a token for auth.")
-        sys.exit(1)
+        sys.exit(ExitCodes.OAUTH_ERROR)
 
     # the token returned via public oauth will expire in 2 hours, which
     # isn't great.  Instead, we're gonna make a token that expires never
@@ -345,6 +346,6 @@ to continue..
             "try token using a token by invoking with `linode-cli configure --token`, "
             "and open an issue at https://github.com/linode/linode-cli"
         )
-        sys.exit(1)
+        sys.exit(ExitCodes.OAUTH_ERROR)
 
     return serv.token
