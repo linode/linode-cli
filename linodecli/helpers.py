@@ -6,6 +6,7 @@ import glob
 import os
 from argparse import ArgumentParser
 from pathlib import Path
+from typing import Optional
 from urllib.parse import urlparse
 
 API_HOST_OVERRIDE = os.getenv("LINODE_CLI_API_HOST")
