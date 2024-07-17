@@ -2,7 +2,10 @@ import textwrap
 
 import pytest
 
-from tests.integration.helpers import exec_test_command
+from tests.integration.helpers import (
+    contains_at_least_one_of,
+    exec_test_command,
+)
 
 
 @pytest.mark.smoke
@@ -11,11 +14,18 @@ def test_help_page_for_non_aliased_actions():
     output = process.stdout.decode()
     wrapped_output = textwrap.fill(output, width=150).replace("\n", "")
 
-    assert "Linodes List" in wrapped_output
-    assert (
-        "API Documentation:  https://www.linode.com/docs/api/linode-instances/#linodes-list"
-        in wrapped_output
+    assert contains_at_least_one_of(
+        wrapped_output, ["Linodes List", "List Linodes"]
     )
+
+    assert contains_at_least_one_of(
+        wrapped_output,
+        [
+            "API Documentation:  https://www.linode.com/docs/api/linode-instances/#linodes-list",
+            "API Documentation:  https://techdocs.akamai.com/linode-api/reference/get-linode-instances",
+        ],
+    )
+
     assert "You may filter results with:" in wrapped_output
     assert "--tags" in wrapped_output
 
@@ -26,10 +36,17 @@ def test_help_page_for_aliased_actions():
     output = process.stdout.decode()
     wrapped_output = textwrap.fill(output, width=150).replace("\n", "")
 
-    assert "Linodes List" in wrapped_output
-    assert (
-        "API Documentation:  https://www.linode.com/docs/api/linode-instances/#linodes-list"
-        in wrapped_output
+    assert contains_at_least_one_of(
+        wrapped_output, ["Linodes List", "List Linodes"]
     )
+
+    assert contains_at_least_one_of(
+        wrapped_output,
+        [
+            "API Documentation:  https://www.linode.com/docs/api/linode-instances/#linodes-list",
+            "API Documentation:  https://techdocs.akamai.com/linode-api/reference/get-linode-instances",
+        ],
+    )
+
     assert "You may filter results with:" in wrapped_output
     assert "--tags" in wrapped_output

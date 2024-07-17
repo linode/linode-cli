@@ -53,7 +53,7 @@ def tickets_id():
         .stdout.decode()
         .rstrip()
     )
-    ticket_ids = res.split(",")
+    ticket_ids = res.splitlines()
     if not ticket_ids or ticket_ids == [""]:
         pytest.skip("No support tickets available to test.")
     first_id = ticket_ids[0]

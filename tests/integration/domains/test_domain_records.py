@@ -5,6 +5,7 @@ import pytest
 
 from tests.integration.helpers import (
     SUCCESS_STATUS_CODE,
+    contains_at_least_one_of,
     delete_target_id,
     exec_test_command,
 )
@@ -207,7 +208,9 @@ def test_help_records_list(test_domain_and_record):
     )
     output = process.stdout.decode()
 
-    assert "Domain Records List" in output
+    assert contains_at_least_one_of(
+        output, ["List domain records", "Domain Records List"]
+    )
     assert "You may filter results with:" in output
     assert "--type" in output
     assert "--name" in output

@@ -106,7 +106,7 @@ def list_operation():
 
     linode-cli foo bar --filterable_result [value]
 
-    GET http://localhost/foo/bar
+    GET http://localhost/v4/foo/bar
     {}
 
     X-Filter: {"filterable_result": "value"}
@@ -135,7 +135,7 @@ def create_operation():
 
     linode-cli foo bar --generic_arg [generic_arg] test_param
 
-    POST http://localhost/foo/bar
+    POST http://localhost/v4/foo/bar
     {
         "generic_arg": "[generic_arg]",
         "test_param": test_param
@@ -164,7 +164,7 @@ def list_operation_for_output_tests():
     """
     Creates the following CLI operation:
 
-    GET http://localhost/foo/bar
+    GET http://localhost/v4/foo/bar
     {}
 
     X-Filter: {"cool": "value"}
@@ -192,7 +192,7 @@ def list_operation_for_overrides_test():
     """
     Creates the following CLI operation:
 
-    GET http://localhost/foo/bar
+    GET http://localhost/v4/foo/bar
     {}
 
     X-Filter: {"cool": "value"}
@@ -221,7 +221,7 @@ def list_operation_for_response_test():
     """
     Creates the following CLI operation:
 
-    GET http://localhost/foo/bar
+    GET http://localhost/v4/foo/bar
     {}
 
     X-Filter: {"cool": "value"}
@@ -250,7 +250,7 @@ def get_operation_for_subtable_test():
     """
     Creates the following CLI operation:
 
-    GET http://localhost/foo/bar
+    GET http://localhost/v4/foo/bar
 
     Returns {
         "table": [
@@ -286,6 +286,26 @@ def get_operation_for_subtable_test():
     method = "get"
 
     return make_test_operation(command, operation, method, path.parameters)
+
+
+@pytest.fixture
+def get_openapi_for_api_components_tests() -> OpenAPI:
+    """
+    Creates a set of OpenAPI operations with various apiVersion and
+    `server` configurations.
+    """
+
+    return _get_parsed_spec("api_url_components_test.yaml")
+
+
+@pytest.fixture
+def get_openapi_for_docs_url_tests() -> OpenAPI:
+    """
+    Creates a set of OpenAPI operations with a GET endpoint using the
+    legacy-style docs URL and a POST endpoint using the new-style docs URL.
+    """
+
+    return _get_parsed_spec("docs_url_test.yaml")
 
 
 @pytest.fixture

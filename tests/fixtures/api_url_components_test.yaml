@@ -1,0 +1,48 @@
+openapi: 3.0.1
+info:
+  title: API Specification
+  version: 1.0.0
+servers:
+  - url: http://localhost/v19
+paths:
+  /foo/bar:
+    get:
+      operationId: fooBarGet
+      responses:
+        '200':
+          description: foobar
+          content:
+            application/json: {}
+    delete:
+      operationId: fooBarDelete
+      servers:
+        - url: http://localhost/v12beta
+      responses:
+        '200':
+          description: foobar
+          content:
+            application/json: {}
+  /{apiVersion}/bar/foo:
+    parameters:
+    - name: apiVersion
+      in: path
+      required: true
+      schema:
+        type: string
+        default: v9canary
+    get:
+      operationId: barFooGet
+      responses:
+        '200':
+          description: foobar
+          content:
+            application/json: {}
+    post:
+      operationId: barFooPost
+      servers:
+        - url: http://localhost/v100beta
+      responses:
+        '200':
+          description: foobar
+          content:
+            application/json: {}

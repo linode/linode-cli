@@ -3,7 +3,6 @@ This module contains various helper functions related to outputting
 help pages.
 """
 
-import re
 import textwrap
 from collections import defaultdict
 from typing import List, Optional
@@ -13,6 +12,7 @@ from rich import print as rprint
 from rich.console import Console
 from rich.padding import Padding
 from rich.table import Table
+from rich.text import Text
 
 from linodecli import plugins
 from linodecli.baked import OpenAPIOperation
@@ -205,7 +205,7 @@ def _help_action_print_filter_args(console: Console, op: OpenAPIOperation):
     if filterable_attrs:
         console.print("[bold]You may filter results with:[/]")
         for attr in filterable_attrs:
-            console.print(f"  [bold magenta]--{attr.name}[/]")
+            console.print(f"  [bold green]--{attr.name}[/]")
 
         console.print(
             "\nAdditionally, you may order results using --order-by and --order."
@@ -239,15 +239,13 @@ def _help_action_print_body_args(
 
             prefix = f" ({', '.join(metadata)})" if len(metadata) > 0 else ""
 
-            description = _markdown_links_to_rich(
-                arg.description.replace("\n", " ").replace("\r", " ")
+            arg_text = Text.from_markup(
+                f"[bold green]--{arg.path}[/][bold]{prefix}:[/] {arg.description_rich}"
             )
 
-            arg_str = (
-                f"[bold magenta]--{arg.path}[/][bold]{prefix}[/]: {description}"
+            console.print(
+                Padding.indent(arg_text, (arg.depth * 2) + 2),
             )
-
-            console.print(Padding.indent(arg_str.rstrip(), (arg.depth * 2) + 2))
 
         console.print()
 
@@ -278,8 +276,8 @@ def _help_group_arguments(
         # leave it as is in the result
         if len(group) > 1:
             groups.append(
-                # Required arguments should come first in groups
-                sorted(group, key=lambda v: not v.required),
+                # Args should be ordered by least depth -> required -> path
+                sorted(group, key=lambda v: (v.depth, not v.required, v.path)),
             )
             continue
 
@@ -304,30 +302,5 @@ def _help_group_arguments(
         result.append(ungrouped)
 
     result += groups
-
-    return result
-
-
-def _markdown_links_to_rich(text):
-    """
-    Returns the given text with Markdown links converted to Rich-compatible links.
-    """
-
-    result = text
-
-    # Find all Markdown links
-    r = re.compile(r"\[(?P<text>.*?)]\((?P<link>.*?)\)")
-
-    for match in r.finditer(text):
-        url = match.group("link")
-
-        # Expand the URL if necessary
-        if url.startswith("/"):
-            url = f"https://linode.com{url}"
-
-        # Replace with more readable text
-        result = result.replace(
-            match.group(), f"{match.group('text')} ([link={url}]{url}[/link])"
-        )
 
     return result
