@@ -372,15 +372,13 @@ class OpenAPIOperation:
 
         self.url = self.url_base + self.url_path
 
-        docs_url = None
-        tags = operation.tags
-        if tags is not None and len(tags) > 0 and len(operation.summary) > 0:
-            tag_path = self._flatten_url_path(tags[0])
-            summary_path = self._flatten_url_path(operation.summary)
-            docs_url = (
-                f"https://www.linode.com/docs/api/{tag_path}/#{summary_path}"
+        self.docs_url = self._resolve_operation_docs_url(operation)
+
+        if self.docs_url is None:
+            print(
+                f"INFO: Could not resolve docs URL for {operation}",
+                file=sys.stderr,
             )
-        self.docs_url = docs_url
 
         code_samples_ext = operation.extensions.get("code-samples")
         self.samples = (
@@ -806,3 +804,45 @@ class OpenAPIOperation:
             self._validate_parent_child_conflicts(parsed)
 
         return self._handle_list_items(list_items, parsed)
+
+    @staticmethod
+    def _resolve_operation_docs_url_legacy(
+        operation: Operation,
+    ) -> Optional[str]:
+        """
+        Gets the docs URL for a given operation in the legacy OpenAPI spec.
+
+        :param operation: The target openapi3.Operation to get the docs URL for.
+        :type operation: str
+
+        :returns: The docs URL if it can be resolved, else None
+        :rtype: Optional[str]
+        """
+        tags = operation.tags
+        if tags is None or len(tags) < 1 or len(operation.summary) < 1:
+            return None
+
+        tag_path = OpenAPIOperation._flatten_url_path(tags[0])
+        summary_path = OpenAPIOperation._flatten_url_path(operation.summary)
+        return f"https://www.linode.com/docs/api/{tag_path}/#{summary_path}"
+
+    @staticmethod
+    def _resolve_operation_docs_url(operation: Operation) -> Optional[str]:
+        """
+        Gets the docs URL for a given OpenAPI operation.
+
+        :param operation: The target openapi3.Operation to get the docs URL for.
+        :type operation: str
+
+        :returns: The docs URL if it can be resolved, else None
+        :rtype: Optional[str]
+        """
+        # Case for TechDocs
+        if (
+            operation.externalDocs is not None
+            and operation.externalDocs.url is not None
+        ):
+            return operation.externalDocs.url
+
+        # Case for legacy docs
+        return OpenAPIOperation._resolve_operation_docs_url_legacy(operation)

@@ -1,0 +1,28 @@
+openapi: 3.0.1
+info:
+  title: API Specification
+  version: 1.0.0
+servers:
+  - url: http://localhost/v4
+paths:
+  /foo/bar:
+    get:
+      summary: get info
+      operationId: BarGet
+      description: This is description
+      tags:
+        - Foo
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    post:
+      externalDocs:
+        description: cool docs url
+        url: https://techdocs.akamai.com/linode-api/reference/cool-docs-url
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}

@@ -295,3 +295,19 @@ class TestOperation:
         assert OpenAPIOperation._get_api_url_components(
             operation=root.paths["/{apiVersion}/bar/foo"].post, params=[]
         ) == ("http://localhost", "/{apiVersion}/bar/foo", "v100beta")
+
+    def test_resolve_docs_url_legacy(self, get_openapi_for_docs_url_tests):
+        root = get_openapi_for_docs_url_tests
+
+        assert (
+            OpenAPIOperation._resolve_operation_docs_url(
+                root.paths["/foo/bar"].get
+            )
+            == "https://www.linode.com/docs/api/foo/#get-info"
+        )
+        assert (
+            OpenAPIOperation._resolve_operation_docs_url(
+                root.paths["/foo/bar"].post
+            )
+            == "https://techdocs.akamai.com/linode-api/reference/cool-docs-url"
+        )

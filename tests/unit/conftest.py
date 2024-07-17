@@ -299,6 +299,16 @@ def get_openapi_for_api_components_tests() -> OpenAPI:
 
 
 @pytest.fixture
+def get_openapi_for_docs_url_tests() -> OpenAPI:
+    """
+    Creates a set of OpenAPI operations with a GET endpoint using the
+    legacy-style docs URL and a POST endpoint using the new-style docs URL.
+    """
+
+    return _get_parsed_spec("docs_url_test.yaml")
+
+
+@pytest.fixture
 def mocked_config():
     """
     mock config representing cli.config
