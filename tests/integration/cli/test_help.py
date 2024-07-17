@@ -22,7 +22,7 @@ def test_help_page_for_non_aliased_actions():
         wrapped_output,
         [
             "API Documentation:  https://www.linode.com/docs/api/linode-instances/#linodes-list",
-            "API Documentation:  https://www.linode.com/docs/api/linode-instances/#list-linodes",
+            "API Documentation:  https://techdocs.akamai.com/linode-api/reference/get-linode-instances",
         ],
     )
 
@@ -44,7 +44,7 @@ def test_help_page_for_aliased_actions():
         wrapped_output,
         [
             "API Documentation:  https://www.linode.com/docs/api/linode-instances/#linodes-list",
-            "API Documentation:  https://www.linode.com/docs/api/linode-instances/#list-linodes",
+            "API Documentation:  https://techdocs.akamai.com/linode-api/reference/get-linode-instances",
         ],
     )
 
