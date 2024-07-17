@@ -205,7 +205,7 @@ def _help_action_print_filter_args(console: Console, op: OpenAPIOperation):
     if filterable_attrs:
         console.print("[bold]You may filter results with:[/]")
         for attr in filterable_attrs:
-            console.print(f"  [bold magenta]--{attr.name}[/]")
+            console.print(f"  [bold green]--{attr.name}[/]")
 
         console.print(
             "\nAdditionally, you may order results using --order-by and --order."
