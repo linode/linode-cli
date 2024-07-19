@@ -4,55 +4,58 @@ from linodecli import help_pages
 
 
 class TestHelpPages:
-    def test_filter_markdown_links(self):
-        """
-        Ensures that Markdown links are properly converted to their rich equivalents.
-        """
-
-        original_text = "Here's [a relative link](/docs/cool) and [an absolute link](https://cloud.linode.com)."
-        expected_text = (
-            "Here's a relative link ([link=https://linode.com/docs/cool]https://linode.com/docs/cool[/link]) "
-            "and an absolute link ([link=https://cloud.linode.com]https://cloud.linode.com[/link])."
-        )
-
-        assert (
-            help_pages._markdown_links_to_rich(original_text) == expected_text
-        )
-
     def test_group_arguments(self, capsys):
         # NOTE: We use SimpleNamespace here so we can do deep comparisons using ==
         args = [
             SimpleNamespace(
-                read_only=False,
-                required=True,
-                path="foo",
+                read_only=False, required=False, depth=0, path="foobaz"
             ),
-            SimpleNamespace(read_only=False, required=False, path="foo.bar"),
-            SimpleNamespace(read_only=False, required=False, path="foobaz"),
-            SimpleNamespace(read_only=False, required=False, path="foo.foo"),
-            SimpleNamespace(read_only=False, required=False, path="foobar"),
-            SimpleNamespace(read_only=False, required=True, path="barfoo"),
+            SimpleNamespace(
+                read_only=False, required=False, depth=0, path="foobar"
+            ),
+            SimpleNamespace(
+                read_only=False, required=True, depth=0, path="barfoo"
+            ),
+            SimpleNamespace(
+                read_only=False, required=False, depth=0, path="foo"
+            ),
+            SimpleNamespace(
+                read_only=False, required=False, depth=1, path="foo.bar"
+            ),
+            SimpleNamespace(
+                read_only=False, required=False, depth=1, path="foo.foo"
+            ),
+            SimpleNamespace(
+                read_only=False, required=True, depth=1, path="foo.baz"
+            ),
         ]
 
         expected = [
             [
-                SimpleNamespace(read_only=False, required=True, path="barfoo"),
+                SimpleNamespace(
+                    read_only=False, required=True, path="barfoo", depth=0
+                ),
             ],
             [
-                SimpleNamespace(read_only=False, required=False, path="foobar"),
-                SimpleNamespace(read_only=False, required=False, path="foobaz"),
+                SimpleNamespace(
+                    read_only=False, required=False, path="foobar", depth=0
+                ),
+                SimpleNamespace(
+                    read_only=False, required=False, path="foobaz", depth=0
+                ),
             ],
             [
                 SimpleNamespace(
-                    read_only=False,
-                    required=True,
-                    path="foo",
+                    read_only=False, required=False, path="foo", depth=0
                 ),
                 SimpleNamespace(
-                    read_only=False, required=False, path="foo.bar"
+                    read_only=False, required=True, path="foo.baz", depth=1
                 ),
                 SimpleNamespace(
-                    read_only=False, required=False, path="foo.foo"
+                    read_only=False, required=False, path="foo.bar", depth=1
+                ),
+                SimpleNamespace(
+                    read_only=False, required=False, path="foo.foo", depth=1
                 ),
             ],
         ]
@@ -136,6 +139,7 @@ class TestHelpPages:
                 required=True,
                 path="path",
                 description="test description",
+                description_rich="test description",
                 depth=0,
             ),
             mocker.MagicMock(
@@ -143,6 +147,7 @@ class TestHelpPages:
                 required=False,
                 path="path2",
                 description="test description 2",
+                description_rich="test description 2",
                 format="json",
                 nullable=True,
                 depth=0,

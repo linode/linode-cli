@@ -73,7 +73,7 @@ def test_create_linode_with_backup_disabled(
             "list",
             "--id",
             linode_id,
-            "--format=id,enabled",
+            "--format=id,backups.enabled",
             "--delimiter",
             ",",
             "--text",
@@ -102,7 +102,7 @@ def test_enable_backups(create_linode_setup):
         BASE_CMD
         + [
             "list",
-            "--format=id,enabled",
+            "--format=id,backups.enabled",
             "--delimiter",
             ",",
             "--text",
@@ -119,7 +119,7 @@ def test_create_backup_with_backup_enabled(linode_backup_enabled):
         BASE_CMD
         + [
             "list",
-            "--format=id,enabled",
+            "--format=id,backups.enabled",
             "--delimiter",
             ",",
             "--text",

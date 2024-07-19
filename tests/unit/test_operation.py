@@ -4,7 +4,11 @@ import io
 import json
 
 from linodecli.baked import operation
-from linodecli.baked.operation import ExplicitEmptyListValue, ExplicitNullValue
+from linodecli.baked.operation import (
+    ExplicitEmptyListValue,
+    ExplicitNullValue,
+    OpenAPIOperation,
+)
 
 
 class TestOperation:
@@ -272,3 +276,38 @@ class TestOperation:
         # User specifies a normal value and an empty list value
         result = parser.parse_args(["--foo", "foo", "--foo", "[]"])
         assert getattr(result, "foo") == ["foo", "[]"]
+
+    def test_resolve_api_components(self, get_openapi_for_api_components_tests):
+        root = get_openapi_for_api_components_tests
+
+        assert OpenAPIOperation._get_api_url_components(
+            operation=root.paths["/foo/bar"].get, params=[]
+        ) == ("http://localhost", "/{apiVersion}/foo/bar", "v19")
+
+        assert OpenAPIOperation._get_api_url_components(
+            operation=root.paths["/foo/bar"].delete, params=[]
+        ) == ("http://localhost", "/{apiVersion}/foo/bar", "v12beta")
+
+        assert OpenAPIOperation._get_api_url_components(
+            operation=root.paths["/{apiVersion}/bar/foo"].get, params=[]
+        ) == ("http://localhost", "/{apiVersion}/bar/foo", "v19")
+
+        assert OpenAPIOperation._get_api_url_components(
+            operation=root.paths["/{apiVersion}/bar/foo"].post, params=[]
+        ) == ("http://localhost", "/{apiVersion}/bar/foo", "v100beta")
+
+    def test_resolve_docs_url_legacy(self, get_openapi_for_docs_url_tests):
+        root = get_openapi_for_docs_url_tests
+
+        assert (
+            OpenAPIOperation._resolve_operation_docs_url(
+                root.paths["/foo/bar"].get
+            )
+            == "https://www.linode.com/docs/api/foo/#get-info"
+        )
+        assert (
+            OpenAPIOperation._resolve_operation_docs_url(
+                root.paths["/foo/bar"].post
+            )
+            == "https://techdocs.akamai.com/linode-api/reference/cool-docs-url"
+        )

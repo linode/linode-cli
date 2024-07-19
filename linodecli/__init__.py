@@ -51,7 +51,11 @@ skip_config = (
     or TEST_MODE
 )
 
-cli = CLI(VERSION, handle_url_overrides(BASE_URL), skip_config=skip_config)
+cli = CLI(
+    VERSION,
+    handle_url_overrides(BASE_URL, override_path=True),
+    skip_config=skip_config,
+)
 
 
 def main():  # pylint: disable=too-many-branches,too-many-statements
