@@ -29,8 +29,6 @@ jobs:
 
       - name: Install Package
         run: make install
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run the unit test suite
         run: make test
@@ -59,8 +57,6 @@ jobs:
         shell: pwsh
         run: | 
           make install
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run the unit test suite
         run: make test

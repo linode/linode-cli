@@ -72,8 +72,6 @@ jobs:
 
       - name: Install the CLI
         run: make install
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - run: make INTEGRATION_TEST_PATH="${{ inputs.test_path }}" testint
         if: ${{ steps.validate-tests.outputs.match == '' }}
@@ -162,8 +160,6 @@ jobs:
 
       - name: Install the CLI
         run: make install
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - run: make INTEGRATION_TEST_PATH="${{ inputs.test_path }}" testint
         env:

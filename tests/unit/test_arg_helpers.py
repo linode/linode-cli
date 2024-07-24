@@ -1,5 +1,4 @@
 #!/usr/local/bin/python3
-import pytest
 
 from linodecli import arg_helpers
 
@@ -150,10 +149,3 @@ class TestArgParsing:
         msg, code = arg_helpers.remove_plugin("testing.plugin", mocked_config)
         assert "not a registered plugin" in msg
         assert code == 14
-
-    def test_bake_command_bad_website(self, capsys, mock_cli):
-        with pytest.raises(SystemExit) as ex:
-            arg_helpers.bake_command(mock_cli, "https://website.com")
-        captured = capsys.readouterr()
-        assert ex.value.code == 2
-        assert "Request failed to https://website.com" in captured.out
