@@ -9,7 +9,7 @@ from typing import List, Tuple
 
 # Sentence delimiter, split on a period followed by any type of
 # whitespace (space, new line, tab, etc.)
-REGEX_SENTENCE_DELIMITER = re.compile(r"\.(?:\s|$)")
+REGEX_SENTENCE_DELIMITER = re.compile(r"\W(?:\s|$)")
 
 # Matches on pattern __prefix__ at the beginning of a description
 # or after a comma
