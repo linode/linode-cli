@@ -9,6 +9,8 @@ from rich.align import Align
 from rich.console import Console
 from rich.table import Table
 
+from linodecli.exit_codes import ExitCodes
+
 
 def call(_, ctx):
     """
@@ -32,7 +34,7 @@ def call(_, ctx):
 
     if status != 200:
         print("It failed :(")
-        sys.exit(1)
+        sys.exit(ExitCodes.REQUEST_FAILED)
 
     output = Table()
     headers = ["ID", "Label", "Loc"] + [x[1] for x in capabilities]

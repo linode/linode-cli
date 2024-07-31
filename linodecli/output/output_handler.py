@@ -4,6 +4,7 @@ Handles formatting the output of commands used in Linode CLI
 
 import copy
 import json
+import sys
 from argparse import Namespace
 from enum import Enum, auto
 from sys import stdout
@@ -243,8 +244,8 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
             for col in self.columns.split(","):
                 for attr in attrs:
                     # Display this column if the format string
-                    # matches the column_name or path of this column
-                    if col in (attr.column_name, attr.name):
+                    # matches the path of this column
+                    if col == attr.name:
                         attrs.remove(attr)
                         columns.append(attr)
 
@@ -444,7 +445,8 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
                 print(
                     "WARNING: '--all' is a deprecated flag, "
                     "and will be removed in a future version. "
-                    "Please consider use '--all-columns' instead."
+                    "Please consider use '--all-columns' instead.",
+                    file=sys.stderr,
                 )
             self.columns = "*"
         elif parsed.format:

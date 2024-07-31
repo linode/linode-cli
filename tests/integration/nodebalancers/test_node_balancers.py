@@ -212,7 +212,7 @@ def test_display_public_ipv4_for_nodebalancer(test_node_balancers):
             "--no-headers",
         ]
     ).stdout.decode()
-    assert re.search("^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}", result)
+    assert re.search(r"^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}", result)
 
 
 def test_fail_to_view_nodebalancer_with_invalid_id():

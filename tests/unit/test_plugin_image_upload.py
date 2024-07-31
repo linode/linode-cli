@@ -30,7 +30,7 @@ def test_no_file(mock_cli, capsys: CaptureFixture):
 
     captured_text = capsys.readouterr().out
 
-    assert err.value.code == 2
+    assert err.value.code == 8
     assert "No file at blah.txt" in captured_text
 
 
@@ -45,7 +45,7 @@ def test_file_too_large(mock_cli, capsys: CaptureFixture):
 
     captured_text = capsys.readouterr().out
 
-    assert err.value.code == 2
+    assert err.value.code == 8
     assert "File blah.txt is too large" in captured_text
 
 
@@ -63,7 +63,7 @@ def test_unauthorized(mock_cli, capsys: CaptureFixture):
 
     captured_text = capsys.readouterr().out
 
-    assert err.value.code == 3
+    assert err.value.code == 2
     assert "Your token was not authorized to use this endpoint" in captured_text
 
 
@@ -81,7 +81,7 @@ def test_non_beta(mock_cli, capsys: CaptureFixture):
 
     captured_text = capsys.readouterr().out
 
-    assert err.value.code == 4
+    assert err.value.code == 2
     assert (
         "It looks like you are not in the Machine Images Beta" in captured_text
     )
@@ -101,7 +101,7 @@ def test_non_beta(mock_cli, capsys: CaptureFixture):
 
     captured_text = capsys.readouterr().out
 
-    assert err.value.code == 4
+    assert err.value.code == 2
     assert (
         "It looks like you are not in the Machine Images Beta" in captured_text
     )
@@ -120,7 +120,7 @@ def test_failed_upload(mock_cli, capsys: CaptureFixture):
 
     captured_text = capsys.readouterr().out
 
-    assert err.value.code == 3
+    assert err.value.code == 2
     assert (
         "Upload failed with status 500; response was it borked :("
         in captured_text

@@ -14,6 +14,7 @@ import sys
 
 import requests
 
+from linodecli.exit_codes import ExitCodes
 from linodecli.plugins import inherit_plugin_args
 
 PLUGIN_BASE = "linode-cli image-upload"
@@ -121,7 +122,7 @@ def call(args, context):
 
         if len(results) < 1:
             print(f"No file found matching pattern {filepath}")
-            sys.exit(2)
+            sys.exit(ExitCodes.FILE_ERROR)
 
         if len(results) > 1:
             print(
@@ -132,20 +133,20 @@ def call(args, context):
 
     if not os.path.isfile(filepath):
         print(f"No file at {filepath}; must be a path to a valid file.")
-        sys.exit(2)
+        sys.exit(ExitCodes.FILE_ERROR)
 
     # make sure it's not larger than the max upload size
     if os.path.getsize(filepath) > MAX_UPLOAD_SIZE:
         print(
             f"File {filepath} is too large; compressed size must be less than 5GB"
         )
-        sys.exit(2)
+        sys.exit(ExitCodes.FILE_ERROR)
 
     if not parsed.region:
         print(
             "No region provided.  Please set a default region or use --region"
         )
-        sys.exit(1)
+        sys.exit(ExitCodes.ARGUMENT_ERROR)
 
     label = parsed.label or os.path.basename(filepath)
 
@@ -166,16 +167,16 @@ def call(args, context):
                 "reconfigure the CLI with `linode-cli configure` to ensure you "
                 "can make this request."
             )
-            sys.exit(3)
+            sys.exit(ExitCodes.REQUEST_FAILED)
         if status == 404:
             print(
                 "It looks like you are not in the Machine Images Beta, and therefore "
                 "cannot upload images yet.  Please stay tuned, or open a support ticket "
                 "to request access."
             )
-            sys.exit(4)
+            sys.exit(ExitCodes.REQUEST_FAILED)
         print(f"Upload failed with status {status}; response was {resp}")
-        sys.exit(3)
+        sys.exit(ExitCodes.REQUEST_FAILED)
 
     # grab the upload URL and image data
     image = resp["image"]

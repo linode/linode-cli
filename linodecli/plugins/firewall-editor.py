@@ -14,6 +14,7 @@ from rich import box
 from rich import print as rprint
 from rich.table import Table
 
+from linodecli.exit_codes import ExitCodes
 from linodecli.plugins import inherit_plugin_args
 
 BOLD = "\033[1m"
@@ -204,7 +205,7 @@ def _get_firewall(firewall_id, client):
 
     if code != 200:
         print(f"Error retrieving firewall: {code}")
-        sys.exit(1)
+        sys.exit(ExitCodes.FIREWALL_ERROR)
 
     code, rules = client.call_operation(
         "firewalls", "rules-list", args=[firewall_id]
@@ -212,7 +213,7 @@ def _get_firewall(firewall_id, client):
 
     if code != 200:
         print(f"Error retrieving firewall rules: {code}")
-        sys.exit(2)
+        sys.exit(ExitCodes.FIREWALL_ERROR)
 
     return firewall, rules
 

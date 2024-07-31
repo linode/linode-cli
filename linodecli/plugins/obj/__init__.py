@@ -19,6 +19,7 @@ from rich.table import Table
 from linodecli.cli import CLI
 from linodecli.configuration import _do_get_request
 from linodecli.configuration.helpers import _default_text_input
+from linodecli.exit_codes import ExitCodes
 from linodecli.plugins import PluginContext, inherit_plugin_args
 from linodecli.plugins.obj.buckets import create_bucket, delete_bucket
 from linodecli.plugins.obj.config import (
@@ -147,11 +148,11 @@ def set_acl(get_client, args, **kwargs):  # pylint: disable=unused-argument
     # make sure the call is sane
     if parsed.acl_public and parsed.acl_private:
         print("You may not set the ACL to public and private in the same call")
-        sys.exit(1)
+        sys.exit(ExitCodes.REQUEST_FAILED)
 
     if not parsed.acl_public and not parsed.acl_private:
         print("You must choose an ACL to apply")
-        sys.exit(1)
+        sys.exit(ExitCodes.REQUEST_FAILED)
     acl = "public-read" if parsed.acl_public else "private"
     bucket = parsed.bucket
 
@@ -168,8 +169,8 @@ def set_acl(get_client, args, **kwargs):  # pylint: disable=unused-argument
 
     try:
         set_acl_func(**set_acl_options)
-    except ClientError as e:
-        sys.exit(e)
+    except ClientError:
+        sys.exit(ExitCodes.REQUEST_FAILED)
     print("ACL updated")
 
 
@@ -198,15 +199,15 @@ def show_usage(get_client, args, **kwargs):  # pylint: disable=unused-argument
             bucket_names = [
                 b["Name"] for b in client.list_buckets().get("Buckets", [])
             ]
-        except ClientError as e:
-            sys.exit(e)
+        except ClientError:
+            sys.exit(ExitCodes.REQUEST_FAILED)
 
     grand_total = 0
     for b in bucket_names:
         try:
             objects = client.list_objects_v2(Bucket=b).get("Contents", [])
-        except ClientError as e:
-            sys.exit(e)
+        except ClientError:
+            sys.exit(ExitCodes.REQUEST_FAILED)
         total = 0
         obj_count = 0
 
@@ -226,7 +227,7 @@ def show_usage(get_client, args, **kwargs):  # pylint: disable=unused-argument
         print("--------")
         print(f"{_denominate(grand_total)} Total")
 
-    sys.exit(0)
+    sys.exit(ExitCodes.SUCCESS)
 
 
 COMMAND_MAP = {
@@ -314,7 +315,7 @@ def get_credentials(cli: CLI):
             f"You must set both {ENV_ACCESS_KEY_NAME} "
             f"and {ENV_SECRET_KEY_NAME}, or neither"
         )
-        sys.exit(1)
+        sys.exit(ExitCodes.REQUEST_FAILED)
 
     # not given on command line, so look them up
     if not access_key:
@@ -354,7 +355,9 @@ def call(
             "'pip3 install boto3' or 'pip install boto3'"
         )
 
-        sys.exit(2)  # requirements not met - we can't go on
+        sys.exit(
+            ExitCodes.REQUEST_FAILED
+        )  # requirements not met - we can't go on
 
     parser = get_obj_args_parser()
     parsed, args = parser.parse_known_args(args)
@@ -365,7 +368,7 @@ def call(
 
     if not parsed.command:
         print_help(parser)
-        sys.exit(0)
+        sys.exit(ExitCodes.SUCCESS)
 
     access_key = None
     secret_key = None
@@ -381,7 +384,7 @@ def call(
     def try_get_default_cluster():
         if not context.client.defaults:
             print("Error: cluster is required.")
-            sys.exit(1)
+            sys.exit(ExitCodes.REQUEST_FAILED)
 
         print(
             "Error: No default cluster is configured.  Either configure the CLI "
@@ -409,8 +412,8 @@ def call(
             COMMAND_MAP[parsed.command](
                 get_client, args, suppress_warnings=parsed.suppress_warnings
             )
-        except ClientError as e:
-            sys.exit(f"Error: {e}")
+        except ClientError:
+            sys.exit(ExitCodes.REQUEST_FAILED)
     elif parsed.command == "regenerate-keys":
         regenerate_s3_credentials(
             context.client, suppress_warnings=parsed.suppress_warnings
@@ -419,7 +422,7 @@ def call(
         _configure_plugin(context.client)
     else:
         print(f"No command {parsed.command}")
-        sys.exit(1)
+        sys.exit(ExitCodes.REQUEST_FAILED)
 
 
 def _get_boto_client(cluster, access_key, secret_key):
@@ -474,7 +477,7 @@ def _get_s3_creds(client: CLI, force: bool = False):
                 "configure the CLI, unset the 'LINODE_CLI_TOKEN' environment "
                 "variable and then run `linode-cli configure`."
             )
-            sys.exit(1)
+            sys.exit(ExitCodes.REQUEST_FAILED)
 
         # before we do anything, can they do object storage?
         status, resp = client.call_operation("account", "view")
@@ -483,14 +486,14 @@ def _get_s3_creds(client: CLI, force: bool = False):
             if status == 401:
                 # special case - oauth token isn't allowed to do this
                 print(NO_SCOPES_ERROR)
-                sys.exit(4)
+                sys.exit(ExitCodes.REQUEST_FAILED)
             if status == 403:
                 # special case - restricted users can't use obj
                 print(NO_ACCESS_ERROR)
-                sys.exit(4)
+                sys.exit(ExitCodes.REQUEST_FAILED)
             # something went wrong - give up
             print("Key generation failed!")
-            sys.exit(4)
+            sys.exit(ExitCodes.REQUEST_FAILED)
 
         # label caps at 50 characters - trim some stuff maybe
         # static characters in label account for 13 total
@@ -516,14 +519,14 @@ def _get_s3_creds(client: CLI, force: bool = False):
             if status == 401:
                 # special case - oauth token isn't allowed to do this
                 print(NO_SCOPES_ERROR)
-                sys.exit(4)
+                sys.exit(ExitCodes.REQUEST_FAILED)
             if status == 403:
                 # special case - restricted users can't use obj
                 print(NO_ACCESS_ERROR)
-                sys.exit(4)
+                sys.exit(ExitCodes.REQUEST_FAILED)
             # something went wrong - give up
             print("Key generation failed!")
-            sys.exit(3)
+            sys.exit(ExitCodes.REQUEST_FAILED)
 
         access_key = resp["access_key"]
         secret_key = resp["secret_key"]

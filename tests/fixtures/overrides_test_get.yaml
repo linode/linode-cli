@@ -3,7 +3,7 @@ info:
   title: API Specification
   version: 1.0.0
 servers:
-  - url: http://localhost
+  - url: http://localhost/v4
 
 paths:
   /foo/bar:

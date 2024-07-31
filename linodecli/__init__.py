@@ -13,6 +13,7 @@ from rich import print as rprint
 from rich.table import Column, Table
 
 from linodecli import plugins
+from linodecli.exit_codes import ExitCodes
 
 from .arg_helpers import (
     bake_command,
@@ -50,7 +51,11 @@ skip_config = (
     or TEST_MODE
 )
 
-cli = CLI(VERSION, handle_url_overrides(BASE_URL), skip_config=skip_config)
+cli = CLI(
+    VERSION,
+    handle_url_overrides(BASE_URL, override_path=True),
+    skip_config=skip_config,
+)
 
 
 def main():  # pylint: disable=too-many-branches,too-many-statements
@@ -85,7 +90,7 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
             # print version info and exit - but only if no command was given
             print(f"linode-cli {VERSION}")
             print(f"Built from spec version {cli.spec_version}")
-            sys.exit(0)
+            sys.exit(ExitCodes.SUCCESS)
         else:
             # something else might want to parse version
             # find where it was originally, as it was removed from args
@@ -96,17 +101,17 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
     if parsed.command == "bake":
         if parsed.action is None:
             print("No spec provided, cannot bake")
-            sys.exit(9)
+            sys.exit(ExitCodes.ARGUMENT_ERROR)
         bake_command(cli, parsed.action)
-        sys.exit(0)
+        sys.exit(ExitCodes.SUCCESS)
     elif cli.ops is None:
         # if not spec was found and we weren't baking, we're doomed
-        sys.exit(3)
+        sys.exit(ExitCodes.ARGUMENT_ERROR)
 
     if parsed.command == "register-plugin":
         if parsed.action is None:
             print("register-plugin requires a module name!")
-            sys.exit(9)
+            sys.exit(ExitCodes.ARGUMENT_ERROR)
         msg, code = register_plugin(parsed.action, cli.config, cli.ops)
         print(msg)
         sys.exit(code)
@@ -114,32 +119,32 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
     if parsed.command == "remove-plugin":
         if parsed.action is None:
             print("remove-plugin requires a plugin name to remove!")
-            sys.exit(9)
+            sys.exit(ExitCodes.ARGUMENT_ERROR)
         msg, code = remove_plugin(parsed.action, cli.config)
         print(msg)
         sys.exit(code)
 
     if parsed.command == "completion":
         print(get_completions(cli.ops, parsed.help, parsed.action))
-        sys.exit(0)
+        sys.exit(ExitCodes.SUCCESS)
 
     # handle a help for the CLI
     if parsed.command is None or (parsed.command is None and parsed.help):
         parser.print_help()
         print_help_default()
-        sys.exit(0)
+        sys.exit(ExitCodes.SUCCESS)
 
     if parsed.command == "env-vars":
         print_help_env_vars()
-        sys.exit(0)
+        sys.exit(ExitCodes.SUCCESS)
 
     if parsed.command == "commands":
         print_help_commands(cli.ops)
-        sys.exit(0)
+        sys.exit(ExitCodes.SUCCESS)
 
     if parsed.command == "plugins":
         print_help_plugins(cli.config)
-        sys.exit(0)
+        sys.exit(ExitCodes.SUCCESS)
 
     # configure
     if parsed.command == "configure":
@@ -151,7 +156,7 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
             )
         else:
             cli.configure()
-        sys.exit(0)
+        sys.exit(ExitCodes.SUCCESS)
 
     # block of commands for user-focused operations
     if parsed.command == "set-user":
@@ -163,7 +168,7 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
             )
         else:
             cli.config.set_default_user(parsed.action)
-        sys.exit(0)
+        sys.exit(ExitCodes.SUCCESS)
 
     if parsed.command == "show-users":
         if parsed.help:
@@ -177,7 +182,7 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
             )
         else:
             cli.config.print_users()
-        sys.exit(0)
+        sys.exit(ExitCodes.SUCCESS)
 
     if parsed.command == "remove-user":
         if parsed.help or not parsed.action:
@@ -190,7 +195,7 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
             )
         else:
             cli.config.remove_user(parsed.action)
-        sys.exit(0)
+        sys.exit(ExitCodes.SUCCESS)
 
     # check for plugin invocation
     if parsed.command not in cli.ops and parsed.command in plugins.available(
@@ -202,7 +207,7 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
         plugin_args = argv[1:]  # don't include the program name
         plugin_args.remove(parsed.command)  # don't include the plugin name
         plugins.invoke(parsed.command, plugin_args, context)
-        sys.exit(0)
+        sys.exit(ExitCodes.SUCCESS)
 
     # unknown commands
     if (
@@ -211,7 +216,7 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
         and parsed.command not in HELP_TOPICS
     ):
         print(f"Unrecognized command {parsed.command}")
-        sys.exit(1)
+        sys.exit(ExitCodes.UNRECOGNIZED_COMMAND)
 
     # handle a help for a command - either --help or no action triggers this
     if (
@@ -236,10 +241,10 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
             table.add_row(*row)
 
         rprint(table)
-        sys.exit(0)
+        sys.exit(ExitCodes.SUCCESS)
 
     if parsed.command is not None and parsed.action is not None:
         if parsed.help:
             print_help_action(cli, parsed.command, parsed.action)
-            sys.exit(0)
+            sys.exit(ExitCodes.SUCCESS)
         cli.handle_command(parsed.command, parsed.action, args)

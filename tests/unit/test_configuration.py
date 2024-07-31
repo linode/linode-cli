@@ -82,7 +82,7 @@ mysql_engine = mysql/8.0.26"""
             with contextlib.redirect_stdout(f):
                 conf.set_user("bad_user")
 
-        assert err.value.code == 1
+        assert err.value.code == 4
         assert "not configured" in f.getvalue()
 
         conf.set_user("cli-dev2")
@@ -101,7 +101,7 @@ mysql_engine = mysql/8.0.26"""
                 conf.remove_user("cli-dev")
 
         assert "default user!" in f.getvalue()
-        assert err.value.code == 1
+        assert err.value.code == 4
 
         with patch("linodecli.configuration.open", mock_open()):
             conf.remove_user("cli-dev2")
@@ -133,7 +133,7 @@ mysql_engine = mysql/8.0.26"""
             with contextlib.redirect_stdout(f):
                 conf.set_default_user("bad_user")
 
-        assert err.value.code == 1
+        assert err.value.code == 4
         assert "not configured" in f.getvalue()
 
         with patch("linodecli.configuration.open", mock_open()):

@@ -22,7 +22,7 @@ def test_beta_list():
 
 @pytest.fixture
 def get_beta_id():
-    beta_id = (
+    beta_ids = (
         exec_test_command(
             BASE_CMD
             + [
@@ -39,7 +39,10 @@ def get_beta_id():
         .rstrip()
         .splitlines()
     )
-    first_id = beta_id[0]
+    if not beta_ids or beta_ids == [""]:
+        pytest.skip("No betas available to test.")
+
+    first_id = beta_ids[0]
     yield first_id
 
 

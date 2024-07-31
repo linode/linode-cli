@@ -147,10 +147,20 @@ def test_fail_to_create_volume_with_all_numberic_label():
 
 def test_list_volume(test_volume_id):
     result = exec_test_command(
-        BASE_CMD + ["list", "--text", "--no-headers", "--delimiter", ","]
+        BASE_CMD
+        + [
+            "list",
+            "--text",
+            "--no-headers",
+            "--delimiter",
+            ",",
+            "--format",
+            "id,label,status,region,size,linode_id,linode_label",
+        ]
     ).stdout.decode()
     assert re.search(
-        "[0-9]+,[A-Za-z0-9].*,.*,(creating|active|offline),.*", result
+        "[0-9]+,[A-Za-z0-9-]+,(creating|active|offline),[A-Za-z0-9-]+,[0-9]+,,",
+        result,
     )
 
 

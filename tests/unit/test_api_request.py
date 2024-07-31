@@ -187,7 +187,7 @@ class TestAPIRequest:
             mock_cli, create_operation, SimpleNamespace()
         )
 
-        assert "http://localhost/foo/bar" == result
+        assert "http://localhost/v4/foo/bar" == result
 
     def test_build_filter_header(self, list_operation):
         result = api_request._build_filter_header(
@@ -363,7 +363,7 @@ class TestAPIRequest:
         mock_response = Mock(status_code=200, reason="OK")
 
         def validate_http_request(url, headers=None, data=None, **kwargs):
-            assert url == "http://localhost/foo/bar"
+            assert url == "http://localhost/v4/foo/bar"
             assert data == json.dumps(
                 {
                     "test_param": 12345,

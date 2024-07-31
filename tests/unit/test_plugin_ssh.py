@@ -28,7 +28,7 @@ def test_windows_error(capsys: CaptureFixture):
     with pytest.raises(SystemExit) as err:
         plugin.call(["test@test"], None)
 
-    assert err.value.code == 1
+    assert err.value.code == 2
 
     captured_text = capsys.readouterr().out
     assert "This plugin is not currently supported in Windows." in captured_text
@@ -137,7 +137,7 @@ def test_find_with_bad_label(mock_cli, capsys: CaptureFixture):
             PluginContext("FAKETOKEN", mock_cli), test_label
         )
 
-    assert err.value.code == 1
+    assert err.value.code == 2
 
     captured_text = capsys.readouterr().out
 

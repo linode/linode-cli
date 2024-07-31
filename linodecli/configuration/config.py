@@ -7,6 +7,8 @@ import os
 import sys
 from typing import Any, Dict, List, Optional
 
+from linodecli.exit_codes import ExitCodes
+
 from .auth import (
     _check_full_access,
     _do_get_request,
@@ -95,7 +97,7 @@ class CLIConfig:
         """
         if not self.config.has_section(username):
             print(f"User {username} is not configured!")
-            sys.exit(1)
+            sys.exit(ExitCodes.USERNAME_ERROR)
 
         self.username = username
 
@@ -112,7 +114,7 @@ class CLIConfig:
                 f"Cannot remove {username} as they are the default user! You can "
                 "change the default user with: `linode-cli set-user USERNAME`"
             )
-            sys.exit(1)
+            sys.exit(ExitCodes.USERNAME_ERROR)
 
         if self.config.has_section(username):
             self.config.remove_section(username)
@@ -129,7 +131,7 @@ class CLIConfig:
             if sec != "DEFAULT":
                 print(f'{"*" if sec == default_user else " "}  {sec}')
 
-        sys.exit(0)
+        sys.exit(ExitCodes.SUCCESS)
 
     def set_default_user(self, username: str):
         """
@@ -137,7 +139,7 @@ class CLIConfig:
         """
         if not self.config.has_section(username):
             print(f"User {username} is not configured!")
-            sys.exit(1)
+            sys.exit(ExitCodes.USERNAME_ERROR)
 
         self.config.set("DEFAULT", "default-user", username)
         self.write_config()
@@ -263,7 +265,7 @@ class CLIConfig:
             ENV_TOKEN_NAME, None
         ):
             print(f"User {username} is not configured.")
-            sys.exit(1)
+            sys.exit(ExitCodes.USERNAME_ERROR)
         if not self.config.has_section(username) or allowed_defaults is None:
             return namespace
 

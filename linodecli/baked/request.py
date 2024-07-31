@@ -2,6 +2,8 @@
 Request details for a CLI Operation
 """
 
+from linodecli.baked.parsing import process_arg_description
+
 
 class OpenAPIRequestArg:
     """
@@ -44,10 +46,15 @@ class OpenAPIRequestArg:
         #: the larger response model
         self.path = prefix + "." + name if prefix else name
 
-        #: The description of this argument, for help display
-        self.description = (
-            schema.description.split(".")[0] if schema.description else ""
+        description_rich, description = process_arg_description(
+            schema.description or ""
         )
+
+        #: The description of this argument for Markdown/plaintext display
+        self.description = description
+
+        #: The description of this argument for display on the help page
+        self.description_rich = description_rich
 
         #: If this argument is required for requests
         self.required = required

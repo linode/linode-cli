@@ -2,6 +2,9 @@
 - name: new-feature
   description: for new features in the changelog.
   color: 225fee
+- name: project
+  description: for new projects in the changelog.
+  color: 46BAF0
 - name: improvement
   description: for improvements in existing functionality in the changelog.
   color: 22ee47
