@@ -94,8 +94,8 @@ def create_bucket(
     for bk in created_buckets:
         try:
             delete_bucket(bk)
-        except:
-            logging.exception(f"Failed to cleanup bucket: {bk}")
+        except Exception as e:
+            logging.exception(f"Failed to cleanup bucket: {bk}, {e}")
 
 
 def delete_bucket(bucket_name: str, force: bool = True):
@@ -208,6 +208,27 @@ def test_multi_files_multi_bucket(
             output = process.stdout.decode()
             assert "100.0%" in output
             assert "Done" in output
+
+
+@pytest.mark.skip(reason="Long run test case")
+def test_large_number_of_files_single_bucket(
+    create_bucket: Callable[[Optional[str]], str],
+    generate_test_files: GetTestFilesType,
+    keys: Keys,
+    monkeypatch: MonkeyPatch,
+):
+    patch_keys(keys, monkeypatch)
+
+    number = 1005
+    bucket_name = create_bucket()
+    file_paths = generate_test_files(number)
+    for file in file_paths:
+        process = exec_test_command(
+            BASE_CMD + ["put", str(file.resolve()), bucket_name]
+        )
+        output = process.stdout.decode()
+        assert "100.0%" in output
+        assert "Done" in output
 
 
 def test_all_rows(
