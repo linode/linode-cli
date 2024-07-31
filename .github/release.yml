@@ -3,7 +3,10 @@ changelog:
     labels:
       - ignore-for-release
   categories:
-    - title: ⚠️  Breaking Change
+    - title: 📋 New Project
+      labels:
+        - project
+    - title: ⚠️ Breaking Change
       labels:
         - breaking-change
     - title: 🐛 Bug Fixes
@@ -18,7 +21,7 @@ changelog:
     - title: 🧪 Testing Improvements
       labels:
         - testing
-    - title: ⚙️  Repo/CI Improvements
+    - title: ⚙️ Repo/CI Improvements
       labels:
         - repo-ci-improvement
     - title: 📖 Documentation
