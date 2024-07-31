@@ -426,7 +426,8 @@ def call(
             COMMAND_MAP[parsed.command](
                 get_client, args, suppress_warnings=parsed.suppress_warnings
             )
-        except ClientError:
+        except ClientError as e:
+            print(e)
             sys.exit(ExitCodes.REQUEST_FAILED)
     elif parsed.command == "regenerate-keys":
         regenerate_s3_credentials(
