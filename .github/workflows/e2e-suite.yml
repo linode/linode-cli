@@ -82,13 +82,13 @@ jobs:
         if: always()
         run: |
           filename=$(ls | grep -E '^[0-9]{12}_cli_test_report\.xml$')
-          python tod_scripts/add_to_xml_test_report.py \
+          python3 e2e_scripts/tod_scripts/xml_to_obj_storage/scripts/add_gha_info_to_xml.py \
           --branch_name "${GITHUB_REF#refs/*/}" \
           --gha_run_id "$GITHUB_RUN_ID" \
           --gha_run_number "$GITHUB_RUN_NUMBER" \
           --xmlfile "${filename}"
           sync
-          python tod_scripts/test_report_upload_script.py "${filename}"
+          python3 e2e_scripts/tod_scripts/xml_to_obj_storage/scripts/xml_to_obj.py "${filename}"
         env:
           LINODE_CLI_OBJ_ACCESS_KEY: ${{ secrets.LINODE_CLI_OBJ_ACCESS_KEY }}
           LINODE_CLI_OBJ_SECRET_KEY: ${{ secrets.LINODE_CLI_OBJ_SECRET_KEY }}
