@@ -1,5 +1,6 @@
 import json
 import logging
+from concurrent.futures import ThreadPoolExecutor, wait
 from dataclasses import dataclass
 from typing import Callable, Optional
 
@@ -94,8 +95,8 @@ def create_bucket(
     for bk in created_buckets:
         try:
             delete_bucket(bk)
-        except:
-            logging.exception(f"Failed to cleanup bucket: {bk}")
+        except Exception as e:
+            logging.exception(f"Failed to cleanup bucket: {bk}, {e}")
 
 
 def delete_bucket(bucket_name: str, force: bool = True):
@@ -208,6 +209,31 @@ def test_multi_files_multi_bucket(
             output = process.stdout.decode()
             assert "100.0%" in output
             assert "Done" in output
+
+
+@pytest.mark.parametrize("num_files", [1005])
+def test_large_number_of_files_single_bucket_parallel(
+    create_bucket: Callable[[Optional[str]], str],
+    generate_test_files: GetTestFilesType,
+    keys: Keys,
+    monkeypatch: MonkeyPatch,
+    num_files: int,
+):
+    patch_keys(keys, monkeypatch)
+
+    bucket_name = create_bucket()
+    file_paths = generate_test_files(num_files)
+
+    with ThreadPoolExecutor(50) as executor:
+        futures = [
+            executor.submit(
+                exec_test_command,
+                BASE_CMD + ["put", str(file.resolve()), bucket_name],
+            )
+            for file in file_paths
+        ]
+
+        wait(futures)
 
 
 def test_all_rows(
