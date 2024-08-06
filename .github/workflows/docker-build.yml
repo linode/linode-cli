@@ -16,5 +16,3 @@ jobs:
     - uses: actions/checkout@v3
     - name: Build the Docker image
       run: docker build . --file Dockerfile --tag linode/cli:$(date +%s)
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
