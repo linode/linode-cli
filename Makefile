@@ -3,9 +3,9 @@
 #
 
 # The URL of the raw OpenAPI spec to build linode-cli with.
-# TODO: Uncomment before merging
+# TODO: Uncomment once spec is available in the akamai-apis repository.
 # SPEC := https://raw.githubusercontent.com/akamai/akamai-apis/main/apis/linode-api/v4/openapi.json
-SPEC := https://gist.githubusercontent.com/lgarber-akamai/1c84a451231195d63e990a89f45788fc/raw/3d4c6c677c06bd28d90ec6dd994c7305da0839af/openapi-new.json
+SPEC := https://raw.githubusercontent.com/linode/linode-api-docs/development/openapi.yaml
 
 # Test-related arguments
 MODULE :=
