@@ -79,7 +79,8 @@ def test_create_a_domain(master_domain):
     another_domain = (
         exec_test_command(
             [
-                "linode-cli", "domains",
+                "linode-cli",
+                "domains",
                 "create",
                 "--type",
                 "master",
@@ -130,7 +131,10 @@ def test_create_domain_srv_record(test_domain_and_record):
 
     output = process.stdout.decode()
 
-    assert re.search(r'[0-9]+,SRV,_telnet\._tcp,target-test-record\.\d+example\.com,0,4,4\n', str(output))
+    assert re.search(
+        r"[0-9]+,SRV,_telnet\._tcp,target-test-record\.\d+example\.com,0,4,4\n",
+        str(output),
+    )
 
 
 def test_list_srv_record(test_domain_and_record):
@@ -147,7 +151,10 @@ def test_list_srv_record(test_domain_and_record):
     )
     output = process.stdout.decode()
 
-    assert re.search(r'[0-9]+,SRV,_telnet\._tcp,record-setup\.\d+example\.com,0,4,4\n', str(output))
+    assert re.search(
+        r"[0-9]+,SRV,_telnet\._tcp,record-setup\.\d+example\.com,0,4,4\n",
+        str(output),
+    )
 
 
 @pytest.mark.smoke
@@ -168,7 +175,10 @@ def test_view_domain_record(test_domain_and_record):
     )
     output = process.stdout.decode()
 
-    assert re.search(r'[0-9]+,SRV,_telnet\._tcp,record-setup\.\d+example\.com,0,4,4\n', output)
+    assert re.search(
+        r"[0-9]+,SRV,_telnet\._tcp,record-setup\.\d+example\.com,0,4,4\n",
+        output,
+    )
 
 
 def test_update_domain_record(test_domain_and_record):
@@ -189,7 +199,10 @@ def test_update_domain_record(test_domain_and_record):
     )
     output = process.stdout.decode()
 
-    assert re.search(r'[0-9]+,SRV,_telnet\._tcp,record-setup-update\.\d+example\.com,0,4,4\n', str(output))
+    assert re.search(
+        r"[0-9]+,SRV,_telnet\._tcp,record-setup-update\.\d+example\.com,0,4,4\n",
+        str(output),
+    )
 
 
 def test_delete_a_domain_record(test_domain_and_record):

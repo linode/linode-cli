@@ -28,7 +28,10 @@ def test_fields_from_kernels_list():
     output = process.stdout.decode()
 
     for line in output.splitlines():
-        assert re.search("linode/.*,.*,(False|True),(i386|x86_64),(False|True),(False|True),.*", line)
+        assert re.search(
+            "linode/.*,.*,(False|True),(i386|x86_64),(False|True),(False|True),.*",
+            line,
+        )
 
 
 @pytest.mark.smoke
@@ -55,5 +58,7 @@ def test_view_kernel():
 
     assert "id,version,kvm,architecture,pvops,deprecated,built" in output
 
-    assert re.search("linode/.*,.*,(False|True),(i386|x86_64),(False|True),(False|True),.*", output)
-
+    assert re.search(
+        "linode/.*,.*,(False|True),(i386|x86_64),(False|True),(False|True),.*",
+        output,
+    )
