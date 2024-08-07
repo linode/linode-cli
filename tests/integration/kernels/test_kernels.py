@@ -12,7 +12,7 @@ def test_list_available_kernels():
     output = process.stdout.decode()
 
     for line in output.splitlines():
-        assert ("linode" in line, "Output does not contain keyword linode..")
+        assert "linode" in line
 
 
 def test_fields_from_kernels_list():
@@ -28,13 +28,7 @@ def test_fields_from_kernels_list():
     output = process.stdout.decode()
 
     for line in output.splitlines():
-        assert (
-            re.search(
-                "linode/.*,.*,(False|True),(i386|x86_64),(False|True),(False|True),.*",
-                line,
-            ),
-            "Output does not match the format specified..",
-        )
+        assert re.search("linode/.*,.*,(False|True),(i386|x86_64),(False|True),(False|True),.*", line)
 
 
 @pytest.mark.smoke
@@ -59,14 +53,7 @@ def test_view_kernel():
     )
     output = process.stdout.decode()
 
-    assert (
-        "id,version,kvm,architecture,pvops,deprecated,built" in output,
-        "No header found..",
-    )
-    assert (
-        re.search(
-            "linode/.*,.*,(False|True),(i386|x86_64),(False|True),(False|True),.*",
-            output,
-        ),
-        "Ouput does not match the format specified..",
-    )
+    assert "id,version,kvm,architecture,pvops,deprecated,built" in output
+
+    assert re.search("linode/.*,.*,(False|True),(i386|x86_64),(False|True),(False|True),.*", output)
+

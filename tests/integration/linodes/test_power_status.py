@@ -65,4 +65,4 @@ def test_shutdown_linode(test_linode_id):
 
     result = wait_until(linode_id=linode_id, timeout=180, status="offline")
 
-    assert (result, "Linode status has not changed to running from offline")
+    assert result, "Linode status has not changed to running from offline"
