@@ -3,6 +3,8 @@ import time
 
 import pytest
 
+from linodecli.exit_codes import ExitCodes
+
 from tests.integration.helpers import (
     delete_target_id,
     exec_failing_test_command,
@@ -108,7 +110,7 @@ def test_test_stackscript_id_fails_without_image():
             "--no-headers",
             "--delimiter",
             ",",
-        ]
+        ], ExitCodes.UNRECOGNIZED_COMMAND
     ).stderr.decode()
 
     assert "Request failed: 400" in result
@@ -216,7 +218,7 @@ def test_fail_to_deploy_stackscript_to_linode_from_incompatible_image(
             DEFAULT_RANDOM_PASS,
             "--no-headers",
             "--text",
-        ]
+        ], ExitCodes.UNRECOGNIZED_COMMAND
     ).stderr.decode()
 
     assert "image is not valid" in result

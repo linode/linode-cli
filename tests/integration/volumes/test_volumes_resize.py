@@ -49,7 +49,7 @@ def test_resize_fails_to_smaller_volume(test_volume_id):
     time.sleep(VOLUME_CREATION_WAIT)
     result = exec_failing_test_command(
         BASE_CMD
-        + ["resize", volume_id, "--size", "5", "--text", "--no-headers"]
+        + ["resize", volume_id, "--size", "5", "--text", "--no-headers"], ExitCodes.UNRECOGNIZED_COMMAND
     ).stderr.decode()
 
     assert "Request failed: 400" in result
@@ -67,7 +67,7 @@ def test_resize_fails_to_volume_larger_than_1024gb(test_volume_id):
             "1024893405",
             "--text",
             "--no-headers",
-        ]
+        ], ExitCodes.UNRECOGNIZED_COMMAND
     ).stderr.decode()
 
     if "test" == os.environ.get(

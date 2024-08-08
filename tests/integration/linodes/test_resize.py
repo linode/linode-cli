@@ -2,6 +2,8 @@ import os
 
 import pytest
 
+from linodecli.exit_codes import ExitCodes
+
 from tests.integration.helpers import (
     delete_target_id,
     exec_failing_test_command,
@@ -62,7 +64,7 @@ def test_resize_fails_to_the_same_plan(test_linode_id):
 
     result = exec_failing_test_command(
         BASE_CMD
-        + ["resize", "--type", linode_plan, "--text", "--no-headers", linode_id]
+        + ["resize", "--type", linode_plan, "--text", "--no-headers", linode_id], ExitCodes.UNRECOGNIZED_COMMAND
     ).stderr.decode()
 
     assert "Request failed: 400" in result
@@ -97,7 +99,7 @@ def test_resize_fails_to_smaller_plan(test_linode_id):
             "--text",
             "--no-headers",
             linode_id,
-        ]
+        ], ExitCodes.UNRECOGNIZED_COMMAND
     ).stderr.decode()
 
     assert "Request failed: 400" in result
@@ -120,7 +122,7 @@ def test_resize_fail_to_invalid_plan(test_linode_id):
             "--text",
             "--no-headers",
             linode_id,
-        ]
+        ], ExitCodes.UNRECOGNIZED_COMMAND
     ).stderr.decode()
 
     assert "Request failed: 400" in result

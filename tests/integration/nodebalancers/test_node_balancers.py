@@ -2,6 +2,8 @@ import re
 
 import pytest
 
+from linodecli.exit_codes import ExitCodes
+
 from tests.integration.helpers import (
     delete_target_id,
     exec_failing_test_command,
@@ -168,7 +170,7 @@ def create_linode_to_add(linode_cloud_firewall):
 
 def test_fail_to_create_nodebalancer_without_region():
     result = exec_failing_test_command(
-        BASE_CMD + ["create", "--text", "--no-headers"]
+        BASE_CMD + ["create", "--text", "--no-headers"], ExitCodes.UNRECOGNIZED_COMMAND
     ).stderr.decode()
     assert "Request failed: 400" in result
     assert "region	region is required" in result
@@ -217,7 +219,7 @@ def test_display_public_ipv4_for_nodebalancer(test_node_balancers):
 
 def test_fail_to_view_nodebalancer_with_invalid_id():
     result = exec_failing_test_command(
-        BASE_CMD + ["view", "535", "--text", "--no-headers"]
+        BASE_CMD + ["view", "535", "--text", "--no-headers"], ExitCodes.UNRECOGNIZED_COMMAND
     ).stderr.decode()
 
     assert "Request failed: 404" in result
@@ -378,7 +380,7 @@ def test_fail_to_update_node_to_public_ipv4_address(test_node_balancers):
             "--no-headers",
             "--delimiter",
             ",",
-        ]
+        ], ExitCodes.UNRECOGNIZED_COMMAND
     ).stderr.decode()
 
     assert "Request failed: 400" in result
