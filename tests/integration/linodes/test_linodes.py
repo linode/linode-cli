@@ -4,7 +4,6 @@ import time
 import pytest
 
 from linodecli.exit_codes import ExitCodes
-
 from tests.integration.helpers import (
     delete_target_id,
     exec_failing_test_command,
@@ -122,7 +121,8 @@ def test_create_linodes_fails_without_a_root_pass():
             DEFAULT_TEST_IMAGE,
             "--text",
             "--no-headers",
-        ], ExitCodes.UNRECOGNIZED_COMMAND
+        ],
+        ExitCodes.REQUEST_FAILED,
     ).stderr.decode()
     assert "Request failed: 400" in result
     assert "root_pass	root_pass is required" in result

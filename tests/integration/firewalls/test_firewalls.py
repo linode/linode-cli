@@ -4,7 +4,6 @@ import time
 import pytest
 
 from linodecli.exit_codes import ExitCodes
-
 from tests.integration.helpers import (
     delete_target_id,
     exec_failing_test_command,
@@ -128,7 +127,8 @@ def test_fails_to_create_firewall_without_inbound_policy():
                 "--no-headers",
                 "--format",
                 "id",
-            ], ExitCodes.UNRECOGNIZED_COMMAND
+            ],
+            ExitCodes.REQUEST_FAILED,
         )
         .stderr.decode()
         .rstrip()
@@ -153,7 +153,8 @@ def test_fails_to_create_firewall_without_outbound_policy():
                 "--no-headers",
                 "--format",
                 "id",
-            ], ExitCodes.UNRECOGNIZED_COMMAND
+            ],
+            ExitCodes.REQUEST_FAILED,
         )
         .stderr.decode()
         .rstrip()
@@ -178,7 +179,8 @@ def test_firewall_label_must_be_unique_upon_creation(test_firewall_id):
                 "--no-headers",
                 "--format",
                 "id",
-            ], ExitCodes.UNRECOGNIZED_COMMAND
+            ],
+            ExitCodes.REQUEST_FAILED,
         )
         .stderr.decode()
         .rstrip()

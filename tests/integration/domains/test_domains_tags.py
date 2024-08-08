@@ -4,7 +4,6 @@ import time
 import pytest
 
 from linodecli.exit_codes import ExitCodes
-
 from tests.integration.helpers import (
     delete_tag,
     delete_target_id,
@@ -34,7 +33,8 @@ def test_fail_to_create_master_domain_with_invalid_tags():
             "--format=id",
             "--tag",
             bad_tag,
-        ], expected_code=ExitCodes.UNRECOGNIZED_COMMAND
+        ],
+        expected_code=ExitCodes.REQUEST_FAILED,
     )
 
 
@@ -57,7 +57,8 @@ def test_fail_to_create_slave_domain_with_invalid_tags():
             "--format=id",
             "--tag",
             bad_tag,
-        ], expected_code=ExitCodes.UNRECOGNIZED_COMMAND
+        ],
+        expected_code=ExitCodes.REQUEST_FAILED,
     )
 
 

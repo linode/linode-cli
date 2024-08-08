@@ -5,7 +5,6 @@ import time
 import pytest
 
 from linodecli.exit_codes import ExitCodes
-
 from tests.integration.helpers import (
     delete_target_id,
     exec_failing_test_command,
@@ -60,7 +59,8 @@ def test_fail_to_create_volume_under_10gb():
             "5",
             "--text",
             "--no-headers",
-        ], ExitCodes.UNRECOGNIZED_COMMAND
+        ],
+        ExitCodes.REQUEST_FAILED,
     ).stderr.decode()
 
     if "test" == os.environ.get(
@@ -82,7 +82,8 @@ def test_fail_to_create_volume_without_region():
             "10",
             "--text",
             "--no-headers",
-        ], ExitCodes.UNRECOGNIZED_COMMAND
+        ],
+        ExitCodes.REQUEST_FAILED,
     ).stderr.decode()
     assert "Request failed: 400" in result
     assert "Must provide a region or a Linode ID" in result
@@ -99,7 +100,8 @@ def test_fail_to_create_volume_without_label():
             "10",
             "--text",
             "--no-headers",
-        ], ExitCodes.UNRECOGNIZED_COMMAND
+        ],
+        ExitCodes.REQUEST_FAILED,
     ).stderr.decode()
     assert "Request failed: 400" in result
     assert "label	label is required" in result
@@ -118,7 +120,8 @@ def test_fail_to_create_volume_over_1024gb_in_size():
             "10241",
             "--text",
             "--no-headers",
-        ], ExitCodes.UNRECOGNIZED_COMMAND
+        ],
+        ExitCodes.REQUEST_FAILED,
     ).stderr.decode()
     if "test" == os.environ.get(
         "TEST_ENVIRONMENT", None
@@ -141,7 +144,8 @@ def test_fail_to_create_volume_with_all_numberic_label():
             "10",
             "--text",
             "--no-headers",
-        ], ExitCodes.UNRECOGNIZED_COMMAND
+        ],
+        ExitCodes.REQUEST_FAILED,
     ).stderr.decode()
     assert "Request failed: 400" in result
     assert "label	Must begin with a letter" in result

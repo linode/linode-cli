@@ -3,7 +3,6 @@ import time
 import pytest
 
 from linodecli.exit_codes import ExitCodes
-
 from tests.integration.helpers import (
     delete_target_id,
     exec_failing_test_command,
@@ -40,7 +39,8 @@ def test_view_unique_tag(test_tag_instance):
 def test_fail_to_create_tag_shorter_than_three_char():
     bad_tag = "aa"
     result = exec_failing_test_command(
-        BASE_CMD + ["create", "--label", bad_tag, "--text", "--no-headers"], ExitCodes.UNRECOGNIZED_COMMAND
+        BASE_CMD + ["create", "--label", bad_tag, "--text", "--no-headers"],
+        ExitCodes.REQUEST_FAILED,
     ).stderr.decode()
     assert "Request failed: 400" in result
     assert "Length must be 3-50 characters" in result

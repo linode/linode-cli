@@ -3,7 +3,6 @@ import os
 import pytest
 
 from linodecli.exit_codes import ExitCodes
-
 from tests.integration.helpers import (
     delete_target_id,
     exec_failing_test_command,
@@ -38,7 +37,8 @@ def test_rebuild_fails_without_image(test_linode_id):
             linode_id,
             "--text",
             "--no-headers",
-        ], ExitCodes.UNRECOGNIZED_COMMAND
+        ],
+        ExitCodes.REQUEST_FAILED,
     ).stderr.decode()
 
     assert "Request failed: 400" in result
