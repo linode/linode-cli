@@ -7,21 +7,20 @@ on:
         description: 'Use minimal test account'
         required: false
         default: 'false'
+      test_path:
+        description: "The path from 'test/integration' to the target to be tested, e.g. 'cli'"
+        required: false
       sha:
         description: 'The hash value of the commit.'
         required: false
         default: ''
-      test_path:
-        description: "The path from 'test/integration' to the target to be tested, e.g. 'cli'"
-        required: false
       pull_request_number:
-        description: 'The number of the PR.'
+        description: 'The number of the PR. Ensure sha value is provided'
         required: false
   push:
     branches:
       - main
       - dev
-  pull_request:
 
 jobs:
   integration-tests:
