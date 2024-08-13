@@ -11,6 +11,7 @@ import requests
 import yaml
 
 from linodecli import plugins
+from linodecli.exit_codes import ExitCodes
 from linodecli.helpers import (
     register_args_shared,
     register_debug_arg,
@@ -183,6 +184,6 @@ def bake_command(cli, spec_loc):
                 raise RuntimeError(f"Request failed to {spec_loc}")
     except Exception as e:
         print(f"Could not load spec: {e}")
-        sys.exit(2)
+        sys.exit(ExitCodes.REQUEST_FAILED)
 
     cli.bake(spec)

@@ -16,6 +16,7 @@ from requests import ConnectTimeout
 from rich import print as rprint
 from rich.table import Table
 
+from linodecli.exit_codes import ExitCodes
 from linodecli.helpers import register_debug_arg
 
 PLUGIN_BASE = "linode-cli metadata"
@@ -208,7 +209,7 @@ def call(args, context):
 
     if not parsed.endpoint in COMMAND_MAP or len(args) != 0:
         print_help(parser)
-        sys.exit(0)
+        sys.exit(ExitCodes.SUCCESS)
 
     # make a client, but only if we weren't printing help and endpoint is valid
     if "--help" not in args:
@@ -222,9 +223,9 @@ def call(args, context):
             ) from exc
     else:
         print_help(parser)
-        sys.exit(0)
+        sys.exit(ExitCodes.SUCCESS)
 
     try:
         COMMAND_MAP[parsed.endpoint](client)
-    except ApiError as e:
-        sys.exit(f"Error: {e}")
+    except ApiError:
+        sys.exit(ExitCodes.REQUEST_FAILED)

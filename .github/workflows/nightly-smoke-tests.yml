@@ -32,4 +32,4 @@ jobs:
         run: |
           make smoketest
         env:
-          LINODE_CLI_TOKEN: ${{ secrets.LINODE_TOKEN_2 }}
+          LINODE_CLI_TOKEN: ${{ secrets.LINODE_TOKEN }}

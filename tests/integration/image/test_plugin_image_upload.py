@@ -57,7 +57,7 @@ def test_invalid_file(
     )
     output = process.stdout.decode()
 
-    assert process.returncode == 2
+    assert process.returncode == 8
     assert f"No file at {file_path}" in output
 
 

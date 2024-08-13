@@ -5,8 +5,10 @@ The bucket manipulation module of CLI Plugin for handling object storage
 import sys
 from argparse import ArgumentParser
 
+from linodecli.exit_codes import ExitCodes
 from linodecli.plugins import inherit_plugin_args
 from linodecli.plugins.obj.config import PLUGIN_BASE
+from linodecli.plugins.obj.helpers import _delete_all_objects
 
 
 def create_bucket(
@@ -30,7 +32,7 @@ def create_bucket(
     client.create_bucket(Bucket=parsed.name)
 
     print(f"Bucket {parsed.name} created")
-    sys.exit(0)
+    sys.exit(ExitCodes.SUCCESS)
 
 
 def delete_bucket(
@@ -60,23 +62,9 @@ def delete_bucket(
     bucket_name = parsed.name
 
     if parsed.recursive:
-        objects = [
-            {"Key": obj.get("Key")}
-            for obj in client.list_objects_v2(Bucket=bucket_name).get(
-                "Contents", []
-            )
-            if obj.get("Key")
-        ]
-        client.delete_objects(
-            Bucket=bucket_name,
-            Delete={
-                "Objects": objects,
-                "Quiet": False,
-            },
-        )
+        _delete_all_objects(client, bucket_name)
 
     client.delete_bucket(Bucket=bucket_name)
-
     print(f"Bucket {parsed.name} removed")
 
-    sys.exit(0)
+    sys.exit(ExitCodes.SUCCESS)

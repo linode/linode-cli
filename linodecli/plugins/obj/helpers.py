@@ -9,6 +9,7 @@ from datetime import datetime
 
 from rich.table import Table
 
+from linodecli.exit_codes import ExitCodes
 from linodecli.plugins.obj.config import DATE_FORMAT
 
 INVALID_PAGE_MSG = "No result to show in this page."
@@ -138,6 +139,53 @@ def flip_to_page(iterable: Iterable, page: int = 1):
             next(iterable)
         except StopIteration:
             print(INVALID_PAGE_MSG)
-            sys.exit(2)
+            sys.exit(ExitCodes.REQUEST_FAILED)
 
     return next(iterable)
+
+
+def _get_objects_for_deletion_from_page(object_type, page, versioned=False):
+    return [
+        (
+            {"Key": obj["Key"], "VersionId": obj["VersionId"]}
+            if versioned
+            else {"Key": obj["Key"]}
+        )
+        for obj in page.get(object_type, [])
+    ]
+
+
+def _delete_all_objects(client, bucket_name):
+    pages = client.get_paginator("list_objects_v2").paginate(
+        Bucket=bucket_name, PaginationConfig={"PageSize": 1000}
+    )
+    for page in pages:
+        client.delete_objects(
+            Bucket=bucket_name,
+            Delete={
+                "Objects": _get_objects_for_deletion_from_page(
+                    "Contents", page
+                ),
+                "Quiet": False,
+            },
+        )
+
+    for page in client.get_paginator("list_object_versions").paginate(
+        Bucket=bucket_name, PaginationConfig={"PageSize": 1000}
+    ):
+        client.delete_objects(
+            Bucket=bucket_name,
+            Delete={
+                "Objects": _get_objects_for_deletion_from_page(
+                    "Versions", page, True
+                )
+            },
+        )
+        client.delete_objects(
+            Bucket=bucket_name,
+            Delete={
+                "Objects": _get_objects_for_deletion_from_page(
+                    "DeleteMarkers", page, True
+                )
+            },
+        )

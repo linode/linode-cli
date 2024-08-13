@@ -37,7 +37,7 @@ def test_tickets_list():
 
 @pytest.fixture
 def tickets_id():
-    ticket_ids = (
+    res = (
         exec_test_command(
             BASE_CMD
             + [
@@ -52,13 +52,18 @@ def tickets_id():
         )
         .stdout.decode()
         .rstrip()
-        .split(",")
     )
+    ticket_ids = res.splitlines()
+    if not ticket_ids or ticket_ids == [""]:
+        pytest.skip("No support tickets available to test.")
     first_id = ticket_ids[0]
     yield first_id
 
 
 def test_tickets_view(tickets_id):
+    if not tickets_id:
+        pytest.skip("No support tickets available to view.")
+
     ticket_id = tickets_id
     res = (
         exec_test_command(
@@ -91,6 +96,9 @@ def test_reply_support_ticket(tickets_id):
 
 
 def test_view_replies_support_ticket(tickets_id):
+    if not tickets_id:
+        pytest.skip("No support tickets available to view replies.")
+
     ticket_id = tickets_id
     res = (
         exec_test_command(

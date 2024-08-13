@@ -77,7 +77,7 @@ def test_no_label_no_id(mock_cli):
                 PluginContext("REALTOKEN", mock_cli),
             )
 
-    assert err.value.code == 1
+    assert err.value.code == 6
 
     assert "Either --label or --id must be used." in stderr_buf.getvalue()
 
@@ -94,7 +94,7 @@ def test_nonexisting_label(mock_cli):
                 PluginContext("REALTOKEN", mock_cli),
             )
 
-    assert err.value.code == 1
+    assert err.value.code == 6
 
     assert (
         "Cluster with label empty_data does not exist." in stderr_buf.getvalue()
@@ -112,7 +112,7 @@ def test_nonexisting_id(mock_cli):
                 PluginContext("REALTOKEN", mock_cli),
             )
 
-    assert err.value.code == 1
+    assert err.value.code == 6
 
     assert "Error retrieving kubeconfig:" in stderr_buf.getvalue()
 
@@ -136,7 +136,7 @@ def test_improper_file(mock_cli, fake_empty_file):
                 PluginContext("REALTOKEN", mock_cli),
             )
 
-    assert err.value.code == 1
+    assert err.value.code == 6
 
     assert "Could not load file at" in stderr_buf.getvalue()
 

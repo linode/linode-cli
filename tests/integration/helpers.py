@@ -2,13 +2,19 @@ import random
 import subprocess
 import time
 from string import ascii_lowercase
-from typing import Callable, List
+from typing import Callable, Container, Iterable, List, TypeVar
+
+from linodecli import ExitCodes
+from linodecli.exit_codes import ExitCodes
 
 BASE_URL = "https://api.linode.com/v4/"
 INVALID_HOST = "https://wrongapi.linode.com"
 SUCCESS_STATUS_CODE = 0
 FAILED_STATUS_CODE = 256
 COMMAND_JSON_OUTPUT = ["--suppress-warnings", "--no-defaults", "--json"]
+
+# TypeVars for generic type hints below
+T = TypeVar("T")
 
 
 def get_random_text(length: int = 10):
@@ -34,7 +40,9 @@ def exec_test_command(args: List[str]):
     return process
 
 
-def exec_failing_test_command(args: List[str], expected_code: int = 1):
+def exec_failing_test_command(
+    args: List[str], expected_code: int = ExitCodes.REQUEST_FAILED
+):
     process = subprocess.run(args, stderr=subprocess.PIPE)
     assert process.returncode == expected_code
     return process
@@ -137,3 +145,7 @@ def count_lines(text: str):
 def assert_headers_in_lines(headers, lines):
     for header in headers:
         assert header in lines[0]
+
+
+def contains_at_least_one_of(target: Container[T], search_for: Iterable[T]):
+    return any(v in target for v in search_for)

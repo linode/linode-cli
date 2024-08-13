@@ -43,10 +43,15 @@ def test_print_events_usage_information():
     output = process.stdout.decode()
 
     assert "linode-cli events [ACTION]" in output
-    assert re.search("mark-read.*Event Mark as Read", output)
-    assert re.search("mark-seen.*Event Mark as Seen", output)
-    assert re.search("list.*Events List", output)
-    assert re.search("view.*Event View", output)
+
+    assert re.search(
+        "mark-read.*(Event Mark as Read|Mark an event as read)", output
+    )
+    assert re.search(
+        "mark-seen.*(Event Mark as Seen|Mark an event as seen)", output
+    )
+    assert re.search("list.*(Events List|List events)", output)
+    assert re.search("view.*(Event View|Get an event)", output)
 
 
 @pytest.mark.smoke

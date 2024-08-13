@@ -12,7 +12,8 @@ import requests
 from packaging import version
 from requests import Response
 
-from linodecli.helpers import API_CA_PATH
+from linodecli.exit_codes import ExitCodes
+from linodecli.helpers import API_CA_PATH, API_VERSION_OVERRIDE
 
 from .baked.operation import (
     ExplicitEmptyListValue,
@@ -184,14 +185,22 @@ def _build_filter_header(
 
 
 def _build_request_url(ctx, operation, parsed_args) -> str:
-    target_server = handle_url_overrides(
+    url_base = handle_url_overrides(
         operation.url_base,
         host=ctx.config.get_value("api_host"),
-        version=ctx.config.get_value("api_version"),
         scheme=ctx.config.get_value("api_scheme"),
     )
 
-    result = f"{target_server}{operation.url_path}".format(**vars(parsed_args))
+    result = f"{url_base}{operation.url_path}".format(
+        # {apiVersion} is defined in the endpoint paths for
+        # the TechDocs API specs
+        apiVersion=(
+            API_VERSION_OVERRIDE
+            or ctx.config.get_value("api_version")
+            or operation.default_api_version
+        ),
+        **vars(parsed_args),
+    )
 
     if operation.method == "get":
         result += f"?page={ctx.page}&page_size={ctx.page_size}"
@@ -394,7 +403,7 @@ def _handle_error(ctx, response):
             title="errors",
             to=sys.stderr,
         )
-    sys.exit(1)
+    sys.exit(ExitCodes.REQUEST_FAILED)
 
 
 def _check_retry(response):
