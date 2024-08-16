@@ -73,8 +73,30 @@ def test_create_a_domain(master_domain):
     )
     output_current = process.stdout.decode()
 
+    timestamp = str(time.time_ns())
+
     # Create domain
-    domain_id = master_domain
+    another_domain = (
+        exec_test_command(
+            [
+                "linode-cli",
+                "domains",
+                "create",
+                "--type",
+                "master",
+                "--domain",
+                timestamp + "example.com",
+                "--soa_email",
+                "pthiel_test@linode.com",
+                "--text",
+                "--no-header",
+                "--format",
+                "id",
+            ]
+        )
+        .stdout.decode()
+        .rstrip()
+    )
 
     process = exec_test_command(
         BASE_CMD + ["list", "--format=id", "--text", "--no-header"]
@@ -82,10 +104,7 @@ def test_create_a_domain(master_domain):
     output_after = process.stdout.decode()
 
     # Check if list is bigger than previous list
-    assert (
-        len(output_after.splitlines()) > len(output_current.splitlines()),
-        "the list is not updated with new domain..",
-    )
+    assert len(output_after.splitlines()) > len(output_current.splitlines())
 
 
 @pytest.mark.smoke
@@ -112,9 +131,9 @@ def test_create_domain_srv_record(test_domain_and_record):
 
     output = process.stdout.decode()
 
-    assert (
-        re.search("[0-9]+,SRV,_telnet._tcp,target-test-record+,0,4,4", output),
-        "Output does not match the format",
+    assert re.search(
+        r"[0-9]+,SRV,_telnet\._tcp,target-test-record\.\d+example\.com,0,4,4\n",
+        str(output),
     )
 
 
@@ -132,9 +151,9 @@ def test_list_srv_record(test_domain_and_record):
     )
     output = process.stdout.decode()
 
-    assert (
-        re.search("[0-9]+,SRV,_telnet._tcp,record-setup+,0,4,4", output),
-        "Output does not match the format",
+    assert re.search(
+        r"[0-9]+,SRV,_telnet\._tcp,record-setup\.\d+example\.com,0,4,4\n",
+        str(output),
     )
 
 
@@ -156,9 +175,9 @@ def test_view_domain_record(test_domain_and_record):
     )
     output = process.stdout.decode()
 
-    assert (
-        re.search("[0-9]+,SRV,_telnet._tcp,record-setup+,0,4,4", output),
-        "Output does not match the format",
+    assert re.search(
+        r"[0-9]+,SRV,_telnet\._tcp,record-setup\.\d+example\.com,0,4,4\n",
+        output,
     )
 
 
@@ -180,9 +199,9 @@ def test_update_domain_record(test_domain_and_record):
     )
     output = process.stdout.decode()
 
-    assert (
-        re.search("[0-9]+,SRV,_telnet._tcp,record-setup-update+,0,4,4", output),
-        "Output does not match the format",
+    assert re.search(
+        r"[0-9]+,SRV,_telnet\._tcp,record-setup-update\.\d+example\.com,0,4,4\n",
+        str(output),
     )
 
 
