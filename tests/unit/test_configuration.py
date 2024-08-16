@@ -265,6 +265,7 @@ mysql_engine = mysql/8.0.26"""
                 "foobar.linode.com",
                 "v4beta",
                 "https",
+                "n",
             ]
         )
 
