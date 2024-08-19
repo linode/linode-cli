@@ -320,7 +320,7 @@ mysql_engine = mysql/8.0.26"""
         """
         conf = configuration.CLIConfig(self.base_url, skip_config=True)
 
-        answers = iter(["1", "1", "1", "1", "1", "1", "n"])
+        answers = iter(["1", "1", "1", "1", "1", "1", "n", "n"])
 
         def mock_input(prompt):
             if not prompt:
