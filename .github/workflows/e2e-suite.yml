@@ -1,4 +1,5 @@
 name: Integration Tests
+
 on:
   workflow_dispatch:
     inputs:
@@ -6,20 +7,37 @@ on:
         description: 'Use minimal test account'
         required: false
         default: 'false'
+      test_path:
+        description: "The path from 'test/integration' to the target to be tested, e.g. 'cli'"
+        required: false
       sha:
         description: 'The hash value of the commit.'
         required: false
         default: ''
+      pull_request_number:
+        description: 'The number of the PR. Ensure sha value is provided'
+        required: false
   push:
     branches:
       - main
       - dev
+
 jobs:
   integration-tests:
-    name: Run integration tests
+    name: Run integration tests on Ubuntu
     runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && inputs.sha != '' || github.event_name == 'push' || github.event_name == 'pull_request'
     steps:
-      - name: Clone Repository with SHA
+      - name: Validate Test Path
+        uses: actions-ecosystem/action-regex-match@v2
+        id: validate-tests
+        if: ${{ inputs.test_path != '' }}
+        with:
+          text: ${{ inputs.test_path }}
+          regex: '[^a-z0-9-:.\/_]'  # Tests validation
+          flags: gi
+
+      - name: Checkout Repository with SHA
         if: ${{ inputs.sha != '' }}
         uses: actions/checkout@v4
         with:
@@ -27,12 +45,37 @@ jobs:
           submodules: 'recursive'
           ref: ${{ inputs.sha }}
 
-      - name: Clone Repository without SHA
+      - name: Checkout Repository without SHA
         if: ${{ inputs.sha == '' }}
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           submodules: 'recursive'
+
+      - name: Get the hash value of the latest commit from the PR branch
+        uses: octokit/graphql-action@v2.x
+        id: commit-hash
+        if: ${{ inputs.pull_request_number != '' }}
+        with:
+          query: |
+            query PRHeadCommitHash($owner: String!, $repo: String!, $pr_num: Int!) {
+              repository(owner:$owner, name:$repo) {
+                pullRequest(number: $pr_num) {
+                  headRef {
+                    target {
+                      ... on Commit {
+                        oid
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          owner: ${{ github.event.repository.owner.login }}
+          repo: ${{ github.event.repository.name }}
+          pr_num: ${{ fromJSON(inputs.pull_request_number) }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Update system packages
         run: sudo apt-get update -y
@@ -70,6 +113,9 @@ jobs:
           timestamp=$(date +'%Y%m%d%H%M')
           report_filename="${timestamp}_cli_test_report.xml"
           make testint TEST_ARGS="--junitxml=${report_filename}"
+        if: ${{ steps.validate-tests.outputs.match == '' || inputs.test_path == '' }}
+        env:
+          LINODE_CLI_TOKEN: ${{ env.LINODE_CLI_TOKEN }}
 
       - name: Apply Calico Rules to LKE
         if: always()
@@ -92,3 +138,32 @@ jobs:
         env:
           LINODE_CLI_OBJ_ACCESS_KEY: ${{ secrets.LINODE_CLI_OBJ_ACCESS_KEY }}
           LINODE_CLI_OBJ_SECRET_KEY: ${{ secrets.LINODE_CLI_OBJ_SECRET_KEY }}
+
+      - name: Update PR Check Run
+        uses: actions/github-script@v6
+        id: update-check-run
+        if: ${{ inputs.pull_request_number != '' && fromJson(steps.commit-hash.outputs.data).repository.pullRequest.headRef.target.oid == inputs.sha }}
+        env:
+          number: ${{ inputs.pull_request_number }}
+          job: ${{ github.job }}
+          conclusion: ${{ job.status }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { data: pull } = await github.rest.pulls.get({
+              ...context.repo,
+              pull_number: process.env.number
+            });
+            const ref = pull.head.sha;
+            const { data: checks } = await github.rest.checks.listForRef({
+              ...context.repo,
+              ref
+            });
+            const check = checks.check_runs.filter(c => c.name === process.env.job);
+            const { data: result } = await github.rest.checks.update({
+              ...context.repo,
+              check_run_id: check[0].id,
+              status: 'completed',
+              conclusion: process.env.conclusion
+            });
+            return result;
