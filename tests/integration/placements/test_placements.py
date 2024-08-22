@@ -1,4 +1,5 @@
 import time
+
 import pytest
 
 from tests.integration.helpers import (
@@ -35,14 +36,14 @@ def create_placement_group():
         .rstrip()
     )
     yield placement_group_id
-    delete_target_id(target="placement", subcommand="group-delete", id=placement_group_id)
+    delete_target_id(
+        target="placement", subcommand="group-delete", id=placement_group_id
+    )
 
 
 def test_placement_group_list():
     res = (
-        exec_test_command(
-            BASE_CMD + ["groups-list", "--text", "--delimiter=,"]
-        )
+        exec_test_command(BASE_CMD + ["groups-list", "--text", "--delimiter=,"])
         .stdout.decode()
         .rstrip()
     )
@@ -55,7 +56,8 @@ def test_placement_group_view(create_placement_group):
     placement_group_id = create_placement_group
     res = (
         exec_test_command(
-            BASE_CMD + ["group-view", placement_group_id, "--text", "--delimiter=,"]
+            BASE_CMD
+            + ["group-view", placement_group_id, "--text", "--delimiter=,"]
         )
         .stdout.decode()
         .rstrip()
@@ -71,8 +73,17 @@ def test_assign_placement_group(support_test_linode_id, create_placement_group):
     linode_id = support_test_linode_id
     placement_group_id = create_placement_group
     res = (
-        exec_test_command(BASE_CMD + ["assign-linode", placement_group_id, "--linodes", linode_id, "--text",
-                                      "--delimiter=,"])
+        exec_test_command(
+            BASE_CMD
+            + [
+                "assign-linode",
+                placement_group_id,
+                "--linodes",
+                linode_id,
+                "--text",
+                "--delimiter=,",
+            ]
+        )
         .stdout.decode()
         .rstrip()
     )
@@ -80,12 +91,23 @@ def test_assign_placement_group(support_test_linode_id, create_placement_group):
 
 
 @pytest.mark.skip(reason="BUG TPT-3109")
-def test_unassign_placement_group(support_test_linode_id, create_placement_group):
+def test_unassign_placement_group(
+    support_test_linode_id, create_placement_group
+):
     linode_id = support_test_linode_id
     placement_group_id = create_placement_group
     res = (
-        exec_test_command(BASE_CMD + ["unassign-linode", placement_group_id, "--linode", linode_id, "--text",
-                                      "--delimiter=,"])
+        exec_test_command(
+            BASE_CMD
+            + [
+                "unassign-linode",
+                placement_group_id,
+                "--linode",
+                linode_id,
+                "--text",
+                "--delimiter=,",
+            ]
+        )
         .stdout.decode()
         .rstrip()
     )
