@@ -58,6 +58,6 @@ jobs:
 
             *Job Details:*
             - Workflow: ${{ github.workflow }}
-            - Run ID: ${{ github.run_id }}
+            - Branch: `${{ github.ref_name }}`
             - Run URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
             - Commit: <${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}|`${{ github.sha }}`>
