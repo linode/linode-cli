@@ -102,7 +102,5 @@ def test_update_slave_domain(slave_domain_setup):
         ]
     )
 
-    assert (
-        result.returncode == SUCCESS_STATUS_CODE,
-        "Failed to update slave domain",
-    )
+    assert result.returncode == SUCCESS_STATUS_CODE
+

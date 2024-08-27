@@ -38,6 +38,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Run smoke tests
+        id: smoke_tests
         run: |
           make smoketest
         env:
