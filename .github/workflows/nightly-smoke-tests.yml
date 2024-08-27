@@ -54,7 +54,7 @@ jobs:
           SLACK_MESSAGE: |
             *Nightly Smoke Tests Completed*
 
-            *Build Result:* ${{ job.steps.smoke_tests.outcome == 'success' && 'Build Passed ' || 'Build Failed' }}
+            *Build Result:* ${{ steps.smoke_tests.outcome == 'success' && 'Build Passed ' || 'Build Failed' }}
 
             *Job Details:*
             - Workflow: ${{ github.workflow }}
