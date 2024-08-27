@@ -11,9 +11,10 @@ from tests.integration.helpers import (
 BASE_CMD = ["linode-cli", "longview"]
 
 
+@pytest.mark.smoke
 def test_create_longview_client():
     new_label = str(time.time_ns()) + "label"
-    exec_test_command(
+    result = exec_test_command(
         BASE_CMD
         + [
             "create",
@@ -21,8 +22,12 @@ def test_create_longview_client():
             new_label,
             "--text",
             "--no-headers",
+            "--delimiter",
+            ",",
         ]
-    )
+    ).stdout.decode()
+
+    assert new_label in result
 
 
 def test_longview_client_list():

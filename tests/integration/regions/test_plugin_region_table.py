@@ -44,6 +44,7 @@ def test_regions_list():
     assert_headers_in_lines(headers, lines)
 
 
+@pytest.mark.smoke
 def test_regions_list_avail():
     res = (
         exec_test_command(BASE_CMD + ["list-avail", "--text", "--delimiter=,"])
@@ -78,6 +79,7 @@ def get_region_id():
     yield first_id
 
 
+@pytest.mark.smoke
 def test_regions_view(get_region_id):
     region_id = get_region_id
     res = (

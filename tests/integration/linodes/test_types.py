@@ -2,6 +2,8 @@ import os
 import subprocess
 from typing import List
 
+import pytest
+
 env = os.environ.copy()
 env["COLUMNS"] = "200"
 
@@ -16,6 +18,7 @@ def exec_test_command(args: List[str]):
 
 
 # verifying the DC pricing changes along with types
+@pytest.mark.smoke
 def test_linode_type():
     process = exec_test_command(["linode-cli", "linodes", "types"])
     output = process.stdout.decode()

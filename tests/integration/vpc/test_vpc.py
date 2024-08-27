@@ -1,6 +1,8 @@
 import re
 import time
 
+import pytest
+
 from linodecli.exit_codes import ExitCodes
 from tests.integration.conftest import get_regions_with_capabilities
 from tests.integration.helpers import (
@@ -35,6 +37,7 @@ def test_view_vpc(test_vpc_wo_subnet):
     assert vpc_id in res
 
 
+@pytest.mark.smoke
 def test_update_vpc(test_vpc_wo_subnet):
     vpc_id = test_vpc_wo_subnet
 
@@ -120,6 +123,7 @@ def test_view_subnet(test_vpc_wo_subnet, test_subnet):
     assert vpc_subnet_id in output
 
 
+@pytest.mark.smoke
 def test_update_subnet(test_vpc_w_subnet):
     vpc_id = test_vpc_w_subnet
 
