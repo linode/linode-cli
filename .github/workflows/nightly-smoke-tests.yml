@@ -56,7 +56,7 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": ":rocket: *${{ github.workflow }} Completed in ${{ github.repository }}* :white_check_mark:"
+                    "text": ":rocket: *${{ github.workflow }} Completed in: ${{ github.repository }}* :white_check_mark:"
                   }
                 },
                 {
