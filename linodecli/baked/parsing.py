@@ -176,9 +176,10 @@ def process_arg_description(description: str) -> Tuple[str, str]:
     result = strip_techdocs_prefixes(result)
     result = result.replace("\n", " ").replace("\r", " ")
 
-    description, links = extract_markdown_links(result)
+    # NOTE: Links should only be separated from Rich Markdown links
+    result_no_links, links = extract_markdown_links(result)
 
     if len(links) > 0:
-        description += f" See: {'; '.join(links)}"
+        result_no_links += f" See: {'; '.join(links)}"
 
-    return unescape(markdown_to_rich_markup(description)), unescape(description)
+    return unescape(markdown_to_rich_markup(result_no_links)), unescape(result)

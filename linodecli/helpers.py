@@ -6,7 +6,7 @@ import glob
 import os
 from argparse import ArgumentParser
 from pathlib import Path
-from typing import Optional
+from typing import Callable, List, Optional, TypeVar
 from urllib.parse import urlparse
 
 API_HOST_OVERRIDE = os.getenv("LINODE_CLI_API_HOST")
@@ -120,3 +120,36 @@ def expand_globs(pattern: str):
         print(f"No file found matching pattern {pattern}")
 
     return [Path(x).resolve() for x in results]
+
+
+T = TypeVar("T")
+
+
+def sorted_actions_smart(
+    actions: List[T], key: Callable[[T], str] = lambda v: v
+) -> List[T]:
+    """
+    Returns the given list of actions ordered to maximize readability.
+
+    :param actions: The actions to order.
+    :param key: A function to retrieve the name of a given action.
+
+    :returns: The ordered actions.
+    """
+
+    result = []
+    root_actions, other_actions = [], []
+
+    for action in sorted(actions, key=key):
+        action_key = key(action)
+
+        if "-" not in action_key:
+            root_actions.append(action)
+            continue
+
+        other_actions.append(action)
+
+    result.extend(root_actions)
+    result.extend(other_actions)
+
+    return result

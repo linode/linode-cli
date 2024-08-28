@@ -20,6 +20,10 @@ VERSION_FILE := ./linodecli/version.py
 VERSION_MODULE_DOCSTRING ?= \"\"\"\nThe version of the Linode CLI.\n\"\"\"\n\n
 LINODE_CLI_VERSION ?= "0.0.0.dev"
 
+# Documentation-related variables
+SPHINX_BUILDER ?= html
+SPHINX_GENERATED_PATH := ./docs/_generated
+
 .PHONY: install
 install: check-prerequisites requirements build
 	pip3 install --force dist/*.whl
@@ -81,6 +85,18 @@ testall:
 # Alias for unit; integration tests should be explicit
 .PHONY: test
 test: testunit
+
+.PHONY: clean-docs-commands
+clean-docs-commands:
+	rm -rf "$(SPHINX_GENERATED_PATH)"
+
+.PHONY: generate-docs
+generate-docs-commands: clean-docs-commands
+	python3 -m linodecli generate-docs "$(SPHINX_GENERATED_PATH)"
+
+.PHONY: generate-docs
+generate-docs: generate-docs-commands
+	cd docs && make $(SPHINX_BUILDER)
 
 .PHONY: black
 black:

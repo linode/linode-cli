@@ -24,6 +24,7 @@ from .arg_helpers import (
 from .cli import CLI
 from .completion import get_completions
 from .configuration import ENV_TOKEN_NAME
+from .documentation.generator import DocumentationGenerator
 from .help_pages import (
     HELP_TOPICS,
     print_help_action,
@@ -100,13 +101,24 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
     # handle a bake - this is used to parse a spec and bake it as a pickle
     if parsed.command == "bake":
         if parsed.action is None:
-            print("No spec provided, cannot bake")
+            print("No spec provided, cannot bake.", file=sys.stderr)
             sys.exit(ExitCodes.ARGUMENT_ERROR)
         bake_command(cli, parsed.action)
         sys.exit(ExitCodes.SUCCESS)
     elif cli.ops is None:
         # if not spec was found and we weren't baking, we're doomed
         sys.exit(ExitCodes.ARGUMENT_ERROR)
+
+    if parsed.command == "generate-docs":
+        if parsed.action is None:
+            print(
+                "No directory provided, cannot generate documentation.",
+                file=sys.stderr,
+            )
+            sys.exit(ExitCodes.ARGUMENT_ERROR)
+
+        DocumentationGenerator().generate(cli, output_directory=parsed.action)
+        sys.exit(ExitCodes.SUCCESS)
 
     if parsed.command == "register-plugin":
         if parsed.action is None:

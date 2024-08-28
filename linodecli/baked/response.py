@@ -4,6 +4,8 @@ Converting the processed OpenAPI Responses into something the CLI can work with
 
 from openapi3.paths import MediaType
 
+from linodecli.baked.parsing import process_arg_description
+
 
 def _is_paginated(response):
     """
@@ -52,8 +54,10 @@ class OpenAPIResponseAttr:
         self.nested_list_depth = nested_list_depth
 
         #: The description of this argument, for help display.  Only used for filterable attributes.
-        self.description = (
-            schema.description.split(".")[0] if schema.description else ""
+        self.description_rich, self.description = (
+            process_arg_description(schema.description)
+            if schema.description
+            else ("", "")
         )
 
         #: No response model fields are required. This is only used for filterable attributes.

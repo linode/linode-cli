@@ -1,0 +1,139 @@
+.. role:: action-subheading
+.. role:: action-subheading-description
+.. role:: action-argument-required
+
+{% macro action_details(action) %}
+{% set action_title = action.action[0] %}
+{% set action_title_format = "`%s <%s>`_" % (action_title, action.api_documentation_url) if action.api_documentation_url else action_title %}
+.. _{{ action.command }}_{{ action.action[0] }}:
+
+{{ action_title_format }}
+{{ "-" * (action_title_format | length) }}
+{% if action.action | length > 1 %}
+
+*Aliases: {{ action[1:] | join(", ") }}*
+{% endif %}
+
+{% if action.deprecated %}
+.. warning::
+    This command is deprecated and may not be supported in the future.
+{% endif %}
+
+{{ action.description }}
+{% if action.usage %}
+
+.. cssclass:: action-subheading
+
+    .. rubric:: Usage
+
+:action-subheading-description:`The format accepted by this command.`
+
+..  code-block:: bash
+
+{{ action.usage | indent(first=True) }}
+
+{% endif %}
+{% if action.samples | length > 0 %}
+
+.. cssclass:: action-subheading
+
+    .. rubric:: Sample{% if action.samples | length > 1 %}s{% endif %}
+
+
+:action-subheading-description:`Examples of how this command might be used.`
+
+{% for sample in action.samples %}
+
+..  code-block:: bash
+
+{{ sample | indent(first=True) }}
+
+{% endfor %}
+{% endif %}
+{% if action.parameters | length > 0 %}
+
+.. cssclass:: action-subheading
+
+    .. rubric:: Parameters
+
+:action-subheading-description:`Positional parameters used to define the resource this command should target.`
+
+..  list-table::
+    :header-rows: 1
+    :width: 100%
+    :widths: 15 10 75
+
+    * - Name
+      - Type
+      - Description
+
+{% for parameter in action.parameters %}
+    * - :code:`{{ parameter.name }}`
+      - {{ parameter.type }}
+      - {% if parameter.description %}{{ parameter.description }}{% else %}N/A{% endif %}
+
+{% endfor %}
+{% endif %}
+{% if action.arguments | length > 0 %}
+
+.. cssclass:: action-subheading
+
+    .. rubric:: Arguments
+
+:action-subheading-description:`Additional fields used to execute this request.`
+
+..  list-table::
+    :header-rows: 1
+    :width: 100%
+    :widths: 15 10 10 65
+
+    * - Name
+      - Required
+      - Type
+      - Description
+
+{% for argument in action.arguments %}
+    * - :code:`--{{ argument.path }}`
+      - {% if argument.required %}:action-argument-required:`Yes`{% else %}No{% endif %}
+
+      - {{ argument.type }}
+      - {% if argument.description %}{{ argument.description }}{% else %}N/A{% endif %}
+
+{% endfor %}
+{% endif %}
+{% if action.filterable_attrs | length > 0 %}
+
+.. rubric:: Filterable Attributes
+
+`Arguments used to define a filter for response entries.`
+
+..  list-table::
+    :header-rows: 1
+    :width: 100%
+    :widths: 15 10 75
+
+    * - Name
+      - Type
+      - Description
+
+{% for attr in action.filterable_attrs %}
+    * - :code:`--{{ attr.name }}`
+      - *{{ attr.type }}*
+      - {% if attr.description %}{{ attr.description }}{% else %}N/A{% endif %}
+
+{% endfor %}
+{% endif %}
+{% endmacro %}
+{{ pretty_name }}
+{{ "=" * (pretty_name | length) }}
+
+This section details {{ pretty_name[:-1] if pretty_name[-1] == "s" else pretty_name }}-related Linode CLI commands.
+
+{% for action in actions %}
+{{ action_details(action) }}
+
+{% if loop.index < (actions | length) - 1 %}
+------------
+{% endif %}
+
+{% endfor %}

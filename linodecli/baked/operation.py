@@ -17,6 +17,7 @@ from urllib.parse import urlparse
 import openapi3.paths
 from openapi3.paths import Operation, Parameter
 
+from linodecli.baked.parsing import process_arg_description
 from linodecli.baked.request import OpenAPIFilteringRequest, OpenAPIRequest
 from linodecli.baked.response import OpenAPIResponse
 from linodecli.exit_codes import ExitCodes
@@ -285,6 +286,9 @@ class OpenAPIOperationParameter:
         """
         self.name = parameter.name
         self.type = parameter.schema.type
+        self.description_rich, self.description = process_arg_description(
+            parameter.description or ""
+        )
 
     def __repr__(self):
         return f"<OpenAPIOperationParameter {self.name}>"
@@ -357,7 +361,7 @@ class OpenAPIOperation:
             self.action = action
 
         self.summary = operation.summary
-        self.description = operation.description.split(".")[0]
+        self.description = operation.description.split(".")[0] + "."
 
         # The apiVersion attribute should not be specified as a positional argument
         self.params = [
@@ -386,6 +390,8 @@ class OpenAPIOperation:
             if code_samples_ext is not None
             else []
         )
+
+        self.deprecated = operation.deprecated
 
     @property
     def args(self):
@@ -584,6 +590,7 @@ class OpenAPIOperation:
             arg_type = (
                 arg.item_type if arg.datatype == "array" else arg.datatype
             )
+
             arg_type_handler = TYPES[arg_type]
 
             if arg.nullable:
@@ -781,22 +788,7 @@ class OpenAPIOperation:
         :rtype: Namespace
         """
 
-        #  build an argparse
-        parser = argparse.ArgumentParser(
-            prog=f"linode-cli {self.command} {self.action}",
-            description=self.summary,
-        )
-        for param in self.params:
-            parser.add_argument(
-                param.name, metavar=param.name, type=TYPES[param.type]
-            )
-
-        list_items = []
-
-        if self.method == "get":
-            self._add_args_filter(parser)
-        elif self.method in ("post", "put"):
-            list_items = self._add_args_post_put(parser)
+        parser, list_items = self._build_parser()
 
         parsed = parser.parse_args(args)
 
@@ -804,6 +796,35 @@ class OpenAPIOperation:
             self._validate_parent_child_conflicts(parsed)
 
         return self._handle_list_items(list_items, parsed)
+
+    def _build_parser(
+        self,
+    ) -> Tuple[argparse.ArgumentParser, List[Tuple[str, str]]]:
+        """
+        Builds and returns an argument parser for this operation.
+
+        :returns: A tuple containing the new argument parser and a list of tuples, each
+                  representing a single list argument.
+        """
+
+        result = argparse.ArgumentParser(
+            prog=f"linode-cli {self.command} {self.action}",
+            description=self.summary,
+        )
+
+        for param in self.params:
+            result.add_argument(
+                param.name, metavar=param.name, type=TYPES[param.type]
+            )
+
+        list_items = []
+
+        if self.method == "get":
+            self._add_args_filter(result)
+        elif self.method in ("post", "put"):
+            list_items = self._add_args_post_put(result)
+
+        return result, list_items
 
     @staticmethod
     def _resolve_operation_docs_url_legacy(

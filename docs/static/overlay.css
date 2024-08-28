@@ -1,0 +1,37 @@
+/* Hack to force wrapping in table cells. */
+table {
+    width: 100% !important;
+}
+
+tr {
+    width: 100% !important;
+}
+
+td {
+    word-wrap: break-word !important;
+    white-space: normal !important;
+}
+
+/* Make the content area a bit larger than default. */
+.wy-nav-content {
+    max-width: 1000px !important;
+}
+
+/* Make the logo a bit larger than default */
+.logo {
+    width: 150px !important;
+}
+
+/* Custom formatting for actions */
+.action-subheading {
+    margin-bottom: 4px !important;
+}
+
+.action-subheading-description {
+    font-size: 90% !important;
+    margin-bottom: 12px !important;
+}
+
+.action-argument-required {
+    color: red !important;
+}
