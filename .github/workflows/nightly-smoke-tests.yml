@@ -46,18 +46,61 @@ jobs:
 
       - name: Notify Slack
         if: always()
-        uses: rtCamp/action-slack-notify@v2
+        uses: slackapi/slack-github-action@v1.26.0
+        with:
+          channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
+          payload: |
+            {
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": ":rocket: *${{ github.workflow }} Completed in ${{ github.repository }}* :white_check_mark:"
+                  }
+                },
+                {
+                  "type": "divider"
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Build Result:*\n${{ steps.smoke_tests.outcome == 'success' && ':large_green_circle: Build Passed' || ':red_circle: Build Failed' }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Branch:*\n`${{ github.ref_name }}`"
+                    }
+                  ]
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Commit Hash:*\n<${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}|${{ github.sha }}>"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Run URL:*\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run Details>"
+                    }
+                  ]
+                },
+                {
+                  "type": "divider"
+                },
+                {
+                  "type": "context",
+                  "elements": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "Triggered by: :bust_in_silhouette: `${{ github.actor }}`"
+                    }
+                  ]
+                }
+              ]
+            }
         env:
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-          SLACK_USERNAME: 'GHBot'
-          SLACK_COLOR: ${{ job.status }}
-          SLACK_MESSAGE: |
-            *Nightly Smoke Tests Completed*
-
-            *Build Result:* ${{ steps.smoke_tests.outcome == 'success' && 'Build Passed ' || 'Build Failed' }}
-
-            *Job Details:*
-            - Workflow: ${{ github.workflow }}
-            - Branch: `${{ github.ref_name }}`
-            - Run URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-            - Commit: <${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}|`${{ github.sha }}`>
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
