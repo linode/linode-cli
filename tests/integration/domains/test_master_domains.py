@@ -3,6 +3,7 @@ import time
 
 import pytest
 
+from linodecli.exit_codes import ExitCodes
 from tests.integration.helpers import (
     delete_target_id,
     exec_failing_test_command,
@@ -58,7 +59,8 @@ def test_create_domain_fails_without_spcified_type():
             "pthiel@linode.com",
             "--text",
             "--no-headers",
-        ]
+        ],
+        expected_code=ExitCodes.REQUEST_FAILED,
     ).stderr.decode()
 
     assert "Request failed: 400" in result
@@ -77,7 +79,8 @@ def test_create_master_domain_fails_without_soa_email():
             "example.bc-" + timestamp + ".com",
             "--text",
             "--no-headers",
-        ]
+        ],
+        expected_code=ExitCodes.REQUEST_FAILED,
     ).stderr.decode()
 
     assert "Request failed: 400" in result

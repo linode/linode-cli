@@ -1,6 +1,7 @@
 import re
 import time
 
+from linodecli.exit_codes import ExitCodes
 from tests.integration.conftest import get_regions_with_capabilities
 from tests.integration.helpers import (
     exec_failing_test_command,
@@ -160,7 +161,8 @@ def test_fails_to_create_vpc_invalid_label():
 
     res = (
         exec_failing_test_command(
-            BASE_CMD + ["create", "--label", invalid_label, "--region", region]
+            BASE_CMD + ["create", "--label", invalid_label, "--region", region],
+            ExitCodes.REQUEST_FAILED,
         )
         .stderr.decode()
         .rstrip()
@@ -184,7 +186,8 @@ def test_fails_to_create_vpc_duplicate_label(test_vpc_wo_subnet):
 
     res = (
         exec_failing_test_command(
-            BASE_CMD + ["create", "--label", label, "--region", region]
+            BASE_CMD + ["create", "--label", label, "--region", region],
+            ExitCodes.REQUEST_FAILED,
         )
         .stderr.decode()
         .rstrip()
@@ -199,7 +202,8 @@ def test_fails_to_update_vpc_invalid_label(test_vpc_wo_subnet):
 
     res = (
         exec_failing_test_command(
-            BASE_CMD + ["update", vpc_id, "--label", invalid_label]
+            BASE_CMD + ["update", vpc_id, "--label", invalid_label],
+            ExitCodes.REQUEST_FAILED,
         )
         .stderr.decode()
         .rstrip()
@@ -223,7 +227,8 @@ def test_fails_to_create_vpc_subnet_w_invalid_label(test_vpc_wo_subnet):
             "--ipv4",
             "10.1.0.0/24",
             vpc_id,
-        ]
+        ],
+        ExitCodes.REQUEST_FAILED,
     ).stderr.decode()
 
     assert "Request failed: 400" in res
@@ -256,7 +261,8 @@ def test_fails_to_update_vpc_subenet_w_invalid_label(test_vpc_w_subnet):
                 "--text",
                 "--format=label",
                 "--no-headers",
-            ]
+            ],
+            ExitCodes.REQUEST_FAILED,
         )
         .stderr.decode()
         .rstrip()
