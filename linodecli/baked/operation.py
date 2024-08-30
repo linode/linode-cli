@@ -788,7 +788,7 @@ class OpenAPIOperation:
         :rtype: Namespace
         """
 
-        parser, list_items = self._build_parser()
+        parser, list_items = self.build_parser()
 
         parsed = parser.parse_args(args)
 
@@ -797,7 +797,7 @@ class OpenAPIOperation:
 
         return self._handle_list_items(list_items, parsed)
 
-    def _build_parser(
+    def build_parser(
         self,
     ) -> Tuple[argparse.ArgumentParser, List[Tuple[str, str]]]:
         """

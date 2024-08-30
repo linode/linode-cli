@@ -1,3 +1,7 @@
+"""
+Contains the primary class for generating documentation files.
+"""
+
 import json
 from dataclasses import asdict
 from pathlib import Path
@@ -14,6 +18,10 @@ OUTPUT_PATH_GROUP_FORMAT = "groups/{name}.rst"
 
 
 class DocumentationGenerator:
+    """
+    The primary class responsible for generating Linode CLI documentation.
+    """
+
     def __init__(self):
         self._template_env = Environment(
             loader=PackageLoader("linodecli.documentation", "templates"),
@@ -43,7 +51,9 @@ class DocumentationGenerator:
 
         # Write the build data to a JSON file so it can be consumed from the
         # Sphinx config.
-        with open(output_path / OUTPUT_PATH_BUILD_META, "w") as f:
+        with open(
+            output_path / OUTPUT_PATH_BUILD_META, "w", encoding="utf-8"
+        ) as f:
             json.dump(asdict(build_meta), f)
 
         # Generate a documentation file for each CLI group.

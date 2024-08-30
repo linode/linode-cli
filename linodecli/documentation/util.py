@@ -1,3 +1,7 @@
+"""
+Contains various utility functions related to documentation generation.
+"""
+
 import math
 import re
 

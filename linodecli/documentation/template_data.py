@@ -1,3 +1,7 @@
+"""
+Contains all structures used to render documentation templates.
+"""
+
 from dataclasses import dataclass, field
 from io import StringIO
 from typing import Dict, List, Optional, Self
@@ -37,6 +41,15 @@ class FilterableAttribute:
 
     @classmethod
     def from_openapi(cls, attr: OpenAPIResponseAttr) -> Self:
+        """
+        Returns a new FilterableAttribute object initialized using values
+        from the given filterable OpenAPI response attribute.
+
+        :param attr: The OpenAPI response attribute to initialize the object with.
+
+        :returns: The initialized object.
+        """
+
         return cls(
             name=attr.name,
             type=(
@@ -70,6 +83,15 @@ class Argument:
 
     @classmethod
     def from_openapi(cls, arg: OpenAPIRequestArg) -> Self:
+        """
+        Returns a new Argument object initialized using values
+        from the given OpenAPI request argument.
+
+        :param arg: The OpenAPI request argument to initialize the object with.
+
+        :returns: The initialized object.
+        """
+
         return cls(
             path=arg.path,
             required=arg.required,
@@ -103,6 +125,15 @@ class Param:
 
     @classmethod
     def from_openapi(cls, param: OpenAPIOperationParameter) -> Self:
+        """
+        Returns a new Param object initialized using values
+        from the given OpenAPI parameter.
+
+        :param param: The OpenAPI parameter to initialize the object with.
+
+        :returns: The initialized object.
+        """
+
         return cls(
             name=param.name,
             type=param.type,
@@ -137,6 +168,15 @@ class Action:
 
     @classmethod
     def from_openapi(cls, operation: OpenAPIOperation) -> Self:
+        """
+        Returns a new Action object initialized using values
+        from the given operation.
+
+        :param operation: The operation to initialize the object with.
+
+        :returns: The initialized object.
+        """
+
         result = cls(
             command=operation.command,
             action=(
@@ -191,8 +231,16 @@ class Action:
 
     @staticmethod
     def _get_usage(operation: OpenAPIOperation) -> str:
+        """
+        Returns the formatted argparse usage string for the given operation.
+
+        :param: operation: The operation to get the usage string for.
+
+        :returns: The formatted usage string.
+        """
+
         usage_io = StringIO()
-        operation._build_parser()[0].print_usage(file=usage_io)
+        operation.build_parser()[0].print_usage(file=usage_io)
 
         return _format_usage_text(usage_io.getvalue())
 
@@ -211,6 +259,16 @@ class Group:
     def from_openapi(
         cls, name: str, group: Dict[str, OpenAPIOperation]
     ) -> Self:
+        """
+        Returns a new Group object initialized using values
+        from the given name and group mapping.
+
+        :param name: The name/key of the group.
+        :param group: A mapping between action names and their corresponding OpenAPIOperations.
+
+        :returns: The initialized object.
+        """
+
         return cls(
             name=name,
             pretty_name=(
@@ -235,6 +293,15 @@ class Root:
 
     @classmethod
     def from_cli(cls, cli: CLI) -> Self:
+        """
+        Returns a new Root object initialized using values
+        from the given CLI.
+
+        :param cli: The CLI to initialize the object with.
+
+        :returns: The initialized object.
+        """
+
         return cls(
             groups=sorted(
                 [
