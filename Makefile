@@ -10,7 +10,7 @@ TEST_CASE_COMMAND = -k $(TEST_CASE)
 endif
 
 # TODO: Revert this once the corrected spec is available.
-SPEC := $(PWD)/openapi.yaml.tmp
+SPEC := ./openapi.yaml.tmp
 
 SPEC_VERSION ?= latest
 ifndef SPEC
