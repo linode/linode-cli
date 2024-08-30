@@ -34,7 +34,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          submodules: 'recursive'
+          submodules: "recursive"
 
       - name: Update system packages
         run: sudo apt-get update -y
@@ -42,7 +42,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.x'
+          python-version: "3.x"
 
       - name: Install Python dependencies and update cert
         run: |
@@ -69,24 +69,42 @@ jobs:
     needs:
       - build
     steps:
+      - name: Checkout the GitHub Pages branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: "recursive"
+          ref: "static/pages"
+
+      - name: Ensure any previous documentation for this branch are removed
+        run: rm -rf "./${{ github.ref }}"
+
       - name: Download the artifact from the previous job
         uses: actions/download-artifact@v4
         with:
           name: generated-docs-html
-          path: .docs-html
+          path: "${{ github.ref }}"
 
-      # TODO: Implement some sort of page merging logic here so we can host
-      #       separate pages for `dev`, `main` and commit hashes.
-
-      - name: Configure GitHub Pages
-        uses: actions/configure-pages@v5
-        with:
-          enablement: true
-
-      - name: Push the rendered documentation site to GitHub Pages
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: .docs-html
-
-      - name: Deploy to GitHub Pages
-        uses: actions/deploy-pages@v4
+      - name: Commit and push this change
+        run: |
+          git config user.name "Documentation Publisher"
+          git config user.email "dl-linode-dev-dx@akamai.com"
+          git add .
+          git commit -m "Rebuild ${{ github.ref }} from ${{ github.sha }}"
+          git push origin static/pages
+#
+#      # TODO: Implement some sort of page merging logic here so we can host
+#      #       separate pages for `dev`, `main` and commit hashes.
+#
+#      - name: Configure GitHub Pages
+#        uses: actions/configure-pages@v5
+#        with:
+#          enablement: true
+#
+#      - name: Push the rendered documentation site to GitHub Pages
+#        uses: actions/upload-pages-artifact@v3
+#        with:
+#          path: .docs-html
+#
+#      - name: Deploy to GitHub Pages
+#        uses: actions/deploy-pages@v4
