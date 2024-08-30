@@ -9,6 +9,8 @@ ifdef TEST_CASE
 TEST_CASE_COMMAND = -k $(TEST_CASE)
 endif
 
+# TODO: Revert this once the corrected spec is available.
+SPEC := $(PWD)/openapi.yaml.tmp
 
 SPEC_VERSION ?= latest
 ifndef SPEC
@@ -91,7 +93,7 @@ clean-docs-commands:
 	rm -rf "$(SPHINX_GENERATED_PATH)"
 
 .PHONY: generate-docs
-generate-docs-commands: clean-docs-commands
+generate-docs-commands: bake clean-docs-commands
 	python3 -m linodecli generate-docs "$(SPHINX_GENERATED_PATH)"
 
 .PHONY: generate-docs

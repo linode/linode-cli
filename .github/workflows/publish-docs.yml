@@ -1,0 +1,92 @@
+name: Build and Publish Documentation
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+
+      # TODO: Remove this line
+      - new/doc-generation
+
+  release:
+    types:
+      - published
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Make sure we avoid a race condition =)
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build the documentation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: 'recursive'
+
+      - name: Update system packages
+        run: sudo apt-get update -y
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install Python dependencies and update cert
+        run: |
+          pip install wheel boto3 && \
+          pip install certifi -U && \
+          pip install .[obj,dev]
+
+      - name: Build the documentation
+        run: make generate-docs
+        env:
+          # We need to define a token to prevent the CLI from
+          # attempting to do a first-time configuration.
+          LINODE_CLI_TOKEN: foobar
+
+      - name: Upload the artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-docs-html
+          path: docs/build/html
+
+  publish:
+    name: Publish the documentation
+    runs-on: ubuntu-latest
+    needs:
+      - build
+    steps:
+      - name: Download the artifact from the previous job
+        uses: actions/download-artifact@v4
+        with:
+          name: generated-docs-html
+          path: .docs-html
+
+      # TODO: Implement some sort of page merging logic here so we can host
+      #       separate pages for `dev`, `main` and commit hashes.
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Push the rendered documentation site to GitHub Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .docs-html
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
