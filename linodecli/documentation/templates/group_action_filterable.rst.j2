@@ -1,0 +1,33 @@
+{% macro render(attributes) %}
+{% include "_roles.rst.j2" %}
+{% import "_macros.rst.j2" as macros %}
+
+{{
+    macros.group_action_subheading(
+        "Filterable Attributes",
+        "Arguments used to define a filter for response entries."
+    )
+}}
+
+{% set rows = [] %}
+{% for attr in attributes %}
+    {%
+        do rows.append(
+            [
+                ":action-table-field-name:`\-\-%s`" % attr.name,
+                ":action-table-field-type:`%s`" % attr.type,
+                attr.description if attr.description else "N/A"
+            ]
+        )
+    %}
+{% endfor %}
+{{
+    macros.group_action_table(
+        "action-filterable-field-table",
+        [1, 1, 98],
+        ["Name", "Type", "Description"],
+        *rows
+    )
+}}
+
+{% endmacro %}

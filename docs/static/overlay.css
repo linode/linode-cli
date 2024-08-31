@@ -22,9 +22,12 @@ td {
     width: 150px !important;
 }
 
-/* Custom formatting for actions */
+/*
+Custom formatting for actions
+*/
 .action-subheading {
     margin-bottom: 4px !important;
+    font-weight: 700 !important;
 }
 
 .action-subheading-description {
@@ -32,6 +35,53 @@ td {
     margin-bottom: 12px !important;
 }
 
-.action-argument-required {
-    color: red !important;
+.action-section-header {
+    color: #606060 !important;
+    font-weight: 700 !important;
+    padding-top: 10px !important;
+    margin-bottom: 12px !important;
+    font-size: 95% !important;
+}
+
+.action-table-field-name,
+.action-table-field-optional,
+.action-table-field-required,
+.action-table-field-type {
+    font-size: 85% !important;
+    font-family: SFMono-Regular,Menlo,Monaco,Consolas,Liberation Mono,Courier New,Courier,monospace !important;
+}
+
+.action-table-field-required {
+    color: #E74C3C !important;
+}
+
+/*
+Formatting for generated tables
+*/
+
+/* Prevent word wrapping on `Name` and `Example` fields */
+.action-argument-section-table > tbody tr > td:nth-child(1) *,
+.action-parameter-table > tbody tr > td:nth-child(1) *,
+.action-filterable-field-table > tbody tr > td:nth-child(1) *,
+.action-attribute-section-table > tbody tr > td:nth-child(1) *,
+.action-attribute-section-table > tbody tr > td:nth-child(3) * {
+    word-wrap: unset !important;
+    white-space: nowrap !important;
+}
+
+/* Center-align `Required`, and `Type` columns */
+.action-argument-section-table > tbody tr > td:nth-child(2),
+.action-argument-section-table > thead tr > th:nth-child(2),
+.action-argument-section-table > tbody tr > td:nth-child(3),
+.action-argument-section-table > thead tr > th:nth-child(3),
+
+.action-attribute-section-table > tbody tr > td:nth-child(2),
+.action-attribute-section-table > thead tr > th:nth-child(2),
+
+.action-parameter-table > tbody tr > td:nth-child(2),
+.action-parameter-table > thead tr > th:nth-child(2),
+
+.action-filterable-field-table > tbody tr > td:nth-child(2),
+.action-filterable-field-table > thead tr > th:nth-child(2) {
+    text-align: center !important;
 }

@@ -1,13 +1,13 @@
-linode-cli Documentation
-========================
-
-.. image:: static/demo.gif
-   :alt: Linode CLI Demo
+linode-cli
+==========
 
 Welcome to the `linode-cli` documentation!
 
 For installation instructions and usage guides, please
 refer to the sidebar of this page or the Table of Contents below.
+
+.. image:: static/demo.gif
+   :alt: Linode CLI Demo
 
 Table of Contents
 -----------------

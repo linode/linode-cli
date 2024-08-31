@@ -361,7 +361,9 @@ class OpenAPIOperation:
             self.action = action
 
         self.summary = operation.summary
-        self.description = operation.description.split(".")[0] + "."
+        self.description_rich, self.description = process_arg_description(
+            operation.description or ""
+        )
 
         # The apiVersion attribute should not be specified as a positional argument
         self.params = [
@@ -590,6 +592,10 @@ class OpenAPIOperation:
             arg_type = (
                 arg.item_type if arg.datatype == "array" else arg.datatype
             )
+
+            # # TODO: Remove this workaround once the LKE docs issue has been resolved
+            if arg_type is None:
+                arg_type = "object"
 
             arg_type_handler = TYPES[arg_type]
 

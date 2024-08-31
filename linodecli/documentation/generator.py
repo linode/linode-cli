@@ -8,7 +8,7 @@ from pathlib import Path
 
 from jinja2 import Environment, PackageLoader, select_autoescape
 
-from linodecli import CLI
+from linodecli.cli import CLI
 from linodecli.documentation.template_data import BuildMeta, Root
 
 TEMPLATE_NAME_GROUP = "group.rst.j2"
@@ -25,6 +25,7 @@ class DocumentationGenerator:
     def __init__(self):
         self._template_env = Environment(
             loader=PackageLoader("linodecli.documentation", "templates"),
+            extensions=["jinja2.ext.do"],
             autoescape=select_autoescape(),
             trim_blocks=True,
             lstrip_blocks=True,

@@ -1,0 +1,33 @@
+{% macro render(params) %}
+{% include "_roles.rst.j2" %}
+{% import "_macros.rst.j2" as macros %}
+
+{{
+    macros.group_action_subheading(
+        "Parameters",
+        "Positional parameters used to define the resource this command should target."
+    )
+}}
+
+{% set rows = [] %}
+{% for param in params %}
+    {%
+        do rows.append(
+            [
+                ":action-table-field-name:`%s`" % param.name,
+                ":action-table-field-type:`%s`" % param.type,
+                param.description if param.description else "N/A"
+            ]
+        )
+    %}
+{% endfor %}
+{{
+    macros.group_action_table(
+        "action-parameter-table",
+        [1, 1, 98],
+        ["Name", "Type", "Description"],
+        *rows
+    )
+}}
+
+{% endmacro %}

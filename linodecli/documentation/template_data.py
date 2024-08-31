@@ -2,15 +2,27 @@
 Contains all structures used to render documentation templates.
 """
 
+from collections import defaultdict
 from dataclasses import dataclass, field
 from io import StringIO
-from typing import Dict, List, Optional, Self
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Generic,
+    Iterable,
+    List,
+    Optional,
+    Self,
+    Set,
+    TypeVar,
+)
 
-from linodecli import CLI
 from linodecli.baked import OpenAPIOperation
 from linodecli.baked.operation import OpenAPIOperationParameter
 from linodecli.baked.request import OpenAPIRequestArg
 from linodecli.baked.response import OpenAPIResponseAttr
+from linodecli.cli import CLI
 from linodecli.documentation.util import (
     _format_usage_text,
     _markdown_to_rst,
@@ -27,9 +39,11 @@ GROUP_NAME_CORRECTIONS = {
     "vpcs": "VPCs",
 }
 
+T = TypeVar("T")
+
 
 @dataclass
-class FilterableAttribute:
+class ResponseAttribute:
     """
     Represents a single filterable attribute for a list command/action.
     """
@@ -38,6 +52,7 @@ class FilterableAttribute:
     type: str
 
     description: Optional[str]
+    example: Optional[Any]
 
     @classmethod
     def from_openapi(cls, attr: OpenAPIResponseAttr) -> Self:
@@ -62,6 +77,7 @@ class FilterableAttribute:
                 if attr.description != ""
                 else None
             ),
+            example=attr.example,
         )
 
 
@@ -77,9 +93,13 @@ class Argument:
 
     is_json: bool = False
     is_nullable: bool = False
-    is_parent: bool = False
     depth: int = 0
     description: Optional[str] = None
+    example: Optional[Any] = None
+
+    is_parent: bool = False
+    is_child: bool = False
+    parent: Optional[str] = None
 
     @classmethod
     def from_openapi(cls, arg: OpenAPIRequestArg) -> Self:
@@ -92,23 +112,29 @@ class Argument:
         :returns: The initialized object.
         """
 
+        type_str = arg.datatype
+        if arg.item_type is not None:
+            type_str = f"{arg.datatype}[{arg.item_type}]"
+
+        if arg.format == "json":
+            type_str = "json"
+
         return cls(
             path=arg.path,
             required=arg.required,
-            type=(
-                arg.datatype
-                if arg.item_type is None
-                else f"{arg.datatype}[{arg.item_type}]"
-            ),
+            type=type_str,
             is_json=arg.format == "json",
             is_nullable=arg.nullable,
             is_parent=arg.is_parent,
+            parent=arg.parent,
+            is_child=arg.is_child,
             depth=arg.depth,
             description=(
                 _markdown_to_rst(arg.description)
                 if arg.description != ""
                 else None
             ),
+            example=arg.example,
         )
 
 
@@ -146,6 +172,48 @@ class Param:
 
 
 @dataclass
+class FieldSection(Generic[T]):
+    """
+    Represents a single section of arguments.
+    """
+
+    name: str
+    entries: List[T]
+
+    @classmethod
+    def from_iter(
+        cls,
+        data: Iterable[T],
+        get_parent: Callable[[T], Optional[str]],
+        sort_key: Callable[[T], Any],
+    ) -> List[Self]:
+        """
+        Builds a list of FieldSection created from the given data using the given functions.
+
+        :param data: The data to partition.
+        :param get_parent: A function returning the parent of this entry.
+        :param sort_key: A function passed into the `key` argument of the sort function.
+
+        :returns: The built list of sections.
+        """
+
+        sections = defaultdict(lambda: [])
+
+        for entry in data:
+            parent = get_parent(entry)
+
+            sections[parent if parent is not None else ""].append(entry)
+
+        return sorted(
+            [
+                FieldSection(name=key, entries=sorted(section, key=sort_key))
+                for key, section in sections.items()
+            ],
+            key=lambda section: section.name,
+        )
+
+
+@dataclass
 class Action:
     """
     Represents a single generated Linode CLI command/action.
@@ -161,10 +229,20 @@ class Action:
     deprecated: bool = False
     parameters: List[Param] = field(default_factory=lambda: [])
     samples: List[str] = field(default_factory=lambda: [])
-    filterable_attrs: List[FilterableAttribute] = field(
+    attributes: List[ResponseAttribute] = field(default_factory=lambda: [])
+    filterable_attributes: List[ResponseAttribute] = field(
         default_factory=lambda: []
     )
-    arguments: List[Argument] = field(default_factory=lambda: [])
+
+    argument_sections: List[FieldSection[Argument]] = field(
+        default_factory=lambda: []
+    )
+    argument_sections_names: Set[str] = field(default_factory=lambda: {})
+
+    attribute_sections: List[FieldSection[ResponseAttribute]] = field(
+        default_factory=lambda: []
+    )
+    attribute_sections_names: Set[str] = field(default_factory=lambda: {})
 
     @classmethod
     def from_openapi(cls, operation: OpenAPIOperation) -> Self:
@@ -205,27 +283,48 @@ class Action:
                 Param.from_openapi(param) for param in operation.params
             ]
 
-        if operation.args:
-            result.arguments = sorted(
-                [
-                    Argument.from_openapi(arg)
-                    for arg in operation.args
-                    if isinstance(arg, OpenAPIRequestArg)
-                ],
-                key=lambda arg: (not arg.required, arg.path),
-            )
-
         if operation.method == "get" and operation.response_model.is_paginated:
-            result.filterable_attrs = sorted(
+            result.filterable_attributes = sorted(
                 [
-                    FilterableAttribute.from_openapi(attr)
+                    ResponseAttribute.from_openapi(attr)
                     for attr in operation.response_model.attrs
                     if attr.filterable
                 ],
                 key=lambda v: v.name,
             )
 
-        result.usage = Action._get_usage(operation)
+        if operation.args:
+            result.argument_sections = FieldSection.from_iter(
+                iter(
+                    Argument.from_openapi(arg)
+                    for arg in operation.args
+                    if isinstance(arg, OpenAPIRequestArg)
+                ),
+                get_parent=lambda arg: arg.parent if arg.is_child else None,
+                sort_key=lambda arg: (not arg.required, arg.path),
+            )
+
+            result.argument_sections_names = {
+                section.name for section in result.argument_sections
+            }
+
+        if operation.response_model.attrs:
+            result.attribute_sections = FieldSection.from_iter(
+                iter(
+                    ResponseAttribute.from_openapi(attr)
+                    for attr in operation.response_model.attrs
+                ),
+                get_parent=lambda attr: (
+                    attr.name.split(".", maxsplit=1)[0]
+                    if "." in attr.name
+                    else None
+                ),
+                sort_key=lambda attr: attr.name,
+            )
+
+            result.attribute_sections_names = {
+                section.name for section in result.argument_sections
+            }
 
         return result
 

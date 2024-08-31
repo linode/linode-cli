@@ -9,9 +9,6 @@ ifdef TEST_CASE
 TEST_CASE_COMMAND = -k $(TEST_CASE)
 endif
 
-# TODO: Revert this once the corrected spec is available.
-SPEC := ./openapi.yaml.tmp
-
 SPEC_VERSION ?= latest
 ifndef SPEC
 override SPEC = $(shell ./resolve_spec_url ${SPEC_VERSION})

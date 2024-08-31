@@ -105,6 +105,9 @@ class OpenAPIRequestArg:
         #: Whether null is an acceptable value for this attribute
         self.nullable = schema.nullable
 
+        #: An example value for this attribute
+        self.example = schema.example
+
         # handle the type for list values if this is an array
         if self.datatype == "array" and schema.items:
             self.item_type = schema.items.type

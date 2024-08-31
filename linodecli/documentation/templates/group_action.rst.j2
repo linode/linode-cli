@@ -1,0 +1,51 @@
+{% macro render(action) %}
+{% include "_roles.rst.j2" %}
+{% import "group_action_params.rst.j2" as params_tmpl %}
+{% import "group_action_usage.rst.j2" as usage_tmpl %}
+{% import "group_action_samples.rst.j2" as samples_tmpl %}
+{% import "group_action_arguments.rst.j2" as args_tmpl %}
+{% import "group_action_filterable.rst.j2" as filterable_tmpl %}
+{% import "group_action_attributes.rst.j2" as attrs_tmpl %}
+
+{% set action_title = action.action[0] %}
+{% set action_title_format = "`%s <%s>`_" % (action_title, action.api_documentation_url) if action.api_documentation_url else action_title %}
+.. _commands_{{ action.command }}_{{ action.action[0] }}:
+
+{{ action_title_format }}
+{{ "-" * (action_title_format | length) }}
+{% if action.action | length > 1 %}
+
+*Aliases: {{ action[1:] | join(", ") }}*
+{% endif %}
+
+{% if action.deprecated %}
+.. warning::
+    This command is deprecated and may not be supported in the future.
+{% endif %}
+
+{{ action.description }}
+{% if action.usage %}
+{{ usage_tmpl.render(action.usage) }}
+{% endif %}
+
+{% if action.samples | length > 0 %}
+{{ samples_tmpl.render(action.samples) }}
+{% endif %}
+
+{% if action.parameters | length > 0 %}
+{{ params_tmpl.render(action.parameters) }}
+{% endif %}
+
+{% if action.argument_sections | length > 0 %}
+{{ args_tmpl.render(action.command, action.action[0], action.argument_sections, action.argument_sections_names) }}
+{% endif %}
+
+{% if action.filterable_attributes | length > 0 %}
+{{ filterable_tmpl.render(action.filterable_attributes) }}
+{% endif %}
+
+{% if action.attribute_sections | length > 0%}
+{{ attrs_tmpl.render(action.command, action.action[0], action.attribute_sections, action.attribute_sections_names) }}
+{% endif %}
+
+{% endmacro %}

@@ -80,10 +80,16 @@ class OpenAPIResponseAttr:
         #: How we should associate values of this attribute to output colors
         self.color_map = schema.extensions.get("linode-cli-color")
 
+        #: An example value for this attribute.
+        self.example = schema.example
+
         #: The type for items in this attribute, if this attribute is a list
         self.item_type = None
         if schema.type == "array":
             self.item_type = schema.items.type
+
+            if schema.items.example:
+                self.example = schema.items.example
 
     @property
     def path(self):

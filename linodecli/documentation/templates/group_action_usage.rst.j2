@@ -1,0 +1,16 @@
+{% macro render(usage) %}
+{% include "_roles.rst.j2" %}
+{% import "_macros.rst.j2" as macros %}
+
+{{
+    macros.group_action_subheading(
+        "Usage",
+        "The format accepted by this command."
+    )
+}}
+
+..  code-block:: bash
+
+{{ usage | indent(first=True) }}
+
+{% endmacro %}
