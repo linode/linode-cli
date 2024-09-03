@@ -38,6 +38,7 @@ image = linode/alpine3.16
 plugin-testplugin-testkey = plugin-test-value
 authorized_users = cli-dev
 mysql_engine = mysql/8.0.26
+suppress-version-warning = true
 
 [cli-dev2]
 token = {test_token}2
@@ -156,6 +157,14 @@ mysql_engine = mysql/8.0.26"""
         assert conf.get_value("notakey") == None
         assert conf.get_value("region") == "us-east"
 
+    def test_get_bool(self):
+        """
+        Test CLIConfig.get_bool({key})
+        """
+        conf = self._build_test_config()
+        assert conf.get_bool("notakey") == False
+        assert conf.get_bool("suppress-version-warning") == True
+
     def test_plugin_set_value(self):
         """
         Test CLIConfig.plugin_set_value({key}, {value})
@@ -265,6 +274,7 @@ mysql_engine = mysql/8.0.26"""
                 "foobar.linode.com",
                 "v4beta",
                 "https",
+                "n",
             ]
         )
 
@@ -319,7 +329,7 @@ mysql_engine = mysql/8.0.26"""
         """
         conf = configuration.CLIConfig(self.base_url, skip_config=True)
 
-        answers = iter(["1", "1", "1", "1", "1", "1", "n"])
+        answers = iter(["1", "1", "1", "1", "1", "1", "n", "n"])
 
         def mock_input(prompt):
             if not prompt:
