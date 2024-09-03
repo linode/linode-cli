@@ -101,8 +101,6 @@ jobs:
 
       - name: Install Package
         run: make install
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set LINODE_CLI_TOKEN
         run: |
