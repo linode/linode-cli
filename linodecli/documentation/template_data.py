@@ -208,7 +208,7 @@ class Param:
 
         return cls(
             name=param.name,
-            type=param.type,
+            type=_format_type(param.type),
             description=(
                 _markdown_to_rst(param.description)
                 if param.description is not None
