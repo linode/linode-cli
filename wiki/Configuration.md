@@ -38,6 +38,9 @@ without having a configuration file, which is desirable in some situations.
 You may also specify the path to a custom Certificate Authority file using the `LINODE_CLI_CA`
 environment variable.
 
+If you wish to hide the API Version warning you can use the `LINODE_CLI_SUPPRESS_VERSION_WARNING`
+environment variable.
+
 ## Configurable API URL
 
 In some cases you may want to run linode-cli against a non-default Linode API URL.
