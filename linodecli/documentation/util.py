@@ -144,7 +144,7 @@ def _format_type(
     if data_type == "array":
         if item_type is None:
             raise ValueError(
-                f"item_type must be defined when data_type is defined"
+                "item_type must be defined when data_type is defined"
             )
 
         item_type_fmt = OPENAPI_TYPE_FMT_TRANSLATION.get(item_type)

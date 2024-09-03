@@ -1,3 +1,7 @@
+"""
+Contains custom filters exposed to the documentation templates.
+"""
+
 import math
 from typing import Callable, Dict
 
