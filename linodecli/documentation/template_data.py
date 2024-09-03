@@ -2,6 +2,8 @@
 Contains all structures used to render documentation templates.
 """
 
+import json
+import sys
 from collections import defaultdict
 from dataclasses import dataclass, field
 from io import StringIO
@@ -24,6 +26,7 @@ from linodecli.baked.request import OpenAPIRequestArg
 from linodecli.baked.response import OpenAPIResponseAttr
 from linodecli.cli import CLI
 from linodecli.documentation.util import (
+    _format_type,
     _format_usage_text,
     _markdown_to_rst,
     _normalize_padding,
@@ -67,11 +70,7 @@ class ResponseAttribute:
 
         return cls(
             name=attr.name,
-            type=(
-                attr.datatype
-                if attr.item_type is None
-                else f"{attr.datatype}[{attr.item_type}]"
-            ),
+            type=_format_type(attr.datatype, item_type=attr.item_type),
             description=(
                 _markdown_to_rst(attr.description)
                 if attr.description != ""
@@ -101,6 +100,40 @@ class Argument:
     is_child: bool = False
     parent: Optional[str] = None
 
+    @staticmethod
+    def _format_example(arg: OpenAPIRequestArg) -> Optional[str]:
+        """
+        Returns a formatted example value for the given argument.
+
+        :param arg: The argument to get an example for.
+
+        :returns: The formatted example if it exists, else None.
+        """
+
+        if not arg.example:
+            return None
+
+        if arg.format == "json":
+            return f"{json.dumps(arg.example)}"
+
+        if arg.datatype.startswith("array"):
+            example = arg.example
+
+            # We only want to show one entry for list arguments.
+            if isinstance(example, list):
+                if len(example) < 1:
+                    print(
+                        f"WARN: List example does not have any elements: {example}",
+                        file=sys.stderr,
+                    )
+                    return None
+
+                example = example[0]
+
+            return example
+
+        return arg.example
+
     @classmethod
     def from_openapi(cls, arg: OpenAPIRequestArg) -> Self:
         """
@@ -112,17 +145,12 @@ class Argument:
         :returns: The initialized object.
         """
 
-        type_str = arg.datatype
-        if arg.item_type is not None:
-            type_str = f"{arg.datatype}[{arg.item_type}]"
-
-        if arg.format == "json":
-            type_str = "json"
-
         return cls(
             path=arg.path,
             required=arg.required,
-            type=type_str,
+            type=_format_type(
+                arg.datatype, item_type=arg.item_type, _format=arg.format
+            ),
             is_json=arg.format == "json",
             is_nullable=arg.nullable,
             is_parent=arg.is_parent,
@@ -134,7 +162,7 @@ class Argument:
                 if arg.description != ""
                 else None
             ),
-            example=arg.example,
+            example=cls._format_example(arg),
         )
 
 

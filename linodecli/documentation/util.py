@@ -4,12 +4,21 @@ Contains various utility functions related to documentation generation.
 
 import math
 import re
+from typing import Optional
 
 from linodecli.baked.parsing import REGEX_MARKDOWN_LINK
 
 REGEX_MARKDOWN_CODE_TAG = re.compile(r"`(?P<text>[^`\s]+)`")
 REGEX_USAGE_TOKEN = re.compile(r"(\[[^\[\]]+]|\S+)")
 REGEX_PADDING_CHARACTER = re.compile(r"(^ +)", flags=re.M)
+
+# Contains translations between OpenAPI data types and the condensed doc types.
+OPENAPI_TYPE_FMT_TRANSLATION = {
+    "string": "str",
+    "boolean": "bool",
+    "number": "float",
+    "integer": "int",
+}
 
 
 def _normalize_padding(text: str, pad: str = "\t") -> str:
@@ -112,3 +121,36 @@ def _markdown_to_rst(markdown_text: str) -> str:
     )
 
     return result
+
+
+def _format_type(
+    data_type: str,
+    item_type: Optional[str] = None,
+    _format: Optional[str] = None,
+) -> str:
+    """
+    Returns the formatted string for the given data and item types.
+
+    :param data_type: The root type of an argument/attribute.
+    :param item_type: The type of each item in an argument/attribute, if applicable.
+    :param _format: The `format` attribute of an argument/attribute.
+
+    :returns: The formatted type string,
+    """
+
+    if _format == "json" or data_type == "object":
+        return "json"
+
+    if data_type == "array":
+        if item_type is None:
+            raise ValueError(
+                f"item_type must be defined when data_type is defined"
+            )
+
+        return f"[]{item_type}"
+
+    type_fmt = OPENAPI_TYPE_FMT_TRANSLATION.get(data_type)
+    if type_fmt is None:
+        raise ValueError(f"Unknown data type: {data_type}")
+
+    return type_fmt

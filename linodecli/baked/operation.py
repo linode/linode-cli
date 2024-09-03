@@ -593,10 +593,6 @@ class OpenAPIOperation:
                 arg.item_type if arg.datatype == "array" else arg.datatype
             )
 
-            # # TODO: Remove this workaround once the LKE docs issue has been resolved
-            if arg_type is None:
-                arg_type = "object"
-
             arg_type_handler = TYPES[arg_type]
 
             if arg.nullable:

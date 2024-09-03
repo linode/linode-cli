@@ -9,6 +9,9 @@ ifdef TEST_CASE
 TEST_CASE_COMMAND = -k $(TEST_CASE)
 endif
 
+# TODO: Remove this workaround once the LKE docs issue has been resolved
+SPEC := tmp.openapi.yaml
+
 SPEC_VERSION ?= latest
 ifndef SPEC
 override SPEC = $(shell ./resolve_spec_url ${SPEC_VERSION})

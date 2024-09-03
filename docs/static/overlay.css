@@ -66,6 +66,7 @@ Formatting for generated tables
 
 /* Prevent word wrapping on `Name` and `Example` fields */
 .action-argument-section-table > tbody tr > td:nth-child(1) *,
+.action-argument-section-table > tbody tr > td:nth-child(3) *,
 .action-parameter-table > tbody tr > td:nth-child(1) *,
 .action-filterable-field-table > tbody tr > td:nth-child(1) *,
 .action-attribute-section-table > tbody tr > td:nth-child(1) *,
