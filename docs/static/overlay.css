@@ -44,15 +44,20 @@ Custom formatting for actions
 }
 
 .action-table-field-name,
-.action-table-field-optional,
 .action-table-field-required,
 .action-table-field-type {
     font-size: 85% !important;
     font-family: SFMono-Regular,Menlo,Monaco,Consolas,Liberation Mono,Courier New,Courier,monospace !important;
 }
 
+
+.action-table-field-name {
+    font-weight: 600 !important;
+}
+
 .action-table-field-required {
     color: #E74C3C !important;
+    vertical-align: super !important;
 }
 
 /*
@@ -69,11 +74,9 @@ Formatting for generated tables
     white-space: nowrap !important;
 }
 
-/* Center-align `Required`, and `Type` columns */
+/* Center-align `Type` columns */
 .action-argument-section-table > tbody tr > td:nth-child(2),
 .action-argument-section-table > thead tr > th:nth-child(2),
-.action-argument-section-table > tbody tr > td:nth-child(3),
-.action-argument-section-table > thead tr > th:nth-child(3),
 
 .action-attribute-section-table > tbody tr > td:nth-child(2),
 .action-attribute-section-table > thead tr > th:nth-child(2),

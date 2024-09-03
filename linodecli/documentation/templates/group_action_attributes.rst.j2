@@ -30,7 +30,7 @@
                     if attr.is_parent and attr.path in section_names else ""
                 ),
                 ":action-table-field-type:`%s`" % attr.type,
-                ":json:`%s`" % (attr.example | tojson) if attr.example else "",
+                "``%s``" % attr.example if attr.example else "",
                 attr.description if attr.description else "N/A"
             ]
         )

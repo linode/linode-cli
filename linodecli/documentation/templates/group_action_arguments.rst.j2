@@ -25,13 +25,14 @@
     {%
         do rows.append(
             [
-                ":action-table-field-name:`\-\-%s` %s" % (
+                ":action-table-field-name:`\-\-%s`%s%s" % (
                     arg.path,
-                    ":ref:`(section) <commands_%s_%s_argument_sections_%s>`" % (command, action, arg.path)
-                    if arg.is_parent and arg.path in section_names else ""
+                    " :action-table-field-required:`*`" if arg.required else "",
+                    " :ref:`(section) <commands_%s_%s_argument_sections_%s>`" % (command, action, arg.path)
+                    if arg.is_parent and arg.path in section_names else "",
                 ),
-                ":action-table-field-required:`Yes`" if arg.required else ":action-table-field-optional:`No`",
                 ":action-table-field-type:`%s`" % arg.type,
+                "``%s``" % arg.example if arg.example else "",
                 arg.description if arg.description else "N/A"
             ]
         )
@@ -40,8 +41,8 @@
 {{
     macros.group_action_table(
         "action-argument-section-table",
-        [1, 1, 1, 97],
-        ["Name", "Required", "Type", "Description"],
+        [25, 1, 1, 73],
+        ["Name", "Type", "Example", "Description"],
         *rows
     )
 }}
