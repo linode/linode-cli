@@ -75,6 +75,9 @@ class ResponseAttribute:
         if attr.datatype in ["object", "array"]:
             return json.dumps(attr.example)
 
+        if isinstance(example, bool):
+            return "true" if example else "false"
+
         return str(example)
 
     @classmethod
@@ -149,6 +152,9 @@ class Argument:
                     return None
 
                 example = example[0]
+
+        if isinstance(example, bool):
+            return "true" if example else "false"
 
         return str(example)
 

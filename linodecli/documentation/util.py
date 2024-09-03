@@ -147,7 +147,11 @@ def _format_type(
                 f"item_type must be defined when data_type is defined"
             )
 
-        return f"[]{item_type}"
+        item_type_fmt = OPENAPI_TYPE_FMT_TRANSLATION.get(item_type)
+        if item_type_fmt is None:
+            raise ValueError(f"Unknown item type: {item_type}")
+
+        return f"[]{item_type_fmt}"
 
     type_fmt = OPENAPI_TYPE_FMT_TRANSLATION.get(data_type)
     if type_fmt is None:
