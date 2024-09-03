@@ -90,11 +90,11 @@ jobs:
         with:
           fetch-depth: 0
           submodules: "recursive"
-          ref: "static/docs"
+          ref: "_documentation"
 
       - name: Create the documentation branch if it does not already exist
         if: "${{ steps.checkout-docs.outcome != 'success' }}"
-        run: git switch --orphan static/docs
+        run: git switch --orphan _documentation
 
       - name: Ensure any previous documentation for this branch is removed
         run: rm -rf "./${{ github.ref_name }}"
@@ -121,7 +121,7 @@ jobs:
           git config user.email "dl-linode-dev-dx@akamai.com";
           git add .;
           git commit --allow-empty -m "Build ${{ github.ref_name }} from ${{ github.sha }}";
-          git push origin static/docs;
+          git push origin _documentation;
 
   upload-release-asset:
     name: Upload Release Asset
