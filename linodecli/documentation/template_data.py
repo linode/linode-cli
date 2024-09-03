@@ -344,10 +344,14 @@ class Action:
                 iter(
                     Argument.from_openapi(arg)
                     for arg in operation.args
-                    if isinstance(arg, OpenAPIRequestArg)
+                    if isinstance(arg, OpenAPIRequestArg) and not arg.read_only
                 ),
                 get_parent=lambda arg: arg.parent if arg.is_child else None,
-                sort_key=lambda arg: (not arg.required, arg.path),
+                sort_key=lambda arg: (
+                    not arg.required,
+                    "." in arg.path,
+                    arg.path,
+                ),
             )
 
             result.argument_sections_names = {
