@@ -30,7 +30,7 @@
                     if attr.is_parent and attr.path in section_names else ""
                 ),
                 ":action-table-field-type:`%s`" % attr.type,
-                "``%s``" % attr.example if attr.example else "",
+                ":action-table-field-example:`%s`" % ((attr.example | truncate_middle(length=25)) if attr.example else "N/A"),
                 attr.description if attr.description else "N/A"
             ]
         )

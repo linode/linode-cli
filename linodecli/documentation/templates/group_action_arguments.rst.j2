@@ -32,7 +32,7 @@
                     if arg.is_parent and arg.path in section_names else "",
                 ),
                 ":action-table-field-type:`%s`" % arg.type,
-                "``%s``" % arg.example if arg.example else "",
+                ":action-table-field-example:`%s`" % ((arg.example | truncate_middle(length=25)) if arg.example else "N/A"),
                 arg.description if arg.description else "N/A"
             ]
         )

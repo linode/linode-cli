@@ -57,6 +57,26 @@ class ResponseAttribute:
     description: Optional[str]
     example: Optional[Any]
 
+    @staticmethod
+    def _format_example(attr: OpenAPIResponseAttr) -> Optional[str]:
+        """
+        Returns a formatted example value for the given response attribute.
+
+        :param attr: The attribute to get an example for.
+
+        :returns: The formatted example if it exists, else None.
+        """
+
+        example = attr.example
+
+        if not example:
+            return None
+
+        if attr.datatype in ["object", "array"]:
+            return json.dumps(attr.example)
+
+        return str(example)
+
     @classmethod
     def from_openapi(cls, attr: OpenAPIResponseAttr) -> Self:
         """
@@ -76,7 +96,7 @@ class ResponseAttribute:
                 if attr.description != ""
                 else None
             ),
-            example=attr.example,
+            example=cls._format_example(attr),
         )
 
 
@@ -110,15 +130,15 @@ class Argument:
         :returns: The formatted example if it exists, else None.
         """
 
-        if not arg.example:
+        example = arg.example
+
+        if not example:
             return None
 
-        if arg.format == "json":
-            return f"{json.dumps(arg.example)}"
+        if arg.datatype == "object":
+            return json.dumps(arg.example)
 
         if arg.datatype.startswith("array"):
-            example = arg.example
-
             # We only want to show one entry for list arguments.
             if isinstance(example, list):
                 if len(example) < 1:
@@ -130,9 +150,7 @@ class Argument:
 
                 example = example[0]
 
-            return example
-
-        return arg.example
+        return str(example)
 
     @classmethod
     def from_openapi(cls, arg: OpenAPIRequestArg) -> Self:

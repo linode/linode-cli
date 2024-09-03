@@ -9,6 +9,7 @@ from pathlib import Path
 from jinja2 import Environment, PackageLoader, select_autoescape
 
 from linodecli.cli import CLI
+from linodecli.documentation.filters import get_filter_map
 from linodecli.documentation.template_data import BuildMeta, Root
 
 TEMPLATE_NAME_GROUP = "group.rst.j2"
@@ -30,6 +31,8 @@ class DocumentationGenerator:
             trim_blocks=True,
             lstrip_blocks=True,
         )
+
+        self._template_env.filters.update(get_filter_map())
 
     def generate(self, cli: CLI, output_directory: str = "./docs/_generated"):
         """

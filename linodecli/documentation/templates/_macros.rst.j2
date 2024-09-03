@@ -21,7 +21,7 @@
 
 {% for row in varargs %}
 {% for cell in row %}
-{{ "%s - %s" | format("*" if loop.index0 == 0 else " ", cell) | indent(first=True) }}
+{{ "%s - %s" | format("*" if loop.index0 == 0 else " ", cell.split("\n") | join("\\n")) | indent(first=True) }}
 {% endfor %}
 
 {% endfor %}

@@ -50,9 +50,13 @@ Custom formatting for actions
     font-family: SFMono-Regular,Menlo,Monaco,Consolas,Liberation Mono,Courier New,Courier,monospace !important;
 }
 
-
 .action-table-field-name {
     font-weight: 600 !important;
+}
+
+.action-table-field-example {
+    color: #707070 !important;
+    font-size: 90% !important;
 }
 
 .action-table-field-required {
