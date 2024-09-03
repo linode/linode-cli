@@ -374,11 +374,9 @@ def _attempt_warn_old_version(ctx, result):
                 "with --suppress-warnings",
                 file=sys.stderr,
             )
-        suppress_version_warning = False
-        if ctx.config.get_bool("suppress-version-warning") or os.getenv(
+        suppress_version_warning = ctx.config.get_bool("suppress-version-warning") or os.getenv(
             "LINODE_CLI_SUPPRESS_VERSION_WARNING"
-        ):
-            suppress_version_warning = True
+        )
         if new_version_exists and not suppress_version_warning:
             print(
                 f"The API responded with version {spec_version}, which is newer than "
