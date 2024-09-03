@@ -2,6 +2,8 @@ name: Build Documentation
 
 on:
   push:
+    tags-ignore:
+      - "v*"
   pull_request:
   release:
     types:
