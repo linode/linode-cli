@@ -183,6 +183,9 @@ def _parse_response_model(schema, prefix=None, nested_list_depth=0):
         return attrs
 
     for k, v in schema.properties.items():
+        if v.writeOnly:
+            continue
+
         pref = prefix + "." + k if prefix else k
 
         if v.type == "object":

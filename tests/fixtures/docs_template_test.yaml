@@ -30,7 +30,11 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TestResource'
+              required:
+                - boolean_field
+                - string_field
+              allOf:
+              - $ref: '#/components/schemas/TestResource'
       responses:
         '200':
           description: The new test resource.
@@ -156,10 +160,24 @@ components:
           example: "test string"
         integer_field:
           type: integer
-          description: "An arbitrary integer"
+          description: "An arbitrary integer."
+          writeOnly: true
         boolean_field:
           type: boolean
-          description: "An arbitrary boolean"
+          description: "An arbitrary boolean."
+          example: true
+        object_field:
+          type: object
+          description: "An arbitrary object."
+          properties:
+            foo:
+              type: string
+              description: "An arbitrary foo."
+              example: "bar"
+            bar:
+              type: string
+              description: "An arbitrary bar."
+              example: "foo"
         literal_list:
           type: array
           description: "An arbitrary list of literals"
@@ -180,7 +198,7 @@ components:
                 description: An arbitrary nested string.
                 example: "foobar"
               field_integer:
-                type: string
+                type: integer
                 description: An arbitrary nested integer.
                 example: 321
 

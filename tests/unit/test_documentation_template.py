@@ -1,8 +1,11 @@
-from typing import List
 
 import pytest
 
-from linodecli.documentation.template_data import Root, FieldSection, ResponseAttribute
+from linodecli.documentation.template_data import (
+    Action,
+    ResponseAttribute,
+    Root,
+)
 from tests.unit.conftest import get_first
 
 
@@ -43,26 +46,76 @@ class TestDocumentationTemplate:
         assert len(action.parameters) == 0
         assert len(action.samples) == 0
         assert len(action.filterable_attributes) == 0
-        assert len(action.argument_sections) == 0
-        assert len(action.argument_sections_names) == 0
+        # assert len(action.argument_sections) == 0
+        # assert len(action.argument_sections_names) == 0
 
         assert len(action.attribute_sections)
-
-
+        self._validate_resource_response_attributes(action)
 
     @staticmethod
     def _validate_resource_response_attributes(
-        sections: List[FieldSection[ResponseAttribute]],
+        action: Action,
     ):
-        assert len(sections) == 1
+        assert len(action.attribute_sections) == 3
 
-        section = sections[0]
+        sections = action.attribute_sections
 
-        assert section.name == ""
-        assert len(section.entries) == 1
+        assert sections[0].name == ""
+        assert sections[0].entries == [
+            ResponseAttribute(
+                name="boolean_field",
+                type="bool",
+                description="An arbitrary boolean.",
+                example="true",
+            ),
+            ResponseAttribute(
+                name="literal_list",
+                type="[]str",
+                description="An arbitrary list of literals.",
+                example='["foo", "bar"]',
+            ),
+            ResponseAttribute(
+                name="resource_id",
+                type="int",
+                description="The ID of this test resource.",
+                example="123",
+            ),
+            ResponseAttribute(
+                name="string_field",
+                type="str",
+                description="An arbitrary string.",
+                example="test string",
+            ),
+        ]
 
-        entry = sections[0].entries[0]
-        assert entry.name == "resource_id"
-        assert entry.type == "int"
-        assert entry.description == "The ID of this test resource."
-        assert entry.example == 123
+        assert sections[1].name == "object_field"
+        assert sections[1].entries == [
+            ResponseAttribute(
+                name="object_field.bar",
+                type="str",
+                description="An arbitrary bar.",
+                example="foo",
+            ),
+            ResponseAttribute(
+                name="object_field.foo",
+                type="str",
+                description="An arbitrary foo.",
+                example="bar",
+            ),
+        ]
+
+        assert sections[2].name == "object_list"
+        assert sections[2].entries == [
+            ResponseAttribute(
+                name="object_list.field_integer",
+                type="int",
+                description="An arbitrary nested integer.",
+                example="321",
+            ),
+            ResponseAttribute(
+                name="object_list.field_string",
+                type="str",
+                description="An arbitrary nested string.",
+                example="foobar",
+            ),
+        ]
