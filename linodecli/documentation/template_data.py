@@ -320,6 +320,7 @@ class Action:
                 if operation.description != ""
                 else None
             ),
+            usage=cls._get_usage(operation),
             api_documentation_url=operation.docs_url,
             deprecated=operation.deprecated,
         )
