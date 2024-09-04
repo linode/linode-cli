@@ -176,7 +176,7 @@ class Argument:
                 arg.datatype, item_type=arg.item_type, _format=arg.format
             ),
             is_json=arg.format == "json",
-            is_nullable=arg.nullable,
+            is_nullable=arg.nullable is not None,
             is_parent=arg.is_parent,
             parent=arg.parent,
             is_child=arg.is_child,
@@ -380,7 +380,7 @@ class Action:
             )
 
             result.attribute_sections_names = {
-                section.name for section in result.argument_sections
+                section.name for section in result.attribute_sections
             }
 
         return result

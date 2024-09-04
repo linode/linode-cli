@@ -1,8 +1,8 @@
-
 import pytest
 
 from linodecli.documentation.template_data import (
     Action,
+    Argument,
     ResponseAttribute,
     Root,
 )
@@ -46,16 +46,98 @@ class TestDocumentationTemplate:
         assert len(action.parameters) == 0
         assert len(action.samples) == 0
         assert len(action.filterable_attributes) == 0
-        # assert len(action.argument_sections) == 0
-        # assert len(action.argument_sections_names) == 0
 
-        assert len(action.attribute_sections)
         self._validate_resource_response_attributes(action)
+
+        arg_sections = action.argument_sections
+        assert len(arg_sections) == 2
+
+        assert arg_sections[0].name == ""
+        assert arg_sections[0].entries == [
+            Argument(
+                path="boolean_field",
+                required=True,
+                type="bool",
+                description="An arbitrary boolean.",
+                example="true",
+            ),
+            Argument(
+                path="string_field",
+                required=True,
+                type="str",
+                description="An arbitrary string.",
+                example="test string",
+            ),
+            Argument(
+                path="object_field.bar",
+                required=True,
+                type="str",
+                description="An arbitrary bar.",
+                example="foo",
+            ),
+            Argument(
+                path="integer_field",
+                required=False,
+                type="int",
+                description="An arbitrary integer.",
+            ),
+            Argument(
+                path="literal_list",
+                required=False,
+                type="[]str",
+                description="An arbitrary list of literals.",
+                example="foo",
+            ),
+            Argument(
+                path="object_list",
+                required=False,
+                type="json",
+                is_json=True,
+                description="An arbitrary object.",
+                is_parent=True,
+            ),
+            Argument(
+                path="object_field.foo",
+                required=False,
+                type="str",
+                description="An arbitrary foo.",
+                example="bar",
+            ),
+        ]
+
+        assert arg_sections[1].name == "object_list"
+        assert arg_sections[1].entries == [
+            Argument(
+                path="object_list.field_integer",
+                required=True,
+                type="int",
+                description="An arbitrary nested integer.",
+                example="321",
+                is_child=True,
+                depth=1,
+                parent="object_list",
+            ),
+            Argument(
+                path="object_list.field_string",
+                required=False,
+                type="str",
+                description="An arbitrary nested string.",
+                example="foobar",
+                is_child=True,
+                depth=1,
+                parent="object_list",
+            ),
+        ]
 
     @staticmethod
     def _validate_resource_response_attributes(
         action: Action,
     ):
+        assert action.attribute_sections_names == {
+            "",
+            "object_field",
+            "object_list",
+        }
         assert len(action.attribute_sections) == 3
 
         sections = action.attribute_sections

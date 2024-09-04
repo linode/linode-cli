@@ -166,9 +166,12 @@ components:
           type: boolean
           description: "An arbitrary boolean."
           example: true
+          x-linode-filterable: true
         object_field:
           type: object
           description: "An arbitrary object."
+          required:
+            - bar
           properties:
             foo:
               type: string
@@ -192,6 +195,8 @@ components:
           items:
             type: object
             description: An arbitrary object.
+            required:
+              - field_integer
             properties:
               field_string:
                 type: string
