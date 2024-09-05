@@ -80,8 +80,8 @@ Once everything is set up, you can initiate a build like so::
 
     make build
 
-If desired, you may pass in :code:`SPEC=/path/to/openapi-spec` when running :code:`build`
-or :code:`install`.  This can be a URL or a path to a local spec, and that spec will
+If desired, you may pass in ``SPEC=/path/to/openapi-spec`` when running ``build``
+or ``install``.  This can be a URL or a path to a local spec, and that spec will
 be used when generating the CLI.  A yaml or json file is accepted.
 
 To install the package as part of the build process, use this command::

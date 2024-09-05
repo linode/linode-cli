@@ -40,15 +40,15 @@ All Linode CLI Python requirements can be installed by running the following com
 Building and Installing the Project
 -----------------------------------
 
-The Linode CLI can be built and installed using the :code:`make install` target::
+The Linode CLI can be built and installed using the ``make install`` target::
 
     make install
 
-Alternatively you can build but not install the CLI using the :code:`make build` target::
+Alternatively you can build but not install the CLI using the ``make build`` target::
 
     make build
 
-Optionally you can validate that you have installed a local version of the CLI using the :code:`linode-cli --version` command::
+Optionally you can validate that you have installed a local version of the CLI using the ``linode-cli --version`` command::
 
     linode-cli --version
 
@@ -63,7 +63,7 @@ Building Using a Custom OpenAPI Specification
 
 In some cases, you may want to build the CLI using a custom or modified OpenAPI specification.
 
-This can be achieved using the :code:`SPEC` Makefile argument, for example::
+This can be achieved using the ``SPEC`` Makefile argument, for example::
 
     # Download the OpenAPI spec
     curl -o openapi.yaml https://raw.githubusercontent.com/linode/linode-api-docs/development/openapi.yaml

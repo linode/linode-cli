@@ -11,7 +11,7 @@ response.  If you want to see everything, just ask::
 
     linode-cli linodes list --all
 
-Using :code:`--all` will cause the CLI to display all returned columns of output.
+Using ``--all`` will cause the CLI to display all returned columns of output.
 Note that this will probably be hard to read on normal-sized screens for most
 actions.
 
@@ -52,7 +52,7 @@ To get JSON output from the CLI, simple request it::
 
     linode-cli linodes list --json --all
 
-While the :code:`--all` is optional, you probably want to see all output fields in
+While the ``--all`` is optional, you probably want to see all output fields in
 your JSON output.  If you want your JSON pretty-printed, we can do that too::
 
     linode-cli linodes list --json --pretty --all

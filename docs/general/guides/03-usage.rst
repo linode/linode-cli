@@ -3,27 +3,27 @@
 Usage
 =====
 
-The Linode CLI is invoked with the :code:`linode-cli`,
-or with either of its two aliases available: :code:`linode` and :code:`lin`.
+The Linode CLI is invoked with the ``linode-cli``,
+or with either of its two aliases available: ``linode`` and ``lin``.
 
 The CLI accepts two primary arguments, *command*  and *action*::
 
     linode-cli <command> <action>
 
 *command* is the part of the CLI you are interacting with, for example "linodes".
-You can see a list of all available commands by using :code:`--help`::
+You can see a list of all available commands by using ``--help``::
 
     linode-cli --help
 
 
 *action* is the action you want to perform on a given command, for example "list".
-You can see a list of all available actions for a command with the :code:`--help` for
+You can see a list of all available actions for a command with the ``--help`` for
 that command::
 
     linode-cli linodes --help
 
 Some actions don't require any parameters, but many do.  To see details on how
-to invoke a specific action, use :code:`--help` for that action::
+to invoke a specific action, use ``--help`` for that action::
 
     linode-cli linodes create --help
 
@@ -80,15 +80,15 @@ Specifying List Arguments
 
 When running certain commands, you may need to specify multiple values for a list
 argument. This can be done by specifying the argument multiple times for each
-value in the list. For example, to create a Linode with multiple :code:`tags`
+value in the list. For example, to create a Linode with multiple ``tags``
 you can execute the following::
 
     linode-cli linodes create --region us-east --type g6-nanode-1 --tags tag1 --tags tag2
 
 Lists consisting of nested structures can also be expressed through the command line.
 Duplicated attribute will signal a different object.
-For example, to create a Linode with a public interface on :code:`eth0` and a VLAN interface
-on :code:`eth1` you can execute the following::
+For example, to create a Linode with a public interface on ``eth0`` and a VLAN interface
+on ``eth1`` you can execute the following::
 
     linode-cli linodes create \
         --region us-east --type g6-nanode-1 --image linode/ubuntu22.04 \
@@ -103,9 +103,9 @@ Specifying Nested Arguments
 ---------------------------
 
 When running certain commands, you may need to specify an argument that is nested
-in another field. These arguments can be specified using a :code:`.` delimited path to
-the argument. For example, to create a firewall with an inbound policy of :code:`DROP`
-and an outbound policy of :code:`ACCEPT`, you can execute the following::
+in another field. These arguments can be specified using a ``.`` delimited path to
+the argument. For example, to create a firewall with an inbound policy of ``DROP``
+and an outbound policy of ``ACCEPT``, you can execute the following::
 
     linode-cli firewalls create --label example-firewall --rules.outbound_policy ACCEPT --rules.inbound_policy DROP
 
@@ -117,26 +117,26 @@ In some cases, certain values for arguments may have unique functionality.
 Null Values
 ^^^^^^^^^^^
 
-Arguments marked as nullable can be passed the value :code:`null` to send an explicit null value to the Linode API::
+Arguments marked as nullable can be passed the value ``null`` to send an explicit null value to the Linode API::
 
     linode-cli networking ip-update --rdns null 127.0.0.1
 
 Empty Lists
 ^^^^^^^^^^^
 
-List arguments can be passed the value :code:`[]` to send an explicit empty list value to the Linode API::
+List arguments can be passed the value ``[]`` to send an explicit empty list value to the Linode API::
 
     linode-cli networking ip-share --linode_id 12345 --ips []
 
 Suppressing Defaults
 --------------------
 
-If you configured default values for :code:`image`, :code:`authorized_users`, :code:`region`,
-database :code:`engine`, and Linode :code:`type`, they will be sent for all requests that accept them
+If you configured default values for ``image``, ``authorized_users``, ``region``,
+database ``engine``, and Linode ``type``, they will be sent for all requests that accept them
 if you do not specify a different value.  If you want to send a request *without* these
-arguments, you must invoke the CLI with the :code:`--no-defaults` option.
+arguments, you must invoke the CLI with the ``--no-defaults`` option.
 
-For example, to create a Linode with no :code:`image` after a default Image has been
+For example, to create a Linode with no ``image`` after a default Image has been
 configured, you would do this::
 
     linode-cli linodes create --region us-east --type g5-standard-2 --no-defaults
@@ -146,7 +146,7 @@ Suppressing Warnings
 
 In some situations, like when the CLI is out of date, it will generate a warning
 in addition to its normal output.  If these warnings can interfere with your
-scripts or you otherwise want them disabled, simply add the :code:`--suppress-warnings`
+scripts or you otherwise want them disabled, simply add the ``--suppress-warnings``
 flag to prevent them from being emitted.
 
 ## Suppressing Retries
@@ -154,12 +154,12 @@ flag to prevent them from being emitted.
 Sometimes the API responds with a error that can be ignored. For example a timeout
 or nginx response that can't be parsed correctly, by default the CLI will retry
 calls on these errors we've identified. If you'd like to disable this behavior for
-any reason use the :code:`--no-retry` flag.
+any reason use the ``--no-retry`` flag.
 
 Shell Completion
 ----------------
 
-To generate a completion file for a given shell type, use the :code:`completion` command;
+To generate a completion file for a given shell type, use the ``completion`` command;
 for example to generate completions for bash run::
 
     linode-cli completion bash
@@ -169,7 +169,7 @@ files to enable command completion on your shell.
 
 This command currently supports completions bash and fish shells.
 
-Use :code:`bashcompinit` on zsh with the bash completions for support on zsh shells.
+Use ``bashcompinit`` on zsh with the bash completions for support on zsh shells.
 
 .. rubric:: Next Steps
 

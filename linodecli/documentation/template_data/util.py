@@ -117,7 +117,7 @@ def _markdown_to_rst(markdown_text: str) -> str:
     )
 
     result = REGEX_MARKDOWN_CODE_TAG.sub(
-        lambda match: f":code:`{match['text']}`", result
+        lambda match: f"``{match['text']}``", result
     )
 
     return result

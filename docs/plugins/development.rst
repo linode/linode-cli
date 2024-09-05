@@ -10,7 +10,7 @@ Creating a Plugin
 
 To create a plugin, simply drop a new python file into this directory or write a
 Python module that presents the interface described below. If the
-plugin is a Python module, make sure the :code:`call` method is in the :code:`__init__.py`
+plugin is a Python module, make sure the ``call`` method is in the ``__init__.py``
 file in the root of the module.
 
 Plugins in this directory are called "Internal Plugins," and must meet the
@@ -20,16 +20,16 @@ following conditions:
    offered through the generated CLI
 * Its name must not contain special characters, and should be easily to enter
    on the command line
-* It must contain a :code:`call(args, context)` function for invocation
-* It must support a :code:`--help` command as all other CLI commands do.
+* It must contain a ``call(args, context)`` function for invocation
+* It must support a ``--help`` command as all other CLI commands do.
 
-Plugins that are installed separately and registered with the :code:`register-plugin`
+Plugins that are installed separately and registered with the ``register-plugin``
 command are called "Third Party Plugins," and must meet the following
 conditions:
 
 * Its name must be unique, both with the internal plugins and all CLI operations
-* It must contain a :code:`call(args, context)` function for invocation
-* It must contain a :code:`PLUGIN_NAME` constant whose value is a string that does not
+* It must contain a ``call(args, context)`` function for invocation
+* It must contain a ``PLUGIN_NAME`` constant whose value is a string that does not
    contain special characters, and should be easy to enter on the command line.
 * It should support a `--help` command as all other CLI commands do.
 
@@ -37,7 +37,7 @@ The Plugin Interface
 --------------------
 
 All plugins are either an individual python file or a Python module
-that reside in this directory or installed separately.  Plugins must have one function, :code:`call`, that
+that reside in this directory or installed separately.  Plugins must have one function, ``call``, that
 matches the following signature:
 
 .. code-block:: python
@@ -52,18 +52,18 @@ matches the following signature:
 The PluginContext
 ^^^^^^^^^^^^^^^^^
 
-The :code:`PluginContext` class, passed as :code:`context` to the :code:`call` function, includes
+The ``PluginContext`` class, passed as ``context`` to the ``call`` function, includes
 all information the plugin is given during invocation.  This includes the following:
 
-* :code:`token` - The Personal Access Token registered with the CLI to make requests.
-* :code:`client` - The CLI Client object that can make authenticated requests on behalf
+* ``token`` - The Personal Access Token registered with the CLI to make requests.
+* ``client`` - The CLI Client object that can make authenticated requests on behalf
     of the acting user.  This is preferrable to using `requests` or another library
     directly (see below).
 
 .. rubric:: CLI Client
 
-The CLI Client provided as :code:`context.client` can make authenticated API calls on
-behalf of the user using the provided :code:`call_operation` method.  This method is
+The CLI Client provided as ``context.client`` can make authenticated API calls on
+behalf of the user using the provided ``call_operation`` method.  This method is
 invoked with a command and an action, and executes the given CLI command as if
 it were entered into the command line, returning the resulting status code and
 JSON data.
@@ -82,21 +82,21 @@ Any other operation is not supported and may break without notice.
 Methods
 ^^^^^^^
 
-The :code:`Configuration` class provides the following methods for plugins to use:
+The ``Configuration`` class provides the following methods for plugins to use:
 
-**get_value(key)** Returns the value the current user has set for this key, or :code:`None`
-if the key does not exist.  Currently supported keys are :code:`region`, :code:`type`, and :code:`image`.
+**get_value(key)** Returns the value the current user has set for this key, or ``None``
+if the key does not exist.  Currently supported keys are ``region``, ``type``, and ``image``.
 
 **plugin_set_value(key, value)** Sets a value in the user's config for this plugin.
 Plugins can safely set values for any key, and they are namespaced away from other
 config keys.
 
 **plugin_get_value(key)** Returns the value this plugin previously set for the given
-key, or :code:`None` if not set.  Plugins should assume they are not configured if they
-receive :code:`None` when getting a value with this method.
+key, or ``None`` if not set.  Plugins should assume they are not configured if they
+receive ``None`` when getting a value with this method.
 
 **write_config()** Writes config changes to disk.  This is required to save changes
-after calling :code:`plugin_set_value` above.
+after calling ``plugin_set_value`` above.
 
 Sample Code
 ^^^^^^^^^^^
@@ -125,21 +125,21 @@ Development
 -----------
 
 To develop a plugin, simply create a python source file in this directory that
-has a :code:`call` function as described above.  To test, simply build the CLI as
-normal (via :code:`make install`) or simply by running :code:`./setup.py install` in the
+has a ``call`` function as described above.  To test, simply build the CLI as
+normal (via ``make install``) or simply by running ``./setup.py install`` in the
 root directory of the project (this installs the code without generating new
-baked data, and will only work if you've installed the CLI via :code:`make install`
+baked data, and will only work if you've installed the CLI via ``make install``
 at least once, however it's a lot faster).
 
 To develop a third party plugin, simply create and install your module and register
-it to the CLI.  As long as the :code:`PLUGIN_NAME` doesn't change, updated installations
+it to the CLI.  As long as the ``PLUGIN_NAME`` doesn't change, updated installations
 should invoke the new code.
 
 Examples
 ^^^^^^^^
 
-This directory contains two example plugins, :code:`echo.py.example` and
-:code:`regionstats.py.example`.  To run these, simply remove the :code:`.example` at the end
+This directory contains two example plugins, ``echo.py.example`` and
+``regionstats.py.example``.  To run these, simply remove the ``.example`` at the end
 of the file and build the CLI as described above.
 
 `This directory <https://github.com/linode/linode-cli/tree/main/examples/third-party-plugin>`_
