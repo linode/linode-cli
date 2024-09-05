@@ -121,6 +121,7 @@ class TestDocumentationTemplate:
                 type="str",
                 description="An arbitrary string.",
                 example="test string",
+                additional_details=["nullable"],
             ),
             Argument(
                 path="object_field.bar",
@@ -134,6 +135,7 @@ class TestDocumentationTemplate:
                 required=False,
                 type="int",
                 description="An arbitrary integer.",
+                additional_details=["write-only"],
             ),
             Argument(
                 path="literal_list",
@@ -230,6 +232,7 @@ class TestDocumentationTemplate:
                 required=False,
                 type="int",
                 description="An arbitrary integer.",
+                additional_details=["write-only"],
             ),
             Argument(
                 path="literal_list",
@@ -252,6 +255,7 @@ class TestDocumentationTemplate:
                 type="str",
                 description="An arbitrary string.",
                 example="test string",
+                additional_details=["nullable"],
             ),
             Argument(
                 path="object_field.foo",

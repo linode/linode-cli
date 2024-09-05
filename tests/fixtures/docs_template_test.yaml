@@ -157,6 +157,7 @@ components:
         string_field:
           type: string
           description: "An arbitrary string."
+          nullable: true
           example: "test string"
         integer_field:
           type: integer

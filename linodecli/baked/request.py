@@ -105,6 +105,12 @@ class OpenAPIRequestArg:
         #: Whether null is an acceptable value for this attribute
         self.nullable = schema.nullable
 
+        #: Whether this attribute is deprecated.
+        self.deprecated = schema.deprecated or False
+
+        #: If true, this argument will not be returned in the API response.
+        self.write_only = schema.writeOnly or False
+
         #: An example value for this attribute
         self.example = schema.example
 

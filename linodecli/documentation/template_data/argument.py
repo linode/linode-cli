@@ -4,8 +4,8 @@ Contains the template data for Linode CLI arguments.
 
 import json
 import sys
-from dataclasses import dataclass
-from typing import Any, Optional, Self
+from dataclasses import dataclass, field
+from typing import Any, List, Optional, Self
 
 from linodecli.baked.request import OpenAPIRequestArg
 from linodecli.documentation.template_data.util import (
@@ -25,7 +25,6 @@ class Argument:
     type: str
 
     is_json: bool = False
-    is_nullable: bool = False
     depth: int = 0
     description: Optional[str] = None
     example: Optional[Any] = None
@@ -33,6 +32,8 @@ class Argument:
     is_parent: bool = False
     is_child: bool = False
     parent: Optional[str] = None
+
+    additional_details: List[str] = field(default_factory=lambda: [])
 
     @staticmethod
     def _format_example(arg: OpenAPIRequestArg) -> Optional[str]:
@@ -80,6 +81,17 @@ class Argument:
         :returns: The initialized object.
         """
 
+        additional_details = []
+
+        if arg.nullable:
+            additional_details.append("nullable")
+
+        if arg.deprecated:
+            additional_details.append("deprecated")
+
+        if arg.write_only:
+            additional_details.append("write-only")
+
         return cls(
             path=arg.path,
             required=arg.required,
@@ -87,7 +99,6 @@ class Argument:
                 arg.datatype, item_type=arg.item_type, _format=arg.format
             ),
             is_json=arg.format == "json",
-            is_nullable=arg.nullable is not None,
             is_parent=arg.is_parent,
             parent=arg.parent,
             is_child=arg.is_child,
@@ -98,4 +109,5 @@ class Argument:
                 else None
             ),
             example=cls._format_example(arg),
+            additional_details=additional_details,
         )

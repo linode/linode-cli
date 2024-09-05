@@ -22,6 +22,10 @@
 
 {% set rows = [] %}
 {% for arg in section.entries %}
+    {% set description = arg.description if arg.description else "N/A" %}
+    {% if arg.additional_details | length > 0 %}
+        {% set description = "%s **(%s)**" | format(description, arg.additional_details | join(", ")) %}
+    {% endif %}
     {%
         do rows.append(
             [
@@ -33,7 +37,7 @@
                 ),
                 ":action-table-field-type:`%s`" % arg.type,
                 ":action-table-field-example:`%s`" % ((arg.example | truncate_middle(length=25)) if arg.example else "N/A"),
-                arg.description if arg.description else "N/A"
+                description
             ]
         )
     %}
