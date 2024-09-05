@@ -1,8 +1,8 @@
 from linodecli.documentation.filters import _filter_truncate_middle
 
 
-class TestDocumentation:
-    def test_filter_truncation_middle(self):
+class TestDocumentationFilters:
+    def test_truncation_middle(self):
         assert (
             _filter_truncate_middle("foobarfoobar", length=12) == "foobarfoobar"
         )

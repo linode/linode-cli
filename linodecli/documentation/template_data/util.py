@@ -21,7 +21,7 @@ OPENAPI_TYPE_FMT_TRANSLATION = {
 }
 
 
-def _normalize_padding(text: str, pad: str = "\t") -> str:
+def _normalize_padding(text: str, pad: str = " " * 4) -> str:
     """
     Normalizes the padding for the given text using the given pad character.
 
@@ -31,8 +31,6 @@ def _normalize_padding(text: str, pad: str = "\t") -> str:
     :returns: The normalized text.
     """
 
-    text = text.replace("\t", "")
-
     padding_lengths = [
         len(match[0]) for match in REGEX_PADDING_CHARACTER.finditer(text)
     ]
@@ -40,6 +38,8 @@ def _normalize_padding(text: str, pad: str = "\t") -> str:
         return text
 
     spaces_per_tab = min(padding_lengths)
+
+    text = text.replace("\t", " " * spaces_per_tab)
 
     def _sub_handler(match: re.Match) -> str:
         match_length = len(match[0])
@@ -51,7 +51,9 @@ def _normalize_padding(text: str, pad: str = "\t") -> str:
     return REGEX_PADDING_CHARACTER.sub(_sub_handler, text)
 
 
-def _format_usage_text(text: str, max_length: int = 60, pad: str = "\t") -> str:
+def _format_usage_text(
+    text: str, max_length: int = 60, pad: str = "    "
+) -> str:
     """
     Formats the given usage text for use in the output documentation.
 
