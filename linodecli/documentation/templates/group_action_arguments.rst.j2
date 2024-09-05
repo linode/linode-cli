@@ -24,7 +24,7 @@
 {% for arg in section.entries %}
     {% set description = arg.description if arg.description else "N/A" %}
     {% if arg.additional_details | length > 0 %}
-        {% set description = "%s **(%s)**" | format(description, arg.additional_details | join(", ")) %}
+        {% set description = ":action-argument-additional-details:`(%s)` %s" | format(arg.additional_details | join(", "), description) %}
     {% endif %}
     {%
         do rows.append(

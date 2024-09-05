@@ -77,6 +77,11 @@ Custom formatting for actions
     vertical-align: super !important;
 }
 
+.action-argument-additional-details {
+    font-size: 95% !important;
+    font-weight: 580 !important;
+}
+
 /*
 Formatting for generated tables
 */
