@@ -309,11 +309,7 @@ class Action:
 
         result = cls(
             command=operation.command,
-            action=(
-                operation.action
-                if isinstance(operation.action, list)
-                else [operation.action]
-            ),
+            action=[operation.action] + (operation.action_aliases or []),
             summary=_markdown_to_rst(operation.summary),
             description=(
                 _markdown_to_rst(operation.description)
@@ -322,7 +318,8 @@ class Action:
             ),
             usage=cls._get_usage(operation),
             api_documentation_url=operation.docs_url,
-            deprecated=operation.deprecated,
+            deprecated=operation.deprecated is not None
+            and operation.deprecated,
         )
 
         if operation.samples:

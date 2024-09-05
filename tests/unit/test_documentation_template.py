@@ -3,6 +3,7 @@ import pytest
 from linodecli.documentation.template_data import (
     Action,
     Argument,
+    Param,
     ResponseAttribute,
     Root,
 )
@@ -28,6 +29,59 @@ class TestDocumentationTemplate:
         assert group.pretty_name == "Test Resource"
         assert len(group.actions) == 4
 
+    def test_data_action_view(self, mock_cli_with_parsed_template):
+        cli, tmpl_data = mock_cli_with_parsed_template
+
+        group = get_first(tmpl_data.groups, lambda v: v.name == "test-resource")
+        action = get_first(group.actions, lambda v: v.action[0] == "view")
+
+        assert action.command == "test-resource"
+        assert action.action == ["view"]
+
+        assert "linode-cli test-resource view [-h]" in action.usage
+        assert "resourceId" in action.usage
+
+        assert "Get information about a test resource." == action.summary
+        assert "Get information about a test resource." == action.description
+        assert "https://linode.com" == action.api_documentation_url
+        assert not action.deprecated
+
+        assert len(action.argument_sections) == 0
+        assert len(action.filterable_attributes) == 0
+
+        self._validate_resource_parameters(action)
+        self._validate_resource_response_attributes(action)
+
+    def test_data_action_list(self, mock_cli_with_parsed_template):
+        cli, tmpl_data = mock_cli_with_parsed_template
+
+        group = get_first(tmpl_data.groups, lambda v: v.name == "test-resource")
+        action = get_first(group.actions, lambda v: v.action[0] == "list")
+
+        assert action.command == "test-resource"
+        assert action.action == ["list", "ls"]
+
+        assert "linode-cli test-resource list [-h]" in action.usage
+
+        assert "List test resources." == action.summary
+        assert "List test resources." == action.description
+        assert "https://linode.com" == action.api_documentation_url
+        assert not action.deprecated
+
+        assert len(action.argument_sections) == 0
+        assert len(action.parameters) == 0
+
+        assert action.filterable_attributes == [
+            ResponseAttribute(
+                name="boolean_field",
+                type="bool",
+                description="An arbitrary boolean.",
+                example="true",
+            )
+        ]
+
+        self._validate_resource_response_attributes(action)
+
     def test_data_action_create(self, mock_cli_with_parsed_template):
         cli, tmpl_data = mock_cli_with_parsed_template
 
@@ -41,7 +95,7 @@ class TestDocumentationTemplate:
         assert "Create a new test resource." == action.summary
         assert "Create a new test resource." == action.description
         assert "https://linode.com" == action.api_documentation_url
-        assert action.deprecated is None
+        assert not action.deprecated
 
         assert len(action.parameters) == 0
         assert len(action.samples) == 0
@@ -127,6 +181,16 @@ class TestDocumentationTemplate:
                 depth=1,
                 parent="object_list",
             ),
+        ]
+
+    @staticmethod
+    def _validate_resource_parameters(action: Action):
+        assert action.parameters == [
+            Param(
+                name="resourceId",
+                type="int",
+                description="The ID of the resource.",
+            )
         ]
 
     @staticmethod
