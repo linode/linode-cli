@@ -5,7 +5,7 @@ Contains root template data for the Linode CLI.
 from dataclasses import dataclass
 from typing import List, Self
 
-from linodecli import CLI
+from linodecli.cli import CLI
 from linodecli.documentation.template_data.group import Group
 
 
