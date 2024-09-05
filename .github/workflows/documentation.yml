@@ -2,16 +2,14 @@ name: Build Documentation
 
 on:
   push:
+    branches:
+      - "**"
     tags-ignore:
       - "v*"
   pull_request:
   release:
     types:
       - published
-
-concurrency:
-  group: "docs"
-  cancel-in-progress: false
 
 jobs:
   build:
@@ -80,6 +78,10 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - build
+    # Make sure we avoid a race condition =)
+    concurrency:
+      group: "docs-stage"
+      cancel-in-progress: false
     permissions:
       contents: write
 
