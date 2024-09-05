@@ -90,7 +90,7 @@ paths:
     put:
       summary: Update a test resource.
       operationId: testResourcePut
-      description: Update the test resource.
+      description: Update a test resource.
       externalDocs:
         url: https://linode.com
       x-linode-cli-action: update

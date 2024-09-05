@@ -183,6 +183,109 @@ class TestDocumentationTemplate:
             ),
         ]
 
+    def test_data_action_put(self, mock_cli_with_parsed_template):
+        cli, tmpl_data = mock_cli_with_parsed_template
+
+        group = get_first(tmpl_data.groups, lambda v: v.name == "test-resource")
+        action = get_first(group.actions, lambda v: v.action[0] == "update")
+
+        assert action.command == "test-resource"
+        assert action.action == ["update"]
+
+        assert "linode-cli test-resource update [-h]" in action.usage
+        assert "resourceId" in action.usage
+
+        assert "Update a test resource." == action.summary
+        assert "Update a test resource." == action.description
+        assert "https://linode.com" == action.api_documentation_url
+        assert not action.deprecated
+
+        assert len(action.samples) == 0
+        assert len(action.filterable_attributes) == 0
+
+        self._validate_resource_parameters(action)
+        self._validate_resource_response_attributes(action)
+
+        arg_sections = action.argument_sections
+        assert len(arg_sections) == 2
+
+        assert arg_sections[0].name == ""
+        assert arg_sections[0].entries == [
+            Argument(
+                path="object_field.bar",
+                required=True,
+                type="str",
+                description="An arbitrary bar.",
+                example="foo",
+            ),
+            Argument(
+                path="boolean_field",
+                required=False,
+                type="bool",
+                description="An arbitrary boolean.",
+                example="true",
+            ),
+            Argument(
+                path="integer_field",
+                required=False,
+                type="int",
+                description="An arbitrary integer.",
+            ),
+            Argument(
+                path="literal_list",
+                required=False,
+                type="[]str",
+                description="An arbitrary list of literals.",
+                example="foo",
+            ),
+            Argument(
+                path="object_list",
+                required=False,
+                type="json",
+                is_json=True,
+                description="An arbitrary object.",
+                is_parent=True,
+            ),
+            Argument(
+                path="string_field",
+                required=False,
+                type="str",
+                description="An arbitrary string.",
+                example="test string",
+            ),
+            Argument(
+                path="object_field.foo",
+                required=False,
+                type="str",
+                description="An arbitrary foo.",
+                example="bar",
+            ),
+        ]
+
+        assert arg_sections[1].name == "object_list"
+        assert arg_sections[1].entries == [
+            Argument(
+                path="object_list.field_integer",
+                required=True,
+                type="int",
+                description="An arbitrary nested integer.",
+                example="321",
+                is_child=True,
+                depth=1,
+                parent="object_list",
+            ),
+            Argument(
+                path="object_list.field_string",
+                required=False,
+                type="str",
+                description="An arbitrary nested string.",
+                example="foobar",
+                is_child=True,
+                depth=1,
+                parent="object_list",
+            ),
+        ]
+
     @staticmethod
     def _validate_resource_parameters(action: Action):
         assert action.parameters == [
