@@ -25,6 +25,18 @@ td {
 /*
 Custom formatting for actions
 */
+.action-has-keywords > h2 {
+    margin-bottom: 8px !important;
+}
+
+.action-keyword {
+    margin-bottom: 16px !important;
+}
+
+.action-keyword-key {
+    font-weight: 700 !important;
+}
+
 .action-subheading {
     margin-bottom: 4px !important;
     font-weight: 700 !important;
@@ -43,6 +55,7 @@ Custom formatting for actions
     font-size: 95% !important;
 }
 
+.action-keyword-values,
 .action-table-field-name,
 .action-table-field-required,
 .action-table-field-type {

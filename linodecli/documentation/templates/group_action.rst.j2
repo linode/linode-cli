@@ -9,13 +9,22 @@
 
 {% set action_title = action.action[0] %}
 {% set action_title_format = "`%s <%s>`_" % (action_title, action.api_documentation_url) if action.api_documentation_url else action_title %}
+{% set has_aliases = action.action | length > 1 %}
+{% if has_aliases %}
+.. rst-class:: action-has-keywords
+{% endif %}
+
 .. _commands_{{ action.command }}_{{ action.action[0] }}:
 
 {{ action_title_format }}
 {{ "-" * (action_title_format | length) }}
-{% if action.action | length > 1 %}
+{% if has_aliases %}
 
-*Aliases: {{ action[1:] | join(", ") }}*
+.. rst-class:: action-keyword
+
+:action-keyword-key:`Aliases:`
+{% for alias in action.action[1:] %}:action-keyword-values:`{{ alias }}`{% if not loop.last %}, {% endif %}{% endfor %}
+
 {% endif %}
 
 {% if action.deprecated %}
@@ -24,6 +33,7 @@
 {% endif %}
 
 {{ action.description }}
+
 {% if action.usage %}
 {{ usage_tmpl.render(action.usage) }}
 {% endif %}
