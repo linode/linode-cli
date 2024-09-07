@@ -2,10 +2,10 @@ This guide will help you get started developing against and contributing to the 
 
 ## Index
 
-1. [Overview](./Development%20-%20Overview)
-2. [Skeleton](./Development%20-%20Skeleton)
-3. [Setup](./Development%20-%20Setup)
-4. [Testing](./Development%20-%20Testing)
+1. [Overview](./Development%20-%20Overview.md)
+2. [Skeleton](./Development%20-%20Skeleton.md)
+3. [Setup](./Development%20-%20Setup.md)
+4. [Testing](./Development%20-%20Testing.md)
 
 ## Contributing
 
