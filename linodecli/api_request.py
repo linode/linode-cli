@@ -4,6 +4,7 @@ This module is responsible for handling HTTP requests to the Linode API.
 
 import itertools
 import json
+import os
 import sys
 import time
 from typing import Any, Iterable, List, Optional
@@ -373,8 +374,10 @@ def _attempt_warn_old_version(ctx, result):
                 "with --suppress-warnings",
                 file=sys.stderr,
             )
-
-        if new_version_exists:
+        suppress_version_warning = ctx.config.get_bool("suppress-version-warning") or os.getenv(
+            "LINODE_CLI_SUPPRESS_VERSION_WARNING"
+        )
+        if new_version_exists and not suppress_version_warning:
             print(
                 f"The API responded with version {spec_version}, which is newer than "
                 f"the CLI's version of {ctx.spec_version}.  Please update the CLI to get "

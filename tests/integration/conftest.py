@@ -553,7 +553,7 @@ def support_test_linode_id(linode_cloud_firewall):
                 "--type",
                 "g6-nanode-1",
                 "--region",
-                "us-ord",
+                "us-mia",
                 "--image",
                 DEFAULT_TEST_IMAGE,
                 "--label",
