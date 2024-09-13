@@ -187,6 +187,27 @@ class CLIConfig:
 
         return self.config.get(username, key)
 
+    def get_bool(self, key: str) -> bool:
+        """
+        Retrieves and returns an existing config boolean for the current user.  This
+        is intended for plugins to use instead of having to deal with figuring out
+        who the current user is when accessing their config.
+        .. warning::
+           Plugins _MUST NOT_ set values for the user's config except through
+           ``plugin_set_value`` below.
+        :param key: The key to look up.
+        :type key: str
+        :returns: The boolean for that key, or False if the key doesn't exist for the
+                  current user.
+        :rtype: any
+        """
+        username = self.username or self.default_username()
+
+        if not self.config.has_option(username, key):
+            return False
+
+        return self.config.getboolean(username, key)
+
     # plugin methods - these are intended for plugins to utilize to store their
     # own persistent config information
     def plugin_set_value(self, key: str, value: Any):
