@@ -107,7 +107,7 @@ def register_plugin(module, config, ops):
 
     reregistering = False
     if plugin_name in plugins.available(config):
-        print(f"WARNING: Plugin {plugin_name} is already registered.\n\n")
+        print(f"WARNING: Plugin {plugin_name} is already registered.\n\n", file=sys.stderr)
         answer = input(f"Allow re-registration of {plugin_name}? [y/N] ")
         if not answer or answer not in "yY":
             return "Registration aborted.", 0
@@ -183,7 +183,7 @@ def bake_command(cli, spec_loc):
             else:
                 raise RuntimeError(f"Request failed to {spec_loc}")
     except Exception as e:
-        print(f"Could not load spec: {e}")
+        print(f"Could not load spec: {e}", file=sys.stderr)
         sys.exit(ExitCodes.REQUEST_FAILED)
 
     cli.bake(spec)

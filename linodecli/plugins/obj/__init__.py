@@ -147,11 +147,11 @@ def set_acl(get_client, args, **kwargs):  # pylint: disable=unused-argument
 
     # make sure the call is sane
     if parsed.acl_public and parsed.acl_private:
-        print("You may not set the ACL to public and private in the same call")
+        print("You may not set the ACL to public and private in the same call", file=sys.stderr)
         sys.exit(ExitCodes.REQUEST_FAILED)
 
     if not parsed.acl_public and not parsed.acl_private:
-        print("You must choose an ACL to apply")
+        print("You must choose an ACL to apply", file=sys.stderr)
         sys.exit(ExitCodes.REQUEST_FAILED)
     acl = "public-read" if parsed.acl_public else "private"
     bucket = parsed.bucket
@@ -313,7 +313,8 @@ def get_credentials(cli: CLI):
     if bool(access_key) != bool(secret_key):
         print(
             f"You must set both {ENV_ACCESS_KEY_NAME} "
-            f"and {ENV_SECRET_KEY_NAME}, or neither"
+            f"and {ENV_SECRET_KEY_NAME}, or neither",
+            file=sys.stderr
         )
         sys.exit(ExitCodes.REQUEST_FAILED)
 
@@ -336,7 +337,8 @@ def regenerate_s3_credentials(cli: CLI, suppress_warnings=False):
         print(
             "WARNING: Your old Object Storage keys _were not_ automatically expired!  If you want "
             "to expire them, see `linode-cli object-storage keys-list` and "
-            "`linode-cli object-storage keys-delete [KEYID]`."
+            "`linode-cli object-storage keys-delete [KEYID]`.",
+            file=sys.stderr
         )
 
 
@@ -383,12 +385,13 @@ def call(
 
     def try_get_default_cluster():
         if not context.client.defaults:
-            print("Error: cluster is required.")
+            print("Error: cluster is required.", file=sys.stderr)
             sys.exit(ExitCodes.REQUEST_FAILED)
 
         print(
             "Error: No default cluster is configured.  Either configure the CLI "
-            "or invoke with --cluster to specify a cluster."
+            "or invoke with --cluster to specify a cluster.",
+            file=sys.stderr
         )
         _configure_plugin(context.client)
         return context.client.config.plugin_get_value("cluster")
@@ -413,7 +416,7 @@ def call(
                 get_client, args, suppress_warnings=parsed.suppress_warnings
             )
         except ClientError as e:
-            print(e)
+            print(e, file=sys.stderr)
             sys.exit(ExitCodes.REQUEST_FAILED)
     elif parsed.command == "regenerate-keys":
         regenerate_s3_credentials(
@@ -422,7 +425,7 @@ def call(
     elif parsed.command == "configure":
         _configure_plugin(context.client)
     else:
-        print(f"No command {parsed.command}")
+        print(f"No command {parsed.command}", file=sys.stderr)
         sys.exit(ExitCodes.REQUEST_FAILED)
 
 
@@ -476,7 +479,8 @@ def _get_s3_creds(client: CLI, force: bool = False):
                 "Please set the following variables in your environment: "
                 f"'{ENV_ACCESS_KEY_NAME}' and '{ENV_SECRET_KEY_NAME}'.  If you'd rather "
                 "configure the CLI, unset the 'LINODE_CLI_TOKEN' environment "
-                "variable and then run `linode-cli configure`."
+                "variable and then run `linode-cli configure`.",
+                file=sys.stderr
             )
             sys.exit(ExitCodes.REQUEST_FAILED)
 
@@ -486,14 +490,14 @@ def _get_s3_creds(client: CLI, force: bool = False):
         if status != 200:
             if status == 401:
                 # special case - oauth token isn't allowed to do this
-                print(NO_SCOPES_ERROR)
+                print(NO_SCOPES_ERROR, file=sys.stderr)
                 sys.exit(ExitCodes.REQUEST_FAILED)
             if status == 403:
                 # special case - restricted users can't use obj
-                print(NO_ACCESS_ERROR)
+                print(NO_ACCESS_ERROR, file=sys.stderr)
                 sys.exit(ExitCodes.REQUEST_FAILED)
             # something went wrong - give up
-            print("Key generation failed!")
+            print("Key generation failed!", file=sys.stderr)
             sys.exit(ExitCodes.REQUEST_FAILED)
 
         # label caps at 50 characters - trim some stuff maybe
@@ -519,14 +523,14 @@ def _get_s3_creds(client: CLI, force: bool = False):
         if status != 200:
             if status == 401:
                 # special case - oauth token isn't allowed to do this
-                print(NO_SCOPES_ERROR)
+                print(NO_SCOPES_ERROR, file=sys.stderr)
                 sys.exit(ExitCodes.REQUEST_FAILED)
             if status == 403:
                 # special case - restricted users can't use obj
-                print(NO_ACCESS_ERROR)
+                print(NO_ACCESS_ERROR, file=sys.stderr)
                 sys.exit(ExitCodes.REQUEST_FAILED)
             # something went wrong - give up
-            print("Key generation failed!")
+            print("Key generation failed!", file=sys.stderr)
             sys.exit(ExitCodes.REQUEST_FAILED)
 
         access_key = resp["access_key"]

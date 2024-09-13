@@ -96,7 +96,7 @@ class CLIConfig:
         :type username: str
         """
         if not self.config.has_section(username):
-            print(f"User {username} is not configured!")
+            print(f"User {username} is not configured!", file=sys.stderr)
             sys.exit(ExitCodes.USERNAME_ERROR)
 
         self.username = username
@@ -112,7 +112,8 @@ class CLIConfig:
         if self.default_username() == username:
             print(
                 f"Cannot remove {username} as they are the default user! You can "
-                "change the default user with: `linode-cli set-user USERNAME`"
+                "change the default user with: `linode-cli set-user USERNAME`",
+                file=sys.stderr
             )
             sys.exit(ExitCodes.USERNAME_ERROR)
 
@@ -138,7 +139,7 @@ class CLIConfig:
         Sets the default user.  If that user isn't in the config, exits with error
         """
         if not self.config.has_section(username):
-            print(f"User {username} is not configured!")
+            print(f"User {username} is not configured!", file=sys.stderr)
             sys.exit(ExitCodes.USERNAME_ERROR)
 
         self.config.set("DEFAULT", "default-user", username)
@@ -185,30 +186,6 @@ class CLIConfig:
             return None
 
         return self.config.get(username, key)
-
-    def get_bool(self, key: str) -> bool:
-        """
-        Retrieves and returns an existing config boolean for the current user.  This
-        is intended for plugins to use instead of having to deal with figuring out
-        who the current user is when accessing their config.
-
-        .. warning::
-           Plugins _MUST NOT_ set values for the user's config except through
-           ``plugin_set_value`` below.
-
-        :param key: The key to look up.
-        :type key: str
-
-        :returns: The boolean for that key, or False if the key doesn't exist for the
-                  current user.
-        :rtype: any
-        """
-        username = self.username or self.default_username()
-
-        if not self.config.has_option(username, key):
-            return False
-
-        return self.config.getboolean(username, key)
 
     # plugin methods - these are intended for plugins to utilize to store their
     # own persistent config information
@@ -288,7 +265,7 @@ class CLIConfig:
         if not self.config.has_option(username, "token") and not os.environ.get(
             ENV_TOKEN_NAME, None
         ):
-            print(f"User {username} is not configured.")
+            print(f"User {username} is not configured.", file=sys.stderr)
             sys.exit(ExitCodes.USERNAME_ERROR)
         if not self.config.has_section(username) or allowed_defaults is None:
             return namespace
@@ -325,7 +302,8 @@ class CLIConfig:
         ):
             print(
                 f"Using default values: {warn_dict}; "
-                "use the --no-defaults flag to disable defaults"
+                "use the --no-defaults flag to disable defaults",
+                file=sys.stderr
             )
         return argparse.Namespace(**ns_dict)
 
@@ -472,9 +450,6 @@ class CLIConfig:
 
         if _bool_input("Configure a custom API target?", default=False):
             self._configure_api_target(config)
-
-        if _bool_input("Suppress API Version Warnings?", default=False):
-            config["suppress-version-warning"] = "true"
 
         # save off the new configuration
         if username != "DEFAULT" and not self.config.has_section(username):
