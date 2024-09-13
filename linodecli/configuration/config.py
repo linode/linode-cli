@@ -475,6 +475,9 @@ class CLIConfig:
         if _bool_input("Configure a custom API target?", default=False):
             self._configure_api_target(config)
 
+        if _bool_input("Suppress API Version Warnings?", default=False):
+            config["suppress-version-warning"] = "true"
+
         # save off the new configuration
         if username != "DEFAULT" and not self.config.has_section(username):
             self.config.add_section(username)
