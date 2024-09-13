@@ -192,11 +192,14 @@ class CLIConfig:
         Retrieves and returns an existing config boolean for the current user.  This
         is intended for plugins to use instead of having to deal with figuring out
         who the current user is when accessing their config.
+
         .. warning::
            Plugins _MUST NOT_ set values for the user's config except through
            ``plugin_set_value`` below.
+
         :param key: The key to look up.
         :type key: str
+
         :returns: The boolean for that key, or False if the key doesn't exist for the
                   current user.
         :rtype: any
