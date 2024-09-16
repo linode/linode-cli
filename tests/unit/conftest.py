@@ -1,4 +1,5 @@
 import configparser
+from typing import List
 
 import pytest
 from openapi3 import OpenAPI
@@ -321,3 +322,22 @@ def mocked_config():
             pass
 
     return Config()
+
+
+def assert_contains_ordered_substrings(target: str, entries: List[str]):
+    """
+    Asserts whether the given string contains the given entries in order,
+    ignoring any irrelevant characters in-between.
+
+    :param target: The string to search.
+    :param entries: The ordered list of entries to search for.
+    """
+
+    start_index = 0
+
+    for entry in entries:
+        find_index = target[start_index:].find(entry)
+        assert find_index >= 0
+
+        # Search for the next entry after the end of this entry
+        start_index = find_index + len(entry)
