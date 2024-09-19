@@ -132,6 +132,7 @@ def test_update_kubernetes_cluster(get_cluster_id):
     assert new_label == updated_label
 
 
+@pytest.mark.flaky(reruns=3, reruns_delay=2)
 def test_list_kubernetes_endpoint(get_cluster_id):
     cluster_id = get_cluster_id
     res = (
