@@ -161,7 +161,9 @@ def _merge_dict(dict_1, dict_2):
         if dict_1_value is None and (dict_2_value := dict_2.get(key)):
             # Replace null value in previous config
             result[key] = dict_2_value
-        elif isinstance(dict_1_value, list) and (dict_2_value := dict_2.get(key)):
+        elif isinstance(dict_1_value, list) and (
+            dict_2_value := dict_2.get(key)
+        ):
             merge_map = {sub["name"]: sub for sub in dict_1_value}
             for list_2_item in dict_2_value:
                 if (list_2_name := list_2_item["name"]) not in merge_map:
