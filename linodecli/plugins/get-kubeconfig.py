@@ -90,7 +90,7 @@ def call(args, context):
         else cluster_config
     )
     if parsed.dry_run:
-        print(cluster_config)
+        print(yaml.dump(cluster_config))
     else:
         _dump_config(kubeconfig_path, cluster_config)
 
@@ -146,27 +146,33 @@ def _dump_config(filepath, data):
         yaml.dump(data, file_descriptor)
 
 
-# Merges the lists in the provided dicts. If non-list properties of the two
-# dicts differ, uses the value from the first dict.
 def _merge_dict(dict_1, dict_2):
+    """
+    Merges two dicts:
+    * Lists that are present in both dicts are merged together by their "name" key
+      (preferring duplicate values in the first dict)
+    * `None` or missing keys in the first dict are set to the second dict's value
+    * Other values are preferred from the first dict
+    """
     # Return a new dict to prevent any accidental mutations
     result = {}
 
-    for key in dict_1:
-        if not isinstance(dict_1[key], list):
-            result[key] = dict_1[key]
-            continue
+    for key, dict_1_value in dict_1.items():
+        if dict_1_value is None and (dict_2_value := dict_2.get(key)):
+            # Replace null value in previous config
+            result[key] = dict_2_value
+        elif isinstance(dict_1_value, list) and (dict_2_value := dict_2.get(key)):
+            merge_map = {sub["name"]: sub for sub in dict_1_value}
+            for list_2_item in dict_2_value:
+                if (list_2_name := list_2_item["name"]) not in merge_map:
+                    merge_map[list_2_name] = list_2_item
+            # Convert back to a list
+            result[key] = list(merge_map.values())
+        else:
+            result[key] = dict_1_value
 
-        merge_map = {sub["name"]: sub for sub in dict_1[key]}
-
-        for sub in dict_2[key]:
-            # If the name is already in the merge map, skip
-            if sub["name"] in merge_map:
-                continue
-
-            merge_map[sub["name"]] = sub
-
-        # Convert back to a list
-        result[key] = list(merge_map.values())
+    # Process keys missing in dict_1
+    for key in set(dict_2.keys()).difference(dict_1.keys()):
+        result[key] = dict_2[key]
 
     return result
