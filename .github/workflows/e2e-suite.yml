@@ -23,7 +23,7 @@ on:
       - dev
 
 jobs:
-  integration-tests:
+  integration_tests:
     name: Run integration tests on Ubuntu
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch' && inputs.sha != '' || github.event_name == 'push' || github.event_name == 'pull_request'
@@ -167,3 +167,69 @@ jobs:
               conclusion: process.env.conclusion
             });
             return result;
+
+  notify-slack:
+    runs-on: ubuntu-latest
+    needs: [integration_tests]
+    if: always() && github.repository == 'linode/linode-cli' # Run even if integration tests fail and only on main repository
+
+    steps:
+      - name: Notify Slack
+        uses: slackapi/slack-github-action@v1.27.0
+        with:
+          channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
+          payload: |
+            {
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": ":rocket: *${{ github.workflow }} Completed in: ${{ github.repository }}* :white_check_mark:"
+                  }
+                },
+                {
+                  "type": "divider"
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Build Result:*\n${{ steps.integration_tests.outcome == 'success' && ':large_green_circle: Build Passed' || ':red_circle: Build Failed' }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Branch:*\n`${{ github.ref_name }}`"
+                    }
+                  ]
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Commit Hash:*\n<${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}|${{ github.sha }}>"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Run URL:*\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run Details>"
+                    }
+                  ]
+                },
+                {
+                  "type": "divider"
+                },
+                {
+                  "type": "context",
+                  "elements": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "Triggered by: :bust_in_silhouette: `${{ github.actor }}`"
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
