@@ -9,22 +9,24 @@ from tests.integration.helpers import (
     delete_target_id,
     exec_failing_test_command,
     exec_test_command,
+    get_random_text,
 )
 
 BASE_CMD = ["linode-cli", "volumes"]
-timestamp = str(time.time_ns())
+label = get_random_text(8)
 unique_tag = str(time.time_ns()) + "-tag"
 
 
 @pytest.fixture(scope="package")
 def test_volume_id():
+    label = get_random_text(8)
     volume_id = (
         exec_test_command(
             BASE_CMD
             + [
                 "create",
                 "--label",
-                "A" + timestamp,
+                label,
                 "--region",
                 "us-ord",
                 "--size",
@@ -52,7 +54,7 @@ def test_fail_to_create_volume_under_10gb():
         + [
             "create",
             "--label",
-            "A" + timestamp,
+            label,
             "--region",
             "us-ord",
             "--size",
@@ -68,7 +70,7 @@ def test_fail_to_create_volume_under_10gb():
     ) or "dev" == os.environ.get("TEST_ENVIRONMENT", None):
         assert "size	Must be 10-1024" in result
     else:
-        assert "size	Must be 10-10240" in result
+        assert "size	Must be 10-16384" in result
 
 
 def test_fail_to_create_volume_without_region():
@@ -77,7 +79,7 @@ def test_fail_to_create_volume_without_region():
         + [
             "create",
             "--label",
-            "A" + timestamp,
+            label,
             "--size",
             "10",
             "--text",
@@ -113,11 +115,11 @@ def test_fail_to_create_volume_over_1024gb_in_size():
         + [
             "create",
             "--label",
-            "A" + timestamp,
+            label,
             "--region",
             "us-ord",
             "--size",
-            "10241",
+            "19000",
             "--text",
             "--no-headers",
         ],
@@ -128,7 +130,7 @@ def test_fail_to_create_volume_over_1024gb_in_size():
     ) or "dev" == os.environ.get("TEST_ENVIRONMENT", None):
         assert "size	Must be 10-1024" in result
     else:
-        assert "size	Must be 10-10240" in result
+        assert "size	Must be 10-16384" in result
 
 
 def test_fail_to_create_volume_with_all_numberic_label():
