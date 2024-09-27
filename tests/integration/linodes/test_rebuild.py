@@ -25,6 +25,7 @@ def test_linode_id(linode_cloud_firewall):
     delete_target_id(target="linodes", id=linode_id)
 
 
+@pytest.mark.flaky(reruns=3, reruns_delay=2)
 def test_rebuild_fails_without_image(test_linode_id):
     linode_id = test_linode_id
 

@@ -1,6 +1,8 @@
+from io import StringIO
 from types import SimpleNamespace
 
 from linodecli import help_pages
+from tests.unit.conftest import assert_contains_ordered_substrings
 
 
 class TestHelpPages:
@@ -175,3 +177,40 @@ class TestHelpPages:
         assert "(required, nullable, conflicts with children)" in captured.out
         assert "(JSON, nullable, conflicts with children)" in captured.out
         assert "filter results" not in captured.out
+
+    def test_help_command_actions(self, mocker):
+        test_operations = {
+            "foo": {
+                "b-create": mocker.MagicMock(
+                    summary="Test summary.", action_aliases=[]
+                ),
+                "b-list": mocker.MagicMock(
+                    summary="Test summary 2.", action_aliases=["b-ls"]
+                ),
+                "a-list": mocker.MagicMock(
+                    summary="Test summary 3.", action_aliases=["a-ls"]
+                ),
+            }
+        }
+
+        stdout_buffer = StringIO()
+        help_pages.print_help_command_actions(
+            test_operations, "foo", file=stdout_buffer
+        )
+
+        # Ensure the given snippets are printed in order, ignoring irrelevant characters
+        assert_contains_ordered_substrings(
+            stdout_buffer.getvalue(),
+            [
+                "linode-cli foo [ACTION]",
+                "Available actions:",
+                "action",
+                "summary",
+                "a-list, a-ls",
+                "Test summary 3.",
+                "b-create",
+                "Test summary.",
+                "b-list, b-ls",
+                "Test summary 2.",
+            ],
+        )

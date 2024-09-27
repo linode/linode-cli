@@ -35,7 +35,8 @@ dev = [
     "build>=0.10.0",
     "twine>=4.0.2",
     "jinja2",
-    "sphinx_rtd_theme"
+    "sphinx_rtd_theme",
+    "pytest-rerunfailures"
 ]
 
 [project.scripts]
