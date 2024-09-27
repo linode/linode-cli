@@ -9,9 +9,6 @@ ifdef TEST_CASE
 TEST_CASE_COMMAND = -k $(TEST_CASE)
 endif
 
-# TODO: Remove this workaround once the LKE docs issue has been resolved
-SPEC := https://gist.githubusercontent.com/lgarber-akamai/3e1d77f08acf1a7b29d63a77b0b4a289/raw/12f18d7b7b54cf8587c9f24e72509b0e530e5760/openapi.yaml
-
 SPEC_VERSION ?= latest
 ifndef SPEC
 override SPEC = $(shell ./resolve_spec_url ${SPEC_VERSION})
