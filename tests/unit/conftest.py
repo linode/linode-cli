@@ -1,7 +1,6 @@
 import configparser
-
 from io import BytesIO
-from typing import Callable, Iterable, Optional, TypeVar, List
+from typing import Callable, Iterable, List, Optional, TypeVar
 
 import pytest
 from openapi3 import OpenAPI
