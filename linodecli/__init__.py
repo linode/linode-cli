@@ -27,6 +27,7 @@ from .configuration import ENV_TOKEN_NAME
 from .help_pages import (
     HELP_TOPICS,
     print_help_action,
+    print_help_command_actions,
     print_help_commands,
     print_help_default,
     print_help_env_vars,
@@ -224,23 +225,7 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
         and parsed.action is None
         and parsed.command in cli.ops
     ):
-        print(f"linode-cli {parsed.command} [ACTION]")
-        print()
-        print("Available actions: ")
-
-        content = [
-            [", ".join([action, *op.action_aliases]), op.summary]
-            for action, op in cli.ops[parsed.command].items()
-        ]
-
-        table = Table(
-            Column(header="action", no_wrap=True),
-            Column(header="summary", style="cyan"),
-        )
-        for row in content:
-            table.add_row(*row)
-
-        rprint(table)
+        print_help_command_actions(cli.ops, parsed.command)
         sys.exit(ExitCodes.SUCCESS)
 
     if parsed.command is not None and parsed.action is not None:

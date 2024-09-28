@@ -3,15 +3,16 @@ This module contains various helper functions related to outputting
 help pages.
 """
 
+import sys
 import textwrap
 from collections import defaultdict
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from rich import box
 from rich import print as rprint
 from rich.console import Console
 from rich.padding import Padding
-from rich.table import Table
+from rich.table import Column, Table
 from rich.text import Text
 
 from linodecli import plugins
@@ -138,6 +139,36 @@ def print_help_default():
         "For comprehensive documentation, "
         "visit https://www.linode.com/docs/api/"
     )
+
+
+def print_help_command_actions(
+    ops: Dict[str, Dict[str, OpenAPIOperation]],
+    command: Optional[str],
+    file=sys.stdout,
+):
+    """
+    Prints the help page for a single command, including all actions
+    under the given command.
+
+    :param ops: A dictionary mapping CLI commands -> actions -> operations.
+    :param command: The command to print the help page for.
+    """
+
+    print(f"linode-cli {command} [ACTION]\n\nAvailable actions: ", file=file)
+
+    content = [
+        [", ".join([action, *op.action_aliases]), op.summary]
+        for action, op in sorted(ops[command].items(), key=lambda v: v[0])
+    ]
+
+    table = Table(
+        Column(header="action", no_wrap=True),
+        Column(header="summary", style="cyan"),
+    )
+    for row in content:
+        table.add_row(*row)
+
+    rprint(table, file=file)
 
 
 def print_help_action(
