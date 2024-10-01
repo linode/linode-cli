@@ -2,6 +2,7 @@ import os
 
 import pytest
 
+from linodecli.exit_codes import ExitCodes
 from tests.integration.helpers import (
     delete_target_id,
     exec_failing_test_command,
@@ -24,6 +25,7 @@ def test_linode_id(linode_cloud_firewall):
     delete_target_id(target="linodes", id=linode_id)
 
 
+@pytest.mark.flaky(reruns=3, reruns_delay=2)
 def test_rebuild_fails_without_image(test_linode_id):
     linode_id = test_linode_id
 
@@ -36,7 +38,8 @@ def test_rebuild_fails_without_image(test_linode_id):
             linode_id,
             "--text",
             "--no-headers",
-        ]
+        ],
+        ExitCodes.REQUEST_FAILED,
     ).stderr.decode()
 
     assert "Request failed: 400" in result

@@ -4,26 +4,29 @@ import time
 
 import pytest
 
+from linodecli.exit_codes import ExitCodes
 from tests.integration.helpers import (
     delete_target_id,
     exec_failing_test_command,
     exec_test_command,
+    get_random_text,
 )
 
 BASE_CMD = ["linode-cli", "volumes"]
-timestamp = str(time.time_ns())
+label = get_random_text(8)
 unique_tag = str(time.time_ns()) + "-tag"
 
 
 @pytest.fixture(scope="package")
 def test_volume_id():
+    label = get_random_text(8)
     volume_id = (
         exec_test_command(
             BASE_CMD
             + [
                 "create",
                 "--label",
-                "A" + timestamp,
+                label,
                 "--region",
                 "us-ord",
                 "--size",
@@ -51,14 +54,15 @@ def test_fail_to_create_volume_under_10gb():
         + [
             "create",
             "--label",
-            "A" + timestamp,
+            label,
             "--region",
             "us-ord",
             "--size",
             "5",
             "--text",
             "--no-headers",
-        ]
+        ],
+        ExitCodes.REQUEST_FAILED,
     ).stderr.decode()
 
     if "test" == os.environ.get(
@@ -66,7 +70,7 @@ def test_fail_to_create_volume_under_10gb():
     ) or "dev" == os.environ.get("TEST_ENVIRONMENT", None):
         assert "size	Must be 10-1024" in result
     else:
-        assert "size	Must be 10-10240" in result
+        assert "size	Must be 10-16384" in result
 
 
 def test_fail_to_create_volume_without_region():
@@ -75,12 +79,13 @@ def test_fail_to_create_volume_without_region():
         + [
             "create",
             "--label",
-            "A" + timestamp,
+            label,
             "--size",
             "10",
             "--text",
             "--no-headers",
-        ]
+        ],
+        ExitCodes.REQUEST_FAILED,
     ).stderr.decode()
     assert "Request failed: 400" in result
     assert "Must provide a region or a Linode ID" in result
@@ -97,7 +102,8 @@ def test_fail_to_create_volume_without_label():
             "10",
             "--text",
             "--no-headers",
-        ]
+        ],
+        ExitCodes.REQUEST_FAILED,
     ).stderr.decode()
     assert "Request failed: 400" in result
     assert "label	label is required" in result
@@ -109,21 +115,22 @@ def test_fail_to_create_volume_over_1024gb_in_size():
         + [
             "create",
             "--label",
-            "A" + timestamp,
+            label,
             "--region",
             "us-ord",
             "--size",
-            "10241",
+            "19000",
             "--text",
             "--no-headers",
-        ]
+        ],
+        ExitCodes.REQUEST_FAILED,
     ).stderr.decode()
     if "test" == os.environ.get(
         "TEST_ENVIRONMENT", None
     ) or "dev" == os.environ.get("TEST_ENVIRONMENT", None):
         assert "size	Must be 10-1024" in result
     else:
-        assert "size	Must be 10-10240" in result
+        assert "size	Must be 10-16384" in result
 
 
 def test_fail_to_create_volume_with_all_numberic_label():
@@ -139,7 +146,8 @@ def test_fail_to_create_volume_with_all_numberic_label():
             "10",
             "--text",
             "--no-headers",
-        ]
+        ],
+        ExitCodes.REQUEST_FAILED,
     ).stderr.decode()
     assert "Request failed: 400" in result
     assert "label	Must begin with a letter" in result

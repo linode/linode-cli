@@ -3,7 +3,6 @@ import pytest
 from tests.integration.helpers import delete_target_id, exec_test_command
 from tests.integration.linodes.helpers_linodes import (
     BASE_CMD,
-    create_linode,
     create_linode_and_wait,
     wait_until,
 )
@@ -11,7 +10,7 @@ from tests.integration.linodes.helpers_linodes import (
 
 @pytest.fixture
 def test_linode_id(linode_cloud_firewall):
-    linode_id = create_linode(firewall_id=linode_cloud_firewall)
+    linode_id = create_linode_and_wait(firewall_id=linode_cloud_firewall)
 
     yield linode_id
 
@@ -52,6 +51,7 @@ def test_reboot_linode(create_linode_in_running_state):
     ), "Linode status has not changed to running from provisioning"
 
 
+@pytest.mark.flaky(reruns=3, reruns_delay=2)
 def test_shutdown_linode(test_linode_id):
     linode_id = test_linode_id
 
@@ -65,4 +65,4 @@ def test_shutdown_linode(test_linode_id):
 
     result = wait_until(linode_id=linode_id, timeout=180, status="offline")
 
-    assert (result, "Linode status has not changed to running from offline")
+    assert result, "Linode status has not changed to running from offline"

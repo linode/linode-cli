@@ -3,6 +3,7 @@ import time
 
 import pytest
 
+from linodecli.exit_codes import ExitCodes
 from tests.integration.helpers import (
     delete_target_id,
     exec_failing_test_command,
@@ -49,7 +50,8 @@ def test_resize_fails_to_smaller_volume(test_volume_id):
     time.sleep(VOLUME_CREATION_WAIT)
     result = exec_failing_test_command(
         BASE_CMD
-        + ["resize", volume_id, "--size", "5", "--text", "--no-headers"]
+        + ["resize", volume_id, "--size", "5", "--text", "--no-headers"],
+        ExitCodes.REQUEST_FAILED,
     ).stderr.decode()
 
     assert "Request failed: 400" in result
@@ -67,7 +69,8 @@ def test_resize_fails_to_volume_larger_than_1024gb(test_volume_id):
             "1024893405",
             "--text",
             "--no-headers",
-        ]
+        ],
+        ExitCodes.REQUEST_FAILED,
     ).stderr.decode()
 
     if "test" == os.environ.get(
@@ -79,7 +82,7 @@ def test_resize_fails_to_volume_larger_than_1024gb(test_volume_id):
         )
     else:
         assert (
-            "Storage volumes cannot be resized larger than 10240 gigabytes"
+            "Storage volumes cannot be resized larger than 16384 gigabytes"
             in result
         )
 

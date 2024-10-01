@@ -5,7 +5,7 @@ from linodecli.plugins.obj import get_obj_args_parser, helpers, print_help
 
 
 def test_print_help(mock_cli: CLI, capsys: CaptureFixture):
-    parser = get_obj_args_parser(["us-mia-1"])
+    parser = get_obj_args_parser()
     print_help(parser)
     captured_text = capsys.readouterr()
     assert parser.format_help() in captured_text.out
