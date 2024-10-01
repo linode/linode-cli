@@ -341,9 +341,8 @@ to continue..
             # serve requests one at a time until we get a token or are interrupted
             serv.handle_request()
     except KeyboardInterrupt:
-        print(file=sys.stderr)
         print(
-            "Giving up.  If you couldn't get web authentication to work, please "
+            "\nGiving up.  If you couldn't get web authentication to work, please "
             "try token using a token by invoking with `linode-cli configure --token`, "
             "and open an issue at https://github.com/linode/linode-cli",
             file=sys.stderr
