@@ -119,7 +119,8 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
 
     if parsed.command == "remove-plugin":
         if parsed.action is None:
-            print("remove-plugin requires a plugin name to remove!", file=sys.stderr)
+            print("remove-plugin requires a plugin name to remove!",
+                  file=sys.stderr)
             sys.exit(ExitCodes.ARGUMENT_ERROR)
         msg, code = remove_plugin(parsed.action, cli.config)
         print(msg)

@@ -133,7 +133,8 @@ def call(args, context):
         filepath = results[0]
 
     if not os.path.isfile(filepath):
-        print(f"No file at {filepath}; must be a path to a valid file.", file=sys.stderr)
+        print(f"No file at {filepath}; must be a path to a valid file.",
+              file=sys.stderr)
         sys.exit(ExitCodes.FILE_ERROR)
 
     # make sure it's not larger than the max upload size
@@ -180,7 +181,8 @@ def call(args, context):
                 file=sys.stderr
             )
             sys.exit(ExitCodes.REQUEST_FAILED)
-        print(f"Upload failed with status {status}; response was {resp}", file=sys.stderr)
+        print(f"Upload failed with status {status}; response was {resp}",
+                file=sys.stderr)
         sys.exit(ExitCodes.REQUEST_FAILED)
 
     # grab the upload URL and image data

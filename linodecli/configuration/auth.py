@@ -59,7 +59,7 @@ def _handle_response_status(
         return
 
     print(f"Could not contact {response.url} - Error: {response.status_code}",
-            file=sys.stderr)
+          file=sys.stderr)
     if exit_on_error:
         sys.exit(ExitCodes.REQUEST_FAILED)
 
@@ -244,7 +244,8 @@ def _get_token_web(base_url: str) -> Tuple[str, str]:
     username = _username_for_token(base_url, temp_token)
 
     if username is None:
-        print("OAuth failed.  Please try again of use a token for auth.", file=sys.stderr)
+        print("OAuth failed.  Please try again of use a token for auth.",
+              file=sys.stderr)
         sys.exit(ExitCodes.OAUTH_ERROR)
 
     # the token returned via public oauth will expire in 2 hours, which

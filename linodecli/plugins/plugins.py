@@ -128,7 +128,8 @@ def invoke(name: str, args: List[str], context: PluginContext):
                 "DEFAULT", f"plugin-name-{name}"
             )
         except KeyError:
-            print(f"Plugin {name} is misconfigured - please re-register it", file=sys.stderr)
+            print(f"Plugin {name} is misconfigured - please re-register it",
+                  file=sys.stderr)
             sys.exit(ExitCodes.REQUEST_FAILED)
 
         try:

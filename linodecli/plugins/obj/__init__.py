@@ -147,7 +147,8 @@ def set_acl(get_client, args, **kwargs):  # pylint: disable=unused-argument
 
     # make sure the call is sane
     if parsed.acl_public and parsed.acl_private:
-        print("You may not set the ACL to public and private in the same call", file=sys.stderr)
+        print("You may not set the ACL to public and private in the same call",
+              file=sys.stderr)
         sys.exit(ExitCodes.REQUEST_FAILED)
 
     if not parsed.acl_public and not parsed.acl_private:
