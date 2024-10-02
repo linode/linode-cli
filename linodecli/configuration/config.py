@@ -290,7 +290,10 @@ class CLIConfig:
         ):
             print(f"User {username} is not configured.")
             sys.exit(ExitCodes.USERNAME_ERROR)
-        if not self.config.has_section(username) or allowed_defaults is None:
+        if (
+            not self.config.has_section(username)
+            and self.config.default_section is None
+        ) or allowed_defaults is None:
             return namespace
 
         warn_dict = {}
