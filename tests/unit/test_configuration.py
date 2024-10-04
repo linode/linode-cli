@@ -615,9 +615,8 @@ mysql_engine = mysql/8.0.26"""
         Test use a custom configuration path
         """
         conf = self._build_test_config()
-
-        tmp_path.mkdir(exist_ok=True)
         custom_path = tmp_path / "test-cli-config"
+
         with (
             patch.dict(
                 os.environ,
