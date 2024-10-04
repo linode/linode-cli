@@ -609,3 +609,27 @@ mysql_engine = mysql/8.0.26"""
         output = stdout_buf.getvalue()
         assert "foo [y/N]: " in output
         assert result
+
+    def test_custom_config_path(self, monkeypatch, tmp_path):
+        """
+        Test use a custom configuration path
+        """
+        conf = self._build_test_config()
+
+        tmp_path.mkdir(exist_ok=True)
+        custom_path = tmp_path / "test-cli-config"
+        with (
+            patch.dict(
+                os.environ,
+                {"LINODE_CLI_CONFIG": custom_path.absolute().as_posix()},
+            ),
+        ):
+            conf.write_config()
+
+            configs = custom_path.read_text().splitlines()
+            expected_configs = self.mock_config_file.splitlines()
+
+            assert len(configs) == len(expected_configs) + 1
+
+            for i, _ in enumerate(expected_configs):
+                assert expected_configs[i] == configs[i]
