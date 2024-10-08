@@ -82,7 +82,7 @@ def test_resize_fails_to_volume_larger_than_1024gb(test_volume_id):
         )
     else:
         assert (
-            "Storage volumes cannot be resized larger than 10240 gigabytes"
+            "Storage volumes cannot be resized larger than 16384 gigabytes"
             in result
         )
 
