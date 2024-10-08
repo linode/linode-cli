@@ -43,7 +43,7 @@ class InputValidation:
             try:
                 validator(value)
             except ValueError as err:
-                print(f"Invalid Input: {'; '.join(err.args)}")
+                print(f"Invalid Input: {'; '.join(err.args)}", file=sys.stderr)
                 continue
 
             return value
@@ -204,7 +204,7 @@ def _get_firewall(firewall_id, client):
     )
 
     if code != 200:
-        print(f"Error retrieving firewall: {code}")
+        print(f"Error retrieving firewall: {code}", file=sys.stderr)
         sys.exit(ExitCodes.FIREWALL_ERROR)
 
     code, rules = client.call_operation(
@@ -212,7 +212,7 @@ def _get_firewall(firewall_id, client):
     )
 
     if code != 200:
-        print(f"Error retrieving firewall rules: {code}")
+        print(f"Error retrieving firewall rules: {code}", file=sys.stderr)
         sys.exit(ExitCodes.FIREWALL_ERROR)
 
     return firewall, rules
@@ -449,7 +449,7 @@ def remove_rule(rules):
     change = InputValidation.input_io(rules)
 
     if len(change) < 1:
-        print("No entires to remove")
+        print("No entires to remove", file=sys.stderr)
         return False
 
     ind_str = InputValidation.input(
@@ -614,9 +614,9 @@ def call(args, context):
             if code == 200:
                 print("Rules updated successfully!")
                 break
-            print(f"Error editing rules: {code}: {errors}")
+            print(f"Error editing rules: {code}: {errors}", file=sys.stderr)
             # block to see the error, then re-enter the editor
             sys.stdin.read(1)
         else:
-            print("Aborted.")
+            print("Aborted.", file=sys.stderr)
             break

@@ -27,7 +27,8 @@ def call(args, context):  # pylint: disable=too-many-branches
         print(
             "This plugin is not currently supported in Windows.  For more "
             "information or to suggest a fix, please visit "
-            "https://github.com/linode/linode-cli"
+            "https://github.com/linode/linode-cli",
+            file=sys.stderr
         )
         sys.exit(ExitCodes.REQUEST_FAILED)
 
@@ -62,7 +63,8 @@ def call(args, context):  # pylint: disable=too-many-branches
 
     if target["status"] != "running":
         print(
-            f"{label} is not running (status is {target['status']}); operation aborted."
+            f"{label} is not running (status is {target['status']}); operation aborted.",
+            file=sys.stderr
         )
         sys.exit(ExitCodes.REQUEST_FAILED)
 
@@ -95,7 +97,7 @@ def find_linode_with_label(context, label: str) -> str:
     )
 
     if result != 200:
-        print(f"Could not retrieve Linode: {result} error")
+        print(f"Could not retrieve Linode: {result} error", file=sys.stderr)
         sys.exit(ExitCodes.REQUEST_FAILED)
 
     potential_matches = potential_matches["data"]
