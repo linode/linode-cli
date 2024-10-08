@@ -4,6 +4,8 @@ Converting the processed OpenAPI Responses into something the CLI can work with
 
 from openapi3.paths import MediaType
 
+from linodecli.baked.parsing import process_arg_description
+
 
 def _is_paginated(response):
     """
@@ -52,8 +54,10 @@ class OpenAPIResponseAttr:
         self.nested_list_depth = nested_list_depth
 
         #: The description of this argument, for help display.  Only used for filterable attributes.
-        self.description = (
-            schema.description.split(".")[0] if schema.description else ""
+        self.description_rich, self.description = (
+            process_arg_description(schema.description)
+            if schema.description
+            else ("", "")
         )
 
         #: No response model fields are required. This is only used for filterable attributes.
@@ -76,10 +80,16 @@ class OpenAPIResponseAttr:
         #: How we should associate values of this attribute to output colors
         self.color_map = schema.extensions.get("linode-cli-color")
 
+        #: An example value for this attribute.
+        self.example = schema.example
+
         #: The type for items in this attribute, if this attribute is a list
         self.item_type = None
         if schema.type == "array":
             self.item_type = schema.items.type
+
+            if schema.items.example:
+                self.example = schema.items.example
 
     @property
     def path(self):
@@ -173,6 +183,9 @@ def _parse_response_model(schema, prefix=None, nested_list_depth=0):
         return attrs
 
     for k, v in schema.properties.items():
+        if v.writeOnly:
+            continue
+
         pref = prefix + "." + k if prefix else k
 
         if v.type == "object":

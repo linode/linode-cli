@@ -5,15 +5,15 @@ This module contains logic related to string parsing and replacement.
 import functools
 import re
 from html import unescape
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 # Sentence delimiter, split on a period followed by any type of
 # whitespace (space, new line, tab, etc.)
-REGEX_SENTENCE_DELIMITER = re.compile(r"\.(?:\s|$)")
+REGEX_SENTENCE_DELIMITER = re.compile(r"\.(?:\s|$)", flags=re.M)
 
 # Matches on pattern __prefix__ at the beginning of a description
 # or after a comma
-REGEX_TECHDOCS_PREFIX = re.compile(r"(?:, |\A)__([\w-]+)__")
+REGEX_TECHDOCS_PREFIX = re.compile(r"(?:, |\A)__([^_]+)__")
 
 # Matches on pattern [link title](https://.../)
 REGEX_MARKDOWN_LINK = re.compile(r"\[(?P<text>.*?)]\((?P<link>.*?)\)")
@@ -121,23 +121,35 @@ def get_short_description(description: str) -> str:
     :rtype: set
     """
 
-    target_lines = description.splitlines()
-    relevant_lines = None
-
-    for i, line in enumerate(target_lines):
+    def __simplify(sentence: str) -> Optional[str]:
         # Edge case for descriptions starting with a note
-        if line.lower().startswith("__note__"):
-            continue
+        if sentence.lower().startswith("__note__"):
+            return None
 
-        relevant_lines = target_lines[i:]
-        break
+        sentence = strip_techdocs_prefixes(sentence)
 
-    if relevant_lines is None:
+        # Check that the sentence still has content after stripping prefixes
+        if len(sentence) < 2:
+            return None
+
+        return sentence + "."
+
+    # Find the first relevant sentence
+    result = next(
+        simplified
+        for simplified in iter(
+            __simplify(sentence)
+            for sentence in REGEX_SENTENCE_DELIMITER.split(description)
+        )
+        if simplified is not None
+    )
+
+    if result is None:
         raise ValueError(
             f"description does not contain any relevant lines: {description}",
         )
 
-    return REGEX_SENTENCE_DELIMITER.split("\n".join(relevant_lines), 1)[0] + "."
+    return result
 
 
 def strip_techdocs_prefixes(description: str) -> str:
@@ -150,11 +162,7 @@ def strip_techdocs_prefixes(description: str) -> str:
     :returns: The stripped description
     :rtype: str
     """
-    result_description = REGEX_TECHDOCS_PREFIX.sub(
-        "", description.lstrip()
-    ).lstrip()
-
-    return result_description
+    return REGEX_TECHDOCS_PREFIX.sub("", description.lstrip()).lstrip()
 
 
 def process_arg_description(description: str) -> Tuple[str, str]:
@@ -173,12 +181,12 @@ def process_arg_description(description: str) -> Tuple[str, str]:
         return "", ""
 
     result = get_short_description(description)
-    result = strip_techdocs_prefixes(result)
     result = result.replace("\n", " ").replace("\r", " ")
 
-    description, links = extract_markdown_links(result)
+    # NOTE: Links should only be separated from Rich Markdown links
+    result_no_links, links = extract_markdown_links(result)
 
     if len(links) > 0:
-        description += f" See: {'; '.join(links)}"
+        result_no_links += f" See: {'; '.join(links)}"
 
-    return unescape(markdown_to_rich_markup(description)), unescape(description)
+    return unescape(markdown_to_rich_markup(result_no_links)), unescape(result)

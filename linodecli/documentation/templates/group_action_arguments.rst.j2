@@ -1,0 +1,55 @@
+{% macro render(command, action, sections, section_names) %}
+{% include "_roles.rst.j2" %}
+{% import "_macros.rst.j2" as macros %}
+
+{{
+    macros.group_action_subheading(
+        "Arguments",
+        "Additional fields used to execute this request."
+    )
+}}
+
+{% for section in sections %}
+{% if section.name | length > 0 %}
+
+.. _commands_{{ command }}_{{ action }}_argument_sections_{{ section.name }}:
+
+.. rst-class:: action-section-header
+
+{{ section.name }}
+
+{% endif %}
+
+{% set rows = [] %}
+{% for arg in section.entries %}
+    {% set description = arg.description if arg.description else "N/A" %}
+    {% if arg.additional_details | length > 0 %}
+        {% set description = ":action-argument-additional-details:`(%s)` %s" | format(arg.additional_details | join(", "), description) %}
+    {% endif %}
+    {%
+        do rows.append(
+            [
+                ":action-table-field-name:`\-\-%s`%s%s" % (
+                    arg.path,
+                    " :action-table-field-required:`*`" if arg.required else "",
+                    " :ref:`(section) <commands_%s_%s_argument_sections_%s>`" % (command, action, arg.path)
+                    if arg.is_parent and arg.path in section_names else "",
+                ),
+                ":action-table-field-type:`%s`" % arg.type,
+                ":action-table-field-example:`%s`" % ((arg.example | truncate_middle(length=25)) if arg.example else "N/A"),
+                description
+            ]
+        )
+    %}
+{% endfor %}
+{{
+    macros.group_action_table(
+        "action-argument-section-table",
+        [1, 1, 1, 97],
+        ["Name", "Type", "Example", "Description"],
+        *rows
+    )
+}}
+{% endfor %}
+
+{% endmacro %}

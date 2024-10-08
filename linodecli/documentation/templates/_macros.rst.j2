@@ -1,0 +1,29 @@
+{% macro group_action_subheading(title, description) %}
+
+.. rst-class:: action-subheading
+
+{{ title }}
+
+.. rst-class:: action-subheading-description
+
+{{ description }}
+
+{% endmacro %}
+
+{% macro group_action_table(class, widths) %}
+
+.. rst-class:: {{ class }}
+
+..  list-table::
+    :header-rows: 1
+    :width: 100%
+    :widths: {{ widths | join(" ") }}
+
+{% for row in varargs %}
+{% for cell in row %}
+{{ "%s - %s" | format("*" if loop.index0 == 0 else " ", cell.split("\n") | join("\\n")) | indent(first=True) }}
+{% endfor %}
+
+{% endfor %}
+
+{% endmacro %}

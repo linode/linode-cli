@@ -1,0 +1,20 @@
+{% macro render(samples) %}
+{% include "_roles.rst.j2" %}
+{% import "_macros.rst.j2" as macros %}
+
+{{
+    macros.group_action_subheading(
+        "Sample%s" | format("s" if samples | length > 1 else ""),
+        "Examples of how this command might be used."
+    )
+}}
+
+{% for sample in samples %}
+
+..  code-block:: bash
+
+{{ sample | indent(first=True) }}
+
+{% endfor %}
+
+{% endmacro %}

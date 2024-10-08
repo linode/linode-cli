@@ -1,0 +1,242 @@
+openapi: 3.0.1
+info:
+  title: API Specification
+  version: 1.0.0
+servers:
+  - url: https://api.linode.com/v4
+
+paths:
+  /{apiVersion}/test/resource:
+    x-linode-cli-command: test-resource
+    parameters:
+      - name: "apiVersion"
+        in: "path"
+        required: true
+        schema:
+          enum: [ "v4", "v4beta" ]
+          type: "string"
+          default: "v4"
+    post:
+      summary: Create a new test resource.
+      operationId: testResourceCreate
+      description: Create a new test resource.
+      x-linode-cli-action: create
+      externalDocs:
+        url: https://linode.com
+      requestBody:
+        description: >
+          The parameters to set when creating the test resource.
+        required: True
+        content:
+          application/json:
+            schema:
+              required:
+                - boolean_field
+                - string_field
+              allOf:
+              - $ref: '#/components/schemas/TestResource'
+      responses:
+        '200':
+          description: The new test resource.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestResource'
+    get:
+      summary: List test resources.
+      operationId: testResourceList
+      description: List test resources.
+      externalDocs:
+        url: https://linode.com
+      x-linode-cli-action:
+        - list
+        - ls
+      responses:
+        '200':
+          description: A paginated list containing the test resources.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TestResource'
+                  page:
+                    $ref: '#/components/schemas/PaginationEnvelope/properties/page'
+                  pages:
+                    $ref: '#/components/schemas/PaginationEnvelope/properties/pages'
+                  results:
+                    $ref: '#/components/schemas/PaginationEnvelope/properties/results'
+
+  /{apiVersion}/test/resource/{resourceId}:
+    x-linode-cli-command: test-resource
+    parameters:
+      - name: "apiVersion"
+        in: "path"
+        required: true
+        schema:
+          enum: [ "v4", "v4beta" ]
+          type: "string"
+          default: "v4"
+
+      - name: "resourceId"
+        required: true
+        in: "path"
+        description: "The ID of the resource."
+        schema:
+          type: "integer"
+    put:
+      summary: Update a test resource.
+      operationId: testResourcePut
+      description: Update a test resource.
+      externalDocs:
+        url: https://linode.com
+      x-linode-cli-action: update
+      requestBody:
+        description: >
+          The parameters to set when creating the test resource.
+        required: True
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TestResource'
+      responses:
+        '200':
+          description: The updated test resource.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestResource'
+
+    get:
+      summary: Get information about a test resource.
+      operationId: testResourceGet
+      description: Get information about a test resource.
+      externalDocs:
+        url: https://linode.com
+      x-linode-cli-action: view
+      responses:
+        '200':
+          description: The test resource.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestResource'
+
+components:
+  schemas:
+    PaginationEnvelope:
+      type: object
+      properties:
+        pages:
+          type: integer
+          readOnly: true
+          description: The total number of pages.
+          example: 1
+        page:
+          type: integer
+          readOnly: true
+          description: The current page.
+          example: 1
+        results:
+          type: integer
+          readOnly: true
+          description: The total number of results.
+          example: 1
+    TestResource:
+      type: object
+      description: Foobar object request
+      properties:
+        resource_id:
+          type: integer
+          readOnly: true
+          description: "The ID of this test resource."
+          example: 123
+        string_field:
+          type: string
+          description: "An arbitrary string."
+          nullable: true
+          example: "test string"
+        integer_field:
+          type: integer
+          description: "An arbitrary integer."
+          writeOnly: true
+        boolean_field:
+          type: boolean
+          description: "An arbitrary boolean."
+          example: true
+          x-linode-filterable: true
+        object_field:
+          type: object
+          description: "An arbitrary object."
+          required:
+            - bar
+          properties:
+            foo:
+              type: string
+              description: "An arbitrary foo."
+              example: "bar"
+            bar:
+              type: string
+              description: "An arbitrary bar."
+              example: "foo"
+        literal_list:
+          type: array
+          description: "An arbitrary list of literals"
+          example:
+            - "foo"
+            - "bar"
+          items:
+            type: string
+        object_list:
+          type: array
+          description: "An arbitrary list of objects."
+          items:
+            type: object
+            description: An arbitrary object.
+            required:
+              - field_integer
+            properties:
+              field_string:
+                type: string
+                description: An arbitrary nested string.
+                example: "foobar"
+              field_integer:
+                type: integer
+                description: An arbitrary nested integer.
+                example: 321
+
+
+#        nullable_int:
+#          type: integer
+#          nullable: true
+#          description: An arbitrary nullable int
+#        nullable_string:
+#          type: string
+#          nullable: true
+#          description: An arbitrary nullable string
+#        nullable_float:
+#          type: number
+#          nullable: true
+#          description: An arbitrary nullable float
+#
+#                  nested_int:
+#                    type: number
+#                    description: A deeply nested integer.
+#              field_array:
+#                type: array
+#                description: An arbitrary deeply nested array.
+#                items:
+#                  type: string
+#              field_string:
+#                type: string
+#                description: An arbitrary field.
+#              field_int:
+#                type: number
+#                description: An arbitrary field.
+#              nullable_string:
+#                type: string
+#                description: An arbitrary nullable string.
+#                nullable: true

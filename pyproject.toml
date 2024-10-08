@@ -34,6 +34,8 @@ dev = [
     "boto3-stubs[s3]",
     "build>=0.10.0",
     "twine>=4.0.2",
+    "jinja2",
+    "sphinx_rtd_theme",
     "pytest-rerunfailures"
 ]
 
@@ -42,11 +44,17 @@ linode-cli = "linodecli:main"
 linode = "linodecli:main"
 lin = "linodecli:main"
 
+[tool.setuptools]
+include-package-data = true
+
 [tool.setuptools.dynamic]
 version = { attr = "linodecli.version.__version__" }
 
 [tool.setuptools.packages.find]
 include = ["linodecli*"]
+
+[tool.setuptools.package-data]
+"linodecli.documentation.templates" = ["*"]
 
 [tool.isort]
 profile = "black"

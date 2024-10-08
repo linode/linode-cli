@@ -6,7 +6,7 @@ import glob
 import os
 from argparse import ArgumentParser
 from pathlib import Path
-from typing import Optional
+from typing import Any, Callable, List, Optional, TypeVar
 from urllib.parse import urlparse
 
 API_HOST_OVERRIDE = os.getenv("LINODE_CLI_API_HOST")
@@ -17,6 +17,9 @@ API_SCHEME_OVERRIDE = os.getenv("LINODE_CLI_API_SCHEME")
 # This field defaults to True to enable default verification if
 # no path is specified.
 API_CA_PATH = os.getenv("LINODE_CLI_CA", None) or True
+
+# Keywords used to infer whether an operation is a CRUD operation.
+CRUD_OPERATION_KEYWORDS = ["list", "view", "create", "add", "update", "delete"]
 
 
 def handle_url_overrides(
@@ -120,3 +123,35 @@ def expand_globs(pattern: str):
         print(f"No file found matching pattern {pattern}")
 
     return [Path(x).resolve() for x in results]
+
+
+T = TypeVar("T")
+
+
+def sorted_actions_smart(
+    actions: List[T], key: Callable[[T], str] = lambda v: v
+) -> List[T]:
+    """
+    Returns the given list of actions ordered to maximize readability.
+
+    :param actions: The actions to order.
+    :param key: A function to retrieve the name of a given action.
+
+    :returns: The ordered actions.
+    """
+
+    def __key(action: T) -> Any:
+        name = key(action)
+
+        # Prioritize CRUD operations
+        for i, crud_operation in enumerate(CRUD_OPERATION_KEYWORDS):
+            name = name.replace(crud_operation, str(i))
+
+        return (
+            # Prioritize root operations
+            "-" in name,
+            # Sort everything else
+            name,
+        )
+
+    return sorted(actions, key=__key)

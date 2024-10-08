@@ -65,7 +65,7 @@ class TestParsing:
 
         assert (
             get_short_description(
-                "__Note__. This might be a sentence.\nThis is a sentence."
+                "__Note__ This might be a sentence.\nThis is a sentence."
             )
             == "This is a sentence."
         )

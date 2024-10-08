@@ -1,0 +1,14 @@
+{% import "group_action.rst.j2" as action_tmpl %}
+{{ pretty_name }}
+{{ "=" * (pretty_name | length) }}
+
+This section details {{ pretty_name[:-1] if pretty_name[-1] == "s" else pretty_name }}-related Linode CLI commands.
+
+{% for action in actions %}
+{{ action_tmpl.render(action) }}
+
+{% if loop.index < (actions | length) - 1 %}
+------------
+{% endif %}
+
+{% endfor %}

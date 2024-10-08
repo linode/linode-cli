@@ -1,0 +1,49 @@
+{% macro render(command, action, sections, section_names) %}
+{% include "_roles.rst.j2" %}
+{% import "_macros.rst.j2" as macros %}
+
+{{
+    macros.group_action_subheading(
+        "Result Attributes",
+        "The attributes returned by this command."
+    )
+}}
+
+{% for section in sections %}
+{% if section.name | length > 0 %}
+
+.. _commands_{{ command }}_{{ action }}_attribute_sections_{{ section.name }}:
+
+.. rst-class:: action-section-header
+
+{{ section.name }}
+
+{% endif %}
+{% set rows = [] %}
+{% for attr in section.entries %}
+    {%
+        do rows.append(
+            [
+                ":action-table-field-name:`%s` %s" % (
+                    attr.name,
+                    ":ref:`(section) <commands_%s_%s_attribute_sections_%s>`" % (command, action, attr.name)
+                    if attr.is_parent and attr.path in section_names else ""
+                ),
+                ":action-table-field-type:`%s`" % attr.type,
+                ":action-table-field-example:`%s`" % ((attr.example | truncate_middle(length=25)) if attr.example else "N/A"),
+                attr.description if attr.description else "N/A"
+            ]
+        )
+    %}
+{% endfor %}
+{{
+    macros.group_action_table(
+        "action-attribute-section-table",
+        [1, 1, 1, 97],
+        ["Name", "Type", "Example", "Description"],
+        *rows
+    )
+}}
+{% endfor %}
+
+{% endmacro %}

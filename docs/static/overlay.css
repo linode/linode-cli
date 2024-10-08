@@ -1,0 +1,113 @@
+/* Hack to force wrapping in table cells. */
+table {
+    width: 100% !important;
+}
+
+tr {
+    width: 100% !important;
+}
+
+td {
+    word-wrap: break-word !important;
+    white-space: normal !important;
+}
+
+/* Make the content area a bit larger than default. */
+.wy-nav-content {
+    max-width: 1000px !important;
+}
+
+/* Make the logo a bit larger than default */
+.logo {
+    width: 150px !important;
+}
+
+/*
+Custom formatting for actions
+*/
+.action-has-keywords > h2 {
+    margin-bottom: 8px !important;
+}
+
+.action-keyword {
+    margin-bottom: 16px !important;
+}
+
+.action-keyword-key {
+    font-weight: 700 !important;
+}
+
+.action-subheading {
+    margin-bottom: 4px !important;
+    font-weight: 700 !important;
+}
+
+.action-subheading-description {
+    font-size: 90% !important;
+    margin-bottom: 12px !important;
+}
+
+.action-section-header {
+    color: #606060 !important;
+    font-weight: 700 !important;
+    padding-top: 10px !important;
+    margin-bottom: 12px !important;
+    font-size: 95% !important;
+}
+
+.action-keyword-values,
+.action-table-field-name,
+.action-table-field-required,
+.action-table-field-type {
+    font-size: 85% !important;
+    font-family: SFMono-Regular,Menlo,Monaco,Consolas,Liberation Mono,Courier New,Courier,monospace !important;
+}
+
+.action-table-field-name {
+    font-weight: 600 !important;
+}
+
+.action-table-field-example {
+    color: #707070 !important;
+    font-size: 90% !important;
+}
+
+.action-table-field-required {
+    color: #E74C3C !important;
+    vertical-align: super !important;
+}
+
+.action-argument-additional-details {
+    font-size: 95% !important;
+    font-weight: 580 !important;
+}
+
+/*
+Formatting for generated tables
+*/
+
+/* Prevent word wrapping on `Name` and `Example` fields */
+.action-argument-section-table > tbody tr > td:nth-child(1) *,
+.action-argument-section-table > tbody tr > td:nth-child(3) *,
+.action-parameter-table > tbody tr > td:nth-child(1) *,
+.action-filterable-field-table > tbody tr > td:nth-child(1) *,
+.action-attribute-section-table > tbody tr > td:nth-child(1) *,
+.action-attribute-section-table > tbody tr > td:nth-child(3) * {
+    word-wrap: unset !important;
+    white-space: nowrap !important;
+}
+
+/* Center-align `Type` columns */
+.action-argument-section-table > tbody tr > td:nth-child(2),
+.action-argument-section-table > thead tr > th:nth-child(2),
+
+.action-attribute-section-table > tbody tr > td:nth-child(2),
+.action-attribute-section-table > thead tr > th:nth-child(2),
+
+.action-parameter-table > tbody tr > td:nth-child(2),
+.action-parameter-table > thead tr > th:nth-child(2),
+
+.action-filterable-field-table > tbody tr > td:nth-child(2),
+.action-filterable-field-table > thead tr > th:nth-child(2) {
+    text-align: center !important;
+}

@@ -9,6 +9,8 @@ ifdef TEST_CASE
 TEST_CASE_COMMAND = -k $(TEST_CASE)
 endif
 
+# TODO: Remove this workaround once the LKE docs issue has been resolved
+SPEC := https://gist.githubusercontent.com/lgarber-akamai/3e1d77f08acf1a7b29d63a77b0b4a289/raw/12f18d7b7b54cf8587c9f24e72509b0e530e5760/openapi.yaml
 
 SPEC_VERSION ?= latest
 ifndef SPEC
@@ -19,6 +21,10 @@ endif
 VERSION_FILE := ./linodecli/version.py
 VERSION_MODULE_DOCSTRING ?= \"\"\"\nThe version of the Linode CLI.\n\"\"\"\n\n
 LINODE_CLI_VERSION ?= "0.0.0.dev"
+
+# Documentation-related variables
+SPHINX_BUILDER ?= html
+SPHINX_GENERATED_PATH := ./docs/_generated
 
 .PHONY: install
 install: check-prerequisites requirements build
@@ -84,6 +90,18 @@ testall:
 # Alias for unit; integration tests should be explicit
 .PHONY: test
 test: testunit
+
+.PHONY: clean-docs-commands
+clean-docs-commands:
+	rm -rf "$(SPHINX_GENERATED_PATH)"
+
+.PHONY: generate-docs
+generate-docs-commands: bake clean-docs-commands
+	python3 -m linodecli generate-docs "$(SPHINX_GENERATED_PATH)"
+
+.PHONY: generate-docs
+generate-docs: generate-docs-commands
+	cd docs && make $(SPHINX_BUILDER)
 
 .PHONY: black
 black:

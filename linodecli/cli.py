@@ -6,6 +6,7 @@ import os
 import pickle
 import sys
 from sys import version_info
+from typing import IO, Any, Dict, Optional
 
 from openapi3 import OpenAPI
 
@@ -40,7 +41,7 @@ class CLI:  # pylint: disable=too-many-instance-attributes
         self.config = CLIConfig(self.base_url, skip_config=skip_config)
         self.load_baked()
 
-    def bake(self, spec):
+    def bake(self, spec: Dict[str, Any], file: Optional[IO[bytes]] = None):
         """
         Generates ops and bakes them to a pickle
         """
@@ -78,12 +79,15 @@ class CLI:  # pylint: disable=too-many-instance-attributes
         self.ops["_spec_version"] = self.spec.info.version
         self.ops["_spec"] = self.spec
 
-        # finish the baking
-        data_file = self._get_data_file()
-        with open(data_file, "wb") as f:
+        # Serialize the baked spec
+        if file is not None:
+            pickle.dump(self.ops, file)
+            return
+
+        with open(self._get_data_file(), "wb") as f:
             pickle.dump(self.ops, f)
 
-    def load_baked(self):
+    def load_baked(self, file: Optional[IO[bytes]] = None):
         """
         Loads a baked spec representation from a baked pickle
         """
@@ -91,21 +95,26 @@ class CLI:  # pylint: disable=too-many-instance-attributes
         data_path = os.path.join(
             os.path.dirname(os.path.realpath(__file__)), data_file
         )
-        if os.path.exists(data_path):
-            with open(data_path, "rb") as f:
-                self.ops = pickle.load(f)
-                if "_base_url" in self.ops:
-                    self.base_url = self.ops.pop("_base_url")
-                if "_spec_version" in self.ops:
-                    self.spec_version = self.ops.pop("_spec_version")
-                if "_spec" in self.ops:
-                    self.spec = self.ops.pop("_spec")
-        else:
+        if not os.path.exists(data_path):
             print(
                 "No spec baked.  Please bake by calling this script as follows:"
             )
             print("  python3 gen_cli.py bake /path/to/spec")
             self.ops = None  # this signals __init__.py to give up
+            return
+
+        if file is not None:
+            self.ops = pickle.load(file)
+        else:
+            with open(data_path, "rb") as f:
+                self.ops = pickle.load(f)
+
+        if "_base_url" in self.ops:
+            self.base_url = self.ops.pop("_base_url")
+        if "_spec_version" in self.ops:
+            self.spec_version = self.ops.pop("_spec_version")
+        if "_spec" in self.ops:
+            self.spec = self.ops.pop("_spec")
 
     def _get_data_file(self):
         """

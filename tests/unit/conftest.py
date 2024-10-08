@@ -1,5 +1,6 @@
 import configparser
-from typing import List
+from io import BytesIO
+from typing import Callable, Iterable, List, Optional, TypeVar
 
 import pytest
 from openapi3 import OpenAPI
@@ -322,6 +323,38 @@ def mocked_config():
             pass
 
     return Config()
+
+
+@pytest.fixture
+def build_mock_cli_with_spec(mock_cli):
+    """
+    Returns a CLI object initialized with the OpenAPI spec fixture with the given name.
+    """
+
+    def _inner(spec_name: str):
+        result = mock_cli
+        result.ops = {}
+
+        # Buffer the output to prevent overwriting the local data file
+        baked_buffer = BytesIO()
+
+        result.bake(spec=_get_parsed_yaml(spec_name), file=baked_buffer)
+
+        # Rewind the baked buffer for read
+        baked_buffer.seek(0)
+
+        result.load_baked(file=baked_buffer)
+
+        return result
+
+    return _inner
+
+
+T = TypeVar("T")
+
+
+def get_first(data: Iterable[T], search: Callable[[T], bool]) -> Optional[T]:
+    return next((entry for entry in data if search(entry)), None)
 
 
 def assert_contains_ordered_substrings(target: str, entries: List[str]):
