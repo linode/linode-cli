@@ -30,6 +30,8 @@ HELP_ENV_VARS = {
     "(e.g. 'v4beta')",
     "LINODE_CLI_API_SCHEME": "Overrides the target scheme used for API requests. "
     "(e.g. 'https')",
+    "LINODE_CLI_CONFIG": "Overrides the default configuration file path. "
+    "(e.g '~/.linode/my-cli-config')",
 }
 
 HELP_TOPICS = {
