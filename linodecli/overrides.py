@@ -172,19 +172,14 @@ def image_replicate_output(json_data) -> bool:
         show_lines=True,
     )
 
-    headers = json_data.keys()
-
-    for header in headers:
-        if header == "regions":
-            output.add_column("replicas", justify="center")
-        else:
-            output.add_column(header, justify="center")
-
     row = []
     for header in json_data.keys():
         if header == "regions" and len(json_data[header]) > 0:
+            # leverage `replicas` in output for readability
+            output.add_column("replicas", justify="center")
             row.append(build_replicas_output(json_data[header]))
-        else:
+        elif json_data[header] is not None:
+            output.add_column(header, justify="center")
             row.append(Align(str(json_data[header]), align="left"))
 
     output.add_row(*row)
