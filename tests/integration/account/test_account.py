@@ -232,7 +232,7 @@ def test_user_list():
 
 
 @pytest.fixture
-def get_user_id():
+def username():
     user_id = (
         exec_test_command(
             [
@@ -255,11 +255,10 @@ def get_user_id():
     yield first_id
 
 
-def test_user_view(get_user_id):
-    user_id = get_user_id
+def test_user_view(username: str):
     res = (
         exec_test_command(
-            ["linode-cli", "users", "view", user_id, "--text", "--delimiter=,"]
+            ["linode-cli", "users", "view", username, "--text", "--delimiter=,"]
         )
         .stdout.decode()
         .rstrip()
