@@ -15,6 +15,8 @@ CONFIG_DIR = os.environ.get(
     "XDG_CONFIG_HOME", f"{os.path.expanduser('~')}/.config"
 )
 
+ENV_CONFIG_FILE_PATH = "LINODE_CLI_CONFIG"
+
 # this is a list of browser that _should_ work for web-based auth.  This is mostly
 # intended to exclude lynx and other terminal browsers which could be opened, but
 # won't work.
@@ -38,11 +40,23 @@ def _get_config_path() -> str:
     :returns: The path to the local config file.
     :rtype: str
     """
+    custom_path = os.getenv(ENV_CONFIG_FILE_PATH, None)
+
+    if custom_path is not None:
+        custom_path = os.path.expanduser(custom_path)
+        if not os.path.exists(custom_path):
+            os.makedirs(os.path.dirname(custom_path), exist_ok=True)
+        return custom_path
+
     path = f"{LEGACY_CONFIG_DIR}/{LEGACY_CONFIG_NAME}"
     if os.path.exists(path):
         return path
 
-    return f"{CONFIG_DIR}/{CONFIG_NAME}"
+    path = f"{CONFIG_DIR}/{CONFIG_NAME}"
+    if not os.path.exists(path):
+        os.makedirs(CONFIG_DIR, exist_ok=True)
+
+    return path
 
 
 def _get_config(load: bool = True):
