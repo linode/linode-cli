@@ -5,6 +5,7 @@ import pytest
 
 from linodecli.exit_codes import ExitCodes
 from tests.integration.helpers import (
+    assert_headers_in_lines,
     delete_target_id,
     exec_failing_test_command,
     exec_test_command,
@@ -167,3 +168,72 @@ def test_add_tag_to_linode(setup_linodes):
     ).stdout.decode()
 
     assert unique_tag in result
+
+
+def list_disk_list(setup_linodes):
+    linode_id = setup_linodes
+    res = (
+        exec_test_command(
+            BASE_CMD
+            + [
+                "disks-list",
+                linode_id,
+                "--text",
+                "--delimiter=,",
+            ]
+        )
+        .stdout.decode()
+        .rstrip()
+    )
+    lines = res.splitlines()
+
+    headers = ["id", "label"]
+    assert_headers_in_lines(headers, lines)
+
+
+@pytest.fixture
+def get_disk_id(setup_linodes):
+    linode_id = setup_linodes
+    disk_id = (
+        exec_test_command(
+            BASE_CMD
+            + [
+                "disks-list",
+                linode_id,
+                "--text",
+                "--no-headers",
+                "--delimiter",
+                ",",
+                "--format",
+                "id",
+            ]
+        )
+        .stdout.decode()
+        .rstrip()
+        .splitlines()
+    )
+    first_id = disk_id[0].split(",")[0]
+    yield first_id
+
+
+def test_disk_view(setup_linodes, get_disk_id):
+    linode_id = setup_linodes
+    disk_id = get_disk_id
+    res = (
+        exec_test_command(
+            BASE_CMD
+            + [
+                "disk-view",
+                linode_id,
+                disk_id,
+                "--text",
+                "--delimiter=,",
+            ]
+        )
+        .stdout.decode()
+        .rstrip()
+    )
+    lines = res.splitlines()
+
+    headers = ["id", "label"]
+    assert_headers_in_lines(headers, lines)
