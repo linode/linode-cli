@@ -41,6 +41,9 @@ environment variable.
 If you wish to hide the API Version warning you can use the `LINODE_CLI_SUPPRESS_VERSION_WARNING`
 environment variable.
 
+You may also specify a custom configuration path using the `LINODE_CLI_CONFIG` environment variable 
+to replace the default path `~/.config/linode-cli`. 
+
 ## Configurable API URL
 
 In some cases you may want to run linode-cli against a non-default Linode API URL.

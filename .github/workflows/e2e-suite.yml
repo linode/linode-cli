@@ -196,7 +196,7 @@ jobs:
                   "fields": [
                     {
                       "type": "mrkdwn",
-                      "text": "*Build Result:*\n${{ steps.integration_tests.outcome == 'success' && ':large_green_circle: Build Passed' || ':red_circle: Build Failed' }}"
+                      "text": "*Build Result:*\n${{ needs.integration_tests.result == 'success' && ':large_green_circle: Build Passed' || ':red_circle: Build Failed' }}"
                     },
                     {
                       "type": "mrkdwn",
