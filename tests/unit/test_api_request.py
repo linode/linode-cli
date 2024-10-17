@@ -44,13 +44,14 @@ class TestAPIRequest:
             api_request._print_request_debug_info(
                 SimpleNamespace(__name__="get"),
                 "https://definitely.linode.com/",
-                {"cool": "test"},
+                {"cool": "test", "Authorization": "sensitiveinfo"},
                 "cool body",
             )
 
         output = stderr_buf.getvalue()
         assert "> GET https://definitely.linode.com/" in output
         assert "> cool: test" in output
+        assert "> Authorization: Bearer *******************************" in output
         assert "> Body:" in output
         assert ">   cool body" in output
         assert "> " in output
