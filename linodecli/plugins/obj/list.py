@@ -79,7 +79,7 @@ def list_objects_or_buckets(
 
                 results = [page]
         except client.exceptions.NoSuchBucket:
-            print("No bucket named " + bucket_name)
+            print("No bucket named " + bucket_name, file=sys.stderr)
             sys.exit(ExitCodes.REQUEST_FAILED)
 
         for item in results:
