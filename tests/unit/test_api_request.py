@@ -51,9 +51,7 @@ class TestAPIRequest:
         output = stderr_buf.getvalue()
         assert "> GET https://definitely.linode.com/" in output
         assert "> cool: test" in output
-        assert (
-            "> Authorization: Bearer *******************************" in output
-        )
+        assert f"> Authorization: Bearer {'*' * 64}" in output
         assert "> Body:" in output
         assert ">   cool body" in output
         assert "> " in output
