@@ -28,7 +28,7 @@ def call(args, context):  # pylint: disable=too-many-branches
             "This plugin is not currently supported in Windows.  For more "
             "information or to suggest a fix, please visit "
             "https://github.com/linode/linode-cli",
-            file=sys.stderr
+            file=sys.stderr,
         )
         sys.exit(ExitCodes.REQUEST_FAILED)
 
@@ -64,7 +64,7 @@ def call(args, context):  # pylint: disable=too-many-branches
     if target["status"] != "running":
         print(
             f"{label} is not running (status is {target['status']}); operation aborted.",
-            file=sys.stderr
+            file=sys.stderr,
         )
         sys.exit(ExitCodes.REQUEST_FAILED)
 

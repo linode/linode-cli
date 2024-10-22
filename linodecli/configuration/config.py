@@ -113,7 +113,7 @@ class CLIConfig:
             print(
                 f"Cannot remove {username} as they are the default user! You can "
                 "change the default user with: `linode-cli set-user USERNAME`",
-                file=sys.stderr
+                file=sys.stderr,
             )
             sys.exit(ExitCodes.USERNAME_ERROR)
 
@@ -330,7 +330,7 @@ class CLIConfig:
             print(
                 f"Using default values: {warn_dict}; "
                 "use the --no-defaults flag to disable defaults",
-                file=sys.stderr
+                file=sys.stderr,
             )
         return argparse.Namespace(**ns_dict)
 

@@ -107,8 +107,10 @@ def register_plugin(module, config, ops):
 
     reregistering = False
     if plugin_name in plugins.available(config):
-        print(f"WARNING: Plugin {plugin_name} is already registered.\n\n",
-              file=sys.stderr)
+        print(
+            f"WARNING: Plugin {plugin_name} is already registered.\n\n",
+            file=sys.stderr,
+        )
         answer = input(f"Allow re-registration of {plugin_name}? [y/N] ")
         if not answer or answer not in "yY":
             return "Registration aborted.", 0

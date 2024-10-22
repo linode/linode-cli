@@ -58,8 +58,10 @@ def _handle_response_status(
     if 199 < response.status_code < 300:
         return
 
-    print(f"Could not contact {response.url} - Error: {response.status_code}",
-          file=sys.stderr)
+    print(
+        f"Could not contact {response.url} - Error: {response.status_code}",
+        file=sys.stderr,
+    )
     if exit_on_error:
         sys.exit(ExitCodes.REQUEST_FAILED)
 
@@ -244,8 +246,10 @@ def _get_token_web(base_url: str) -> Tuple[str, str]:
     username = _username_for_token(base_url, temp_token)
 
     if username is None:
-        print("OAuth failed.  Please try again of use a token for auth.",
-              file=sys.stderr)
+        print(
+            "OAuth failed.  Please try again of use a token for auth.",
+            file=sys.stderr,
+        )
         sys.exit(ExitCodes.OAUTH_ERROR)
 
     # the token returned via public oauth will expire in 2 hours, which
@@ -346,7 +350,7 @@ to continue..
             "\nGiving up.  If you couldn't get web authentication to work, please "
             "try token using a token by invoking with `linode-cli configure --token`, "
             "and open an issue at https://github.com/linode/linode-cli",
-            file=sys.stderr
+            file=sys.stderr,
         )
         sys.exit(ExitCodes.OAUTH_ERROR)
 

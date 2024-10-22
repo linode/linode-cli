@@ -147,8 +147,10 @@ def set_acl(get_client, args, **kwargs):  # pylint: disable=unused-argument
 
     # make sure the call is sane
     if parsed.acl_public and parsed.acl_private:
-        print("You may not set the ACL to public and private in the same call",
-              file=sys.stderr)
+        print(
+            "You may not set the ACL to public and private in the same call",
+            file=sys.stderr,
+        )
         sys.exit(ExitCodes.REQUEST_FAILED)
 
     if not parsed.acl_public and not parsed.acl_private:
@@ -315,7 +317,7 @@ def get_credentials(cli: CLI):
         print(
             f"You must set both {ENV_ACCESS_KEY_NAME} "
             f"and {ENV_SECRET_KEY_NAME}, or neither",
-            file=sys.stderr
+            file=sys.stderr,
         )
         sys.exit(ExitCodes.REQUEST_FAILED)
 
@@ -339,7 +341,7 @@ def regenerate_s3_credentials(cli: CLI, suppress_warnings=False):
             "WARNING: Your old Object Storage keys _were not_ automatically expired!  If you want "
             "to expire them, see `linode-cli object-storage keys-list` and "
             "`linode-cli object-storage keys-delete [KEYID]`.",
-            file=sys.stderr
+            file=sys.stderr,
         )
 
 
@@ -392,7 +394,7 @@ def call(
         print(
             "Error: No default cluster is configured.  Either configure the CLI "
             "or invoke with --cluster to specify a cluster.",
-            file=sys.stderr
+            file=sys.stderr,
         )
         _configure_plugin(context.client)
         return context.client.config.plugin_get_value("cluster")
@@ -481,7 +483,7 @@ def _get_s3_creds(client: CLI, force: bool = False):
                 f"'{ENV_ACCESS_KEY_NAME}' and '{ENV_SECRET_KEY_NAME}'.  If you'd rather "
                 "configure the CLI, unset the 'LINODE_CLI_TOKEN' environment "
                 "variable and then run `linode-cli configure`.",
-                file=sys.stderr
+                file=sys.stderr,
             )
             sys.exit(ExitCodes.REQUEST_FAILED)
 

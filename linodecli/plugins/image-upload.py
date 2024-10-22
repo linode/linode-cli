@@ -127,28 +127,30 @@ def call(args, context):
         if len(results) > 1:
             print(
                 f"warn: Found multiple files matching pattern {filepath}, using {results[0]}",
-                file=sys.stderr
+                file=sys.stderr,
             )
 
         filepath = results[0]
 
     if not os.path.isfile(filepath):
-        print(f"No file at {filepath}; must be a path to a valid file.",
-              file=sys.stderr)
+        print(
+            f"No file at {filepath}; must be a path to a valid file.",
+            file=sys.stderr,
+        )
         sys.exit(ExitCodes.FILE_ERROR)
 
     # make sure it's not larger than the max upload size
     if os.path.getsize(filepath) > MAX_UPLOAD_SIZE:
         print(
             f"File {filepath} is too large; compressed size must be less than 5GB",
-            file=sys.stderr
+            file=sys.stderr,
         )
         sys.exit(ExitCodes.FILE_ERROR)
 
     if not parsed.region:
         print(
             "No region provided.  Please set a default region or use --region",
-            file=sys.stderr
+            file=sys.stderr,
         )
         sys.exit(ExitCodes.ARGUMENT_ERROR)
 
@@ -170,7 +172,7 @@ def call(args, context):
                 "Your token was not authorized to use this endpoint.  Please "
                 "reconfigure the CLI with `linode-cli configure` to ensure you "
                 "can make this request.",
-                file=sys.stderr
+                file=sys.stderr,
             )
             sys.exit(ExitCodes.REQUEST_FAILED)
         if status == 404:
@@ -178,11 +180,13 @@ def call(args, context):
                 "It looks like you are not in the Machine Images Beta, and therefore "
                 "cannot upload images yet.  Please stay tuned, or open a support ticket "
                 "to request access.",
-                file=sys.stderr
+                file=sys.stderr,
             )
             sys.exit(ExitCodes.REQUEST_FAILED)
-        print(f"Upload failed with status {status}; response was {resp}",
-                file=sys.stderr)
+        print(
+            f"Upload failed with status {status}; response was {resp}",
+            file=sys.stderr,
+        )
         sys.exit(ExitCodes.REQUEST_FAILED)
 
     # grab the upload URL and image data
