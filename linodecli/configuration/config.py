@@ -291,7 +291,10 @@ class CLIConfig:
         ):
             print(f"User {username} is not configured.", file=sys.stderr)
             sys.exit(ExitCodes.USERNAME_ERROR)
-        if not self.config.has_section(username) or allowed_defaults is None:
+        if (
+            not self.config.has_section(username)
+            and self.config.default_section is None
+        ) or allowed_defaults is None:
             return namespace
 
         warn_dict = {}
@@ -337,12 +340,6 @@ class CLIConfig:
         to save values they've set, and is used internally to update the config
         on disk when a new user if configured.
         """
-
-        # Create the config path isf necessary
-        config_path = f"{os.path.expanduser('~')}/.config"
-        if not os.path.exists(config_path):
-            os.makedirs(config_path)
-
         with open(_get_config_path(), "w", encoding="utf-8") as f:
             self.config.write(f)
 

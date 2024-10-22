@@ -42,13 +42,18 @@ items:
 - item:
     property-1: a
     property-2: b
-    property-3: c
   name: item-1
 - item:
     property-1: d
     property-2: e
   name: item-2
 dictionary: {"foo": "bar"}
+"""
+
+TEST_YAML_EMPTY_CONFIG = """
+name: testing-kubeconfig
+things: null
+items: null
 """
 
 
@@ -199,6 +204,37 @@ def test_merge(mock_cli, fake_kubeconfig_file):
     assert result["dictionary"] == yaml_a["dictionary"]
 
 
+def test_merge_to_empty_config(mock_cli, fake_kubeconfig_file_without_entries):
+    stdout_buf = io.StringIO()
+    mock_cli.call_operation = mock_call_operation
+
+    file_path = fake_kubeconfig_file_without_entries
+
+    try:
+        with contextlib.redirect_stdout(stdout_buf):
+            plugin.call(
+                [
+                    "--label",
+                    "nonempty_data",
+                    "--kubeconfig",
+                    file_path,
+                    "--dry-run",
+                ],
+                PluginContext("REALTOKEN", mock_cli),
+            )
+    except SystemExit as err:
+        assert err.code == 0
+
+    result = yaml.safe_load(stdout_buf.getvalue())
+    yaml_a = yaml.safe_load(TEST_YAML_EMPTY_CONFIG)
+    yaml_b = yaml.safe_load(TEST_YAML_CONTENT_B)
+
+    assert result["name"] == yaml_a["name"]
+    assert result["things"] is None
+    assert result["items"] == yaml_b["items"]
+    assert result["dictionary"] == yaml_b["dictionary"]
+
+
 @pytest.fixture(scope="session", autouse=True)
 def fake_kubeconfig_file():
     with tempfile.NamedTemporaryFile(delete=False) as fp:
@@ -213,6 +249,17 @@ def fake_kubeconfig_file():
 @pytest.fixture(scope="session", autouse=True)
 def fake_empty_file():
     with tempfile.NamedTemporaryFile(delete=False) as fp:
+        file_path = fp.name
+
+    yield file_path
+
+    os.remove(file_path)
+
+
+@pytest.fixture(scope="session", autouse=True)
+def fake_kubeconfig_file_without_entries():
+    with tempfile.NamedTemporaryFile("wt", delete=False) as fp:
+        fp.write(TEST_YAML_EMPTY_CONFIG)
         file_path = fp.name
 
     yield file_path
