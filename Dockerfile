@@ -1,7 +1,6 @@
 FROM python:3.11-slim AS builder
 
 ARG linode_cli_version
-ARG github_token
 
 WORKDIR /src
 
@@ -12,7 +11,7 @@ COPY . .
 
 RUN make requirements
 
-RUN LINODE_CLI_VERSION=$linode_cli_version GITHUB_TOKEN=$github_token make build
+RUN LINODE_CLI_VERSION=$linode_cli_version make build
 
 FROM python:3.11-slim
 

@@ -57,4 +57,3 @@ jobs:
           tags: linode/cli:${{ steps.cli_version.outputs.result }},linode/cli:latest
           build-args: |
             linode_cli_version=${{ steps.cli_version.outputs.result }}
-            github_token=${{ secrets.GITHUB_TOKEN }}
