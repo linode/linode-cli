@@ -138,7 +138,7 @@ def flip_to_page(iterable: Iterable, page: int = 1):
         try:
             next(iterable)
         except StopIteration:
-            print(INVALID_PAGE_MSG)
+            print(INVALID_PAGE_MSG, file=sys.stderr)
             sys.exit(ExitCodes.REQUEST_FAILED)
 
     return next(iterable)
