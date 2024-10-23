@@ -2,6 +2,11 @@
 # Makefile for more convenient building of the Linode CLI and its baked content
 #
 
+# The URL of the raw OpenAPI spec to build linode-cli with.
+# TODO: Uncomment once spec is available in the akamai-apis repository.
+# SPEC := https://raw.githubusercontent.com/akamai/akamai-apis/main/apis/linode-api/v4/openapi.json
+SPEC := https://raw.githubusercontent.com/linode/linode-api-docs/development/openapi.yaml
+
 # Test-related arguments
 MODULE :=
 TEST_CASE_COMMAND :=
@@ -9,11 +14,6 @@ TEST_ARGS :=
 
 ifdef TEST_CASE
 TEST_CASE_COMMAND = -k $(TEST_CASE)
-endif
-
-SPEC_VERSION ?= latest
-ifndef SPEC
-override SPEC = $(shell ./resolve_spec_url ${SPEC_VERSION})
 endif
 
 # Version-related variables
