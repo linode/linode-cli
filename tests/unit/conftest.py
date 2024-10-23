@@ -1,5 +1,7 @@
 import configparser
-from typing import List
+import contextlib
+import os
+from typing import ContextManager, List, TextIO
 
 import pytest
 from openapi3 import OpenAPI
@@ -23,6 +25,25 @@ type = g6-nanode-1
 LOADED_FILES = {}
 
 
+FIXTURES_PATH = "tests/fixtures"
+
+
+@contextlib.contextmanager
+def open_fixture(filename: str) -> ContextManager[TextIO]:
+    """
+    Gets the reader for a given fixture.
+
+    :returns: A context manager yielding the fixture's reader.
+    """
+
+    f = open(os.path.join(FIXTURES_PATH, filename), "r")
+
+    try:
+        yield f
+    finally:
+        f.close()
+
+
 def _get_parsed_yaml(filename):
     """
     Returns a python dict that is a parsed yaml file from the tests/fixtures
@@ -33,8 +54,9 @@ def _get_parsed_yaml(filename):
     :type filename: str
     """
     if filename not in LOADED_FILES:
-        with open("tests/fixtures/" + filename) as f:
+        with open_fixture(filename) as f:
             raw = f.read()
+
         parsed = safe_load(raw)
 
         LOADED_FILES[filename] = parsed
