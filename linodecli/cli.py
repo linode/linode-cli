@@ -193,7 +193,7 @@ class CLI:  # pylint: disable=too-many-instance-attributes
                 return op
 
         # Fail if no matching alias was found
-        raise ValueError(f"No action {action} for command {command}")
+        raise ValueError(f"Action not found for command {command}: {action}")
 
     @property
     def user_agent(self) -> str:

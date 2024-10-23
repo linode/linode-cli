@@ -15,7 +15,7 @@ from rich.padding import Padding
 from rich.table import Column, Table
 from rich.text import Text
 
-from linodecli import plugins
+from linodecli import ExitCodes, plugins
 from linodecli.baked import OpenAPIOperation
 from linodecli.baked.request import OpenAPIRequestArg
 
@@ -181,8 +181,9 @@ def print_help_action(
     """
     try:
         op = cli.find_operation(command, action)
-    except ValueError:
-        return
+    except ValueError as exc:
+        print(exc, file=sys.stderr)
+        sys.exit(ExitCodes.UNRECOGNIZED_ACTION)
 
     console = Console(highlight=False)
 
