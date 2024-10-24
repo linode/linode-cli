@@ -20,3 +20,4 @@ class ExitCodes(IntEnum):
     KUBECONFIG_ERROR = 6
     ARGUMENT_ERROR = 7
     FILE_ERROR = 8
+    UNRECOGNIZED_ACTION = 9

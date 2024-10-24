@@ -15,9 +15,10 @@ from rich.padding import Padding
 from rich.table import Column, Table
 from rich.text import Text
 
-from linodecli import plugins
 from linodecli.baked import OpenAPIOperation
 from linodecli.baked.request import OpenAPIRequestArg
+from linodecli.exit_codes import ExitCodes
+from linodecli.plugins import plugins
 
 HELP_ENV_VARS = {
     "LINODE_CLI_TOKEN": "A Linode Personal Access Token for the CLI to make requests with. "
@@ -181,8 +182,9 @@ def print_help_action(
     """
     try:
         op = cli.find_operation(command, action)
-    except ValueError:
-        return
+    except ValueError as exc:
+        print(exc, file=sys.stderr)
+        sys.exit(ExitCodes.UNRECOGNIZED_ACTION)
 
     console = Console(highlight=False)
 
