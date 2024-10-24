@@ -9,6 +9,7 @@ from tests.integration.helpers import (
     COMMAND_JSON_OUTPUT,
     get_random_text,
     wait_for_condition,
+    exec_failing_test_command,
 )
 
 TEST_REGION = "us-southeast"
@@ -83,9 +84,9 @@ def test_help():
 
 @pytest.mark.skipif(platform == "win32", reason="Test N/A on Windows")
 def test_ssh_instance_provisioning(target_instance: Dict[str, Any]):
-    process = exec_test_command(BASE_CMD + ["root@" + target_instance["label"]])
+    process = exec_failing_test_command(BASE_CMD + ["root@" + target_instance["label"]], expected_code=2)
     assert process.returncode == 2
-    output = process.stdout.decode()
+    output = process.stderr.decode()
 
     assert "is not running" in output
 
