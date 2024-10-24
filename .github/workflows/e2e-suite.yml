@@ -7,8 +7,8 @@ on:
         description: 'Use minimal test account'
         required: false
         default: 'false'
-      test_path:
-        description: "The path from 'test/integration' to the target to be tested, e.g. 'cli'"
+      module:
+        description: "The module from 'test/integration' to the target to be tested, e.g. 'cli, domains, events, etc'"
         required: false
       sha:
         description: 'The hash value of the commit.'
@@ -28,15 +28,6 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch' && inputs.sha != '' || github.event_name == 'push' || github.event_name == 'pull_request'
     steps:
-      - name: Validate Test Path
-        uses: actions-ecosystem/action-regex-match@v2
-        id: validate-tests
-        if: ${{ inputs.test_path != '' }}
-        with:
-          text: ${{ inputs.test_path }}
-          regex: '[^a-z0-9-:.\/_]'  # Tests validation
-          flags: gi
-
       - name: Checkout Repository with SHA
         if: ${{ inputs.sha != '' }}
         uses: actions/checkout@v4
@@ -105,9 +96,9 @@ jobs:
           timestamp=$(date +'%Y%m%d%H%M')
           report_filename="${timestamp}_cli_test_report.xml"
           make testint TEST_ARGS="--junitxml=${report_filename}"
-        if: ${{ steps.validate-tests.outputs.match == '' || inputs.test_path == '' }}
         env:
           LINODE_CLI_TOKEN: ${{ env.LINODE_CLI_TOKEN }}
+          MODULE: ${{ inputs.module }}
 
       - name: Upload test results
         if: always()
