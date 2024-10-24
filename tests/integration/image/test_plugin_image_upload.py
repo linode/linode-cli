@@ -8,7 +8,11 @@ from typing import List
 
 import pytest
 
-from tests.integration.helpers import get_random_text, exec_failing_test_command, assert_headers_in_lines
+from tests.integration.helpers import (
+    assert_headers_in_lines,
+    exec_failing_test_command,
+    get_random_text,
+)
 
 REGION = "us-iad"
 BASE_CMD = ["linode-cli", "image-upload", "--region", REGION]
