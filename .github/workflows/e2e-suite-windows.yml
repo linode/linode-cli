@@ -103,3 +103,60 @@ jobs:
               conclusion: process.env.conclusion
             });
             return result;
+
+  apply-calico-rules:
+    runs-on: ubuntu-latest
+    needs: [integration_tests]
+    if: ${{ success() || failure() }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: 'recursive'
+
+      - name: Download kubectl and calicoctl for LKE clusters
+        run: |
+          curl -LO "https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl"
+          curl -LO "https://github.com/projectcalico/calico/releases/download/v3.25.0/calicoctl-linux-amd64"
+          chmod +x calicoctl-linux-amd64 kubectl
+          mv calicoctl-linux-amd64 /usr/local/bin/calicoctl
+          mv kubectl /usr/local/bin/kubectl
+
+      - name: Apply Calico Rules to LKE
+        run: |
+          cd e2e_scripts/cloud_security_scripts/lke_calico_rules/ && ./lke_calico_rules_e2e.sh
+        env:
+          LINODE_TOKEN: ${{ secrets.LINODE_TOKEN_2 }}
+
+  add-fw-to-remaining-instances:
+    runs-on: ubuntu-latest
+    needs: [integration_tests]
+    if: ${{ success() || failure() }}
+
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install Linode CLI
+        run: |
+          pip install linode-cli
+
+      - name: Create Firewall and Attach to Instances
+        run: |
+          FIREWALL_ID=$(linode-cli firewalls create --label "e2e-fw-$(date +%s)" --rules.inbound_policy "DROP" --rules.outbound_policy "ACCEPT" --text --format=id --no-headers)
+          echo "Created Firewall with ID: $FIREWALL_ID"
+          
+          for instance_id in $(linode-cli linodes list --format "id" --text --no-header); do
+            echo "Attaching firewall to instance: $instance_id"
+            if linode-cli firewalls device-create "$FIREWALL_ID" --id "$instance_id" --type linode; then
+              echo "Firewall attached to instance $instance_id successfully."
+            else
+              echo "An error occurred while attaching firewall to instance $instance_id. Skipping..."
+            fi
+          done
+        env:
+          LINODE_CLI_TOKEN: ${{ secrets.LINODE_TOKEN_2 }}
