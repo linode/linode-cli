@@ -315,3 +315,45 @@ def test_service_transfers():
 
     headers = ["token", "expiry", "is_sender"]
     assert_headers_in_lines(headers, lines)
+
+
+def test_maintenance_list():
+    res = (
+        exec_test_command(
+            BASE_CMD + ["maintenance-list", "--text", "--delimiter=,"]
+        )
+        .stdout.decode()
+        .rstrip()
+    )
+    lines = res.splitlines()
+
+    headers = ["entity.type", "entity.label"]
+    assert_headers_in_lines(headers, lines)
+
+
+def test_notifications_list():
+    res = (
+        exec_test_command(
+            BASE_CMD + ["notifications-list", "--text", "--delimiter=,"]
+        )
+        .stdout.decode()
+        .rstrip()
+    )
+    lines = res.splitlines()
+
+    headers = ["label", "severity"]
+    assert_headers_in_lines(headers, lines)
+
+
+def test_clients_list():
+    res = (
+        exec_test_command(
+            BASE_CMD + ["clients-list", "--text", "--delimiter=,"]
+        )
+        .stdout.decode()
+        .rstrip()
+    )
+    lines = res.splitlines()
+
+    headers = ["label", "status"]
+    assert_headers_in_lines(headers, lines)
