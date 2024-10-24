@@ -366,9 +366,11 @@ class OpenAPIOperation:
             if param.name not in {"apiVersion"}
         ]
 
-        self.url_base, self.url_path, self.default_api_version = (
-            self._get_api_url_components(operation, params)
-        )
+        (
+            self.url_base,
+            self.url_path,
+            self.default_api_version,
+        ) = self._get_api_url_components(operation, params)
 
         self.url = self.url_base + self.url_path
 

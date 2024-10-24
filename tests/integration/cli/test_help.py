@@ -12,7 +12,7 @@ from tests.integration.helpers import (
 def test_help_page_for_non_aliased_actions():
     process = exec_test_command(["linode-cli", "linodes", "list", "--help"])
     output = process.stdout.decode()
-    wrapped_output = textwrap.fill(output, width=150).replace("\n", "")
+    wrapped_output = textwrap.fill(output, width=180).replace("\n", "")
 
     assert contains_at_least_one_of(
         wrapped_output, ["Linodes List", "List Linodes"]
@@ -34,7 +34,7 @@ def test_help_page_for_non_aliased_actions():
 def test_help_page_for_aliased_actions():
     process = exec_test_command(["linode-cli", "linodes", "ls", "--help"])
     output = process.stdout.decode()
-    wrapped_output = textwrap.fill(output, width=150).replace("\n", "")
+    wrapped_output = textwrap.fill(output, width=180).replace("\n", "")
 
     assert contains_at_least_one_of(
         wrapped_output, ["Linodes List", "List Linodes"]

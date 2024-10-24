@@ -58,7 +58,10 @@ def _handle_response_status(
     if 199 < response.status_code < 300:
         return
 
-    print(f"Could not contact {response.url} - Error: {response.status_code}")
+    print(
+        f"Could not contact {response.url} - Error: {response.status_code}",
+        file=sys.stderr,
+    )
     if exit_on_error:
         sys.exit(ExitCodes.REQUEST_FAILED)
 
@@ -194,7 +197,7 @@ def _username_for_token(base_url: str, token: str) -> str:
     u = _do_get_request(base_url, "/profile", token=token, exit_on_error=False)
     if "errors" in u:
         reasons = ",".join([c["reason"] for c in u["errors"]])
-        print(f"That token didn't work: {reasons}")
+        print(f"That token didn't work: {reasons}", file=sys.stderr)
         return None
 
     return u["username"]
@@ -243,7 +246,10 @@ def _get_token_web(base_url: str) -> Tuple[str, str]:
     username = _username_for_token(base_url, temp_token)
 
     if username is None:
-        print("OAuth failed.  Please try again of use a token for auth.")
+        print(
+            "OAuth failed.  Please try again of use a token for auth.",
+            file=sys.stderr,
+        )
         sys.exit(ExitCodes.OAUTH_ERROR)
 
     # the token returned via public oauth will expire in 2 hours, which
@@ -340,11 +346,11 @@ to continue..
             # serve requests one at a time until we get a token or are interrupted
             serv.handle_request()
     except KeyboardInterrupt:
-        print()
         print(
-            "Giving up.  If you couldn't get web authentication to work, please "
+            "\nGiving up.  If you couldn't get web authentication to work, please "
             "try token using a token by invoking with `linode-cli configure --token`, "
-            "and open an issue at https://github.com/linode/linode-cli"
+            "and open an issue at https://github.com/linode/linode-cli",
+            file=sys.stderr,
         )
         sys.exit(ExitCodes.OAUTH_ERROR)
 
