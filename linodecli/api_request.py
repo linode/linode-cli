@@ -283,6 +283,9 @@ def _print_request_debug_info(method, url, headers, body):
     """
     print(f"> {method.__name__.upper()} {url}", file=sys.stderr)
     for k, v in headers.items():
+        # If this is the Authorization header, sanitize the token
+        if k.lower() == "authorization":
+            v = "Bearer " + "*" * 64
         print(f"> {k}: {v}", file=sys.stderr)
     print("> Body:", file=sys.stderr)
     print(">  ", body or "", file=sys.stderr)
