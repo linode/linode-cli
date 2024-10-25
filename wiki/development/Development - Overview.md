@@ -51,7 +51,8 @@ configure the following:
 - Overrides for the target API URL (hostname, version, scheme, etc.)
 
 This command serves as an interactive prompt and outputs a configuration file to `~/.config/linode-cli`.
-This file is in a simple INI format and can be easily modified manually by users.
+This file is in a simple INI format and can be easily modified manually by users. 
+You may also specify a custom configuration file path using the `LINODE_CLI_CONFIG` environment variable.
 
 Additionally, multiple users can be created for the CLI which can be designated when running commands using the `--as-user` argument
 or using the `default-user` config variable.

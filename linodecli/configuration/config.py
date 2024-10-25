@@ -96,7 +96,7 @@ class CLIConfig:
         :type username: str
         """
         if not self.config.has_section(username):
-            print(f"User {username} is not configured!")
+            print(f"User {username} is not configured!", file=sys.stderr)
             sys.exit(ExitCodes.USERNAME_ERROR)
 
         self.username = username
@@ -112,7 +112,8 @@ class CLIConfig:
         if self.default_username() == username:
             print(
                 f"Cannot remove {username} as they are the default user! You can "
-                "change the default user with: `linode-cli set-user USERNAME`"
+                "change the default user with: `linode-cli set-user USERNAME`",
+                file=sys.stderr,
             )
             sys.exit(ExitCodes.USERNAME_ERROR)
 
@@ -138,7 +139,7 @@ class CLIConfig:
         Sets the default user.  If that user isn't in the config, exits with error
         """
         if not self.config.has_section(username):
-            print(f"User {username} is not configured!")
+            print(f"User {username} is not configured!", file=sys.stderr)
             sys.exit(ExitCodes.USERNAME_ERROR)
 
         self.config.set("DEFAULT", "default-user", username)
@@ -288,9 +289,12 @@ class CLIConfig:
         if not self.config.has_option(username, "token") and not os.environ.get(
             ENV_TOKEN_NAME, None
         ):
-            print(f"User {username} is not configured.")
+            print(f"User {username} is not configured.", file=sys.stderr)
             sys.exit(ExitCodes.USERNAME_ERROR)
-        if not self.config.has_section(username) or allowed_defaults is None:
+        if (
+            not self.config.has_section(username)
+            and self.config.default_section is None
+        ) or allowed_defaults is None:
             return namespace
 
         warn_dict = {}
@@ -325,7 +329,8 @@ class CLIConfig:
         ):
             print(
                 f"Using default values: {warn_dict}; "
-                "use the --no-defaults flag to disable defaults"
+                "use the --no-defaults flag to disable defaults",
+                file=sys.stderr,
             )
         return argparse.Namespace(**ns_dict)
 
@@ -335,12 +340,6 @@ class CLIConfig:
         to save values they've set, and is used internally to update the config
         on disk when a new user if configured.
         """
-
-        # Create the config path isf necessary
-        config_path = f"{os.path.expanduser('~')}/.config"
-        if not os.path.exists(config_path):
-            os.makedirs(config_path)
-
         with open(_get_config_path(), "w", encoding="utf-8") as f:
             self.config.write(f)
 
