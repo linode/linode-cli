@@ -17,6 +17,10 @@ on:
       pull_request_number:
         description: 'The number of the PR. Ensure sha value is provided'
         required: false
+      openapi_spec_url:
+        description: 'URL of the OpenAPI spec to use for the tests'
+        required: false
+        default: ''
   push:
     branches:
       - main
@@ -108,11 +112,23 @@ jobs:
         run: |
           echo "LINODE_CLI_TOKEN=${{ secrets[inputs.use_minimal_test_account == 'true' && 'MINIMAL_LINODE_TOKEN' || 'LINODE_TOKEN'] }}" >> $GITHUB_ENV
 
+      - name: Set OpenAPI Spec URL
+        if: ${{ inputs.openapi_spec_url != '' }}
+        run: |
+          echo "Using OpenAPI Spec URL: ${{ inputs.openapi_spec_url }}"
+          export OPENAPI_SPEC_URL="${{ inputs.openapi_spec_url }}"
+
       - name: Run the integration test suite
         run: |
           timestamp=$(date +'%Y%m%d%H%M')
           report_filename="${timestamp}_cli_test_report.xml"
-          make testint TEST_ARGS="--junitxml=${report_filename}"
+          if [ -n "$OPENAPI_SPEC_URL" ]; then
+            echo "Running tests with OpenAPI spec from: $OPENAPI_SPEC_URL"
+            make testint TEST_ARGS="--openapi-spec-url=${OPENAPI_SPEC_URL} --junitxml=${report_filename}"
+          else
+            echo "Running tests with default OpenAPI spec"
+            make testint TEST_ARGS="--junitxml=${report_filename}"
+          fi
         if: ${{ steps.validate-tests.outputs.match == '' || inputs.test_path == '' }}
         env:
           LINODE_CLI_TOKEN: ${{ env.LINODE_CLI_TOKEN }}
