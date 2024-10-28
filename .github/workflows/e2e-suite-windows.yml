@@ -106,7 +106,7 @@ jobs:
 
   apply-calico-rules:
     runs-on: ubuntu-latest
-    needs: [integration_tests]
+    needs: [integration-fork-windows]
     if: ${{ success() || failure() }}
 
     steps:
@@ -132,7 +132,7 @@ jobs:
 
   add-fw-to-remaining-instances:
     runs-on: ubuntu-latest
-    needs: [integration_tests]
+    needs: [integration-fork-windows]
     if: ${{ success() || failure() }}
 
     steps:
