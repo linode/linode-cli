@@ -103,20 +103,20 @@ jobs:
           mv calicoctl-linux-amd64 /usr/local/bin/calicoctl
           mv kubectl /usr/local/bin/kubectl
 
+      - name: Set OpenAPI Spec URL
+        if: ${{ inputs.openapi_spec_url != '' }}
+        run: |
+          echo "Using OpenAPI Spec URL: ${{ inputs.openapi_spec_url }}"
+          export OPENAPI_SPEC_URL="${{ inputs.openapi_spec_url }}"
+
       - name: Install Package
-        run: make install
+        run: make install SPEC="${OPENAPI_SPEC_URL}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set LINODE_CLI_TOKEN
         run: |
           echo "LINODE_CLI_TOKEN=${{ secrets[inputs.use_minimal_test_account == 'true' && 'MINIMAL_LINODE_TOKEN' || 'LINODE_TOKEN'] }}" >> $GITHUB_ENV
-
-      - name: Set OpenAPI Spec URL
-        if: ${{ inputs.openapi_spec_url != '' }}
-        run: |
-          echo "Using OpenAPI Spec URL: ${{ inputs.openapi_spec_url }}"
-          export OPENAPI_SPEC_URL="${{ inputs.openapi_spec_url }}"
 
       - name: Run the integration test suite
         run: |
