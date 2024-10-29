@@ -1,5 +1,3 @@
-
-
 from tests.integration.helpers import assert_headers_in_lines, exec_test_command
 
 BASE_CMD = ["linode-cli", "vlans"]
