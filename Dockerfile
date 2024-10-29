@@ -1,6 +1,7 @@
 FROM python:3.11-slim AS builder
 
 ARG linode_cli_version
+
 ARG github_token
 
 WORKDIR /src

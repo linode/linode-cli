@@ -1,6 +1,8 @@
 #
 # Makefile for more convenient building of the Linode CLI and its baked content
 #
+
+# Test-related arguments
 MODULE :=
 TEST_CASE_COMMAND :=
 TEST_ARGS :=
@@ -8,7 +10,6 @@ TEST_ARGS :=
 ifdef TEST_CASE
 TEST_CASE_COMMAND = -k $(TEST_CASE)
 endif
-
 
 SPEC_VERSION ?= latest
 ifndef SPEC
