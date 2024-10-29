@@ -21,22 +21,10 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*New Release Published: _linode-cli_ - ${{ github.event.release.tag_name }} is now live!* :tada:"
+                    "text": "*New Release Published: _linode-cli_ <${{ github.event.release.html_url }}|${{ github.event.release.tag_name }}> is now live!* :tada:"
                   }
                 }
               ]
-            }
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-
-      - name: Notify Slack - Threaded Release Notes
-        uses: slackapi/slack-github-action@v1.27.0
-        with:
-          channel-id: ${{ secrets.DEV_DX_SLACK_CHANNEL_ID }}
-          payload: |
-            {
-              "thread_ts": "${{ steps.main_message.outputs.ts }}",
-              "text": "*<${{ github.event.release.html_url }}| ${{ github.event.release.tag_name }} Release notes>*"
             }
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
