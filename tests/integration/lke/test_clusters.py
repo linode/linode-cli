@@ -5,7 +5,6 @@ import pytest
 from tests.integration.helpers import (
     assert_headers_in_lines,
     exec_test_command,
-    remove_lke_clusters,
 )
 
 BASE_CMD = ["linode-cli", "lke"]
@@ -301,6 +300,24 @@ def test_version_view(test_version_id):
 
     headers = ["id"]
     assert_headers_in_lines(headers, lines)
-    # Sleep needed here for proper deletion of linodes that are related to lke cluster
-    time.sleep(5)
-    remove_lke_clusters()
+
+
+def test_list_lke_types():
+    types = (
+        exec_test_command(
+            BASE_CMD
+            + [
+                "types",
+                "--text",
+            ]
+        )
+        .stdout.decode()
+        .rstrip()
+    )
+
+    headers = ["id", "label", "price.hourly", "price.monthly", "transfer"]
+    lines = types.splitlines()
+
+    assert_headers_in_lines(headers, lines)
+    assert "LKE Standard Availability" in types
+    assert "LKE High Availability" in types
