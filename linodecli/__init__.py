@@ -15,12 +15,7 @@ from rich.table import Column, Table
 from linodecli import plugins
 from linodecli.exit_codes import ExitCodes
 
-from .arg_helpers import (
-    bake_command,
-    register_args,
-    register_plugin,
-    remove_plugin,
-)
+from .arg_helpers import register_args, register_plugin, remove_plugin
 from .cli import CLI
 from .completion import get_completions
 from .configuration import ENV_TOKEN_NAME
@@ -103,7 +98,7 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
         if parsed.action is None:
             print("No spec provided, cannot bake", file=sys.stderr)
             sys.exit(ExitCodes.ARGUMENT_ERROR)
-        bake_command(cli, parsed.action)
+        cli.bake(parsed.action)
         sys.exit(ExitCodes.SUCCESS)
     elif cli.ops is None:
         # if not spec was found and we weren't baking, we're doomed
