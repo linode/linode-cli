@@ -116,9 +116,10 @@ class CLI:  # pylint: disable=too-many-instance-attributes
                     self.spec = self.ops.pop("_spec")
         else:
             print(
-                "No spec baked.  Please bake by calling this script as follows:"
+                "No spec baked.  Please bake by calling this script as follows:",
+                file=sys.stderr,
             )
-            print("  python3 gen_cli.py bake /path/to/spec")
+            print("  python3 gen_cli.py bake /path/to/spec", file=sys.stderr)
             self.ops = None  # this signals __init__.py to give up
 
     def _get_data_file(self):

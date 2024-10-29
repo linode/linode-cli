@@ -96,7 +96,7 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
     # handle a bake - this is used to parse a spec and bake it as a pickle
     if parsed.command == "bake":
         if parsed.action is None:
-            print("No spec provided, cannot bake")
+            print("No spec provided, cannot bake", file=sys.stderr)
             sys.exit(ExitCodes.ARGUMENT_ERROR)
         cli.bake(parsed.action)
         sys.exit(ExitCodes.SUCCESS)
@@ -106,7 +106,7 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
 
     if parsed.command == "register-plugin":
         if parsed.action is None:
-            print("register-plugin requires a module name!")
+            print("register-plugin requires a module name!", file=sys.stderr)
             sys.exit(ExitCodes.ARGUMENT_ERROR)
         msg, code = register_plugin(parsed.action, cli.config, cli.ops)
         print(msg)
@@ -114,7 +114,10 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
 
     if parsed.command == "remove-plugin":
         if parsed.action is None:
-            print("remove-plugin requires a plugin name to remove!")
+            print(
+                "remove-plugin requires a plugin name to remove!",
+                file=sys.stderr,
+            )
             sys.exit(ExitCodes.ARGUMENT_ERROR)
         msg, code = remove_plugin(parsed.action, cli.config)
         print(msg)
@@ -211,7 +214,7 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
         and parsed.command not in plugins.available(cli.config)
         and parsed.command not in HELP_TOPICS
     ):
-        print(f"Unrecognized command {parsed.command}")
+        print(f"Unrecognized command {parsed.command}", file=sys.stderr)
         sys.exit(ExitCodes.UNRECOGNIZED_COMMAND)
 
     # handle a help for a command - either --help or no action triggers this

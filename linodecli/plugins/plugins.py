@@ -128,7 +128,10 @@ def invoke(name: str, args: List[str], context: PluginContext):
                 "DEFAULT", f"plugin-name-{name}"
             )
         except KeyError:
-            print(f"Plugin {name} is misconfigured - please re-register it")
+            print(
+                f"Plugin {name} is misconfigured - please re-register it",
+                file=sys.stderr,
+            )
             sys.exit(ExitCodes.REQUEST_FAILED)
 
         try:
@@ -136,7 +139,8 @@ def invoke(name: str, args: List[str], context: PluginContext):
         except ImportError:
             print(
                 f"Expected module '{plugin_module_name}' not found.  "
-                "Either {name} is misconfigured, or the backing module was uninstalled."
+                "Either {name} is misconfigured, or the backing module was uninstalled.",
+                file=sys.stderr,
             )
             sys.exit(ExitCodes.REQUEST_FAILED)
     else:

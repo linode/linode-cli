@@ -12,7 +12,7 @@ def call(args, context):
     status, result = context.client.call_operation('linodes', 'list')
 
     if status != 200:
-        print('It failed :(')
+        print('It failed :(', file=sys.stderr)
         exit(1)
 
     regions = {}
