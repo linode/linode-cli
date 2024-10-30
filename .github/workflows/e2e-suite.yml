@@ -107,7 +107,7 @@ jobs:
         if: ${{ inputs.openapi_spec_url != '' }}
         run: |
           echo "Using OpenAPI Spec URL: ${{ inputs.openapi_spec_url }}"
-          export OPENAPI_SPEC_URL="${{ inputs.openapi_spec_url }}"
+          echo "OPENAPI_SPEC_URL=${{ inputs.openapi_spec_url }}" >> $GITHUB_ENV
 
       - name: Install Package
         run: make install SPEC="${OPENAPI_SPEC_URL}"
