@@ -2,11 +2,17 @@
 Responsible for managing spec and routing commands to operations.
 """
 
+import contextlib
+import json
 import os
 import pickle
 import sys
+from json import JSONDecodeError
 from sys import version_info
+from typing import IO, Any, ContextManager, Dict
 
+import requests
+import yaml
 from openapi3 import OpenAPI
 
 from linodecli.api_request import do_request, get_all_pages
@@ -40,11 +46,19 @@ class CLI:  # pylint: disable=too-many-instance-attributes
         self.config = CLIConfig(self.base_url, skip_config=skip_config)
         self.load_baked()
 
-    def bake(self, spec):
+    def bake(self, spec_location: str):
         """
-        Generates ops and bakes them to a pickle
+        Generates ops and bakes them to a pickle.
+
+        :param spec_location: The URL or file path of the OpenAPI spec to parse.
         """
-        spec = OpenAPI(spec)
+
+        try:
+            spec = self._load_openapi_spec(spec_location)
+        except Exception as e:
+            print(f"Failed to load spec: {e}")
+            sys.exit(ExitCodes.REQUEST_FAILED)
+
         self.spec = spec
         self.ops = {}
         ext = {
@@ -102,9 +116,10 @@ class CLI:  # pylint: disable=too-many-instance-attributes
                     self.spec = self.ops.pop("_spec")
         else:
             print(
-                "No spec baked.  Please bake by calling this script as follows:"
+                "No spec baked.  Please bake by calling this script as follows:",
+                file=sys.stderr,
             )
-            print("  python3 gen_cli.py bake /path/to/spec")
+            print("  python3 gen_cli.py bake /path/to/spec", file=sys.stderr)
             self.ops = None  # this signals __init__.py to give up
 
     def _get_data_file(self):
@@ -205,3 +220,85 @@ class CLI:  # pylint: disable=too-many-instance-attributes
             f"linode-api-docs/{self.spec_version} "
             f"python/{version_info[0]}.{version_info[1]}.{version_info[2]}"
         )
+
+    @staticmethod
+    def _load_openapi_spec(spec_location: str) -> OpenAPI:
+        """
+        Attempts to load the raw OpenAPI spec (YAML or JSON) at the given location.
+
+        :param spec_location: The location of the OpenAPI spec.
+                              This can be a local path or a URL.
+
+        :returns: A tuple containing the loaded OpenAPI object and the parsed spec in
+                  dict format.
+        """
+
+        with CLI._get_spec_file_reader(spec_location) as f:
+            parsed = CLI._parse_spec_file(f)
+
+        return OpenAPI(parsed)
+
+    @staticmethod
+    @contextlib.contextmanager
+    def _get_spec_file_reader(
+        spec_location: str,
+    ) -> ContextManager[IO]:
+        """
+        Returns a reader for an OpenAPI spec file from the given location.
+
+        :param spec_location: The location of the OpenAPI spec.
+                      This can be a local path or a URL.
+
+        :returns: A context manager yielding the spec file's reader.
+        """
+
+        # Case for local file
+        local_path = os.path.expanduser(spec_location)
+        if os.path.exists(local_path):
+            f = open(local_path, "r", encoding="utf-8")
+
+            try:
+                yield f
+            finally:
+                f.close()
+
+            return
+
+        # Case for remote file
+        resp = requests.get(spec_location, stream=True, timeout=120)
+        if resp.status_code != 200:
+            raise RuntimeError(f"Failed to GET {spec_location}")
+
+        # We need to access the underlying urllib
+        # response here so we can return a reader
+        # usable in yaml.safe_load(...) and json.load(...)
+        resp.raw.decode_content = True
+
+        try:
+            yield resp.raw
+        finally:
+            resp.close()
+
+    @staticmethod
+    def _parse_spec_file(reader: IO) -> Dict[str, Any]:
+        """
+        Parses the given file reader into a dict and returns a dict.
+
+        :param reader: A reader for a YAML or JSON file.
+
+        :returns: The parsed file.
+        """
+
+        errors = []
+
+        try:
+            return yaml.safe_load(reader)
+        except yaml.YAMLError as err:
+            errors.append(str(err))
+
+        try:
+            return json.load(reader)
+        except JSONDecodeError as err:
+            errors.append(str(err))
+
+        raise ValueError(f"Failed to parse spec file: {'; '.join(errors)}")

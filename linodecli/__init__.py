@@ -15,12 +15,7 @@ from rich.table import Column, Table
 from linodecli import plugins
 from linodecli.exit_codes import ExitCodes
 
-from .arg_helpers import (
-    bake_command,
-    register_args,
-    register_plugin,
-    remove_plugin,
-)
+from .arg_helpers import register_args, register_plugin, remove_plugin
 from .cli import CLI
 from .completion import get_completions
 from .configuration import ENV_TOKEN_NAME
@@ -101,9 +96,9 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
     # handle a bake - this is used to parse a spec and bake it as a pickle
     if parsed.command == "bake":
         if parsed.action is None:
-            print("No spec provided, cannot bake")
+            print("No spec provided, cannot bake", file=sys.stderr)
             sys.exit(ExitCodes.ARGUMENT_ERROR)
-        bake_command(cli, parsed.action)
+        cli.bake(parsed.action)
         sys.exit(ExitCodes.SUCCESS)
     elif cli.ops is None:
         # if not spec was found and we weren't baking, we're doomed
@@ -111,7 +106,7 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
 
     if parsed.command == "register-plugin":
         if parsed.action is None:
-            print("register-plugin requires a module name!")
+            print("register-plugin requires a module name!", file=sys.stderr)
             sys.exit(ExitCodes.ARGUMENT_ERROR)
         msg, code = register_plugin(parsed.action, cli.config, cli.ops)
         print(msg)
@@ -119,7 +114,10 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
 
     if parsed.command == "remove-plugin":
         if parsed.action is None:
-            print("remove-plugin requires a plugin name to remove!")
+            print(
+                "remove-plugin requires a plugin name to remove!",
+                file=sys.stderr,
+            )
             sys.exit(ExitCodes.ARGUMENT_ERROR)
         msg, code = remove_plugin(parsed.action, cli.config)
         print(msg)
@@ -216,7 +214,7 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
         and parsed.command not in plugins.available(cli.config)
         and parsed.command not in HELP_TOPICS
     ):
-        print(f"Unrecognized command {parsed.command}")
+        print(f"Unrecognized command {parsed.command}", file=sys.stderr)
         sys.exit(ExitCodes.UNRECOGNIZED_COMMAND)
 
     # handle a help for a command - either --help or no action triggers this

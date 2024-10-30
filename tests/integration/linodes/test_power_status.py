@@ -26,6 +26,15 @@ def create_linode_in_running_state(linode_cloud_firewall):
     delete_target_id("linodes", linode_id)
 
 
+@pytest.fixture
+def create_linode_in_running_state_for_reboot(linode_cloud_firewall):
+    linode_id = create_linode_and_wait(firewall_id=linode_cloud_firewall)
+
+    yield linode_id
+
+    delete_target_id("linodes", linode_id)
+
+
 @pytest.mark.smoke
 def test_create_linode_and_boot(test_linode_id):
     linode_id = test_linode_id
@@ -36,9 +45,9 @@ def test_create_linode_and_boot(test_linode_id):
     assert result, "Linode status has not changed to running from provisioning"
 
 
-def test_reboot_linode(create_linode_in_running_state):
+def test_reboot_linode(create_linode_in_running_state_for_reboot):
     # create linode and wait until it is in "running" state
-    linode_id = create_linode_in_running_state
+    linode_id = create_linode_in_running_state_for_reboot
 
     # reboot linode from "running" status
     exec_test_command(

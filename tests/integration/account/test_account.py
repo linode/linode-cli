@@ -232,7 +232,7 @@ def test_user_list():
 
 
 @pytest.fixture
-def get_user_id():
+def username():
     user_id = (
         exec_test_command(
             [
@@ -255,11 +255,10 @@ def get_user_id():
     yield first_id
 
 
-def test_user_view(get_user_id):
-    user_id = get_user_id
+def test_user_view(username: str):
     res = (
         exec_test_command(
-            ["linode-cli", "users", "view", user_id, "--text", "--delimiter=,"]
+            ["linode-cli", "users", "view", username, "--text", "--delimiter=,"]
         )
         .stdout.decode()
         .rstrip()
@@ -315,4 +314,46 @@ def test_service_transfers():
     lines = res.splitlines()
 
     headers = ["token", "expiry", "is_sender"]
+    assert_headers_in_lines(headers, lines)
+
+
+def test_maintenance_list():
+    res = (
+        exec_test_command(
+            BASE_CMD + ["maintenance-list", "--text", "--delimiter=,"]
+        )
+        .stdout.decode()
+        .rstrip()
+    )
+    lines = res.splitlines()
+
+    headers = ["entity.type", "entity.label"]
+    assert_headers_in_lines(headers, lines)
+
+
+def test_notifications_list():
+    res = (
+        exec_test_command(
+            BASE_CMD + ["notifications-list", "--text", "--delimiter=,"]
+        )
+        .stdout.decode()
+        .rstrip()
+    )
+    lines = res.splitlines()
+
+    headers = ["label", "severity"]
+    assert_headers_in_lines(headers, lines)
+
+
+def test_clients_list():
+    res = (
+        exec_test_command(
+            BASE_CMD + ["clients-list", "--text", "--delimiter=,"]
+        )
+        .stdout.decode()
+        .rstrip()
+    )
+    lines = res.splitlines()
+
+    headers = ["label", "status"]
     assert_headers_in_lines(headers, lines)

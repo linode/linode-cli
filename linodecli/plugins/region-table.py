@@ -33,7 +33,7 @@ def call(_, ctx):
     ]
 
     if status != 200:
-        print("It failed :(")
+        print("It failed :(", file=sys.stderr)
         sys.exit(ExitCodes.REQUEST_FAILED)
 
     output = Table()
