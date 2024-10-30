@@ -12,7 +12,7 @@ on:
         required: false
       sha:
         description: 'The hash value of the commit.'
-        required: false
+        required: true
         default: ''
       pull_request_number:
         description: 'The number of the PR. Ensure sha value is provided'
