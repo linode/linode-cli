@@ -8,7 +8,11 @@ from typing import List
 
 import pytest
 
-from tests.integration.helpers import assert_headers_in_lines, get_random_text
+from tests.integration.helpers import (
+    assert_headers_in_lines,
+    exec_failing_test_command,
+    get_random_text,
+)
 
 REGION = "us-iad"
 BASE_CMD = ["linode-cli", "image-upload", "--region", REGION]
@@ -52,13 +56,13 @@ def test_invalid_file(
     fake_image_file,
 ):
     file_path = fake_image_file + "_fake"
-    process = exec_test_command(
-        BASE_CMD + ["--label", "notimportant", file_path]
+    process = exec_failing_test_command(
+        BASE_CMD + ["--label", "notimportant", file_path], expected_code=8
     )
-    output = process.stdout.decode()
+    error_output = process.stderr.decode()
 
     assert process.returncode == 8
-    assert f"No file at {file_path}" in output
+    assert f"No file at {file_path}" in error_output
 
 
 @pytest.mark.smoke
