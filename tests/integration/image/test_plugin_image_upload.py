@@ -8,7 +8,11 @@ from typing import List
 
 import pytest
 
-from tests.integration.helpers import get_random_text
+from tests.integration.helpers import (
+    assert_headers_in_lines,
+    exec_failing_test_command,
+    get_random_text,
+)
 
 REGION = "us-iad"
 BASE_CMD = ["linode-cli", "image-upload", "--region", REGION]
@@ -52,13 +56,13 @@ def test_invalid_file(
     fake_image_file,
 ):
     file_path = fake_image_file + "_fake"
-    process = exec_test_command(
-        BASE_CMD + ["--label", "notimportant", file_path]
+    process = exec_failing_test_command(
+        BASE_CMD + ["--label", "notimportant", file_path], expected_code=8
     )
-    output = process.stdout.decode()
+    error_output = process.stderr.decode()
 
     assert process.returncode == 8
-    assert f"No file at {file_path}" in output
+    assert f"No file at {file_path}" in error_output
 
 
 @pytest.mark.smoke
@@ -135,3 +139,63 @@ def test_file_upload_cloud_init(
     # Delete the image
     process = exec_test_command(["linode-cli", "images", "rm", image[0]["id"]])
     assert process.returncode == 0
+
+
+def test_image_list():
+    res = (
+        exec_test_command(
+            ["linode-cli", "images", "list", "--text", "--delimiter=,"]
+        )
+        .stdout.decode()
+        .rstrip()
+    )
+    lines = res.splitlines()
+
+    headers = ["label", "description"]
+    assert_headers_in_lines(headers, lines)
+
+
+@pytest.fixture
+def get_image_id():
+    image_id = (
+        exec_test_command(
+            [
+                "linode-cli",
+                "images",
+                "list",
+                "--text",
+                "--no-headers",
+                "--delimiter",
+                ",",
+                "--format",
+                "id",
+            ]
+        )
+        .stdout.decode()
+        .rstrip()
+        .splitlines()
+    )
+    first_id = image_id[0].split(",")[0]
+    yield first_id
+
+
+def test_image_view(get_image_id):
+    image_id = get_image_id
+    res = (
+        exec_test_command(
+            [
+                "linode-cli",
+                "images",
+                "view",
+                image_id,
+                "--text",
+                "--delimiter=,",
+            ]
+        )
+        .stdout.decode()
+        .rstrip()
+    )
+    lines = res.splitlines()
+
+    headers = ["label", "description"]
+    assert_headers_in_lines(headers, lines)

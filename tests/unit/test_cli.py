@@ -2,11 +2,15 @@ from __future__ import annotations
 
 import copy
 import math
+import os
 import re
 
 import pytest
 import requests
+import requests_mock
 from pytest import MonkeyPatch
+
+from tests.unit.conftest import FIXTURES_PATH, open_fixture
 
 if True:
     from linodecli import CLI
@@ -77,6 +81,46 @@ class TestCLI:
         assert re.compile(
             r"linode-cli/[0-9]+\.[0-9]+\.[0-9]+ linode-api-docs/[0-9]+\.[0-9]+\.[0-9]+ python/[0-9]+\.[0-9]+\.[0-9]+"
         ).match(mock_cli.user_agent)
+
+    def test_load_openapi_spec_json(self):
+        url_base = "https://localhost/"
+        path = "cli_test_load.json"
+        url = f"{url_base}{path}"
+
+        with open_fixture(path) as f:
+            content = f.read()
+
+        with requests_mock.Mocker() as m:
+            m.get(url, text=content)
+
+            parsed_json_local = CLI._load_openapi_spec(
+                str(os.path.join(FIXTURES_PATH, path))
+            )
+
+            parsed_json_http = CLI._load_openapi_spec(url)
+
+            assert m.call_count == 1
+            assert parsed_json_http.raw_element == parsed_json_local.raw_element
+
+    def test_load_openapi_spec_yaml(self):
+        url_base = "https://localhost/"
+        path = "cli_test_load.yaml"
+        url = f"{url_base}{path}"
+
+        with open_fixture(path) as f:
+            content = f.read()
+
+        with requests_mock.Mocker() as m:
+            m.get(url, text=content)
+
+            parsed_json_local = CLI._load_openapi_spec(
+                str(os.path.join(FIXTURES_PATH, path))
+            )
+
+            parsed_json_http = CLI._load_openapi_spec(url)
+
+            assert m.call_count == 1
+            assert parsed_json_http.raw_element == parsed_json_local.raw_element
 
 
 def test_get_all_pages(

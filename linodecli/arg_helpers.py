@@ -2,16 +2,10 @@
 """
 Argument parser for the linode CLI
 """
-
-import os
 import sys
 from importlib import import_module
 
-import requests
-import yaml
-
 from linodecli import plugins
-from linodecli.exit_codes import ExitCodes
 from linodecli.helpers import (
     register_args_shared,
     register_debug_arg,
@@ -107,7 +101,10 @@ def register_plugin(module, config, ops):
 
     reregistering = False
     if plugin_name in plugins.available(config):
-        print(f"WARNING: Plugin {plugin_name} is already registered.\n\n")
+        print(
+            f"WARNING: Plugin {plugin_name} is already registered.\n\n",
+            file=sys.stderr,
+        )
         answer = input(f"Allow re-registration of {plugin_name}? [y/N] ")
         if not answer or answer not in "yY":
             return "Registration aborted.", 0
@@ -166,24 +163,3 @@ def remove_plugin(plugin_name, config):
 
     config.write_config()
     return f"Plugin {plugin_name} removed", 0
-
-
-def bake_command(cli, spec_loc):
-    """
-    Handle a bake command from args
-    """
-    try:
-        if os.path.exists(os.path.expanduser(spec_loc)):
-            with open(os.path.expanduser(spec_loc), encoding="utf-8") as f:
-                spec = yaml.safe_load(f.read())
-        else:  # try to GET it
-            resp = requests.get(spec_loc, timeout=120)
-            if resp.status_code == 200:
-                spec = yaml.safe_load(resp.content)
-            else:
-                raise RuntimeError(f"Request failed to {spec_loc}")
-    except Exception as e:
-        print(f"Could not load spec: {e}")
-        sys.exit(ExitCodes.REQUEST_FAILED)
-
-    cli.bake(spec)
