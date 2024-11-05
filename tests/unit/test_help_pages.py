@@ -104,7 +104,7 @@ class TestHelpPages:
 
     def test_help_with_ops_with_plugins(self, capsys, mocker, mocked_config):
         mocker.patch(
-            "linodecli.arg_helpers.plugins.available",
+            "linodecli.help_pages.plugins.available",
             return_value=["testing.plugin"],
         )
         help_pages.print_help_plugins(mocked_config)
