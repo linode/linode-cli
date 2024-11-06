@@ -149,3 +149,22 @@ def assert_headers_in_lines(headers, lines):
 
 def contains_at_least_one_of(target: Container[T], search_for: Iterable[T]):
     return any(v in target for v in search_for)
+
+
+def retry_exec_test_command_with_delay(
+    args: List[str], retries: int = 3, delay: int = 2
+):
+    for attempt in range(retries):
+        process = subprocess.run(args, stdout=subprocess.PIPE)
+
+        # Check if the command succeeded
+        if process.returncode == 0:
+            return process
+        else:
+            print(
+                f"Attempt {attempt + 1} failed, retrying in {delay} seconds..."
+            )
+            time.sleep(delay)
+
+    assert process.returncode == 0, f"Command failed after {retries} retries"
+    return process
