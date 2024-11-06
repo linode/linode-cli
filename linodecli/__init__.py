@@ -230,4 +230,5 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
         if parsed.help:
             print_help_action(cli, parsed.command, parsed.action)
             sys.exit(ExitCodes.SUCCESS)
+
         cli.handle_command(parsed.command, parsed.action, args)
