@@ -140,8 +140,8 @@ def test_resize_fail_to_invalid_plan(test_linode_id):
 
 
 @pytest.mark.skipif(
-    os.environ.get("RUN_LONG_TESTS", None) != "TRUE",
-    reason="Skipping long-running Test, to run set RUN_LONG_TESTS=TRUE",
+    os.environ.get("RUN_LONG_TESTS", None) != "True",
+    reason="Skipping long-running Test, to run set RUN_LONG_TESTS=True",
 )
 def test_resize_to_next_size_plan(test_linode_id):
     linode_id = test_linode_id

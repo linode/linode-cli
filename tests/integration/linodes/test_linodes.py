@@ -9,12 +9,14 @@ from tests.integration.helpers import (
     delete_target_id,
     exec_failing_test_command,
     exec_test_command,
+    get_random_region_with_caps,
 )
 from tests.integration.linodes.helpers_linodes import (
     BASE_CMD,
     DEFAULT_LABEL,
     DEFAULT_RANDOM_PASS,
     DEFAULT_TEST_IMAGE,
+    create_linode,
     wait_until,
 )
 
@@ -23,7 +25,7 @@ linode_label = DEFAULT_LABEL + timestamp
 
 
 @pytest.fixture(scope="package", autouse=True)
-def setup_linodes(linode_cloud_firewall):
+def test_linode_instance(linode_cloud_firewall):
     linode_id = (
         exec_test_command(
             BASE_CMD
@@ -61,6 +63,31 @@ def setup_linodes(linode_cloud_firewall):
     delete_target_id(target="linodes", id=linode_id)
 
 
+@pytest.fixture
+def test_disk_id(test_linode_instance):
+    linode_id = test_linode_instance
+    disk_id = (
+        exec_test_command(
+            BASE_CMD
+            + [
+                "disks-list",
+                linode_id,
+                "--text",
+                "--no-headers",
+                "--delimiter",
+                ",",
+                "--format",
+                "id",
+            ]
+        )
+        .stdout.decode()
+        .rstrip()
+        .splitlines()
+    )
+    first_id = disk_id[0].split(",")[0]
+    yield first_id
+
+
 def test_update_linode_with_a_image():
     result = exec_test_command(BASE_CMD + ["update", "--help"]).stdout.decode()
 
@@ -77,8 +104,8 @@ def test_create_linodes_with_a_label(linode_with_label):
 
 
 @pytest.mark.smoke
-def test_view_linode_configuration(setup_linodes):
-    linode_id = setup_linodes
+def test_view_linode_configuration(test_linode_instance):
+    linode_id = test_linode_instance
     result = exec_test_command(
         BASE_CMD
         + [
@@ -142,15 +169,15 @@ def test_create_linode_without_image_and_not_boot(linode_wo_image):
     assert "offline" in result
 
 
-def test_list_linodes(setup_linodes):
+def test_list_linodes(test_linode_instance):
     result = exec_test_command(
         BASE_CMD + ["list", "--format", "label", "--text", "--no-headers"]
     ).stdout.decode()
     assert linode_label in result
 
 
-def test_add_tag_to_linode(setup_linodes):
-    linode_id = setup_linodes
+def test_add_tag_to_linode(test_linode_instance):
+    linode_id = test_linode_instance
     unique_tag = "tag" + str(int(time.time()))
 
     result = exec_test_command(
@@ -170,8 +197,8 @@ def test_add_tag_to_linode(setup_linodes):
     assert unique_tag in result
 
 
-def list_disk_list(setup_linodes):
-    linode_id = setup_linodes
+def list_disk_list(test_linode_instance):
+    linode_id = test_linode_instance
     res = (
         exec_test_command(
             BASE_CMD
@@ -191,34 +218,9 @@ def list_disk_list(setup_linodes):
     assert_headers_in_lines(headers, lines)
 
 
-@pytest.fixture
-def get_disk_id(setup_linodes):
-    linode_id = setup_linodes
-    disk_id = (
-        exec_test_command(
-            BASE_CMD
-            + [
-                "disks-list",
-                linode_id,
-                "--text",
-                "--no-headers",
-                "--delimiter",
-                ",",
-                "--format",
-                "id",
-            ]
-        )
-        .stdout.decode()
-        .rstrip()
-        .splitlines()
-    )
-    first_id = disk_id[0].split(",")[0]
-    yield first_id
-
-
-def test_disk_view(setup_linodes, get_disk_id):
-    linode_id = setup_linodes
-    disk_id = get_disk_id
+def test_disk_view(test_linode_instance, test_disk_id):
+    linode_id = test_linode_instance
+    disk_id = test_disk_id
     res = (
         exec_test_command(
             BASE_CMD
@@ -237,3 +239,60 @@ def test_disk_view(setup_linodes, get_disk_id):
 
     headers = ["id", "label"]
     assert_headers_in_lines(headers, lines)
+    assert disk_id in res
+
+
+def test_create_linode_disk_encryption_enabled(linode_cloud_firewall):
+    test_region = get_random_region_with_caps(
+        required_capabilities=["Linodes", "Disk Encryption"]
+    )
+
+    linode_id = create_linode(
+        firewall_id=linode_cloud_firewall,
+        disk_encryption=True,
+        test_region=test_region,
+    )
+
+    res = (
+        exec_test_command(
+            BASE_CMD
+            + ["view", "--text", "--delimiter=,", "--format=id,disk_encryption"]
+        )
+        .stdout.decode()
+        .rstrip()
+    )
+
+    headers = ["id", "disk_encryption"]
+    assert_headers_in_lines(headers, res.splitlines())
+
+    assert linode_id in res and "enabled" in res
+
+    delete_target_id(target="linodes", id=linode_id)
+
+
+def test_create_linode_disk_encryption_disabled(linode_cloud_firewall):
+    test_region = get_random_region_with_caps(
+        required_capabilities=["Linodes", "Disk Encryption"]
+    )
+
+    linode_id = create_linode(
+        firewall_id=linode_cloud_firewall,
+        disk_encryption=False,
+        test_region=test_region,
+    )
+
+    res = (
+        exec_test_command(
+            BASE_CMD
+            + ["view", "--text", "--delimiter=,", "--format=id,disk_encryption"]
+        )
+        .stdout.decode()
+        .rstrip()
+    )
+
+    headers = ["id", "disk_encryption"]
+    assert_headers_in_lines(headers, res.splitlines())
+
+    assert linode_id in res and "disabled" in res
+
+    delete_target_id(target="linodes", id=linode_id)

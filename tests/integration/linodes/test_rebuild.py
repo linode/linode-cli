@@ -7,6 +7,7 @@ from tests.integration.helpers import (
     delete_target_id,
     exec_failing_test_command,
     exec_test_command,
+    get_random_region_with_caps,
 )
 from tests.integration.linodes.helpers_linodes import (
     BASE_CMD,
@@ -17,8 +18,15 @@ from tests.integration.linodes.helpers_linodes import (
 
 
 @pytest.fixture
-def test_linode_id(linode_cloud_firewall):
-    linode_id = create_linode_and_wait(firewall_id=linode_cloud_firewall)
+def linode_for_rebuild_tests(linode_cloud_firewall):
+    test_region = get_random_region_with_caps(
+        required_capabilities=["Linodes", "Disk Encryption"]
+    )
+    linode_id = create_linode_and_wait(
+        firewall_id=linode_cloud_firewall,
+        disk_encryption=False,
+        test_region=test_region,
+    )
 
     yield linode_id
 
@@ -26,14 +34,14 @@ def test_linode_id(linode_cloud_firewall):
 
 
 @pytest.mark.flaky(reruns=3, reruns_delay=2)
-def test_rebuild_fails_without_image(test_linode_id):
+def test_rebuild_fails_without_image(linode_for_rebuild_tests):
     result = exec_failing_test_command(
         BASE_CMD
         + [
             "rebuild",
             "--root_pass",
             DEFAULT_RANDOM_PASS,
-            test_linode_id,
+            linode_for_rebuild_tests,
             "--text",
             "--no-headers",
         ],
@@ -44,8 +52,8 @@ def test_rebuild_fails_without_image(test_linode_id):
     assert "You must specify an image" in result
 
 
-def test_rebuild_fails_with_invalid_image(test_linode_id):
-    linode_id = test_linode_id
+def test_rebuild_fails_with_invalid_image(linode_for_rebuild_tests):
+    linode_id = linode_for_rebuild_tests
     rebuild_image = "bad/image"
 
     result = exec_failing_test_command(
@@ -66,26 +74,13 @@ def test_rebuild_fails_with_invalid_image(test_linode_id):
 
 
 @pytest.mark.skipif(
-    os.environ.get("RUN_LONG_TESTS", None) != "TRUE",
-    reason="Skipping long-running Test, to run set RUN_LONG_TESTS=TRUE",
+    os.environ.get("RUN_LONG_TESTS", None) != "True",
+    reason="Skipping long-running Test, to run set RUN_LONG_TESTS=True",
 )
-def test_rebuild_a_linode(test_linode_id):
-    linode_id = test_linode_id
-    rebuild_image = (
-        exec_test_command(
-            [
-                "linode-cli",
-                "images",
-                "list",
-                "--text",
-                "--no-headers" "--format",
-                "id",
-            ]
-        )
-        .stdout.decode()
-        .rstrip()
-        .splitlines()[4]
-    )
+@pytest.mark.flaky(reruns=3, reruns_delay=5)
+def test_rebuild_a_linode(linode_for_rebuild_tests):
+    linode_id = linode_for_rebuild_tests
+    rebuild_image = "linode/alpine3.20"
 
     # trigger rebuild
     exec_test_command(
@@ -116,4 +111,110 @@ def test_rebuild_a_linode(test_linode_id):
         BASE_CMD
         + ["view", linode_id, "--format", "image", "--text", "--no-headers"]
     ).stdout.decode()
+    assert rebuild_image in result
+
+
+@pytest.mark.skipif(
+    os.environ.get("RUN_LONG_TESTS", None) != "True",
+    reason="Skipping long-running Test, to run set RUN_LONG_TESTS=True",
+)
+@pytest.mark.flaky(reruns=3, reruns_delay=5)
+def test_rebuild_linode_disk_encryption_enabled(linode_for_rebuild_tests):
+    linode_id = linode_for_rebuild_tests
+    rebuild_image = "linode/alpine3.20"
+
+    # trigger rebuild
+    exec_test_command(
+        BASE_CMD
+        + [
+            "rebuild",
+            linode_id,
+            "--image",
+            rebuild_image,
+            "--root_pass",
+            DEFAULT_RANDOM_PASS,
+            "--text",
+            "--no-headers",
+            "--disk_encryption",
+            "enabled",
+        ]
+    ).stdout.decode()
+
+    # check status for rebuilding
+    assert wait_until(
+        linode_id=linode_id, timeout=180, status="rebuilding"
+    ), "linode failed to change status to rebuilding.."
+
+    # check if rebuilding finished
+    assert wait_until(
+        linode_id=linode_id, timeout=180, status="running"
+    ), "linode failed to change status to running from rebuilding.."
+
+    result = exec_test_command(
+        BASE_CMD
+        + [
+            "view",
+            linode_id,
+            "--format",
+            "image",
+            "--text",
+            "--no-headers",
+            "--format=id,image,disk_encryption",
+        ]
+    ).stdout.decode()
+
+    assert "enabled" in result
+    assert rebuild_image in result
+
+
+@pytest.mark.skipif(
+    os.environ.get("RUN_LONG_TESTS", None) != "True",
+    reason="Skipping long-running Test, to run set RUN_LONG_TESTS=True",
+)
+@pytest.mark.flaky(reruns=3, reruns_delay=5)
+def test_rebuild_linode_disk_encryption_disabled(linode_for_rebuild_tests):
+    linode_id = linode_for_rebuild_tests
+    rebuild_image = "linode/alpine3.20"
+
+    # trigger rebuild
+    exec_test_command(
+        BASE_CMD
+        + [
+            "rebuild",
+            linode_id,
+            "--image",
+            rebuild_image,
+            "--root_pass",
+            DEFAULT_RANDOM_PASS,
+            "--text",
+            "--no-headers",
+            "--disk_encryption",
+            "disabled",
+        ]
+    ).stdout.decode()
+
+    # check status for rebuilding
+    assert wait_until(
+        linode_id=linode_id, timeout=180, status="rebuilding"
+    ), "linode failed to change status to rebuilding.."
+
+    # check if rebuilding finished
+    assert wait_until(
+        linode_id=linode_id, timeout=180, status="running"
+    ), "linode failed to change status to running from rebuilding.."
+
+    result = exec_test_command(
+        BASE_CMD
+        + [
+            "view",
+            linode_id,
+            "--format",
+            "image",
+            "--text",
+            "--no-headers",
+            "--format=id,image,disk_encryption",
+        ]
+    ).stdout.decode()
+
+    assert "disabled" in result
     assert rebuild_image in result

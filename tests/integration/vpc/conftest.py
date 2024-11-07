@@ -2,11 +2,12 @@ import time
 
 import pytest
 
-from tests.integration.conftest import (
-    create_vpc_w_subnet,
-    get_regions_with_capabilities,
+from tests.integration.conftest import create_vpc_w_subnet
+from tests.integration.helpers import (
+    delete_target_id,
+    exec_test_command,
+    get_random_region_with_caps,
 )
-from tests.integration.helpers import delete_target_id, exec_test_command
 
 
 @pytest.fixture
@@ -21,7 +22,7 @@ def test_vpc_w_subnet():
 
 @pytest.fixture
 def test_vpc_wo_subnet():
-    region = get_regions_with_capabilities(["VPCs"])[0]
+    region = get_random_region_with_caps(required_capabilities=["VPCs"])
 
     label = str(time.time_ns()) + "label"
 
