@@ -246,3 +246,24 @@ def set_backups_enabled_in_account_settings(toggle: bool):
     result = exec_test_command(command).stdout.decode().rstrip()
 
     return result
+
+
+def get_disk_ids(linode_id):
+    disk_ids = (
+        exec_test_command(
+            BASE_CMD
+            + [
+                "disks-list",
+                linode_id,
+                "--text",
+                "--no-headers",
+                "--format",
+                "id",
+            ]
+        )
+        .stdout.decode()
+        .rstrip()
+        .splitlines()
+    )
+
+    return disk_ids
