@@ -8,6 +8,7 @@ from tests.integration.helpers import (
     exec_failing_test_command,
     exec_test_command,
     get_random_region_with_caps,
+    retry_exec_test_command_with_delay,
 )
 from tests.integration.linodes.helpers_linodes import (
     BASE_CMD,
@@ -124,7 +125,7 @@ def test_rebuild_linode_disk_encryption_enabled(linode_for_rebuild_tests):
     rebuild_image = "linode/alpine3.20"
 
     # trigger rebuild
-    exec_test_command(
+    retry_exec_test_command_with_delay(
         BASE_CMD
         + [
             "rebuild",
@@ -137,7 +138,9 @@ def test_rebuild_linode_disk_encryption_enabled(linode_for_rebuild_tests):
             "--no-headers",
             "--disk_encryption",
             "enabled",
-        ]
+        ],
+        retries=3,
+        delay=10,
     ).stdout.decode()
 
     # check status for rebuilding
@@ -177,7 +180,7 @@ def test_rebuild_linode_disk_encryption_disabled(linode_for_rebuild_tests):
     rebuild_image = "linode/alpine3.20"
 
     # trigger rebuild
-    exec_test_command(
+    retry_exec_test_command_with_delay(
         BASE_CMD
         + [
             "rebuild",
@@ -190,7 +193,9 @@ def test_rebuild_linode_disk_encryption_disabled(linode_for_rebuild_tests):
             "--no-headers",
             "--disk_encryption",
             "disabled",
-        ]
+        ],
+        retries=3,
+        delay=10,
     ).stdout.decode()
 
     # check status for rebuilding
@@ -203,7 +208,7 @@ def test_rebuild_linode_disk_encryption_disabled(linode_for_rebuild_tests):
         linode_id=linode_id, timeout=180, status="running"
     ), "linode failed to change status to running from rebuilding.."
 
-    result = exec_test_command(
+    result = retry_exec_test_command_with_delay(
         BASE_CMD
         + [
             "view",
@@ -213,7 +218,9 @@ def test_rebuild_linode_disk_encryption_disabled(linode_for_rebuild_tests):
             "--text",
             "--no-headers",
             "--format=id,image,disk_encryption",
-        ]
+        ],
+        retries=3,
+        delay=10,
     ).stdout.decode()
 
     assert "disabled" in result
