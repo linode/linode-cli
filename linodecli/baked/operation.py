@@ -447,7 +447,13 @@ class OpenAPIOperation:
             None,
         )
         if version_param is not None:
-            return version_param.schema.default or version_param.schema.enum[0]
+            schema = version_param.schema
+
+            if schema.default:
+                return schema.default
+
+            if schema.enum and len(schema.enum) > 0:
+                return schema.enum[0]
 
         return None
 
@@ -476,8 +482,6 @@ class OpenAPIOperation:
 
         url_base = urlparse(url_server)._replace(path="").geturl()
         url_path = operation.path[-2]
-
-        print(operation.path, [f"{param.name} {param.in_}" for param in params])
 
         api_version = OpenAPIOperation._resolve_api_version(params, url_server)
         if api_version is None:
