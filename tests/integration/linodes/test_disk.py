@@ -134,8 +134,8 @@ def test_disk_resize_clone_and_create(linode_instance_disk_tests):
     assert "disabled" in res
 
 
-def test_disk_reset_password(linode_disk_config):
-    linode_id = linode_disk_config
+def test_disk_reset_password(linode_instance_disk_tests):
+    linode_id = linode_instance_disk_tests
     disk_id = get_disk_ids(linode_id)[1]
 
     res = retry_exec_test_command_with_delay(
@@ -155,8 +155,8 @@ def test_disk_reset_password(linode_disk_config):
     assert res.returncode == 0
 
 
-def test_disk_update(linode_disk_config):
-    linode_id = linode_disk_config
+def test_disk_update(linode_instance_disk_tests):
+    linode_id = linode_instance_disk_tests
     disk_id = get_disk_ids(linode_id)[1]
 
     update_label = get_random_text(5) + "newdisk"
@@ -187,8 +187,8 @@ def test_disk_update(linode_disk_config):
     assert update_label in res
 
 
-def test_disks_list(linode_disk_config):
-    linode_id = linode_disk_config
+def test_disks_list(linode_instance_disk_tests):
+    linode_id = linode_instance_disk_tests
 
     res = (
         (
