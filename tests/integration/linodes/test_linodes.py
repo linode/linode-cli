@@ -256,7 +256,13 @@ def test_create_linode_disk_encryption_enabled(linode_cloud_firewall):
     res = (
         exec_test_command(
             BASE_CMD
-            + ["view", linode_id, "--text", "--delimiter=,", "--format=id,disk_encryption"]
+            + [
+                "view",
+                linode_id,
+                "--text",
+                "--delimiter=,",
+                "--format=id,disk_encryption",
+            ]
         )
         .stdout.decode()
         .rstrip()
@@ -284,7 +290,13 @@ def test_create_linode_disk_encryption_disabled(linode_cloud_firewall):
     res = (
         exec_test_command(
             BASE_CMD
-            + ["view", linode_id, "--text", "--delimiter=,", "--format=id,disk_encryption"]
+            + [
+                "view",
+                linode_id,
+                "--text",
+                "--delimiter=,",
+                "--format=id,disk_encryption",
+            ]
         )
         .stdout.decode()
         .rstrip()
