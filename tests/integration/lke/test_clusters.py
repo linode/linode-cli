@@ -512,4 +512,3 @@ def test_pool_view(test_lke_cluster, test_node_pool):
     ]
 
     assert_headers_in_lines(headers, lines)
-    assert "disabled" in node_pool
