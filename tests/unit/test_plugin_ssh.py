@@ -30,7 +30,7 @@ def test_windows_error(capsys: CaptureFixture):
 
     assert err.value.code == 2
 
-    captured_text = capsys.readouterr().out
+    captured_text = capsys.readouterr().err
     assert "This plugin is not currently supported in Windows." in captured_text
 
 
@@ -54,7 +54,7 @@ def test_target_not_running(mock_cli, capsys: CaptureFixture):
 
     assert err.value.code == 2
 
-    captured_text = capsys.readouterr().out
+    captured_text = capsys.readouterr().err
     assert (
         f"{test_label} is not running (status is provisioning)" in captured_text
     )
@@ -163,7 +163,7 @@ def test_find_api_error(mock_cli, capsys: CaptureFixture):
 
     assert err.value.code == 2
 
-    captured_text = capsys.readouterr().out
+    captured_text = capsys.readouterr().err
 
     assert "Could not retrieve Linode: 500 error" in captured_text
 

@@ -80,7 +80,7 @@ mysql_engine = mysql/8.0.26"""
         f = io.StringIO()
 
         with pytest.raises(SystemExit) as err:
-            with contextlib.redirect_stdout(f):
+            with contextlib.redirect_stderr(f):
                 conf.set_user("bad_user")
 
         assert err.value.code == 4
@@ -98,7 +98,7 @@ mysql_engine = mysql/8.0.26"""
         f = io.StringIO()
 
         with pytest.raises(SystemExit) as err:
-            with contextlib.redirect_stdout(f):
+            with contextlib.redirect_stderr(f):
                 conf.remove_user("cli-dev")
 
         assert "default user!" in f.getvalue()
@@ -131,7 +131,7 @@ mysql_engine = mysql/8.0.26"""
 
         f = io.StringIO()
         with pytest.raises(SystemExit) as err:
-            with contextlib.redirect_stdout(f):
+            with contextlib.redirect_stderr(f):
                 conf.set_default_user("bad_user")
 
         assert err.value.code == 4
@@ -226,7 +226,7 @@ mysql_engine = mysql/8.0.26"""
         ]
 
         f = io.StringIO()
-        with contextlib.redirect_stdout(f):
+        with contextlib.redirect_stderr(f):
             result = vars(conf.update(ns, allowed_defaults))
 
         assert "--no-defaults" in f.getvalue()
