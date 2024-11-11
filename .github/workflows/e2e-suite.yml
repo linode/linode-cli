@@ -110,7 +110,7 @@ jobs:
           echo "OPENAPI_SPEC_URL=${{ inputs.openapi_spec_url }}" >> $GITHUB_ENV
 
       - name: Install Package
-        run: make install SPEC="${OPENAPI_SPEC_URL}"
+        run: make install SPEC="${{ env.OPENAPI_SPEC_URL }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -124,7 +124,7 @@ jobs:
           report_filename="${timestamp}_cli_test_report.xml"
           if [ -n "$OPENAPI_SPEC_URL" ]; then
             echo "Running tests with OpenAPI spec from: $OPENAPI_SPEC_URL"
-            make testint TEST_ARGS="--openapi-spec-url=${OPENAPI_SPEC_URL} --junitxml=${report_filename}"
+            make testint TEST_ARGS="--junitxml=${report_filename}"
           else
             echo "Running tests with default OpenAPI spec"
             make testint TEST_ARGS="--junitxml=${report_filename}"
