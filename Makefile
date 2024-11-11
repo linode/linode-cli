@@ -72,7 +72,9 @@ testunit:
 	@orig_xdg_config_home=$${XDG_CONFIG_HOME:-}; \
 	export LINODE_CLI_TEST_MODE=1 XDG_CONFIG_HOME=/tmp/linode/.config; \
 	pytest -v tests/unit; \
-	export XDG_CONFIG_HOME=$$orig_xdg_config_home
+	exit_code=$$?; \
+	export XDG_CONFIG_HOME=$$orig_xdg_config_home; \
+	exit $$exit_code
 
 .PHONY: testint
 testint:
