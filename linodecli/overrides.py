@@ -76,6 +76,46 @@ def handle_image_replicate(operation, output_handler, json_data) -> bool:
     return image_replicate_output(json_data)
 
 
+@output_override("placement", "group-view", OutputMode.table)
+def handle_placement_group_view(operation, output_handler, json_data) -> bool:
+    # pylint: disable=unused-argument
+    """
+    Override the output of 'linode-cli placement group-view' to show PG members.
+    """
+    return pg_view_output(json_data)
+
+
+@output_override("placement", "group-update", OutputMode.table)
+def handle_placement_group_update(operation, output_handler, json_data) -> bool:
+    # pylint: disable=unused-argument
+    """
+    Override the output of 'linode-cli placement group-update' to show PG members.
+    """
+    return pg_view_output(json_data)
+
+
+@output_override("placement", "assign-linode", OutputMode.table)
+def handle_placement_assign_linode(
+    operation, output_handler, json_data
+) -> bool:
+    # pylint: disable=unused-argument
+    """
+    Override the output of 'linode-cli placement assign-linode' to show PG members.
+    """
+    return pg_view_output(json_data)
+
+
+@output_override("placement", "unassign-linode", OutputMode.table)
+def handle_placement_unassign_linode(
+    operation, output_handler, json_data
+) -> bool:
+    # pylint: disable=unused-argument
+    """
+    Override the output of 'linode-cli placement unassign-linode' to show PG members.
+    """
+    return pg_view_output(json_data)
+
+
 def linode_types_with_region_prices(
     operation, output_handler, json_data
 ) -> bool:
@@ -203,6 +243,51 @@ def image_replicate_output(json_data) -> bool:
 
     output.add_row(*row)
 
+    console.print(output)
+
+    return False
+
+
+def build_pg_members(members: List) -> Table:
+    """
+    Format nested linode members list to a sub-table.
+    """
+    table = Table()
+
+    member_headers = members[0].keys()
+    for h in member_headers:
+        table.add_column(h, justify="center")
+
+    for member in members:
+        row = []
+        for h in member_headers:
+            row.append(Align(str(member[h]), align="left"))
+        table.add_row(*row)
+
+    return table
+
+
+def pg_view_output(json_data) -> bool:
+    """
+    Parse and format the placement group output table.
+    """
+    output = Table(
+        header_style="bold",
+        show_lines=True,
+    )
+
+    row = []
+    for header in json_data:
+        if json_data[header] is not None:
+            output.add_column(header, justify="center")
+            if header == "members" and len(json_data[header]) > 0:
+                row.append(build_pg_members(json_data[header]))
+            else:
+                row.append(Align(str(json_data[header]), align="left"))
+
+    output.add_row(*row)
+
+    console = Console()
     console.print(output)
 
     return False
