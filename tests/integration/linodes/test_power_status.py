@@ -61,7 +61,7 @@ def test_reboot_linode(create_linode_in_running_state_for_reboot):
         BASE_CMD + ["reboot", linode_id, "--text", "--no-headers"], 3, 20
     )
 
-    print("result is:", result)
+    assert result.returncode == 0
 
     assert wait_until(
         linode_id=linode_id, timeout=240, status="running"
