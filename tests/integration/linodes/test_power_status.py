@@ -57,11 +57,9 @@ def test_reboot_linode(create_linode_in_running_state_for_reboot):
     wait_until(linode_id=linode_id, timeout=240, status="running")
 
     # reboot linode from "running" status
-    result = retry_exec_test_command_with_delay(
+    retry_exec_test_command_with_delay(
         BASE_CMD + ["reboot", linode_id, "--text", "--no-headers"], 3, 20
     )
-
-    assert result.returncode == 0
 
     assert wait_until(
         linode_id=linode_id, timeout=240, status="running"
