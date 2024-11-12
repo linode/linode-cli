@@ -20,7 +20,6 @@ on:
       python-version:
         description: 'Specify Python version to use'
         required: false
-        default: '3.10'
       run-eol-python-version:
         description: 'Run EOL python version?'
         required: false
@@ -33,6 +32,11 @@ on:
     branches:
       - main
       - dev
+
+env:
+  DEFAULT_PYTHON_VERSION: "3.9"
+  EOL_PYTHON_VERSION: "3.8"
+  EXIT_STATUS: 0
 
 jobs:
   integration_tests:
@@ -86,7 +90,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: ${{ inputs.run-eol-python-version == 'true' && '3.9' || inputs.python-version }}
+          python-version: ${{ inputs.run-eol-python-version == 'true' && env.EOL_PYTHON_VERSION || inputs.python-version || env.DEFAULT_PYTHON_VERSION }}
 
       - name: Install Python dependencies and update cert
         run: |
