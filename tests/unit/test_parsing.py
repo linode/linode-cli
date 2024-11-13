@@ -2,6 +2,7 @@ from linodecli.baked.parsing import (
     extract_markdown_links,
     get_short_description,
     markdown_to_rich_markup,
+    simplify_description,
     strip_techdocs_prefixes,
 )
 
@@ -100,4 +101,30 @@ class TestParsing:
             )
             == "very [i]cool[/] [b]test[/] [i]string[/]*\n[b]wow[/] [i]cool[/]* "
             "[italic deep_pink3 on grey15]code block[/] `"
+        )
+
+    def test_simplify_description(self):
+        # This description was not parsed correctly prior to PR #680.
+        assert simplify_description(
+            "The authentication methods that are allowed when connecting to "
+            "[the Linode Shell (Lish)](https://www.linode.com/docs/guides/lish/).\n"
+            "\n"
+            "- `keys_only` is the most secure if you intend to use Lish.\n"
+            "- `disabled` is recommended if you do not intend to use Lish at all.\n"
+            "- If this account's Cloud Manager authentication type is set to a Third-Party Authentication method, "
+            "`password_keys` cannot be used as your Lish authentication method. To view this account's Cloud Manager "
+            "`authentication_type` field, send a request to the "
+            "[Get a profile](https://techdocs.akamai.com/linode-api/reference/get-profile) operation."
+        ) == (
+            "The authentication methods that are allowed when connecting to the Linode Shell (Lish). "
+            "See: https://www.linode.com/docs/guides/lish/",
+            "The authentication methods that are allowed when connecting to "
+            "[the Linode Shell (Lish)](https://www.linode.com/docs/guides/lish/).",
+        )
+
+        assert simplify_description(
+            "A unique, user-defined `string` referring to the Managed Database."
+        ) == (
+            "A unique, user-defined [italic deep_pink3 on grey15]string[/] referring to the Managed Database.",
+            "A unique, user-defined `string` referring to the Managed Database.",
         )
