@@ -2,7 +2,7 @@
 Request details for a CLI Operation
 """
 
-from linodecli.baked.parsing import process_arg_description
+from linodecli.baked.parsing import simplify_description
 
 
 class OpenAPIRequestArg:
@@ -46,7 +46,7 @@ class OpenAPIRequestArg:
         #: the larger response model
         self.path = prefix + "." + name if prefix else name
 
-        description_rich, description = process_arg_description(
+        description_rich, description = simplify_description(
             schema.description or ""
         )
 

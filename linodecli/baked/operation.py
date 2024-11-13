@@ -17,6 +17,7 @@ from urllib.parse import urlparse
 import openapi3.paths
 from openapi3.paths import Operation, Parameter
 
+from linodecli.baked.parsing import simplify_description
 from linodecli.baked.request import OpenAPIFilteringRequest, OpenAPIRequest
 from linodecli.baked.response import OpenAPIResponse
 from linodecli.exit_codes import ExitCodes
@@ -356,8 +357,12 @@ class OpenAPIOperation:
             self.action_aliases = {}
             self.action = action
 
-        self.summary = operation.summary
-        self.description = operation.description.split(".")[0]
+        # Ensure the summary has punctuation
+        self.summary = operation.summary.rstrip(".") + "."
+
+        self.description_rich, self.description = simplify_description(
+            operation.description or ""
+        )
 
         # The apiVersion attribute should not be specified as a positional argument
         self.params = [

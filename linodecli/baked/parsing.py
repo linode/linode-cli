@@ -165,7 +165,7 @@ def strip_techdocs_prefixes(description: str) -> str:
     return REGEX_TECHDOCS_PREFIX.sub("", description.lstrip()).lstrip()
 
 
-def process_arg_description(description: str) -> Tuple[str, str]:
+def simplify_description(description: str) -> Tuple[str, str]:
     """
     Processes the given raw request argument description into one suitable
     for help pages, etc.
