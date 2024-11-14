@@ -46,3 +46,21 @@ paths:
           description: foobar
           content:
             application/json: {}
+
+  /{apiVersion}/bar:
+    parameters:
+    - name: apiVersion
+      in: path
+      required: true
+      schema:
+        type: string
+        enum:
+          - v1000
+          - v1000beta
+    get:
+      operationId: barGet
+      responses:
+        '200':
+          description: foobar
+          content:
+            application/json: {}
