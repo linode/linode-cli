@@ -86,14 +86,8 @@ jobs:
           pip install certifi -U && \
           pip install .[obj,dev]
 
-      - name: Set OpenAPI Spec URL
-        if: ${{ inputs.openapi_spec_url != '' }}
-        run: |
-          echo "Using OpenAPI Spec URL: ${{ inputs.openapi_spec_url }}"
-          echo "OPENAPI_SPEC_URL=${{ inputs.openapi_spec_url }}" >> $GITHUB_ENV
-
       - name: Install Package
-        run: make install SPEC="${{ env.OPENAPI_SPEC_URL }}"
+        run: make install SPEC="${{ inputs.OPENAPI_SPEC_URL }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -108,7 +102,7 @@ jobs:
           echo "Running tests, report: ${report_filename}"
           if [ -n "$OPENAPI_SPEC_URL" ]; then
             echo "Running tests with OpenAPI spec from: $OPENAPI_SPEC_URL"
-            make testint TEST_ARGS="--junitxml=${report_filename}"
+            make testint TEST_ARGS="--junitxml=${report_filename}" MODULE="${{ inputs.module }}"
           else
                 echo "Running tests with default OpenAPI spec"
                 make testint TEST_ARGS="--junitxml=${report_filename}"
