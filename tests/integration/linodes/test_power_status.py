@@ -1,6 +1,10 @@
 import pytest
 
-from tests.integration.helpers import delete_target_id, exec_test_command
+from tests.integration.helpers import (
+    delete_target_id,
+    exec_test_command,
+    retry_exec_test_command_with_delay,
+)
 from tests.integration.linodes.helpers_linodes import (
     BASE_CMD,
     create_linode_and_wait,
@@ -45,19 +49,21 @@ def test_create_linode_and_boot(test_linode_id):
     assert result, "Linode status has not changed to running from provisioning"
 
 
+@pytest.mark.flaky(reruns=3, reruns_delay=2)
 def test_reboot_linode(create_linode_in_running_state_for_reboot):
     # create linode and wait until it is in "running" state
     linode_id = create_linode_in_running_state_for_reboot
+    # In case if the linode is not ready to reboot
+    wait_until(linode_id=linode_id, timeout=240, status="running")
 
     # reboot linode from "running" status
-    exec_test_command(
-        BASE_CMD + ["reboot", linode_id, "--text", "--no-headers"]
+    retry_exec_test_command_with_delay(
+        BASE_CMD + ["reboot", linode_id, "--text", "--no-headers"], 3, 20
     )
 
-    # returns false if status is not running after 240s after reboot
     assert wait_until(
         linode_id=linode_id, timeout=240, status="running"
-    ), "Linode status has not changed to running from provisioning"
+    ), "Linode status has not changed to running from provisioning after reboot"
 
 
 @pytest.mark.flaky(reruns=3, reruns_delay=2)

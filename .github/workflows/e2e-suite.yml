@@ -17,10 +17,26 @@ on:
       pull_request_number:
         description: 'The number of the PR. Ensure sha value is provided'
         required: false
+      python-version:
+        description: 'Specify Python version to use'
+        required: false
+      run-eol-python-version:
+        description: 'Run EOL python version?'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
   push:
     branches:
       - main
       - dev
+
+env:
+  DEFAULT_PYTHON_VERSION: "3.10"
+  EOL_PYTHON_VERSION: "3.8"
+  EXIT_STATUS: 0
 
 jobs:
   integration_tests:
@@ -74,7 +90,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.x'
+          python-version: ${{ inputs.run-eol-python-version == 'true' && env.EOL_PYTHON_VERSION || inputs.python-version || env.DEFAULT_PYTHON_VERSION }}
 
       - name: Install Python dependencies and update cert
         run: |
