@@ -447,7 +447,13 @@ class OpenAPIOperation:
             None,
         )
         if version_param is not None:
-            return version_param.schema.default
+            schema = version_param.schema
+
+            if schema.default:
+                return schema.default
+
+            if schema.enum and len(schema.enum) > 0:
+                return schema.enum[0]
 
         return None
 
