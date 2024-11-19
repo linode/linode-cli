@@ -35,7 +35,7 @@ def test_list_vlans_help_menu():
         .rstrip()
     )
 
-    assert "linode-cli vlans ls\nList VLANs\n" in help_menu
+    assert "linode-cli vlans ls\nList VLANs" in help_menu
     assert (
         "https://techdocs.akamai.com/linode-api/reference/get-vlans"
         in help_menu
