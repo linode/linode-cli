@@ -371,6 +371,20 @@ class OpenAPIOperation:
             if param.name not in {"apiVersion"}
         ]
 
+        # Validation to ensure no conflicting arguments & param names are found.
+        # This is necessary because arguments and parameters are both parsed into the
+        # same result namespace by argparse.
+        if self.request is not None and hasattr(self.request, "attrs"):
+            param_names = {param.name for param in self.params}
+
+            for attr in self.request.attrs:
+                if attr not in param_names:
+                    continue
+
+                raise ValueError(
+                    f"Attribute {attr.name} conflicts with parameter of the same name"
+                )
+
         (
             self.url_base,
             self.url_path,

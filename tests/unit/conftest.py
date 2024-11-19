@@ -183,6 +183,37 @@ def create_operation():
 
 
 @pytest.fixture
+def update_operation():
+    """
+    Creates the following CLI operation:
+
+    linode-cli foo bar-update --generic_arg [generic_arg] test_param
+
+    PUT http://localhost/v4/foo/bar/{fooId}
+    {
+        "generic_arg": "[generic_arg]",
+        "test_param": test_param
+    }
+    """
+
+    spec = _get_parsed_spec("api_request_test_foobar_put.yaml")
+
+    dict_values = list(spec.paths.values())
+
+    # Get parameters for OpenAPIOperation() from yaml fixture
+    path = dict_values[0]
+    command = path.extensions.get("linode-cli-command", "default")
+    operation = getattr(path, "put")
+    method = "put"
+
+    create_operation = make_test_operation(
+        command, operation, method, path.parameters
+    )
+
+    return create_operation
+
+
+@pytest.fixture
 def list_operation_for_output_tests():
     """
     Creates the following CLI operation:
