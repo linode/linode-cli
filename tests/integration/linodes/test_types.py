@@ -1,29 +1,27 @@
-import os
-import subprocess
-from typing import List
-
 import pytest
 
-env = os.environ.copy()
-env["COLUMNS"] = "200"
-
-
-def exec_test_command(args: List[str]):
-    process = subprocess.run(
-        args,
-        stdout=subprocess.PIPE,
-        env=env,
-    )
-    return process
+from tests.integration.helpers import assert_headers_in_lines, exec_test_command
 
 
 # verifying the DC pricing changes along with types
 @pytest.mark.smoke
 def test_linode_type():
-    process = exec_test_command(["linode-cli", "linodes", "types"])
-    output = process.stdout.decode()
-    assert " price.hourly " in output
-    assert " price.monthly " in output
-    assert " region_prices " in output
-    assert " hourly " in output
-    assert " monthly " in output
+    output = exec_test_command(
+        ["linode-cli", "linodes", "types", "--text"]
+    ).stdout.decode()
+
+    headers = [
+        "id",
+        "label",
+        "class",
+        "disk",
+        "memory",
+        "vcpus",
+        "gpus",
+        "network_out",
+        "transfer",
+        "price.hourly",
+        "price.monthly",
+    ]
+
+    assert_headers_in_lines(headers, output.splitlines())

@@ -2,9 +2,17 @@ on:
   pull_request:
   workflow_dispatch:
     inputs:
-      test_path:
-        description: "The path from 'test/integration' to the target to be tested, e.g. 'cli'"
+      module:
+        description: "The module from 'test/integration' to the target to be tested, e.g. 'cli, domains, events, etc'"
         required: false
+      run_long_tests:
+        description: "Select True to run long tests, e.g. database, rebuild, etc"
+        required: false
+        type: choice
+        options:
+          - "True"
+          - "False"
+        default: "False"
       sha:
         description: 'The hash value of the commit.'
         required: true
@@ -21,13 +29,6 @@ jobs:
       github.event_name == 'workflow_dispatch' && inputs.sha != ''
 
     steps:
-      - uses: actions-ecosystem/action-regex-match@v2
-        id: validate-tests
-        with:
-          text: ${{ inputs.test_path }}
-          regex: '[^a-z0-9-:.\/_]'  # Tests validation
-          flags: gi
-
       # Check out merge commit
       - name: Checkout PR
         uses: actions/checkout@v4
@@ -72,7 +73,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - run: make INTEGRATION_TEST_PATH="${{ inputs.test_path }}" testint
+      - run: make MODULE="${{ inputs.module }}" RUN_LONG_TESTS="${{ inputs.run_long_tests }}" testint
         env:
           LINODE_CLI_TOKEN: ${{ secrets.LINODE_TOKEN_2 }}
 

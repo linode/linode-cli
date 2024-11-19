@@ -37,7 +37,7 @@ def create_placement_group():
     )
     yield placement_group_id
     delete_target_id(
-        target="placement", subcommand="group-delete", id=placement_group_id
+        target="placement", delete_command="group-delete", id=placement_group_id
     )
 
 

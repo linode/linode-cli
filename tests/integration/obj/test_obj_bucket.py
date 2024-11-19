@@ -144,5 +144,5 @@ def test_obj_storage_key_update(get_key_id):
     )
     assert new_label == updated_label
     delete_target_id(
-        target="object-storage", subcommand="keys-delete", id=key_id
+        target="object-storage", delete_command="keys-delete", id=key_id
     )
