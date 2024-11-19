@@ -96,7 +96,8 @@ def test_disk_resize_clone_and_create(linode_instance_disk_tests):
         .rstrip()
     )
 
-    headers = ["id", "label", "status", "size", "filesystem", "disk_encryption"]
+    # #TODO:: Add "disk_encryption" when spec shows the header
+    headers = ["id", "label", "status", "size", "filesystem"]
 
     assert_headers_in_lines(headers, res.splitlines())
 
@@ -125,13 +126,14 @@ def test_disk_resize_clone_and_create(linode_instance_disk_tests):
         .rstrip()
     )
 
-    headers = ["id", "label", "status", "size", "filesystem", "disk_encryption"]
+    # TODO:: Add "disk_encryption" when spec shows the header
+    headers = ["id", "label", "status", "size", "filesystem"]
 
     assert_headers_in_lines(headers, res.splitlines())
 
     assert label in res
     assert "15" in res
-    assert "disabled" in res
+    # assert "disabled" in res
 
 
 def test_disk_reset_password(linode_instance_disk_tests):
@@ -181,7 +183,8 @@ def test_disk_update(linode_instance_disk_tests):
         .rstrip()
     )
 
-    headers = ["id", "label", "status", "size", "filesystem", "disk_encryption"]
+    # TODO:: Add "disk_encryption" when spec shows the header
+    headers = ["id", "label", "status", "size", "filesystem"]
 
     assert_headers_in_lines(headers, res.splitlines())
     assert update_label in res
@@ -205,6 +208,7 @@ def test_disks_list(linode_instance_disk_tests):
         .rstrip()
     )
 
-    headers = ["id", "label", "status", "size", "filesystem", "disk_encryption"]
+    # TODO:: Add "disk_encryption" when spec shows the header
+    headers = ["id", "label", "status", "size", "filesystem"]
 
     assert_headers_in_lines(headers, res.splitlines())
