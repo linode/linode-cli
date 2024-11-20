@@ -118,11 +118,9 @@ jobs:
           report_filename="${timestamp}_cli_test_report.xml"
           echo "Running tests, report: ${report_filename}"
           if [ -n "$OPENAPI_SPEC_URL" ]; then
-            echo "Running tests with OpenAPI spec from: $OPENAPI_SPEC_URL"
             make testint TEST_ARGS="--junitxml=${report_filename}" MODULE="${{ inputs.module }}"
           else
-                echo "Running tests with default OpenAPI spec"
-                make testint TEST_ARGS="--junitxml=${report_filename}"
+            make testint TEST_ARGS="--junitxml=${report_filename}"MODULE="${{ inputs.module }}"
           fi
         env:
           LINODE_CLI_TOKEN: ${{ env.LINODE_CLI_TOKEN }}
