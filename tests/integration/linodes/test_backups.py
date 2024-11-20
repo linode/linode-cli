@@ -131,8 +131,8 @@ def test_create_backup_with_backup_enabled(linode_backup_enabled):
 
 
 @pytest.mark.skipif(
-    os.environ.get("RUN_LONG_TESTS", None) != "TRUE",
-    reason="Skipping long-running Test, to run set RUN_LONG_TESTS=TRUE",
+    os.environ.get("RUN_LONG_TESTS", None) != "True",
+    reason="Skipping long-running Test, to run set RUN_LONG_TESTS=True",
 )
 def test_take_snapshot_of_linode():
     # get linode id after creation and wait for "running" status
@@ -159,8 +159,8 @@ def test_take_snapshot_of_linode():
 
 
 @pytest.mark.skipif(
-    os.environ.get("RUN_LONG_TESTS", None) != "TRUE",
-    reason="Skipping long-running Test, to run set RUN_LONG_TESTS=TRUE",
+    os.environ.get("RUN_LONG_TESTS", None) != "True",
+    reason="Skipping long-running Test, to run set RUN_LONG_TESTS=True",
 )
 def test_view_the_snapshot(snapshot_of_linode):
     # get linode id after creation and wait for "running" status
@@ -187,8 +187,8 @@ def test_view_the_snapshot(snapshot_of_linode):
 
 
 @pytest.mark.skipif(
-    os.environ.get("RUN_LONG_TESTS", None) != "TRUE",
-    reason="Skipping long-running Test, to run set RUN_LONG_TESTS=TRUE",
+    os.environ.get("RUN_LONG_TESTS", None) != "True",
+    reason="Skipping long-running Test, to run set RUN_LONG_TESTS=True",
 )
 def test_cancel_backups(snapshot_of_linode):
     # get linode id after creation and wait for "running" status

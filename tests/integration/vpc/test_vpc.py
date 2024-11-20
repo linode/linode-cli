@@ -4,10 +4,10 @@ import time
 import pytest
 
 from linodecli.exit_codes import ExitCodes
-from tests.integration.conftest import get_regions_with_capabilities
 from tests.integration.helpers import (
     exec_failing_test_command,
     exec_test_command,
+    get_random_region_with_caps,
 )
 
 BASE_CMD = ["linode-cli", "vpcs"]
@@ -161,7 +161,7 @@ def test_update_subnet(test_vpc_w_subnet):
 
 def test_fails_to_create_vpc_invalid_label():
     invalid_label = "invalid_label"
-    region = get_regions_with_capabilities(["VPCs"])[0]
+    region = get_random_region_with_caps(required_capabilities=["VPCs"])
 
     res = (
         exec_failing_test_command(
@@ -186,7 +186,7 @@ def test_fails_to_create_vpc_duplicate_label(test_vpc_wo_subnet):
         .stdout.decode()
         .rstrip()
     )
-    region = get_regions_with_capabilities(["VPCs"])[0]
+    region = get_random_region_with_caps(required_capabilities=["VPCs"])
 
     res = (
         exec_failing_test_command(
@@ -220,7 +220,6 @@ def test_fails_to_update_vpc_invalid_label(test_vpc_wo_subnet):
 def test_fails_to_create_vpc_subnet_w_invalid_label(test_vpc_wo_subnet):
     vpc_id = test_vpc_wo_subnet
     invalid_label = "invalid_label"
-    region = get_regions_with_capabilities(["VPCs"])[0]
 
     res = exec_failing_test_command(
         BASE_CMD

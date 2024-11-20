@@ -22,7 +22,7 @@ def test_linode_id(linode_cloud_firewall):
 
 
 @pytest.fixture
-def create_linode_in_running_state(linode_cloud_firewall):
+def linode_in_running_state(linode_cloud_firewall):
     linode_id = create_linode_and_wait(firewall_id=linode_cloud_firewall)
 
     yield linode_id
@@ -31,7 +31,7 @@ def create_linode_in_running_state(linode_cloud_firewall):
 
 
 @pytest.fixture
-def create_linode_in_running_state_for_reboot(linode_cloud_firewall):
+def linode_in_running_state_for_reboot(linode_cloud_firewall):
     linode_id = create_linode_and_wait(firewall_id=linode_cloud_firewall)
 
     yield linode_id
@@ -50,11 +50,9 @@ def test_create_linode_and_boot(test_linode_id):
 
 
 @pytest.mark.flaky(reruns=3, reruns_delay=2)
-def test_reboot_linode(create_linode_in_running_state_for_reboot):
+def test_reboot_linode(linode_in_running_state_for_reboot):
     # create linode and wait until it is in "running" state
-    linode_id = create_linode_in_running_state_for_reboot
-    # In case if the linode is not ready to reboot
-    wait_until(linode_id=linode_id, timeout=240, status="running")
+    linode_id = linode_in_running_state_for_reboot
 
     # reboot linode from "running" status
     retry_exec_test_command_with_delay(
