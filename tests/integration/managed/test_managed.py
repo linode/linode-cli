@@ -101,7 +101,7 @@ def test_managed_contact_update(get_contact_id):
     )
     assert update_name == unique_name1
     delete_target_id(
-        target="managed", subcommand="contact-delete", id=contact_id
+        target="managed", delete_command="contact-delete", id=contact_id
     )
 
 
@@ -197,7 +197,7 @@ def test_managed_credentials_update(get_credential_id):
     )
     assert update_label == new_label
     delete_target_id(
-        target="managed", subcommand="credential-revoke", id=credential_id
+        target="managed", delete_command="credential-revoke", id=credential_id
     )
 
 

@@ -1,7 +1,11 @@
+import contextlib
 from io import StringIO
 from types import SimpleNamespace
 
-from linodecli import help_pages
+import pytest
+
+from linodecli import CLI, help_pages
+from linodecli.baked import OpenAPIOperation
 from tests.unit.conftest import assert_contains_ordered_substrings
 
 
@@ -100,7 +104,7 @@ class TestHelpPages:
 
     def test_help_with_ops_with_plugins(self, capsys, mocker, mocked_config):
         mocker.patch(
-            "linodecli.arg_helpers.plugins.available",
+            "linodecli.help_pages.plugins.available",
             return_value=["testing.plugin"],
         )
         help_pages.print_help_plugins(mocked_config)
@@ -120,10 +124,28 @@ class TestHelpPages:
             assert topic in captured.out
 
     # arg_helpers.print_help_action(cli, command, action)
-    def test_action_help_value_error(self, capsys, mock_cli):
-        help_pages.print_help_action(mock_cli, None, None)
-        captured = capsys.readouterr()
-        assert not captured.out
+    def test_action_help_value_error(
+        self, capsys, mock_cli: CLI, create_operation: OpenAPIOperation
+    ):
+        mock_cli.ops = {
+            "foo": {
+                "bar": create_operation,
+            }
+        }
+
+        stderr_buf = StringIO()
+
+        with pytest.raises(SystemExit), contextlib.redirect_stderr(stderr_buf):
+            help_pages.print_help_action(mock_cli, "fake", "fake")
+
+        assert "Command not found: fake" in stderr_buf.getvalue()
+
+        stderr_buf = StringIO()
+
+        with pytest.raises(SystemExit), contextlib.redirect_stderr(stderr_buf):
+            help_pages.print_help_action(mock_cli, "foo", "fake")
+
+        assert "Action not found for command foo: fake" in stderr_buf.getvalue()
 
     def test_action_help_post_method(self, capsys, mocker, mock_cli):
         mocked_ops = mocker.MagicMock()

@@ -28,7 +28,7 @@ def test_no_file(mock_cli, capsys: CaptureFixture):
             PluginContext("REALTOKEN", mock_cli),
         )
 
-    captured_text = capsys.readouterr().out
+    captured_text = capsys.readouterr().err
 
     assert err.value.code == 8
     assert "No file at blah.txt" in captured_text
@@ -43,7 +43,7 @@ def test_file_too_large(mock_cli, capsys: CaptureFixture):
     with pytest.raises(SystemExit) as err:
         plugin.call(args, ctx)
 
-    captured_text = capsys.readouterr().out
+    captured_text = capsys.readouterr().err
 
     assert err.value.code == 8
     assert "File blah.txt is too large" in captured_text
@@ -61,7 +61,7 @@ def test_unauthorized(mock_cli, capsys: CaptureFixture):
     with pytest.raises(SystemExit) as err:
         plugin.call(args, ctx)
 
-    captured_text = capsys.readouterr().out
+    captured_text = capsys.readouterr().err
 
     assert err.value.code == 2
     assert "Your token was not authorized to use this endpoint" in captured_text
@@ -79,7 +79,7 @@ def test_non_beta(mock_cli, capsys: CaptureFixture):
     with pytest.raises(SystemExit) as err:
         plugin.call(args, ctx)
 
-    captured_text = capsys.readouterr().out
+    captured_text = capsys.readouterr().err
 
     assert err.value.code == 2
     assert (
@@ -99,7 +99,7 @@ def test_non_beta(mock_cli, capsys: CaptureFixture):
     with pytest.raises(SystemExit) as err:
         plugin.call(args, ctx)
 
-    captured_text = capsys.readouterr().out
+    captured_text = capsys.readouterr().err
 
     assert err.value.code == 2
     assert (
@@ -118,7 +118,7 @@ def test_failed_upload(mock_cli, capsys: CaptureFixture):
     with pytest.raises(SystemExit) as err:
         plugin.call(args, ctx)
 
-    captured_text = capsys.readouterr().out
+    captured_text = capsys.readouterr().err
 
     assert err.value.code == 2
     assert (

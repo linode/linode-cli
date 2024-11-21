@@ -296,6 +296,25 @@ class TestOperation:
             operation=root.paths["/{apiVersion}/bar/foo"].post, params=[]
         ) == ("http://localhost", "/{apiVersion}/bar/foo", "v100beta")
 
+    def test_resolve_api_version(self, get_openapi_for_api_components_tests):
+        root = get_openapi_for_api_components_tests
+
+        assert (
+            OpenAPIOperation._resolve_api_version(
+                params=root.paths["/{apiVersion}/bar/foo"].parameters,
+                server_url="http://localhost",
+            )
+            == "v9canary"
+        )
+
+        assert (
+            OpenAPIOperation._resolve_api_version(
+                params=root.paths["/{apiVersion}/bar"].parameters,
+                server_url="http://localhost",
+            )
+            == "v1000"
+        )
+
     def test_resolve_docs_url_legacy(self, get_openapi_for_docs_url_tests):
         root = get_openapi_for_docs_url_tests
 

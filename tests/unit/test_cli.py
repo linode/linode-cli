@@ -73,7 +73,7 @@ class TestCLI:
         with pytest.raises(ValueError, match=r"Command not found: *"):
             mock_cli.find_operation("bad", "list")
 
-        with pytest.raises(ValueError, match=r"No action *"):
+        with pytest.raises(ValueError, match=r"Action not found for command *"):
             mock_cli.find_operation("foo", "cool")
             mock_cli.find_operation("cool", "cool")
 

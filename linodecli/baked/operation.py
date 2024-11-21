@@ -17,6 +17,7 @@ from urllib.parse import urlparse
 import openapi3.paths
 from openapi3.paths import Operation, Parameter
 
+from linodecli.baked.parsing import simplify_description
 from linodecli.baked.request import OpenAPIFilteringRequest, OpenAPIRequest
 from linodecli.baked.response import OpenAPIResponse
 from linodecli.exit_codes import ExitCodes
@@ -356,8 +357,12 @@ class OpenAPIOperation:
             self.action_aliases = {}
             self.action = action
 
-        self.summary = operation.summary
-        self.description = operation.description.split(".")[0]
+        # Ensure the summary has punctuation
+        self.summary = operation.summary.rstrip(".") + "."
+
+        self.description_rich, self.description = simplify_description(
+            operation.description or ""
+        )
 
         # The apiVersion attribute should not be specified as a positional argument
         self.params = [
@@ -365,6 +370,20 @@ class OpenAPIOperation:
             for param in params
             if param.name not in {"apiVersion"}
         ]
+
+        # Validation to ensure no conflicting arguments & param names are found.
+        # This is necessary because arguments and parameters are both parsed into the
+        # same result namespace by argparse.
+        if self.request is not None and hasattr(self.request, "attrs"):
+            param_names = {param.name for param in self.params}
+
+            for attr in self.request.attrs:
+                if attr not in param_names:
+                    continue
+
+                raise ValueError(
+                    f"Attribute {attr.name} conflicts with parameter of the same name"
+                )
 
         (
             self.url_base,
@@ -447,7 +466,13 @@ class OpenAPIOperation:
             None,
         )
         if version_param is not None:
-            return version_param.schema.default
+            schema = version_param.schema
+
+            if schema.default:
+                return schema.default
+
+            if schema.enum and len(schema.enum) > 0:
+                return schema.enum[0]
 
         return None
 

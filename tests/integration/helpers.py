@@ -1,3 +1,4 @@
+import json
 import random
 import subprocess
 import time
@@ -71,8 +72,8 @@ def delete_tag(arg: str):
     assert result.returncode == SUCCESS_STATUS_CODE
 
 
-def delete_target_id(target: str, id: str, subcommand: str = "delete"):
-    command = ["linode-cli", target, subcommand, id]
+def delete_target_id(target: str, id: str, delete_command: str = "delete"):
+    command = ["linode-cli", target, delete_command, id]
     result = exec_test_command(command)
     assert result.returncode == SUCCESS_STATUS_CODE
 
@@ -149,3 +150,47 @@ def assert_headers_in_lines(headers, lines):
 
 def contains_at_least_one_of(target: Container[T], search_for: Iterable[T]):
     return any(v in target for v in search_for)
+
+
+def retry_exec_test_command_with_delay(
+    args: List[str], retries: int = 3, delay: int = 2
+):
+    for attempt in range(retries):
+        process = subprocess.run(args, stdout=subprocess.PIPE)
+
+        # Check if the command succeeded
+        if process.returncode == 0:
+            return process
+        else:
+            print(
+                f"Attempt {attempt + 1} failed, retrying in {delay} seconds..."
+            )
+            time.sleep(delay)
+
+    assert process.returncode == 0, f"Command failed after {retries} retries"
+    return process
+
+
+def get_random_region_with_caps(
+    required_capabilities: List[str], site_type="core"
+):
+    json_regions_data = (
+        exec_test_command(["linode-cli", "regions", "ls", "--json"])
+        .stdout.decode()
+        .strip()
+    )
+
+    # Parse regions JSON data
+    regions = json.loads(json_regions_data)
+
+    matching_regions = [
+        region
+        for region in regions
+        if all(cap in region["capabilities"] for cap in required_capabilities)
+        and region["site_type"] == site_type
+    ]
+
+    # Extract the region ids
+    matching_region_ids = [region["id"] for region in matching_regions]
+
+    return random.choice(matching_region_ids) if matching_region_ids else None
