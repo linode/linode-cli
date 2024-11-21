@@ -259,11 +259,13 @@ def _build_request_body(ctx, operation, parsed_args) -> Optional[str]:
     if ctx.defaults:
         parsed_args = ctx.config.update(parsed_args, operation.allowed_defaults)
 
+    param_names = {param.name for param in operation.params}
+
     expanded_json = {}
 
     # expand paths
     for k, v in vars(parsed_args).items():
-        if v is None:
+        if v is None or k in param_names:
             continue
 
         cur = expanded_json

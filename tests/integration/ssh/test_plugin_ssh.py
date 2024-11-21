@@ -8,12 +8,13 @@ import pytest
 from tests.integration.helpers import (
     COMMAND_JSON_OUTPUT,
     exec_failing_test_command,
+    get_random_region_with_caps,
     get_random_text,
     wait_for_condition,
 )
 
-TEST_REGION = "us-southeast"
-TEST_IMAGE = "linode/alpine3.16"
+TEST_REGION = get_random_region_with_caps(required_capabilities=["Linodes"])
+TEST_IMAGE = "linode/ubuntu24.10"
 TEST_TYPE = "g6-nanode-1"
 TEST_ROOT_PASS = "r00tp@ss!long-long-and-longer"
 

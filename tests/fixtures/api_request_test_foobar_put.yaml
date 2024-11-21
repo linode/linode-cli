@@ -1,0 +1,126 @@
+openapi: 3.0.1
+info:
+  title: API Specification
+  version: 1.0.0
+servers:
+  - url: http://localhost/v4
+
+paths:
+  /foo/bar/{barId}:
+    parameters:
+      - name: barId
+        description: The ID of the bar.
+        in: path
+        required: true
+        schema:
+          type: string
+    x-linode-cli-command: foo
+    put:
+      x-linode-cli-action: bar-update
+      summary: update foobar
+      operationId: fooBarPut
+      description: This is description
+      requestBody:
+        description: >
+          The parameters to set when updating the Foobar.
+        required: True
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/FooBarUpdate'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OpenAPIResponseAttr'
+
+components:
+  schemas:
+    OpenAPIResponseAttr:
+      type: object
+      properties:
+        filterable_result:
+          x-linode-filterable: true
+          type: string
+          description: Filterable result value
+    PaginationEnvelope:
+      type: object
+      properties:
+        pages:
+          type: integer
+          readOnly: true
+          description: The total number of pages.
+          example: 1
+        page:
+          type: integer
+          readOnly: true
+          description: The current page.
+          example: 1
+        results:
+          type: integer
+          readOnly: true
+          description: The total number of results.
+          example: 1
+    FooBarUpdate:
+      type: object
+      description: Foobar object request
+      properties:
+        test_param:
+          x-linode-filterable: true
+          type: integer
+          description: The test parameter
+        generic_arg:
+          x-linode-filterable: true
+          type: string
+          description: The generic argument
+        region:
+          x-linode-filterable: true
+          type: string
+          description: The region
+        nullable_int:
+          type: integer
+          nullable: true
+          description: An arbitrary nullable int
+        nullable_string:
+          type: string
+          nullable: true
+          description: An arbitrary nullable string
+        nullable_float:
+          type: number
+          nullable: true
+          description: An arbitrary nullable float
+        object_list:
+          type: array
+          description: An arbitrary list of objects.
+          items:
+            type: object
+            description: An arbitrary object.
+            properties:
+              field_dict:
+                type: object
+                description: An arbitrary nested dict.
+                properties:
+                  nested_string:
+                    type: string
+                    description: A deeply nested string.
+                  nested_int:
+                    type: number
+                    description: A deeply nested integer.
+              field_array:
+                type: array
+                description: An arbitrary deeply nested array.
+                items:
+                  type: string
+              field_string:
+                type: string
+                description: An arbitrary field.
+              field_int:
+                type: number
+                description: An arbitrary field.
+              nullable_string:
+                type: string
+                description: An arbitrary nullable string.
+                nullable: true

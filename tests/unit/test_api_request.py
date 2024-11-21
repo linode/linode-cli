@@ -389,6 +389,33 @@ class TestAPIRequest:
 
         assert result == mock_response
 
+    def test_do_request_put(self, mock_cli, update_operation):
+        mock_response = Mock(status_code=200, reason="OK")
+
+        def validate_http_request(url, headers=None, data=None, **kwargs):
+            assert url == "http://localhost/v4/foo/bar/567"
+            assert data == json.dumps(
+                {
+                    "test_param": 12345,
+                    "generic_arg": "foobar",
+                    "region": "us-southeast",  # default
+                }
+            )
+            assert "Authorization" in headers
+
+            return mock_response
+
+        update_operation.allowed_defaults = ["region"]
+
+        with patch("linodecli.api_request.requests.put", validate_http_request):
+            result = api_request.do_request(
+                mock_cli,
+                update_operation,
+                ["--generic_arg", "foobar", "--test_param", "12345", "567"],
+            )
+
+        assert result == mock_response
+
     def test_outdated_cli(self, mock_cli):
         # "outdated" version
         mock_cli.suppress_warnings = False

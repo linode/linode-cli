@@ -71,7 +71,9 @@ def wait_until(linode_id: "str", timeout, status: "str", period=5):
     return False
 
 
-def create_linode(firewall_id: "str", test_region=DEFAULT_REGION):
+def create_linode(
+    firewall_id: "str", test_region=DEFAULT_REGION, disk_encryption=False
+):
     # create linode
     linode_id = (
         exec_test_command(
@@ -89,6 +91,8 @@ def create_linode(firewall_id: "str", test_region=DEFAULT_REGION):
                 DEFAULT_RANDOM_PASS,
                 "--firewall_id",
                 firewall_id,
+                "--disk_encryption",
+                "enabled" if disk_encryption else "disabled",
                 "--format=id",
                 "--text",
                 "--no-headers",
@@ -183,73 +187,40 @@ def create_linode_and_wait(
     test_plan=DEFAULT_LINODE_TYPE,
     test_image=DEFAULT_TEST_IMAGE,
     test_region=DEFAULT_REGION,
+    disk_encryption=False,
 ):
-    linode_type = test_plan
+    # Base command
+    command = [
+        "linode-cli",
+        "linodes",
+        "create",
+        "--type",
+        test_plan,
+        "--region",
+        test_region,
+        "--image",
+        test_image,
+        "--root_pass",
+        DEFAULT_RANDOM_PASS,
+        "--firewall_id",
+        firewall_id,
+        "--format=id",
+        "--backups_enabled",
+        "true",
+        "--disk_encryption",
+        "enabled" if disk_encryption else "disabled",
+        "--text",
+        "--no-headers",
+    ]
 
-    # key_pair = generate_random_ssh_key()
-
-    output = ""
-    # if ssh key is successfully generated
+    # Add SSH key if provided
     if ssh_key:
-        output = (
-            exec_test_command(
-                [
-                    "linode-cli",
-                    "linodes",
-                    "create",
-                    "--type",
-                    linode_type,
-                    "--region",
-                    test_region,
-                    "--image",
-                    test_image,
-                    "--root_pass",
-                    DEFAULT_RANDOM_PASS,
-                    "--authorized_keys",
-                    ssh_key,
-                    "--firewall_id",
-                    firewall_id,
-                    "--format=id",
-                    "--backups_enabled",
-                    "true",
-                    "--text",
-                    "--no-headers",
-                ]
-            )
-            .stdout.decode()
-            .rstrip()
-        )
-    else:
-        output = (
-            exec_test_command(
-                [
-                    "linode-cli",
-                    "linodes",
-                    "create",
-                    "--type",
-                    linode_type,
-                    "--region",
-                    "us-ord",
-                    "--image",
-                    test_image,
-                    "--root_pass",
-                    DEFAULT_RANDOM_PASS,
-                    "--firewall_id",
-                    firewall_id,
-                    "--format=id",
-                    "--backups_enabled",
-                    "true",
-                    "--text",
-                    "--no-headers",
-                ]
-            )
-            .stdout.decode()
-            .rstrip()
-        )
-    linode_id = output
+        command.extend(["--authorized_keys", ssh_key])
+
+    linode_id = exec_test_command(command).stdout.decode().strip()
 
     # wait until linode is running, wait_until returns True when it is in running state
-    result = (wait_until(linode_id=linode_id, timeout=240, status="running"),)
+    result = wait_until(linode_id=linode_id, timeout=240, status="running")
 
     assert result, "linode failed to change status to running"
 
@@ -275,3 +246,24 @@ def set_backups_enabled_in_account_settings(toggle: bool):
     result = exec_test_command(command).stdout.decode().rstrip()
 
     return result
+
+
+def get_disk_ids(linode_id):
+    disk_ids = (
+        exec_test_command(
+            BASE_CMD
+            + [
+                "disks-list",
+                linode_id,
+                "--text",
+                "--no-headers",
+                "--format",
+                "id",
+            ]
+        )
+        .stdout.decode()
+        .rstrip()
+        .splitlines()
+    )
+
+    return disk_ids

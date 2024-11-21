@@ -20,6 +20,7 @@ from linodecli import ENV_TOKEN_NAME
 from tests.integration.helpers import (
     delete_target_id,
     exec_test_command,
+    get_random_region_with_caps,
     get_random_text,
 )
 from tests.integration.linodes.helpers_linodes import (
@@ -465,34 +466,6 @@ def nodebalancer_with_default_conf(linode_cloud_firewall):
     delete_target_id(target="nodebalancers", id=nodebalancer_id)
 
 
-def get_regions_with_capabilities(capabilities):
-    regions = (
-        exec_test_command(
-            [
-                "linode-cli",
-                "regions",
-                "ls",
-                "--text",
-                "--no-headers",
-                "--format=id,capabilities",
-            ]
-        )
-        .stdout.decode()
-        .rstrip()
-    )
-
-    regions = regions.split("\n")
-
-    regions_with_all_caps = []
-
-    for region in regions:
-        region_name = region.split()[0]
-        if all(capability in region for capability in capabilities):
-            regions_with_all_caps.append(region_name)
-
-    return regions_with_all_caps
-
-
 def create_vpc_w_subnet():
     """
     Creates and returns a VPC and a corresponding subnet.
@@ -504,7 +477,7 @@ def create_vpc_w_subnet():
     See: https://github.com/pytest-dev/pytest/issues/1216
     """
 
-    region = get_regions_with_capabilities(["VPCs"])[0]
+    region = get_random_region_with_caps(required_capabilities=["VPCs"])
     vpc_label = str(time.time_ns()) + "label"
     subnet_label = str(time.time_ns()) + "label"
 
