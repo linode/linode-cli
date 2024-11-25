@@ -194,3 +194,24 @@ def get_random_region_with_caps(
     matching_region_ids = [region["id"] for region in matching_regions]
 
     return random.choice(matching_region_ids) if matching_region_ids else None
+
+
+def get_cluster_id(label: str):
+    cluster_id = (
+        exec_test_command(
+            [
+                "linode-cli",
+                "lke",
+                "clusters-list",
+                "--text",
+                "--format=id",
+                "--no-headers",
+                "--label",
+                label,
+            ]
+        )
+        .stdout.decode()
+        .rstrip()
+    )
+
+    return cluster_id
