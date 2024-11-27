@@ -91,7 +91,7 @@ def upload_object(
     bucket = parsed.bucket
     if "/" in parsed.bucket:
         bucket = parsed.bucket.split("/")[0]
-        prefix = parsed.bucket.lstrip(f"{bucket}/")
+        prefix = parsed.bucket[len(f"{bucket}/"):]
 
     upload_options = {
         "Bucket": bucket,
