@@ -11,7 +11,7 @@ jobs:
     steps:
       - name: Notify Slack - Main Message
         id: main_message
-        uses: slackapi/slack-github-action@v1.27.0
+        uses: slackapi/slack-github-action@v2.0.0
         with:
           channel-id: ${{ secrets.CLI_SLACK_CHANNEL_ID }}
           payload: |
