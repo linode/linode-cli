@@ -46,61 +46,32 @@ jobs:
 
       - name: Notify Slack
         if: always() && github.repository == 'linode/linode-cli' # Run even if integration tests fail and only on main repository
-        uses: slackapi/slack-github-action@v1.26.0
+        uses: slackapi/slack-github-action@v2.0.0
         with:
-          channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
+          method: chat.postMessage
+          token: ${{ secrets.SLACK_BOT_TOKEN }}
           payload: |
-            {
-              "blocks": [
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": ":rocket: *${{ github.workflow }} Completed in: ${{ github.repository }}* :white_check_mark:"
-                  }
-                },
-                {
-                  "type": "divider"
-                },
-                {
-                  "type": "section",
-                  "fields": [
-                    {
-                      "type": "mrkdwn",
-                      "text": "*Build Result:*\n${{ steps.smoke_tests.outcome == 'success' && ':large_green_circle: Build Passed' || ':red_circle: Build Failed' }}"
-                    },
-                    {
-                      "type": "mrkdwn",
-                      "text": "*Branch:*\n`${{ github.ref_name }}`"
-                    }
-                  ]
-                },
-                {
-                  "type": "section",
-                  "fields": [
-                    {
-                      "type": "mrkdwn",
-                      "text": "*Commit Hash:*\n<${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}|${{ github.sha }}>"
-                    },
-                    {
-                      "type": "mrkdwn",
-                      "text": "*Run URL:*\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run Details>"
-                    }
-                  ]
-                },
-                {
-                  "type": "divider"
-                },
-                {
-                  "type": "context",
-                  "elements": [
-                    {
-                      "type": "mrkdwn",
-                      "text": "Triggered by: :bust_in_silhouette: `${{ github.actor }}`"
-                    }
-                  ]
-                }
-              ]
-            }
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+            channel: ${{ secrets.SLACK_CHANNEL_ID }}
+            blocks:
+              - type: section
+                text:
+                  type: mrkdwn
+                  text: ":rocket: *${{ github.workflow }} Completed in: ${{ github.repository }}* :white_check_mark:"
+              - type: divider
+              - type: section
+                fields:
+                  - type: mrkdwn
+                    text: "*Build Result:*\n${{ steps.smoke_tests.outcome == 'success' && ':large_green_circle: Build Passed' || ':red_circle: Build Failed' }}"
+                  - type: mrkdwn
+                    text: "*Branch:*\n`${{ github.ref_name }}`"
+              - type: section
+                fields:
+                  - type: mrkdwn
+                    text: "*Commit Hash:*\n<${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}|${{ github.sha }}>"
+                  - type: mrkdwn
+                    text: "*Run URL:*\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run Details>"
+              - type: divider
+              - type: context
+                elements:
+                  - type: mrkdwn
+                    text: "Triggered by: :bust_in_silhouette: `${{ github.actor }}`"
