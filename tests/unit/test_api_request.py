@@ -28,6 +28,7 @@ class TestAPIRequest:
             status_code=200,
             reason="OK",
             headers={"cool": "test"},
+            content=b"cool body"
         )
 
         with contextlib.redirect_stderr(stderr_buf):
@@ -36,6 +37,9 @@ class TestAPIRequest:
         output = stderr_buf.getvalue()
         assert "< HTTP/1.1 200 OK" in output
         assert "< cool: test" in output
+        assert "< Body:" in output
+        assert "<   cool body" in output
+        assert "< " in output
 
     def test_request_debug_info(self):
         stderr_buf = io.StringIO()
