@@ -28,7 +28,7 @@ class TestAPIRequest:
             status_code=200,
             reason="OK",
             headers={"cool": "test"},
-            content=b"cool body"
+            content=b"cool body",
         )
 
         with contextlib.redirect_stderr(stderr_buf):
