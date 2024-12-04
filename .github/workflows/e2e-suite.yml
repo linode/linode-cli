@@ -144,7 +144,7 @@ jobs:
           LINODE_CLI_OBJ_SECRET_KEY: ${{ secrets.LINODE_CLI_OBJ_SECRET_KEY }}
 
       - name: Update PR Check Run
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         id: update-check-run
         if: ${{ inputs.pull_request_number != '' && fromJson(steps.commit-hash.outputs.data).repository.pullRequest.headRef.target.oid == inputs.sha }}
         env:
