@@ -101,7 +101,7 @@ jobs:
         run: sudo apt-get update -y
 
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ inputs.run-eol-python-version == 'true' && env.EOL_PYTHON_VERSION || inputs.python-version || env.DEFAULT_PYTHON_VERSION }}
 
@@ -144,7 +144,7 @@ jobs:
           LINODE_CLI_OBJ_SECRET_KEY: ${{ secrets.LINODE_CLI_OBJ_SECRET_KEY }}
 
       - name: Update PR Check Run
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         id: update-check-run
         if: ${{ inputs.pull_request_number != '' && fromJson(steps.commit-hash.outputs.data).repository.pullRequest.headRef.target.oid == inputs.sha }}
         env:
@@ -244,61 +244,32 @@ jobs:
 
     steps:
       - name: Notify Slack
-        uses: slackapi/slack-github-action@v1.27.0
+        uses: slackapi/slack-github-action@v2.0.0
         with:
-          channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
+          method: chat.postMessage
+          token: ${{ secrets.SLACK_BOT_TOKEN }}
           payload: |
-            {
-              "blocks": [
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": ":rocket: *${{ github.workflow }} Completed in: ${{ github.repository }}* :white_check_mark:"
-                  }
-                },
-                {
-                  "type": "divider"
-                },
-                {
-                  "type": "section",
-                  "fields": [
-                    {
-                      "type": "mrkdwn",
-                      "text": "*Build Result:*\n${{ needs.integration_tests.result == 'success' && ':large_green_circle: Build Passed' || ':red_circle: Build Failed' }}"
-                    },
-                    {
-                      "type": "mrkdwn",
-                      "text": "*Branch:*\n`${{ github.ref_name }}`"
-                    }
-                  ]
-                },
-                {
-                  "type": "section",
-                  "fields": [
-                    {
-                      "type": "mrkdwn",
-                      "text": "*Commit Hash:*\n<${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}|${{ github.sha }}>"
-                    },
-                    {
-                      "type": "mrkdwn",
-                      "text": "*Run URL:*\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run Details>"
-                    }
-                  ]
-                },
-                {
-                  "type": "divider"
-                },
-                {
-                  "type": "context",
-                  "elements": [
-                    {
-                      "type": "mrkdwn",
-                      "text": "Triggered by: :bust_in_silhouette: `${{ github.actor }}`"
-                    }
-                  ]
-                }
-              ]
-            }
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+            channel: ${{ secrets.SLACK_CHANNEL_ID }}
+            blocks:
+              - type: section
+                text:
+                  type: mrkdwn
+                  text: ":rocket: *${{ github.workflow }} Completed in: ${{ github.repository }}* :white_check_mark:"
+              - type: divider
+              - type: section
+                fields:
+                  - type: mrkdwn
+                    text: "*Build Result:*\n${{ needs.integration_tests.result == 'success' && ':large_green_circle: Build Passed' || ':red_circle: Build Failed' }}"
+                  - type: mrkdwn
+                    text: "*Branch:*\n`${{ github.ref_name }}`"
+              - type: section
+                fields:
+                  - type: mrkdwn
+                    text: "*Commit Hash:*\n<${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}|${{ github.sha }}>"
+                  - type: mrkdwn
+                    text: "*Run URL:*\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run Details>"
+              - type: divider
+              - type: context
+                elements:
+                  - type: mrkdwn
+                    text: "Triggered by: :bust_in_silhouette: `${{ github.actor }}`"
