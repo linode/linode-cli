@@ -176,7 +176,11 @@ def _parse_response_model(schema, prefix=None, nested_list_depth=0):
     for k, v in schema.properties.items():
         pref = prefix + "." + k if prefix else k
 
-        if v.type == "object" and v.properties is None and v.additionalProperties is not None:
+        if (
+            v.type == "object"
+            and v.properties is None
+            and v.additionalProperties is not None
+        ):
             # This is a dictionary with arbitrary keys
             attrs.append(
                 OpenAPIResponseAttr(
