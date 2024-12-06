@@ -1,5 +1,5 @@
+
 import pytest
-import subprocess
 
 from tests.integration.helpers import assert_headers_in_lines, exec_test_command
 
@@ -21,8 +21,7 @@ def test_account_transfer():
 def test_available_service():
     res = (
         exec_test_command(
-            BASE_CMD
-            + ["get-availability", "--text", "--delimiter=,"]
+            BASE_CMD + ["get-availability", "--text", "--delimiter=,"]
         )
         .stdout.decode()
         .rstrip()
@@ -110,30 +109,30 @@ def test_event_view(get_event_id):
 def test_event_read(get_event_id):
     event_id = get_event_id
     process = exec_test_command(
-            [
-                "linode-cli",
-                "events",
-                "mark-read",
-                event_id,
-                "--text",
-                "--delimiter=,",
-            ]
-        )
+        [
+            "linode-cli",
+            "events",
+            "mark-read",
+            event_id,
+            "--text",
+            "--delimiter=,",
+        ]
+    )
     assert process.returncode == 0
 
 
 def test_event_seen(get_event_id):
     event_id = get_event_id
     process = exec_test_command(
-            [
-                "linode-cli",
-                "events",
-                "mark-seen",
-                event_id,
-                "--text",
-                "--delimiter=,",
-            ]
-        )
+        [
+            "linode-cli",
+            "events",
+            "mark-seen",
+            event_id,
+            "--text",
+            "--delimiter=,",
+        ]
+    )
     assert process.returncode == 0
 
 
