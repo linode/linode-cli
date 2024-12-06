@@ -1,4 +1,5 @@
 import pytest
+import subprocess
 
 from tests.integration.helpers import assert_headers_in_lines, exec_test_command
 
@@ -14,6 +15,21 @@ def test_account_transfer():
     lines = res.splitlines()
 
     headers = ["billable", "quota", "used"]
+    assert_headers_in_lines(headers, lines)
+
+
+def test_available_service():
+    res = (
+        exec_test_command(
+            BASE_CMD
+            + ["get-availability", "--text", "--delimiter=,"]
+        )
+        .stdout.decode()
+        .rstrip()
+    )
+    lines = res.splitlines()
+
+    headers = ["region", "unavailable"]
     assert_headers_in_lines(headers, lines)
 
 
@@ -89,6 +105,36 @@ def test_event_view(get_event_id):
 
     headers = ["id", "action"]
     assert_headers_in_lines(headers, lines)
+
+
+def test_event_read(get_event_id):
+    event_id = get_event_id
+    process = exec_test_command(
+            [
+                "linode-cli",
+                "events",
+                "mark-read",
+                event_id,
+                "--text",
+                "--delimiter=,",
+            ]
+        )
+    assert process.returncode == 0
+
+
+def test_event_seen(get_event_id):
+    event_id = get_event_id
+    process = exec_test_command(
+            [
+                "linode-cli",
+                "events",
+                "mark-seen",
+                event_id,
+                "--text",
+                "--delimiter=,",
+            ]
+        )
+    assert process.returncode == 0
 
 
 def test_account_invoice_list():
