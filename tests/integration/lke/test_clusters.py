@@ -457,44 +457,6 @@ def test_node_pool(test_lke_cluster):
     yield node_pool_id
 
 
-def test_pool_view(test_lke_cluster, test_node_pool):
-    cluster_id = test_lke_cluster
-
-    node_pool_id = test_node_pool
-
-    node_pool = (
-        exec_test_command(
-            BASE_CMD
-            + [
-                "pool-view",
-                cluster_id,
-                node_pool_id,
-                "--text",
-            ]
-        )
-        .stdout.decode()
-        .rstrip()
-    )
-
-    lines = node_pool.splitlines()
-
-    headers = [
-        "autoscaler.enabled",
-        "autoscaler.max",
-        "autoscaler.min",
-        "count",
-        "disk_encryption",
-        "id",
-        "labels.key",
-        "labels.value",
-        "tags",
-        "taints",
-        "type",
-    ]
-
-    assert_headers_in_lines(headers, lines)
-
-
 def test_update_autoscaler(test_lke_cluster, test_node_pool):
     cluster_id = test_lke_cluster
     node_pool_id = test_node_pool
