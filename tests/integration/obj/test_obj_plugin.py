@@ -192,10 +192,10 @@ def test_obj_single_file_single_bucket_with_prefix(
 
 
 def test_obj_single_file_single_bucket_with_prefix_ltrim(
-        create_bucket: Callable[[Optional[str]], str],
-        generate_test_files: GetTestFilesType,
-        keys: Keys,
-        monkeypatch: MonkeyPatch,
+    create_bucket: Callable[[Optional[str]], str],
+    generate_test_files: GetTestFilesType,
+    keys: Keys,
+    monkeypatch: MonkeyPatch,
 ):
     patch_keys(keys, monkeypatch)
     file_path = generate_test_files()[0]
@@ -230,7 +230,7 @@ def test_obj_single_file_single_bucket_with_prefix_ltrim(
             bucket_name,
             "bkprefix/" + file_path.name,
             str(downloaded_file_path),
-            ]
+        ]
     )
     output = process.stdout.decode()
     with open(downloaded_file_path) as f2, open(file_path) as f1:
