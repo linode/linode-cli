@@ -35,10 +35,13 @@ class TestOverrides:
             OUTPUT_OVERRIDES[override_signature](*a)
             return True
 
-        with patch(
-            "linodecli.baked.operation.OUTPUT_OVERRIDES",
-            {override_signature: patch_func},
-        ), patch.object(mock_cli.output_handler, "print") as p:
+        with (
+            patch(
+                "linodecli.baked.operation.OUTPUT_OVERRIDES",
+                {override_signature: patch_func},
+            ),
+            patch.object(mock_cli.output_handler, "print") as p,
+        ):
             list_operation_for_overrides_test.process_response_json(
                 response_json, mock_cli.output_handler
             )
