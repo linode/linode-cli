@@ -300,6 +300,7 @@ def _print_response_debug_info(response):
     """
     # these come back as ints, convert to HTTP version
     http_version = response.raw.version / 10
+    body = response.content.decode("utf-8", errors="replace")
 
     print(
         f"< HTTP/{http_version:.1f} {response.status_code} {response.reason}",
@@ -307,6 +308,8 @@ def _print_response_debug_info(response):
     )
     for k, v in response.headers.items():
         print(f"< {k}: {v}", file=sys.stderr)
+    print("< Body:", file=sys.stderr)
+    print("<  ", body or "", file=sys.stderr)
     print("< ", file=sys.stderr)
 
 
