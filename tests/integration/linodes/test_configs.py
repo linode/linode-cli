@@ -25,7 +25,6 @@ TEST_REGION = get_random_region_with_caps(
 
 @pytest.fixture(scope="session", autouse=True)
 def linode_instance_config_tests(linode_cloud_firewall):
-
     linode_id = create_linode(
         firewall_id=linode_cloud_firewall,
         disk_encryption=False,

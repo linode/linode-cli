@@ -116,3 +116,22 @@ def test_profile_token_list():
     lines = res.splitlines()
     headers = ["label", "scopes", "token"]
     assert_headers_in_lines(headers, lines)
+
+
+def test_sshkeys_list():
+    res = (
+        exec_test_command(
+            [
+                "linode-cli",
+                "sshkeys",
+                "list",
+                "--text",
+                "--delimiter=,",
+            ]
+        )
+        .stdout.decode()
+        .rstrip()
+    )
+    lines = res.splitlines()
+    headers = ["label", "ssh_key"]
+    assert_headers_in_lines(headers, lines)
