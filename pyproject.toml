@@ -7,7 +7,7 @@ name = "linode-cli"
 authors = [{ name = "Akamai Technologies Inc.", email = "developers@linode.com" }]
 description = "The official command-line interface for interacting with the Linode API."
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 license = { text = "BSD-3-Clause" }
 classifiers = []
 dependencies = [
@@ -54,7 +54,7 @@ line_length = 80
 
 [tool.black]
 line-length = 80
-target-version = ["py37", "py38", "py39", "py310", "py311"]
+target-version = ["py39", "py310", "py311", "py312", "py313"]
 
 [tool.autoflake]
 expand-star-imports = true

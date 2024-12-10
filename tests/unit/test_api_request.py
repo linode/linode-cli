@@ -451,8 +451,9 @@ class TestAPIRequest:
             status_code=200, reason="OK", headers={"X-Spec-Version": "1.1.0"}
         )
 
-        with contextlib.redirect_stderr(stderr_buf), patch(
-            "linodecli.api_request.requests.get", mock_http_response
+        with (
+            contextlib.redirect_stderr(stderr_buf),
+            patch("linodecli.api_request.requests.get", mock_http_response),
         ):
             api_request._attempt_warn_old_version(mock_cli, mock_response)
 
@@ -495,8 +496,9 @@ class TestAPIRequest:
             status_code=200, reason="OK", headers={"X-Spec-Version": "1.1.0"}
         )
 
-        with contextlib.redirect_stderr(stderr_buf), patch(
-            "linodecli.api_request.requests.get", mock_http_response
+        with (
+            contextlib.redirect_stderr(stderr_buf),
+            patch("linodecli.api_request.requests.get", mock_http_response),
         ):
             api_request._attempt_warn_old_version(mock_cli, mock_response)
 
@@ -529,8 +531,9 @@ class TestAPIRequest:
             status_code=200, reason="OK", headers={"X-Spec-Version": "1.0.0"}
         )
 
-        with contextlib.redirect_stderr(stderr_buf), patch(
-            "linodecli.api_request.requests.get", mock_http_response
+        with (
+            contextlib.redirect_stderr(stderr_buf),
+            patch("linodecli.api_request.requests.get", mock_http_response),
         ):
             api_request._attempt_warn_old_version(mock_cli, mock_response)
 
