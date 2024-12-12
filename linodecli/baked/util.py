@@ -24,9 +24,8 @@ def _aggregate_schema_properties(schema: Schema) -> Dict[str, Any]:
     nested_schema = (schema.oneOf or []) + (schema.anyOf or [])
 
     for entry in nested_schema:
-        entry_schema = Schema(
-            schema.path, entry, schema._root
-        )  # pylint: disable=protected-access
+        # pylint: disable=protected-access
+        entry_schema = Schema(schema.path, entry, schema._root)
         if entry_schema.properties is None:
             continue
 
