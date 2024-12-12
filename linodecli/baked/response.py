@@ -3,7 +3,8 @@ Converting the processed OpenAPI Responses into something the CLI can work with
 """
 
 from openapi3.paths import MediaType
-from openapi3.schemas import Schema
+
+from linodecli.baked.util import _aggregate_schema_properties
 
 
 def _is_paginated(response):
@@ -171,20 +172,7 @@ def _parse_response_model(schema, prefix=None, nested_list_depth=0):
 
     attrs = []
 
-    properties = {}
-
-    if schema.properties is not None:
-        properties.update(dict(schema.properties))
-
-    # We dynamically merge oneOf values here to ensure they are all accounted for
-    # in the response model.
-    if schema.oneOf is not None:
-        for entry in schema.oneOf:
-            entry_schema = Schema(schema.path, entry, schema._root)
-            if entry_schema.properties is None:
-                continue
-
-            properties.update(dict(entry_schema.properties))
+    properties = _aggregate_schema_properties(schema)
 
     if properties is None:
         return attrs

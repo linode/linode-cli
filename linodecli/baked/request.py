@@ -2,11 +2,10 @@
 Request details for a CLI Operation
 """
 
-import sys
-
 from openapi3.schemas import Schema
 
 from linodecli.baked.parsing import simplify_description
+from linodecli.baked.util import _aggregate_schema_properties
 
 
 class OpenAPIRequestArg:
@@ -138,17 +137,12 @@ def _parse_request_model(schema, prefix=None, parent=None, depth=0):
     """
     args = []
 
-    if depth > 0 and schema.oneOf is not None:
-        print(
-            f"WARN: {'.'.join(schema.path)}: "
-            f"Ignoring oneOf because it is not defined at the request schema's root level.",
-            file=sys.stderr,
-        )
+    properties = _aggregate_schema_properties(schema)
 
-    if schema.properties is None:
+    if properties is None:
         return args
 
-    for k, v in schema.properties.items():
+    for k, v in properties.items():
         if v.type == "object" and not v.readOnly and v.properties:
             # nested objects receive a prefix and are otherwise parsed normally
             pref = prefix + "." + k if prefix else k
@@ -237,9 +231,7 @@ class OpenAPIRequest:
             override._resolve_references()
             schema = override.schema
 
-        # We first build a map of attributes so we can easily merge in
-        # attributes from oneOf.
-        attr_map = {arg.path: arg for arg in _parse_request_model(schema)}
+        self.attrs = _parse_request_model(schema)
 
         # attr_routes stores all attribute routes defined using oneOf.
         # For example, config-create uses one of to isolate HTTP, HTTPS, and TCP request attributes
@@ -248,15 +240,9 @@ class OpenAPIRequest:
         if schema.oneOf is not None:
             for entry in schema.oneOf:
                 entry_schema = Schema(schema.path, entry, request._root)
-                entry_attrs = _parse_request_model(entry_schema)
-
-                self.attr_routes[entry_schema.title] = entry_attrs
-
-                # Merge the oneOf attributes into the arguments
-                for arg in entry_attrs:
-                    attr_map[arg.path] = arg
-
-        self.attrs = list(attr_map.values())
+                self.attr_routes[entry_schema.title] = _parse_request_model(
+                    entry_schema
+                )
 
 
 class OpenAPIFilteringRequest:
