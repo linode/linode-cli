@@ -1,0 +1,71 @@
+openapi: 3.0.1
+info:
+  title: API Specification
+  version: 1.0.0
+servers:
+  - url: http://localhost/v4
+
+paths:
+  /foo/bar:
+    x-linode-cli-command: foo
+    post:
+      summary: Do something.
+      operationId: fooBarPost
+      description: This is description
+      requestBody:
+        description: Some description.
+        required: True
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Foo'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Foo'
+
+components:
+  schemas:
+    Foo:
+      oneOf:
+        - type: object
+          required:
+            - foobar
+            - barfoo
+          properties:
+            foobar:
+              type: string
+              description: Some foobar.
+            barfoo:
+              type: integer
+              description: Some barfoo.
+        - type: object
+          required:
+            - foobar
+            - foofoo
+          properties:
+            foobar:
+              type: string
+              description: Some foobar.
+            foofoo:
+              type: boolean
+              description: Some foofoo.
+            barbar:
+              description: Some barbar.
+              anyOf:
+                - type: object
+                  properties:
+                    foo:
+                      type: string
+                      description: Some foo.
+                    bar:
+                      type: integer
+                      description: Some bar.
+                - type: object
+                  properties:
+                    baz:
+                      type: boolean
+                      description: Some baz.

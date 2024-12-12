@@ -343,6 +343,25 @@ def get_operation_for_subtable_test():
 
 
 @pytest.fixture
+def post_operation_with_one_ofs() -> OpenAPIOperation:
+    """
+    Creates a new OpenAPI operation that makes heavy use of oneOfs and anyOfs.
+    """
+
+    spec = _get_parsed_spec("operation_with_one_ofs.yaml")
+
+    # Get parameters for OpenAPIOperation() from yaml fixture
+    path = list(spec.paths.values())[0]
+
+    return make_test_operation(
+        path.extensions.get("linode-cli-command", "default"),
+        getattr(path, "post"),
+        "post",
+        path.parameters,
+    )
+
+
+@pytest.fixture
 def get_openapi_for_api_components_tests() -> OpenAPI:
     """
     Creates a set of OpenAPI operations with various apiVersion and

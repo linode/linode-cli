@@ -137,7 +137,7 @@ def _parse_request_model(schema, prefix=None, parent=None, depth=0):
     """
     args = []
 
-    properties = _aggregate_schema_properties(schema)
+    properties, required = _aggregate_schema_properties(schema)
 
     if properties is None:
         return args
@@ -185,17 +185,11 @@ def _parse_request_model(schema, prefix=None, parent=None, depth=0):
                 depth=depth + 1,
             )
         else:
-            # required fields are defined in the schema above the property, so
-            # we have to check here if required fields are defined/if this key
-            # is among them and pass it into the OpenAPIRequestArg class.
-            required = False
-            if schema.required:
-                required = k in schema.required
             args.append(
                 OpenAPIRequestArg(
                     k,
                     v,
-                    required,
+                    k in required,
                     prefix=prefix,
                     parent=parent,
                     depth=depth,

@@ -1,6 +1,6 @@
-class TestOutputHandler:
+class TestResponse:
     """
-    Unit tests for linodecli.response
+    Unit tests for baked responses.
     """
 
     def test_model_fix_json_rows(self, list_operation_for_response_test):
@@ -45,3 +45,19 @@ class TestOutputHandler:
         result = attr.render_value(model)
 
         assert result == "[yellow]cool1, cool2[/]"
+
+    def test_handle_one_ofs(self, post_operation_with_one_ofs):
+        model = post_operation_with_one_ofs.response_model
+
+        attr_map = {attr.path: attr for attr in model.attrs}
+
+        expected = {
+            "foobar": ("string", "Some foobar"),
+            "barfoo": ("integer", "Some barfoo"),
+            "foofoo": ("boolean", "Some foofoo"),
+            "barbar": ("string", "Some barbar"),
+        }
+
+        for k, v in expected.items():
+            assert attr_map[k].datatype == v[0]
+            assert attr_map[k].description == v[1]

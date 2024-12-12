@@ -172,7 +172,7 @@ def _parse_response_model(schema, prefix=None, nested_list_depth=0):
 
     attrs = []
 
-    properties = _aggregate_schema_properties(schema)
+    properties, _ = _aggregate_schema_properties(schema)
 
     if properties is None:
         return attrs
