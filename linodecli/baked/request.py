@@ -2,7 +2,7 @@
 Request details for a CLI Operation
 """
 
-pass
+import sys
 
 from openapi3.schemas import Schema
 
@@ -137,6 +137,13 @@ def _parse_request_model(schema, prefix=None, parent=None, depth=0):
     :rtype: list[OpenAPIRequestArg]
     """
     args = []
+
+    if depth > 0 and schema.oneOf is not None:
+        print(
+            f"WARN: {'.'.join(schema.path)}: "
+            f"Ignoring oneOf because it is not defined at the request schema's root level.",
+            file=sys.stderr,
+        )
 
     if schema.properties is None:
         return args
