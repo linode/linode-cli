@@ -17,10 +17,13 @@ def _aggregate_schema_properties(schema: Schema) -> Dict[str, Any]:
     if schema.properties is not None:
         result.update(dict(schema.properties))
 
-    if schema.oneOf is not None:
-        result.update(dict(schema.oneOf))
+    nested_schema = (schema.oneOf or []) + (schema.anyOf or [])
 
-    if schema.anyOf is not None:
-        result.update(dict(schema.anyOf))
+    for entry in nested_schema:
+        entry_schema = Schema(schema.path, entry, schema._root)
+        if entry_schema.properties is None:
+            continue
+
+        result.update(dict(entry_schema.properties))
 
     return result
