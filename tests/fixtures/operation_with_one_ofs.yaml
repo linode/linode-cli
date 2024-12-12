@@ -55,6 +55,7 @@ components:
               description: Some foofoo.
             barbar:
               description: Some barbar.
+              type: object
               anyOf:
                 - type: object
                   properties:

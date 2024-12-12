@@ -143,7 +143,11 @@ def _parse_request_model(schema, prefix=None, parent=None, depth=0):
         return args
 
     for k, v in properties.items():
-        if v.type == "object" and not v.readOnly and v.properties:
+        if (
+            v.type == "object"
+            and not v.readOnly
+            and len(_aggregate_schema_properties(v)[0]) > 0
+        ):
             # nested objects receive a prefix and are otherwise parsed normally
             pref = prefix + "." + k if prefix else k
 

@@ -55,7 +55,9 @@ class TestResponse:
             "foobar": ("string", "Some foobar"),
             "barfoo": ("integer", "Some barfoo"),
             "foofoo": ("boolean", "Some foofoo"),
-            "barbar": ("string", "Some barbar"),
+            "barbar.foo": ("string", "Some foo"),
+            "barbar.bar": ("integer", "Some bar"),
+            "barbar.baz": ("boolean", "Some baz"),
         }
 
         for k, v in expected.items():
