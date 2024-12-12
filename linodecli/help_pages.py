@@ -224,8 +224,13 @@ def print_help_action(
         _help_action_print_filter_args(console, op)
         return
 
-    if op.args:
-        _help_action_print_body_args(console, op)
+    if len(op.arg_routes) > 0:
+        # This operation uses oneOf so we need to render routes
+        # instead of the operation-level argument list.
+        for title, option in op.arg_routes.items():
+            _help_action_print_body_args(console, op, option, title=title)
+    elif op.args:
+        _help_action_print_body_args(console, op, op.args)
 
 
 def _help_action_print_filter_args(console: Console, op: OpenAPIOperation):
@@ -250,13 +255,15 @@ def _help_action_print_filter_args(console: Console, op: OpenAPIOperation):
 def _help_action_print_body_args(
     console: Console,
     op: OpenAPIOperation,
+    args: List[OpenAPIRequestArg],
+    title: Optional[str] = None,
 ):
     """
     Pretty-prints all the body (POST/PUT) arguments for this operation.
     """
-    console.print("[bold]Arguments:[/]")
+    console.print(f"[bold]Arguments{f' ({title})' if title else ''}:[/]")
 
-    for group in _help_group_arguments(op.args):
+    for group in _help_group_arguments(args):
         for arg in group:
             metadata = []
 
