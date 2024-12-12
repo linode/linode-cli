@@ -263,5 +263,3 @@ class TestHelpPages:
         assert "--barbar.bar: Some bar." in captured
         assert "--barbar.baz: Some baz." in captured
         assert "--barbar.foo: Some foo." in captured
-
-        assert False
