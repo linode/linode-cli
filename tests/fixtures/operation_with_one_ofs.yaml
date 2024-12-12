@@ -31,7 +31,8 @@ components:
   schemas:
     Foo:
       oneOf:
-        - type: object
+        - title: Usage 1
+          type: object
           required:
             - foobar
             - barfoo
@@ -42,7 +43,8 @@ components:
             barfoo:
               type: integer
               description: Some barfoo.
-        - type: object
+        - title: Usage 2
+          type: object
           required:
             - foobar
             - foofoo

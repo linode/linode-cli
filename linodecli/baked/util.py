@@ -19,12 +19,16 @@ def _aggregate_schema_properties(
     :return: The aggregated properties and a set containing the keys of required properties.
     """
 
+    schema_count = 0
     properties = {}
     required = defaultdict(lambda: 0)
 
     def _handle_schema(_schema: Schema):
         if _schema.properties is None:
             return
+
+        nonlocal schema_count
+        schema_count += 1
 
         properties.update(dict(_schema.properties))
 
@@ -41,10 +45,6 @@ def _aggregate_schema_properties(
     for entry in one_of + any_of:
         # pylint: disable=protected-access
         _handle_schema(Schema(schema.path, entry, schema._root))
-
-    schema_count = (
-        (1 if schema.properties is not None else 0) + len(one_of) + len(any_of)
-    )
 
     return (
         properties,

@@ -238,6 +238,11 @@ class OpenAPIRequest:
         if schema.oneOf is not None:
             for entry in schema.oneOf:
                 entry_schema = Schema(schema.path, entry, request._root)
+                if entry_schema.title is None:
+                    raise ValueError(
+                        f"No title for oneOf entry in {schema.path}"
+                    )
+
                 self.attr_routes[entry_schema.title] = _parse_request_model(
                     entry_schema
                 )
