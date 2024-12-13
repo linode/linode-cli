@@ -208,11 +208,11 @@ class TestAPIRequest:
         assert (
             json.dumps(
                 {
+                    "filterable_result": "bar",
                     "+and": [
-                        {"filterable_result": "bar"},
                         {"filterable_list_result": "foo"},
                         {"filterable_list_result": "bar"},
-                    ]
+                    ],
                 }
             )
             == result
@@ -271,8 +271,8 @@ class TestAPIRequest:
         assert (
             json.dumps(
                 {
+                    "filterable_result": "bar",
                     "+and": [
-                        {"filterable_result": "bar"},
                         {"filterable_list_result": "foo"},
                         {"filterable_list_result": "bar"},
                     ],
@@ -297,8 +297,8 @@ class TestAPIRequest:
         assert (
             json.dumps(
                 {
+                    "filterable_result": "bar",
                     "+and": [
-                        {"filterable_result": "bar"},
                         {"filterable_list_result": "foo"},
                         {"filterable_list_result": "bar"},
                     ],
@@ -335,11 +335,11 @@ class TestAPIRequest:
             assert url == "http://localhost/v4/foo/bar?page=1&page_size=100"
             assert headers["X-Filter"] == json.dumps(
                 {
+                    "filterable_result": "cool",
                     "+and": [
-                        {"filterable_result": "cool"},
                         {"filterable_list_result": "foo"},
                         {"filterable_list_result": "bar"},
-                    ]
+                    ],
                 }
             )
             assert headers["User-Agent"] == mock_cli.user_agent
