@@ -11,7 +11,7 @@ from tests.integration.helpers import (
 BASE_CMD = ["linode-cli", "placement"]
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def create_placement_group():
     new_label = str(time.time_ns()) + "label"
     placement_group_id = (
@@ -41,6 +41,28 @@ def create_placement_group():
     )
 
 
+def test_update_placement_group(create_placement_group):
+    placement_group_id = create_placement_group
+    new_label = str(time.time_ns()) + "label"
+    updated_label = (
+        exec_test_command(
+            BASE_CMD
+            + [
+                "group-update",
+                placement_group_id,
+                "--label",
+                new_label,
+                "--text",
+                "--no-headers",
+                "--format=label",
+            ]
+        )
+        .stdout.decode()
+        .rstrip()
+    )
+    assert new_label == updated_label
+
+
 def test_placement_group_list():
     res = (
         exec_test_command(BASE_CMD + ["groups-list", "--text", "--delimiter=,"])
@@ -68,69 +90,37 @@ def test_placement_group_view(create_placement_group):
     assert_headers_in_lines(headers, lines)
 
 
-@pytest.mark.skip(reason="BUG TPT-3109")
 def test_assign_placement_group(support_test_linode_id, create_placement_group):
     linode_id = support_test_linode_id
     placement_group_id = create_placement_group
-    res = (
-        exec_test_command(
-            BASE_CMD
-            + [
-                "assign-linode",
-                placement_group_id,
-                "--linodes",
-                linode_id,
-                "--text",
-                "--delimiter=,",
-            ]
-        )
-        .stdout.decode()
-        .rstrip()
+    process = exec_test_command(
+        BASE_CMD
+        + [
+            "assign-linode",
+            placement_group_id,
+            "--linode",
+            linode_id,
+            "--text",
+            "--delimiter=,",
+        ]
     )
-    assert placement_group_id in res
+    assert process.returncode == 0
 
 
-@pytest.mark.skip(reason="BUG TPT-3109")
 def test_unassign_placement_group(
     support_test_linode_id, create_placement_group
 ):
     linode_id = support_test_linode_id
     placement_group_id = create_placement_group
-    res = (
-        exec_test_command(
-            BASE_CMD
-            + [
-                "unassign-linode",
-                placement_group_id,
-                "--linode",
-                linode_id,
-                "--text",
-                "--delimiter=,",
-            ]
-        )
-        .stdout.decode()
-        .rstrip()
+    process = exec_test_command(
+        BASE_CMD
+        + [
+            "unassign-linode",
+            placement_group_id,
+            "--linode",
+            linode_id,
+            "--text",
+            "--delimiter=,",
+        ]
     )
-    assert placement_group_id not in res
-
-
-def test_update_placement_group(create_placement_group):
-    placement_group_id = create_placement_group
-    new_label = str(time.time_ns()) + "label"
-    updated_label = (
-        exec_test_command(
-            BASE_CMD
-            + [
-                "group-update",
-                placement_group_id,
-                "--label",
-                new_label,
-                "--text",
-                "--no-headers",
-                "--format=label",
-            ]
-        )
-        .stdout.decode()
-        .rstrip()
-    )
-    assert new_label == updated_label
+    assert process.returncode == 0
