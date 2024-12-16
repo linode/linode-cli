@@ -29,6 +29,12 @@ paths:
                     $ref: '#/components/schemas/PaginationEnvelope/properties/pages'
                   results:
                     $ref: '#/components/schemas/PaginationEnvelope/properties/results'
+                  dictLike:
+                    $ref: '#/components/schemas/DictionaryLikeObject'
+                  standard:
+                    $ref: '#/components/schemas/StandardObject'
+                  objectArray:
+                    $ref: '#/components/schemas/ArrayOfObjects'
 
 components:
   schemas:
@@ -62,3 +68,26 @@ components:
           readOnly: true
           description: The total number of results.
           example: 1
+    DictionaryLikeObject:
+      type: object
+      additionalProperties:
+        type: string  # Arbitrary keys with string values
+      description: Dictionary with arbitrary keys
+    StandardObject:
+      type: object
+      properties:
+        key1:
+          type: string
+        key2:
+          type: integer
+      description: Standard object with defined properties
+    ArrayOfObjects:
+      type: array
+      items:
+        type: object
+        properties:
+          subkey1:
+            type: string
+          subkey2:
+            type: boolean
+      description: Array of objects
