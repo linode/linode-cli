@@ -1,20 +1,43 @@
-name: Unit Tests
+name: Continuous Integration
 on:
   workflow_dispatch: null
   push:
   pull_request:
 jobs:
+  docker-build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Build the Docker image
+      run: docker build . --file Dockerfile --tag linode/cli:$(date +%s) --build-arg="github_token=$GITHUB_TOKEN"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout repo
+        uses: actions/checkout@v4
+
+      - name: setup python 3
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: install dependencies
+        run: make install
+
+      - name: run linter
+        run: make lint
+
   unit-tests-on-ubuntu:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [ '3.9','3.10','3.11', '3.12' ]
+        python-version: [ "3.9","3.10","3.11", "3.12", "3.13" ]
     steps:
       - name: Clone Repository
         uses: actions/checkout@v4
-
-      - name: Update system packages
-        run: sudo apt-get update -y
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -22,13 +45,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install Python wheel
-        run: pip install wheel boto3
-
-      - name: Update cert
-        run: pip install certifi -U
-
-      - name: Install deps
-        run: pip install .[dev]
+        run: pip install -U wheel boto3 certifi
 
       - name: Install Package
         run: make install
@@ -47,7 +64,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.x'
+          python-version: "3.x"
 
       - name: Install Python wheel
         run: pip install wheel boto3
