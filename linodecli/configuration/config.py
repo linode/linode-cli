@@ -409,9 +409,9 @@ class CLIConfig:
                 for t in _do_get_request(self.base_url, "/linode/types")["data"]
             ]
         )
-        images = [
-            i["id"] for i in _do_get_request(self.base_url, "/images")["data"]
-        ]
+        images = sorted(
+            [i["id"] for i in _do_get_request(self.base_url, "/images")["data"]]
+        )
 
         is_full_access = _check_full_access(self.base_url, token)
 
