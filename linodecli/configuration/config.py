@@ -423,9 +423,9 @@ class CLIConfig:
             )
 
             if "data" in users:
-                auth_users = [
-                    u["username"] for u in users["data"] if "ssh_keys" in u
-                ]
+                auth_users = sorted(
+                    [u["username"] for u in users["data"] if "ssh_keys" in u]
+                )
 
         # get the preferred things
         config["region"] = _default_thing_input(
