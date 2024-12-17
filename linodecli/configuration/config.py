@@ -397,9 +397,12 @@ class CLIConfig:
         print(f"\nConfiguring {username}\n")
 
         # Configuring Defaults
-        regions = [
-            r["id"] for r in _do_get_request(self.base_url, "/regions")["data"]
-        ]
+        regions = sorted(
+            [
+                r["id"]
+                for r in _do_get_request(self.base_url, "/regions")["data"]
+            ]
+        )
         types = [
             t["id"]
             for t in _do_get_request(self.base_url, "/linode/types")["data"]
