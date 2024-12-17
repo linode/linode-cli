@@ -44,8 +44,8 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install Python wheel
-        run: pip install -U wheel boto3 certifi
+      - name: Install Python dependencies
+        run: pip install -U certifi
 
       - name: Install Package
         run: make install
@@ -66,14 +66,8 @@ jobs:
         with:
           python-version: "3.x"
 
-      - name: Install Python wheel
-        run: pip install wheel boto3
-
-      - name: Update cert
-        run: pip install certifi -U
-
-      - name: Install deps
-        run: pip install .[dev]
+      - name: Install Python dependencies
+        run: pip install -U certifi
 
       - name: Install Package
         shell: pwsh
