@@ -1,9 +1,27 @@
-name: OCI Image Publish
+name: Release
 on:
   workflow_dispatch: null
   release:
     types: [ published ]
 jobs:
+  notify:
+    if: github.repository == 'linode/linode-cli'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify Slack - Main Message
+        id: main_message
+        uses: slackapi/slack-github-action@v2.0.0
+        with:
+          method: chat.postMessage
+          token: ${{ secrets.SLACK_BOT_TOKEN }}
+          payload: |
+            channel: ${{ secrets.CLI_SLACK_CHANNEL_ID }}
+            blocks:
+              - type: section
+                text:
+                  type: mrkdwn
+                  text: "*New Release Published: _linode-cli_ <${{ github.event.release.html_url }}|${{ github.event.release.tag_name }}> is now live!* :tada:"
+
   oci_publish:
     name: Build and publish the OCI image
     runs-on: ubuntu-latest
@@ -58,3 +76,37 @@ jobs:
           build-args: |
             linode_cli_version=${{ steps.cli_version.outputs.result }}
             github_token=${{ secrets.GITHUB_TOKEN }}
+
+  pypi-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Update system packages
+        run: sudo apt-get update -y
+
+      - name: Install make
+        run: sudo apt-get install -y build-essential
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install Python deps
+        run: pip install wheel
+
+      - name: Install package requirements
+        run: make requirements
+
+      - name: Build the package
+        run: make build
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          LINODE_CLI_VERSION: ${{ github.event.release.tag_name }}
+
+      - name: Publish the release artifacts to PyPI
+        uses: pypa/gh-action-pypi-publish@67339c736fd9354cd4f8cb0b744f2b82a74b5c70 # pin@release/v1.12.3
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
