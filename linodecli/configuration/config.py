@@ -403,10 +403,12 @@ class CLIConfig:
                 for r in _do_get_request(self.base_url, "/regions")["data"]
             ]
         )
-        types = [
-            t["id"]
-            for t in _do_get_request(self.base_url, "/linode/types")["data"]
-        ]
+        types = sorted(
+            [
+                t["id"]
+                for t in _do_get_request(self.base_url, "/linode/types")["data"]
+            ]
+        )
         images = [
             i["id"] for i in _do_get_request(self.base_url, "/images")["data"]
         ]
