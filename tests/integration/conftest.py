@@ -513,7 +513,7 @@ def pytest_configure(config):
     )
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def support_test_linode_id(linode_cloud_firewall):
     timestamp = str(time.time_ns())
     label = "cli" + timestamp
