@@ -519,6 +519,47 @@ mysql_engine = mysql/8.0.26"""
 
         assert result == "foo"
 
+    def test_default_thing_spacing(self, monkeypatch):
+        stdout_buf = io.StringIO()
+        monkeypatch.setattr("sys.stdin", io.StringIO("1\n"))
+
+        with contextlib.redirect_stdout(stdout_buf):
+            _default_thing_input(
+                "foo\n", [*range(1, 10_001)], "prompt text", "error text"
+            )
+
+        output_lines = stdout_buf.getvalue().splitlines()
+
+        assert output_lines[3] == "     1 - 1"
+        assert output_lines[11] == "     9 - 9"
+        assert output_lines[12] == "    10 - 10"
+        assert output_lines[101] == "    99 - 99"
+        assert output_lines[102] == "   100 - 100"
+        assert output_lines[1001] == "   999 - 999"
+        assert output_lines[1002] == "  1000 - 1000"
+        assert output_lines[10_001] == "  9999 - 9999"
+        assert output_lines[10_002] == " 10000 - 10000"
+
+    def test_default_thing_spacing_with_current(self, monkeypatch):
+        stdout_buf = io.StringIO()
+        monkeypatch.setattr("sys.stdin", io.StringIO("1\n"))
+
+        with contextlib.redirect_stdout(stdout_buf):
+            _default_thing_input(
+                "foo\n",
+                [*range(1, 10)],
+                "prompt text",
+                "error text",
+                current_value="foo",
+            )
+
+        output_lines = stdout_buf.getvalue().splitlines()
+
+        print(output_lines)
+        assert output_lines[4] == "  2 - 1"
+        assert output_lines[11] == "  9 - 8"
+        assert output_lines[12] == " 10 - 9"
+
     def test_default_text_input_optional(self, monkeypatch):
         # No value specified
         stdout_buf = io.StringIO()

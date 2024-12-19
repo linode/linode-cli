@@ -3,8 +3,10 @@ General helper functions for configuraiton
 """
 
 import configparser
+import math
 import os
 import webbrowser
+from functools import partial
 from typing import Any, Callable, List, Optional
 
 LEGACY_CONFIG_NAME = ".linode-cli"
@@ -142,13 +144,17 @@ def _default_thing_input(
     exists = current_value is not None
 
     idx_offset = int(exists) + 1
+    calculate_padding = partial(
+        _calculate_padding, total=len(things) + idx_offset
+    )
 
     # If there is a current value, users should have the option to clear it
     if exists:
-        print(" 1 - No Default")
+        print(f"{calculate_padding(1)}1 - No Default")
 
     for ind, thing in enumerate(things):
-        print(f" {ind + idx_offset} - {thing}")
+        effective_ind = ind + idx_offset
+        print(f"{calculate_padding(effective_ind)}{effective_ind} - {thing}")
     print()
 
     while True:
@@ -182,6 +188,13 @@ def _default_thing_input(
 
         # Choice was valid; return
         return things[choice_idx]
+
+
+def _calculate_padding(idx: int, total: int) -> str:
+    max_padding = math.floor(math.log10(total)) + 1
+    num_spaces = max_padding - math.floor(math.log10(idx))
+
+    return " " * num_spaces
 
 
 def _default_text_input(
