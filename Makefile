@@ -44,7 +44,7 @@ build: clean create-version bake
 
 .PHONY: requirements
 requirements:
-	pip3 install --upgrade .[dev,obj]
+	pip3 install --upgrade ".[dev,obj]"
 
 .PHONY: lint
 lint: build
