@@ -84,12 +84,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Update system packages
-        run: sudo apt-get update -y
-
-      - name: Install make
-        run: sudo apt-get install -y build-essential
-
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
