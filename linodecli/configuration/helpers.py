@@ -3,8 +3,10 @@ General helper functions for configuraiton
 """
 
 import configparser
+import math
 import os
 import webbrowser
+from functools import partial
 from typing import Any, Callable, List, Optional
 
 LEGACY_CONFIG_NAME = ".linode-cli"
@@ -142,13 +144,14 @@ def _default_thing_input(
     exists = current_value is not None
 
     idx_offset = int(exists) + 1
+    pad = partial(_pad_index, total=len(things) + idx_offset)
 
     # If there is a current value, users should have the option to clear it
     if exists:
-        print(" 1 - No Default")
+        print(f"{pad(1)} - No Default")
 
     for ind, thing in enumerate(things):
-        print(f" {ind + idx_offset} - {thing}")
+        print(f"{pad(ind + idx_offset)} - {thing}")
     print()
 
     while True:
@@ -182,6 +185,16 @@ def _default_thing_input(
 
         # Choice was valid; return
         return things[choice_idx]
+
+
+def _pad_index(idx: int, total: int) -> str:
+    # NOTE: The implementation of this function could be less opaque if we're
+    # willing to say, "There will never be a case where total > X, because no
+    # one could examine and choose from that many options."
+    max_padding = math.floor(math.log10(total)) + 1
+    num_spaces = max_padding - math.floor(math.log10(idx))
+
+    return " " * num_spaces + str(idx)
 
 
 def _default_text_input(
