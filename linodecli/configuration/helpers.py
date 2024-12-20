@@ -188,6 +188,9 @@ def _default_thing_input(
 
 
 def _pad_index(idx: int, total: int) -> str:
+    # NOTE: The implementation of this function could be less opaque if we're
+    # willing to say, "There will never be a case where total > X, because no
+    # one could examine and choose from that many options."
     max_padding = math.floor(math.log10(total)) + 1
     num_spaces = max_padding - math.floor(math.log10(idx))
 
