@@ -144,17 +144,15 @@ def _default_thing_input(
     exists = current_value is not None
 
     idx_offset = int(exists) + 1
-    calculate_padding = partial(
-        _calculate_padding, total=len(things) + idx_offset
-    )
+    pad = partial(_calculate_padding, total=len(things) + idx_offset)
 
     # If there is a current value, users should have the option to clear it
     if exists:
-        print(f"{calculate_padding(1)}1 - No Default")
+        print(f"{pad(1)}1 - No Default")
 
     for ind, thing in enumerate(things):
         effective_ind = ind + idx_offset
-        print(f"{calculate_padding(effective_ind)}{effective_ind} - {thing}")
+        print(f"{pad(effective_ind)}{effective_ind} - {thing}")
     print()
 
     while True:
