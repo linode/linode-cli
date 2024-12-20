@@ -5,6 +5,7 @@ on:
     types: [ published ]
 jobs:
   notify:
+    needs: pypi-release
     if: github.repository == 'linode/linode-cli'
     runs-on: ubuntu-latest
     steps:
