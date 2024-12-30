@@ -180,7 +180,18 @@ def _parse_response_model(schema, prefix=None, nested_list_depth=0):
     for k, v in properties.items():
         pref = prefix + "." + k if prefix else k
 
-        if v.type == "object":
+        if (
+            v.type == "object"
+            and v.properties is None
+            and v.additionalProperties is not None
+        ):
+            # This is a dictionary with arbitrary keys
+            attrs.append(
+                OpenAPIResponseAttr(
+                    k, v, prefix=prefix, nested_list_depth=nested_list_depth
+                )
+            )
+        elif v.type == "object":
             attrs += _parse_response_model(v, prefix=pref)
         elif v.type == "array" and v.items.type == "object":
             attrs += _parse_response_model(
@@ -213,6 +224,7 @@ class OpenAPIResponse:
         self.is_paginated = _is_paginated(response)
 
         schema_override = response.extensions.get("linode-cli-use-schema")
+
         if schema_override:
             override = type(response)(
                 response.path, {"schema": schema_override}, response._root
@@ -227,6 +239,7 @@ class OpenAPIResponse:
             )
         else:
             self.attrs = _parse_response_model(response.schema)
+
         self.rows = response.extensions.get("linode-cli-rows")
         self.nested_list = response.extensions.get("linode-cli-nested-list")
         self.subtables = response.extensions.get("linode-cli-subtables")

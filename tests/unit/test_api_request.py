@@ -28,6 +28,7 @@ class TestAPIRequest:
             status_code=200,
             reason="OK",
             headers={"cool": "test"},
+            content=b"cool body",
         )
 
         with contextlib.redirect_stderr(stderr_buf):
@@ -36,6 +37,9 @@ class TestAPIRequest:
         output = stderr_buf.getvalue()
         assert "< HTTP/1.1 200 OK" in output
         assert "< cool: test" in output
+        assert "< Body:" in output
+        assert "<   cool body" in output
+        assert "< " in output
 
     def test_request_debug_info(self):
         stderr_buf = io.StringIO()
@@ -204,11 +208,11 @@ class TestAPIRequest:
         assert (
             json.dumps(
                 {
+                    "filterable_result": "bar",
                     "+and": [
-                        {"filterable_result": "bar"},
                         {"filterable_list_result": "foo"},
                         {"filterable_list_result": "bar"},
-                    ]
+                    ],
                 }
             )
             == result
@@ -267,8 +271,8 @@ class TestAPIRequest:
         assert (
             json.dumps(
                 {
+                    "filterable_result": "bar",
                     "+and": [
-                        {"filterable_result": "bar"},
                         {"filterable_list_result": "foo"},
                         {"filterable_list_result": "bar"},
                     ],
@@ -293,8 +297,8 @@ class TestAPIRequest:
         assert (
             json.dumps(
                 {
+                    "filterable_result": "bar",
                     "+and": [
-                        {"filterable_result": "bar"},
                         {"filterable_list_result": "foo"},
                         {"filterable_list_result": "bar"},
                     ],
@@ -331,11 +335,11 @@ class TestAPIRequest:
             assert url == "http://localhost/v4/foo/bar?page=1&page_size=100"
             assert headers["X-Filter"] == json.dumps(
                 {
+                    "filterable_result": "cool",
                     "+and": [
-                        {"filterable_result": "cool"},
                         {"filterable_list_result": "foo"},
                         {"filterable_list_result": "bar"},
-                    ]
+                    ],
                 }
             )
             assert headers["User-Agent"] == mock_cli.user_agent
