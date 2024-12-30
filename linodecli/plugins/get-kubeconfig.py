@@ -14,6 +14,7 @@ from pathlib import Path
 import yaml
 
 from linodecli.exit_codes import ExitCodes
+from linodecli.help_formatter import SortingHelpFormatter
 
 PLUGIN_BASE = "linode-cli get-kubeconfig"
 
@@ -22,7 +23,11 @@ def call(args, context):
     """
     The entrypoint for this plugin
     """
-    parser = argparse.ArgumentParser(PLUGIN_BASE, add_help=True)
+    parser = argparse.ArgumentParser(
+        PLUGIN_BASE,
+        add_help=True,
+        formatter_class=SortingHelpFormatter
+    )
 
     group = parser.add_mutually_exclusive_group()
 

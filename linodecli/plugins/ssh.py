@@ -16,6 +16,7 @@ from sys import platform
 from typing import Any, Dict, Optional, Tuple
 
 from linodecli.exit_codes import ExitCodes
+from linodecli.help_formatter import SortingHelpFormatter
 from linodecli.plugins import inherit_plugin_args
 
 
@@ -33,7 +34,11 @@ def call(args, context):  # pylint: disable=too-many-branches
         sys.exit(ExitCodes.REQUEST_FAILED)
 
     parser = inherit_plugin_args(
-        argparse.ArgumentParser("linode-cli ssh", add_help=True)
+        argparse.ArgumentParser(
+            "linode-cli ssh",
+            add_help=True,
+            formatter_class=SortingHelpFormatter
+        )
     )
 
     parser.add_argument(

@@ -19,6 +19,7 @@ from .arg_helpers import register_args, register_plugin, remove_plugin
 from .cli import CLI
 from .completion import get_completions
 from .configuration import ENV_TOKEN_NAME
+from .help_formatter import SortingHelpFormatter
 from .help_pages import (
     HELP_TOPICS,
     print_help_action,
@@ -61,6 +62,7 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
     parser = argparse.ArgumentParser(
         "linode-cli",
         add_help=False,
+        formatter_class=SortingHelpFormatter,
         description="The Linode Command Line Interface.\n\nAliases: lin, linode",
     )
     parsed, args = register_args(parser).parse_known_args()

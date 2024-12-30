@@ -17,6 +17,7 @@ except:
     pass
 
 from linodecli.exit_codes import ExitCodes
+from linodecli.help_formatter import SortingHelpFormatter
 from linodecli.helpers import expand_globs
 from linodecli.plugins import inherit_plugin_args
 from linodecli.plugins.obj.config import (
@@ -36,7 +37,12 @@ def upload_object(
     """
     Uploads an object to object storage
     """
-    parser = inherit_plugin_args(ArgumentParser(PLUGIN_BASE + " put"))
+    parser = inherit_plugin_args(
+        ArgumentParser(
+            PLUGIN_BASE + " put",
+            formatter_class=SortingHelpFormatter
+        )
+    )
 
     parser.add_argument(
         "file", metavar="FILE", type=str, nargs="+", help="The files to upload."
@@ -126,7 +132,12 @@ def get_object(
     """
     Retrieves an uploaded object and writes it to a file
     """
-    parser = inherit_plugin_args(ArgumentParser(PLUGIN_BASE + " get"))
+    parser = inherit_plugin_args(
+        ArgumentParser(
+            PLUGIN_BASE + " get",
+            formatter_class=SortingHelpFormatter
+        )
+    )
 
     parser.add_argument(
         "bucket", metavar="BUCKET", type=str, help="The bucket the file is in."
@@ -201,7 +212,12 @@ def delete_object(
     """
     Removes a file from a bucket
     """
-    parser = inherit_plugin_args(ArgumentParser(PLUGIN_BASE + " del"))
+    parser = inherit_plugin_args(
+        ArgumentParser(
+            PLUGIN_BASE + " del",
+            formatter_class=SortingHelpFormatter
+        )
+    )
 
     parser.add_argument(
         "bucket", metavar="BUCKET", type=str, help="The bucket to delete from."
