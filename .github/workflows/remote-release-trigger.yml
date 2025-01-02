@@ -60,7 +60,7 @@ jobs:
         id: calculate_head_sha
         run: echo "commit_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
-      - uses: rickstaa/action-create-tag@84c90e6ba79b47b5147dcb11ff25d6a0e06238ba # pin@v1
+      - uses: rickstaa/action-create-tag@a1c7777fcb2fee4f19b0f283ba888afa11678b72 # pin@v1
         with:
           tag: ${{ steps.calculate_version.outputs.result }}
           commit_sha: ${{ steps.calculate_head_sha.outputs.commit_sha }}
