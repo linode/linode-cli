@@ -236,3 +236,30 @@ class TestHelpPages:
                 "Test summary 2.",
             ],
         )
+
+    def test_action_help_post_method_routed(
+        self, capsys, mocker, mock_cli, post_operation_with_one_ofs
+    ):
+        mock_cli.find_operation = mocker.Mock(
+            return_value=post_operation_with_one_ofs
+        )
+
+        help_pages.print_help_action(mock_cli, "command", "action")
+        captured = capsys.readouterr().out
+
+        print(captured)
+
+        assert "linode-cli command action" in captured
+        assert "Do something." in captured
+
+        assert "Arguments (Usage 1):" in captured
+        assert "--foobar (required): Some foobar." in captured
+        assert "--foofoo (required): Some foofoo." in captured
+
+        assert "Arguments (Usage 2):" in captured
+        assert "--foobar (required): Some foobar." in captured
+        assert "--foofoo (required): Some foofoo." in captured
+
+        assert "--barbar.bar: Some bar." in captured
+        assert "--barbar.baz: Some baz." in captured
+        assert "--barbar.foo: Some foo." in captured

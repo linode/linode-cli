@@ -1,9 +1,12 @@
+import json
+
 import pytest
 
 from tests.integration.helpers import (
     assert_headers_in_lines,
     delete_target_id,
     exec_test_command,
+    get_cluster_id,
     get_random_region_with_caps,
     get_random_text,
     retry_exec_test_command_with_delay,
@@ -82,26 +85,6 @@ def get_pool_nodesid(cluster_id):
     first_id = nodepool_id[0]
 
     return first_id
-
-
-def get_cluster_id(label: str):
-    cluster_id = (
-        exec_test_command(
-            BASE_CMD
-            + [
-                "clusters-list",
-                "--text",
-                "--format=id",
-                "--no-headers",
-                "--label",
-                label,
-            ]
-        )
-        .stdout.decode()
-        .rstrip()
-    )
-
-    return cluster_id
 
 
 @pytest.fixture
@@ -338,14 +321,14 @@ def test_view_pool(test_lke_cluster):
     )
 
     lines = res.splitlines()
-    headers = ["type", "labels.value"]
+    headers = ["type", "labels"]
     assert_headers_in_lines(headers, lines)
 
 
 def test_update_node_pool(test_lke_cluster):
     cluster_id = test_lke_cluster
     node_pool_id = get_node_pool_id(cluster_id)
-    new_label = get_random_text(8) + "updated_pool"
+    new_value = get_random_text(8) + "updated_pool"
 
     result = (
         exec_test_command(
@@ -356,8 +339,8 @@ def test_update_node_pool(test_lke_cluster):
                 node_pool_id,
                 "--count",
                 "5",
-                "--labels.value",
-                new_label,
+                "--labels",
+                json.dumps({"label-key": new_value}),
                 "--text",
                 "--no-headers",
                 "--format=label",
@@ -367,7 +350,7 @@ def test_update_node_pool(test_lke_cluster):
         .rstrip()
     )
 
-    assert new_label in result
+    assert new_value in result
 
 
 def test_view_node(test_lke_cluster):
@@ -464,6 +447,8 @@ def test_node_pool(test_lke_cluster):
                 "1",
                 "--type",
                 "g6-standard-4",
+                "--labels",
+                '{ "example.com/my-app":"team1" }',
                 "--text",
                 "--format=id",
                 "--no-headers",
@@ -476,26 +461,29 @@ def test_node_pool(test_lke_cluster):
     yield node_pool_id
 
 
-def test_pool_view(test_lke_cluster, test_node_pool):
+def test_update_autoscaler(test_lke_cluster, test_node_pool):
     cluster_id = test_lke_cluster
-
     node_pool_id = test_node_pool
 
-    node_pool = (
+    result = (
         exec_test_command(
             BASE_CMD
             + [
-                "pool-view",
+                "pool-update",
                 cluster_id,
                 node_pool_id,
+                "--autoscaler.enabled",
+                "true",
+                "--autoscaler.min",
+                "1",
+                "--autoscaler.max",
+                "3",
                 "--text",
             ]
         )
         .stdout.decode()
         .rstrip()
     )
-
-    lines = node_pool.splitlines()
 
     headers = [
         "autoscaler.enabled",
@@ -504,11 +492,44 @@ def test_pool_view(test_lke_cluster, test_node_pool):
         "count",
         "disk_encryption",
         "id",
-        "labels.key",
-        "labels.value",
+        "labels",
         "tags",
         "taints",
         "type",
     ]
 
-    assert_headers_in_lines(headers, lines)
+    assert_headers_in_lines(headers, result.splitlines())
+
+    assert "3" in result
+    assert "1" in result
+
+
+def test_kubeconfig_view(test_lke_cluster):
+    cluster_id = test_lke_cluster
+
+    kubeconfig = (
+        retry_exec_test_command_with_delay(
+            BASE_CMD
+            + [
+                "kubeconfig-view",
+                cluster_id,
+                "--text",
+            ],
+            retries=5,
+            delay=60,
+        )
+        .stdout.decode()
+        .strip()
+    )
+
+    header = ["kubeconfig"]
+
+    assert_headers_in_lines(header, kubeconfig.splitlines())
+
+    assert kubeconfig
+
+
+def test_cluster_nodes_recycle(test_lke_cluster):
+    cluster_id = test_lke_cluster
+
+    exec_test_command(BASE_CMD + ["cluster-nodes-recycle", cluster_id])

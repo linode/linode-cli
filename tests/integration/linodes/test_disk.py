@@ -21,7 +21,6 @@ TEST_REGION = get_random_region_with_caps(required_capabilities=["Linodes"])
 
 @pytest.fixture(scope="session", autouse=True)
 def linode_instance_disk_tests(linode_cloud_firewall):
-
     linode_id = create_linode_and_wait(
         firewall_id=linode_cloud_firewall,
         disk_encryption=False,

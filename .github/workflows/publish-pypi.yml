@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Update system packages
         run: sudo apt-get update -y
@@ -17,7 +17,7 @@ jobs:
         run: sudo apt-get install -y build-essential
 
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.x'
 
@@ -34,6 +34,6 @@ jobs:
           LINODE_CLI_VERSION: ${{ github.event.release.tag_name }}
 
       - name: Publish the release artifacts to PyPI
-        uses: pypa/gh-action-pypi-publish@a56da0b891b3dc519c7ee3284aff1fad93cc8598 # pin@release/v1.8.6
+        uses: pypa/gh-action-pypi-publish@67339c736fd9354cd4f8cb0b744f2b82a74b5c70 # pin@release/v1.12.3
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
