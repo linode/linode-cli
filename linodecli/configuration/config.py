@@ -397,16 +397,21 @@ class CLIConfig:
         print(f"\nConfiguring {username}\n")
 
         # Configuring Defaults
-        regions = [
-            r["id"] for r in _do_get_request(self.base_url, "/regions")["data"]
-        ]
-        types = [
-            t["id"]
-            for t in _do_get_request(self.base_url, "/linode/types")["data"]
-        ]
-        images = [
-            i["id"] for i in _do_get_request(self.base_url, "/images")["data"]
-        ]
+        regions = sorted(
+            [
+                r["id"]
+                for r in _do_get_request(self.base_url, "/regions")["data"]
+            ]
+        )
+        types = sorted(
+            [
+                t["id"]
+                for t in _do_get_request(self.base_url, "/linode/types")["data"]
+            ]
+        )
+        images = sorted(
+            [i["id"] for i in _do_get_request(self.base_url, "/images")["data"]]
+        )
 
         is_full_access = _check_full_access(self.base_url, token)
 
@@ -423,9 +428,9 @@ class CLIConfig:
             )
 
             if "data" in users:
-                auth_users = [
-                    u["username"] for u in users["data"] if "ssh_keys" in u
-                ]
+                auth_users = sorted(
+                    [u["username"] for u in users["data"] if "ssh_keys" in u]
+                )
 
         # get the preferred things
         config["region"] = _default_thing_input(
