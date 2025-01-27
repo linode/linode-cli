@@ -128,20 +128,14 @@ jobs:
         env:
           LINODE_CLI_TOKEN: ${{ env.LINODE_CLI_TOKEN }}
 
-      - name: Upload test results
+      - name: Upload Test Report as Artifact
         if: always()
-        run: |
-          filename=$(ls | grep -E '^[0-9]{12}_cli_test_report\.xml$')
-          python3 e2e_scripts/tod_scripts/xml_to_obj_storage/scripts/add_gha_info_to_xml.py \
-          --branch_name "${GITHUB_REF#refs/*/}" \
-          --gha_run_id "$GITHUB_RUN_ID" \
-          --gha_run_number "$GITHUB_RUN_NUMBER" \
-          --xmlfile "${filename}"
-          sync
-          python3 e2e_scripts/tod_scripts/xml_to_obj_storage/scripts/xml_to_obj.py "${filename}"
-        env:
-          LINODE_CLI_OBJ_ACCESS_KEY: ${{ secrets.LINODE_CLI_OBJ_ACCESS_KEY }}
-          LINODE_CLI_OBJ_SECRET_KEY: ${{ secrets.LINODE_CLI_OBJ_SECRET_KEY }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report-file
+          if-no-files-found: ignore
+          path: '*.xml'
+          retention-days: 1
 
       - name: Update PR Check Run
         uses: actions/github-script@v7
@@ -236,6 +230,51 @@ jobs:
           done
         env:
           LINODE_CLI_TOKEN: ${{ env.LINODE_CLI_TOKEN }}
+
+  process-upload-report:
+    runs-on: ubuntu-latest
+    needs: [integration_tests]
+    if: always() && github.repository == 'linode/linode-cli' # Run even if integration tests fail and only on main repository
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: 'recursive'
+
+      - name: Download test report
+        uses: actions/download-artifact@v4
+        with:
+          name: test-report-file
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install Python dependencies
+        run: pip3 install requests wheel boto3==1.35.99
+
+      - name: Set release version env
+        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+
+
+      - name: Add variables and upload test results
+        if: always()
+        run: |
+          filename=$(ls | grep -E '^[0-9]{12}_cli_test_report\.xml$')
+          python3 e2e_scripts/tod_scripts/xml_to_obj_storage/scripts/add_gha_info_to_xml.py \
+          --branch_name "${GITHUB_REF#refs/*/}" \
+          --gha_run_id "$GITHUB_RUN_ID" \
+          --gha_run_number "$GITHUB_RUN_NUMBER" \
+          --xmlfile "${filename}"
+          sync
+          python3 e2e_scripts/tod_scripts/xml_to_obj_storage/scripts/xml_to_obj.py "${filename}"
+        env:
+          LINODE_CLI_OBJ_ACCESS_KEY: ${{ secrets.LINODE_CLI_OBJ_ACCESS_KEY }}
+          LINODE_CLI_OBJ_SECRET_KEY: ${{ secrets.LINODE_CLI_OBJ_SECRET_KEY }}
+
 
   notify-slack:
     runs-on: ubuntu-latest
