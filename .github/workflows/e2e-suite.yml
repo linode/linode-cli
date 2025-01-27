@@ -4,14 +4,14 @@ on:
   workflow_dispatch:
     inputs:
       use_minimal_test_account:
-        description: 'Use minimal test account'
+        description: 'Indicate whether to use a minimal test account with limited resources for testing. Defaults to "false"'
         required: false
         default: 'false'
-      module:
-        description: "The module from 'test/integration' to the target to be tested, e.g. 'cli, domains, events, etc'"
+      test_suite:
+        description: "Specify  test suite to run from the 'tests/integration' directory. Examples: 'cli', 'domains', 'events', etc. If not provided, all suites are executed"
         required: false
       run_long_tests:
-        description: "Select True to run long tests, e.g. database, rebuild, etc"
+        description: "Select 'True' to include long-running tests (e.g., database provisioning, server rebuilds). Defaults to 'False'"
         required: false
         type: choice
         options:
@@ -19,21 +19,21 @@ on:
           - "False"
         default: "False"
       sha:
-        description: 'The hash value of the commit.'
+        description: 'Specify commit hash to test. This value is mandatory to ensure the tests run against a specific commit'
         required: true
         default: ''
       pull_request_number:
-        description: 'The number of the PR. Ensure sha value is provided'
+        description: 'Specify pull request number associated with the commit. Optional, but recommended when providing a commit hash (sha)'
         required: false
       openapi_spec_url:
-        description: 'URL of the OpenAPI spec to use for the tests'
+        description: 'Specify URL of the OpenAPI specification file to use for testing. Useful for validating tests against a specific API version or custom specification'
         required: false
         default: ''
       python-version:
-        description: 'Specify Python version to use'
+        description: 'Specify the Python version to use for running tests. Leave empty to use the default Python version configured in the environment'
         required: false
       run-eol-python-version:
-        description: 'Run EOL python version?'
+        description: 'Indicates whether to run tests using an End-of-Life (EOL) Python version. Defaults to "false". Choose "true" to include tests for deprecated Python versions'
         required: false
         default: 'false'
         type: choice
@@ -124,24 +124,18 @@ jobs:
         run: |
           timestamp=$(date +'%Y%m%d%H%M')
           report_filename="${timestamp}_cli_test_report.xml"
-          make testint TEST_ARGS="--junitxml=${report_filename}" MODULE="${{ inputs.module }}" RUN_LONG_TESTS="${{ inputs.run_long_tests }}"
+          make test-int TEST_ARGS="--junitxml=${report_filename}" TEST_SUITE="${{ inputs.test_suite }}" RUN_LONG_TESTS="${{ inputs.run_long_tests }}"
         env:
           LINODE_CLI_TOKEN: ${{ env.LINODE_CLI_TOKEN }}
 
-      - name: Upload test results
+      - name: Upload Test Report as Artifact
         if: always()
-        run: |
-          filename=$(ls | grep -E '^[0-9]{12}_cli_test_report\.xml$')
-          python3 e2e_scripts/tod_scripts/xml_to_obj_storage/scripts/add_gha_info_to_xml.py \
-          --branch_name "${GITHUB_REF#refs/*/}" \
-          --gha_run_id "$GITHUB_RUN_ID" \
-          --gha_run_number "$GITHUB_RUN_NUMBER" \
-          --xmlfile "${filename}"
-          sync
-          python3 e2e_scripts/tod_scripts/xml_to_obj_storage/scripts/xml_to_obj.py "${filename}"
-        env:
-          LINODE_CLI_OBJ_ACCESS_KEY: ${{ secrets.LINODE_CLI_OBJ_ACCESS_KEY }}
-          LINODE_CLI_OBJ_SECRET_KEY: ${{ secrets.LINODE_CLI_OBJ_SECRET_KEY }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report-file
+          if-no-files-found: ignore
+          path: '*.xml'
+          retention-days: 1
 
       - name: Update PR Check Run
         uses: actions/github-script@v7
@@ -236,6 +230,51 @@ jobs:
           done
         env:
           LINODE_CLI_TOKEN: ${{ env.LINODE_CLI_TOKEN }}
+
+  process-upload-report:
+    runs-on: ubuntu-latest
+    needs: [integration_tests]
+    if: always() && github.repository == 'linode/linode-cli' # Run even if integration tests fail and only on main repository
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: 'recursive'
+
+      - name: Download test report
+        uses: actions/download-artifact@v4
+        with:
+          name: test-report-file
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install Python dependencies
+        run: pip3 install requests wheel boto3==1.35.99
+
+      - name: Set release version env
+        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+
+
+      - name: Add variables and upload test results
+        if: always()
+        run: |
+          filename=$(ls | grep -E '^[0-9]{12}_cli_test_report\.xml$')
+          python3 e2e_scripts/tod_scripts/xml_to_obj_storage/scripts/add_gha_info_to_xml.py \
+          --branch_name "${GITHUB_REF#refs/*/}" \
+          --gha_run_id "$GITHUB_RUN_ID" \
+          --gha_run_number "$GITHUB_RUN_NUMBER" \
+          --xmlfile "${filename}"
+          sync
+          python3 e2e_scripts/tod_scripts/xml_to_obj_storage/scripts/xml_to_obj.py "${filename}"
+        env:
+          LINODE_CLI_OBJ_ACCESS_KEY: ${{ secrets.LINODE_CLI_OBJ_ACCESS_KEY }}
+          LINODE_CLI_OBJ_SECRET_KEY: ${{ secrets.LINODE_CLI_OBJ_SECRET_KEY }}
+
 
   notify-slack:
     runs-on: ubuntu-latest
