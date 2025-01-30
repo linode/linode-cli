@@ -2,15 +2,6 @@
 # Makefile for more convenient building of the Linode CLI and its baked content
 #
 
-# Test-related arguments
-MODULE :=
-TEST_CASE_COMMAND :=
-TEST_ARGS :=
-
-ifdef TEST_CASE
-TEST_CASE_COMMAND = -k $(TEST_CASE)
-endif
-
 SPEC_VERSION ?= latest
 ifndef SPEC
 override SPEC = $(shell ./resolve_spec_url ${SPEC_VERSION})
@@ -44,7 +35,7 @@ build: clean create-version bake
 
 .PHONY: requirements
 requirements:
-	pip3 install --upgrade .[dev,obj]
+	pip3 install --upgrade ".[dev,obj]"
 
 .PHONY: lint
 lint: build
@@ -66,8 +57,8 @@ clean:
 	rm -f data-*
 	rm -rf dist linode_cli.egg-info build
 
-.PHONY: testunit
-testunit:
+.PHONY: test-unit
+test-unit:
 	@mkdir -p /tmp/linode/.config
 	@orig_xdg_config_home=$${XDG_CONFIG_HOME:-}; \
 	export LINODE_CLI_TEST_MODE=1 XDG_CONFIG_HOME=/tmp/linode/.config; \
@@ -76,9 +67,14 @@ testunit:
 	export XDG_CONFIG_HOME=$$orig_xdg_config_home; \
 	exit $$exit_code
 
-.PHONY: testint
-testint:
-	pytest tests/integration/${MODULE} ${TEST_CASE_COMMAND} ${TEST_ARGS}
+# Integration Test Arguments
+# TEST_SUITE: Optional, specify a test suite (e.g. domains), Default to run everything if not set
+# TEST_CASE: Optional, specify a test case (e.g. 'test_create_a_domain')
+# TEST_ARGS: Optional, additional arguments for pytest (e.g. '-v' for verbose mode)
+
+.PHONY: test-int
+test-int:
+	pytest tests/integration/$(TEST_SUITE) $(if $(TEST_CASE),-k $(TEST_CASE)) $(TEST_ARGS)
 
 .PHONY: testall
 testall:
@@ -86,7 +82,7 @@ testall:
 
 # Alias for unit; integration tests should be explicit
 .PHONY: test
-test: testunit
+test: test-unit
 
 .PHONY: black
 black:
@@ -103,6 +99,6 @@ autoflake:
 .PHONY: format
 format: black isort autoflake
 
-@PHONEY: smoketest
-smoketest:
+@PHONEY: test-smoke
+test-smoke:
 	pytest -m smoke tests/integration

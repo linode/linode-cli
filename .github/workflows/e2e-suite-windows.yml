@@ -73,7 +73,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - run: make MODULE="${{ inputs.module }}" RUN_LONG_TESTS="${{ inputs.run_long_tests }}" testint
+      - run: make MODULE="${{ inputs.module }}" RUN_LONG_TESTS="${{ inputs.run_long_tests }}" test-int
         env:
           LINODE_CLI_TOKEN: ${{ secrets.LINODE_TOKEN_2 }}
 
