@@ -186,7 +186,7 @@ def generate_test_file(name_generator: Callable[[str], str]):
 
 @pytest.fixture
 def generate_test_files(
-    generate_test_file: Callable[[Optional[str], Optional[str]], Path]
+    generate_test_file: Callable[[Optional[str], Optional[str]], Path],
 ):
     """
     Return a function that can generate files with random text.
