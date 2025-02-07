@@ -255,7 +255,7 @@ class CLIConfig:
                 "No running plugin to retrieve configuration for!"
             )
 
-        username = self.username or self.default_username()
+        username = self.username or self.default_username() or "DEFAULT"
         full_key = f"plugin-{self.running_plugin}-{key}"
 
         if not self.config.has_option(username, full_key):
@@ -553,7 +553,7 @@ class CLIConfig:
 
         if len(users) == 0:
             # config is new or _really_ old
-            token = self.config.get("DEFAULT", "token")
+            token = self.config.get("DEFAULT", "token", fallback=None)
 
             if token is not None:
                 # there's a token in the config - configure that user
