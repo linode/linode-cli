@@ -39,5 +39,5 @@ if __name__ == "__main__":
         desired_version = get_latest_tag()
 
     print(
-        f"https://raw.githubusercontent.com/{LINODE_DOCS_REPO}/{desired_version}/openapi.yaml"
+        f"https://raw.githubusercontent.com/{LINODE_DOCS_REPO}/{desired_version}/openapi.json"
     )
