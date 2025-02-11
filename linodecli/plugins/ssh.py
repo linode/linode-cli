@@ -152,9 +152,7 @@ def parse_target_address(
         if ip.startswith("192.168"):
             continue
 
-        if getattr(
-            parsed, "d"
-        ):
+        if getattr(parsed, "d"):
             ip = ip.replace(".", "-") + ".ip.linodeusercontent.com"
 
         return ip
