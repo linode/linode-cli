@@ -1,4 +1,5 @@
 - [Installation](./Installation)
+- [Uninstallation](./Uninstallation)
 - [Configuration](./Configuration)
 - [Usage](./Usage)
 - [Output](./Output)
