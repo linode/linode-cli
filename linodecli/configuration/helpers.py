@@ -299,6 +299,4 @@ def _config_get_with_default(
     :returns: The value pulled from the config or the default value.
     :rtype: Any
     """
-    return (
-        config.get(user, field) if config.has_option(user, field) else default
-    )
+    return config.get(user, field, fallback=default)
