@@ -294,7 +294,7 @@ class CLIConfig:
             if key.startswith("plugin-"):
                 continue
 
-            value = self.config.get(username, key, fallback=ns_dict[key])
+            value = self.config.get(username, key, fallback=ns_dict.get(key))
 
             if not value:
                 continue
