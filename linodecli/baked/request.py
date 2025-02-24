@@ -2,9 +2,13 @@
 Request details for a CLI Operation
 """
 
+from typing import List, Optional
+
+from openapi3.paths import MediaType
 from openapi3.schemas import Schema
 
 from linodecli.baked.parsing import simplify_description
+from linodecli.baked.response import OpenAPIResponse
 from linodecli.baked.util import _aggregate_schema_properties
 
 
@@ -13,16 +17,16 @@ class OpenAPIRequestArg:
     A single argument to a request as defined by a Schema in the OpenAPI spec
     """
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments
         self,
-        name,
-        schema,
-        required,
-        prefix=None,
-        is_parent=False,
-        parent=None,
-        depth=0,
-    ):  # pylint: disable=too-many-arguments
+        name: str,
+        schema: Schema,
+        required: bool,
+        prefix: Optional[str] = None,
+        is_parent: bool = False,
+        parent: Optional[str] = None,
+        depth: int = 0,
+    ) -> None:
         """
         Parses a single Schema node into a argument the CLI can use when making
         requests.
@@ -120,9 +124,14 @@ class OpenAPIRequestArg:
             )
 
 
-def _parse_request_model(schema, prefix=None, parent=None, depth=0):
+def _parse_request_model(
+    schema: Schema,
+    prefix: Optional[str] = None,
+    parent: Optional[str] = None,
+    depth: int = 0,
+) -> List[OpenAPIRequestArg]:
     """
-    Parses a schema into a list of OpenAPIRequest objects
+    Parses an OpenAPI schema into a list of OpenAPIRequest objects
     :param schema: The schema to parse as a request model
     :type schema: openapi3.Schema
     :param prefix: The prefix to add to all keys in this schema, as a json path
@@ -143,6 +152,7 @@ def _parse_request_model(schema, prefix=None, parent=None, depth=0):
         return args
 
     for k, v in properties.items():
+        # Handle nested objects which aren't read-only and have properties
         if (
             v.type == "object"
             and not v.readOnly
@@ -159,6 +169,8 @@ def _parse_request_model(schema, prefix=None, parent=None, depth=0):
                 # parent arguments.
                 depth=depth,
             )
+
+        # Handle arrays of objects that not marked as JSON
         elif (
             v.type == "array"
             and v.items
@@ -209,7 +221,7 @@ class OpenAPIRequest:
     on the MediaType object of a requestBody portion of an OpenAPI Operation
     """
 
-    def __init__(self, request):
+    def __init__(self, request: MediaType) -> None:
         """
         :param request: The request's MediaType object in the OpenAPI spec,
                         corresponding to the application/json data the endpoint
@@ -256,7 +268,7 @@ class OpenAPIFilteringRequest:
     endpoints where filters are accepted.
     """
 
-    def __init__(self, response_model):
+    def __init__(self, response_model: OpenAPIResponse) -> None:
         """
         :param response_model: The parsed response model whose properties may be
                                filterable.
