@@ -5,12 +5,12 @@
 By default, the CLI displays on some pre-selected fields for a given type of
 response.  If you want to see everything, just ask::
 ```bash
-linode-cli linodes list --all
+linode-cli linodes list --all-columns
 ```
 
-Using `--all` will cause the CLI to display all returned columns of output.
-Note that this will probably be hard to read on normal-sized screens for most
-actions.
+Using `--all-columns` will cause the CLI to display all returned columns of
+output.  Note that this will probably be hard to read on normal-sized screens
+for most actions.
 
 If you want even finer control over your output, you can request specific columns
 be displayed::
@@ -48,11 +48,12 @@ linode-cli linodes list --no-headers --text
 
 To get JSON output from the CLI, simple request it::
 ```bash
-linode-cli linodes list --json --all
+linode-cli linodes list --json --all-columns
 ```
 
-While the `--all` is optional, you probably want to see all output fields in
-your JSON output.  If you want your JSON pretty-printed, we can do that too::
+While the `--all-columns` is optional, you probably want to see all output
+fields in your JSON output.  If you want your JSON pretty-printed, we can do
+that too::
 ```bash
-linode-cli linodes list --json --pretty --all
+linode-cli linodes list --json --pretty --all-columns
 ```
