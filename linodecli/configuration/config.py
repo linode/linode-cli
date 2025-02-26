@@ -82,10 +82,7 @@ class CLIConfig:
         :returns: The `default-user` username or an empty string.
         :rtype: str
         """
-        if self.config.has_option("DEFAULT", "default-user"):
-            return self.config.get("DEFAULT", "default-user")
-
-        return ""
+        return self.config.get("DEFAULT", "default-user", fallback="")
 
     def set_user(self, username: str):
         """
@@ -153,15 +150,11 @@ class CLIConfig:
         :rtype: str
         """
         if self.used_env_token:
-            return os.environ.get(ENV_TOKEN_NAME, None)
+            return os.getenv(ENV_TOKEN_NAME, None)
 
-        if self.config.has_option(
-            self.username or self.default_username(), "token"
-        ):
-            return self.config.get(
-                self.username or self.default_username(), "token"
-            )
-        return ""
+        return self.config.get(
+            self.username or self.default_username(), "token", fallback=""
+        )
 
     def get_value(self, key: str) -> Optional[Any]:
         """
@@ -180,12 +173,9 @@ class CLIConfig:
                   current user.
         :rtype: any
         """
-        username = self.username or self.default_username()
-
-        if not self.config.has_option(username, key):
-            return None
-
-        return self.config.get(username, key)
+        return self.config.get(
+            self.username or self.default_username(), key, fallback=None
+        )
 
     def get_bool(self, key: str) -> bool:
         """
@@ -204,12 +194,10 @@ class CLIConfig:
                   current user.
         :rtype: any
         """
-        username = self.username or self.default_username()
 
-        if not self.config.has_option(username, key):
-            return False
-
-        return self.config.getboolean(username, key)
+        return self.config.getboolean(
+            self.username or self.default_username(), key, fallback=False
+        )
 
     # plugin methods - these are intended for plugins to utilize to store their
     # own persistent config information
@@ -255,13 +243,10 @@ class CLIConfig:
                 "No running plugin to retrieve configuration for!"
             )
 
-        username = self.username or self.default_username()
+        username = self.username or self.default_username() or "DEFAULT"
         full_key = f"plugin-{self.running_plugin}-{key}"
 
-        if not self.config.has_option(username, full_key):
-            return None
-
-        return self.config.get(username, full_key)
+        return self.config.get(username, full_key, fallback=None)
 
     # TODO: this is more of an argparsing function than it is a config function
     # might be better to move this to argparsing during refactor and just have
@@ -308,11 +293,8 @@ class CLIConfig:
             # these don't get included in the updated namespace
             if key.startswith("plugin-"):
                 continue
-            value = None
-            if self.config.has_option(username, key):
-                value = self.config.get(username, key)
-            else:
-                value = ns_dict[key]
+
+            value = self.config.get(username, key, fallback=ns_dict.get(key))
 
             if not value:
                 continue
@@ -553,7 +535,7 @@ class CLIConfig:
 
         if len(users) == 0:
             # config is new or _really_ old
-            token = self.config.get("DEFAULT", "token")
+            token = self.config.get("DEFAULT", "token", fallback=None)
 
             if token is not None:
                 # there's a token in the config - configure that user
