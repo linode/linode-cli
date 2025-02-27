@@ -70,7 +70,9 @@ def test_list_slave_domain(slave_domain):
     result = exec_test_command(
         BASE_CMD + ["list", "--text", "--no-header"]
     ).stdout.decode()
-    assert "-example.com" in result
+    from urllib.parse import urlparse
+    parsed_url = urlparse(result)
+    assert parsed_url.hostname and parsed_url.hostname.endswith("-example.com")
 
 
 @pytest.mark.skip(reason="BUG 872")
