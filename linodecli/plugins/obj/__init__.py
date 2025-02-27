@@ -361,7 +361,8 @@ def call(
         # we can't do anything - ask for an install
         print(
             "This plugin requires the 'boto3' module.  Please install it by running "
-            "'pip3 install boto3' or 'pip install boto3'",  file=sys.stderr,
+            "'pip3 install boto3' or 'pip install boto3'",
+            file=sys.stderr,
         )
 
         sys.exit(
