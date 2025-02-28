@@ -1,0 +1,107 @@
+name: Release
+on:
+  workflow_dispatch: null
+  release:
+    types: [ published ]
+jobs:
+  notify:
+    needs: pypi-release
+    if: github.repository == 'linode/linode-cli'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify Slack - Main Message
+        id: main_message
+        uses: slackapi/slack-github-action@v2.0.0
+        with:
+          method: chat.postMessage
+          token: ${{ secrets.SLACK_BOT_TOKEN }}
+          payload: |
+            channel: ${{ secrets.CLI_SLACK_CHANNEL_ID }}
+            blocks:
+              - type: section
+                text:
+                  type: mrkdwn
+                  text: "*New Release Published: _linode-cli_ <${{ github.event.release.html_url }}|${{ github.event.release.tag_name }}> is now live!* :tada:"
+
+  oci_publish:
+    name: Build and publish the OCI image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone Repository
+        uses: actions/checkout@v4
+
+      - name: setup python 3
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install deps
+        run: make requirements
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@53851d14592bedcffcf25ea515637cff71ef929a # pin@v3.3.0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@6524bf65af31da8d45b59e8c27de4bd072b392f5 # pin@v3.8.0
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # pin@v3.3.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # This is necessary as we want to ensure that version tags
+      # are properly formatted before passing them into the
+      # DockerFile.
+      - uses: actions/github-script@v7
+        id: cli_version
+        with:
+          script: |
+            let tag_name = '${{ github.event.release.tag_name }}';
+            
+            if (tag_name.startsWith("v")) {
+              tag_name = tag_name.slice(1);
+            }
+            
+            return tag_name;
+          result-encoding: string
+
+      - name: Build and push to DockerHub
+        uses: docker/build-push-action@ca877d9245402d1537745e0e356eab47c3520991 # pin@v6.13.0
+        with:
+          context: .
+          file: Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: linode/cli:${{ steps.cli_version.outputs.result }},linode/cli:latest
+          build-args: |
+            linode_cli_version=${{ steps.cli_version.outputs.result }}
+            github_token=${{ secrets.GITHUB_TOKEN }}
+
+  pypi-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install Python deps
+        run: pip install wheel
+
+      - name: Install package requirements
+        run: make requirements
+
+      - name: Build the package
+        run: make build
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          LINODE_CLI_VERSION: ${{ github.event.release.tag_name }}
+
+      - name: Publish the release artifacts to PyPI
+        uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc # pin@release/v1.12.4
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}

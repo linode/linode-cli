@@ -18,7 +18,11 @@ import openapi3.paths
 from openapi3.paths import Operation, Parameter
 
 from linodecli.baked.parsing import simplify_description
-from linodecli.baked.request import OpenAPIFilteringRequest, OpenAPIRequest
+from linodecli.baked.request import (
+    OpenAPIFilteringRequest,
+    OpenAPIRequest,
+    OpenAPIRequestArg,
+)
 from linodecli.baked.response import OpenAPIResponse
 from linodecli.exit_codes import ExitCodes
 from linodecli.help_formatter import SortingHelpFormatter
@@ -415,6 +419,13 @@ class OpenAPIOperation:
         Return a list of attributes from the request schema
         """
         return self.request.attrs if self.request else []
+
+    @property
+    def arg_routes(self) -> Dict[str, List[OpenAPIRequestArg]]:
+        """
+        Return a list of attributes from the request schema
+        """
+        return self.request.attr_routes if self.request else []
 
     @staticmethod
     def _flatten_url_path(tag: str) -> str:

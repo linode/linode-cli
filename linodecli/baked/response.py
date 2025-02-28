@@ -2,7 +2,12 @@
 Converting the processed OpenAPI Responses into something the CLI can work with
 """
 
+from typing import Optional
+
 from openapi3.paths import MediaType
+from openapi3.schemas import Schema
+
+from linodecli.baked.util import _aggregate_schema_properties
 
 
 def _is_paginated(response):
@@ -28,7 +33,13 @@ class OpenAPIResponseAttr:
     from it.
     """
 
-    def __init__(self, name, schema, prefix=None, nested_list_depth=0):
+    def __init__(
+        self,
+        name: str,
+        schema: Schema,
+        prefix: Optional[str] = None,
+        nested_list_depth: int = 0,
+    ) -> None:
         """
         :param name: The key that held this schema in the properties list, representing
                      its name in a response.
@@ -82,10 +93,13 @@ class OpenAPIResponseAttr:
             self.item_type = schema.items.type
 
     @property
-    def path(self):
+    def path(self) -> str:
         """
         This is a helper for filterable fields to return the json path to this
         element in a response.
+
+        :returns: The json path to the element in a response.
+        :rtype: str
         """
         return self.name
 
@@ -127,6 +141,7 @@ class OpenAPIResponseAttr:
             value = str(value)
             color = self.color_map.get(value) or self.color_map["default_"]
             value = f"[{color}]{value}[/]"
+        # Convert None value to an empty string for better display
         if value is None:
             # Prints the word None if you don't change it
             value = ""
@@ -170,10 +185,12 @@ def _parse_response_model(schema, prefix=None, nested_list_depth=0):
 
     attrs = []
 
-    if schema.properties is None:
+    properties, _ = _aggregate_schema_properties(schema)
+
+    if properties is None:
         return attrs
 
-    for k, v in schema.properties.items():
+    for k, v in properties.items():
         pref = prefix + "." + k if prefix else k
 
         if (
@@ -190,12 +207,14 @@ def _parse_response_model(schema, prefix=None, nested_list_depth=0):
         elif v.type == "object":
             attrs += _parse_response_model(v, prefix=pref)
         elif v.type == "array" and v.items.type == "object":
+            # Parse arrays for objects recursively and increase the nesting depth
             attrs += _parse_response_model(
                 v.items,
                 prefix=pref,
                 nested_list_depth=nested_list_depth + 1,
             )
         else:
+            # Handle any other simple types
             attrs.append(
                 OpenAPIResponseAttr(
                     k, v, prefix=prefix, nested_list_depth=nested_list_depth
@@ -211,7 +230,7 @@ class OpenAPIResponse:
     responses section of an OpenAPI Operation
     """
 
-    def __init__(self, response: MediaType):
+    def __init__(self, response: MediaType) -> None:
         """
         :param response: The response's MediaType object in the OpenAPI spec,
                           corresponding to the application/json response type
@@ -283,15 +302,22 @@ class OpenAPIResponse:
 
         nested_lists = [c.strip() for c in self.nested_list.split(",")]
         result = []
+
         for nested_list in nested_lists:
             path_parts = nested_list.split(".")
+
             if not isinstance(json, list):
                 json = [json]
+
             for cur in json:
+                # Get the nested list using the path
                 nlist_path = cur
                 for p in path_parts:
                     nlist_path = nlist_path.get(p)
                 nlist = nlist_path
+
+                # For each item in the nested list,
+                # combine the parent properties with the nested item
                 for item in nlist:
                     cobj = {k: v for k, v in cur.items() if k != path_parts[0]}
                     cobj["_split"] = path_parts[-1]

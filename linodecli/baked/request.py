@@ -2,7 +2,14 @@
 Request details for a CLI Operation
 """
 
+from typing import List, Optional
+
+from openapi3.paths import MediaType
+from openapi3.schemas import Schema
+
 from linodecli.baked.parsing import simplify_description
+from linodecli.baked.response import OpenAPIResponse
+from linodecli.baked.util import _aggregate_schema_properties
 
 
 class OpenAPIRequestArg:
@@ -10,16 +17,16 @@ class OpenAPIRequestArg:
     A single argument to a request as defined by a Schema in the OpenAPI spec
     """
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments
         self,
-        name,
-        schema,
-        required,
-        prefix=None,
-        is_parent=False,
-        parent=None,
-        depth=0,
-    ):  # pylint: disable=too-many-arguments
+        name: str,
+        schema: Schema,
+        required: bool,
+        prefix: Optional[str] = None,
+        is_parent: bool = False,
+        parent: Optional[str] = None,
+        depth: int = 0,
+    ) -> None:
         """
         Parses a single Schema node into a argument the CLI can use when making
         requests.
@@ -117,9 +124,14 @@ class OpenAPIRequestArg:
             )
 
 
-def _parse_request_model(schema, prefix=None, parent=None, depth=0):
+def _parse_request_model(
+    schema: Schema,
+    prefix: Optional[str] = None,
+    parent: Optional[str] = None,
+    depth: int = 0,
+) -> List[OpenAPIRequestArg]:
     """
-    Parses a schema into a list of OpenAPIRequest objects
+    Parses an OpenAPI schema into a list of OpenAPIRequest objects
     :param schema: The schema to parse as a request model
     :type schema: openapi3.Schema
     :param prefix: The prefix to add to all keys in this schema, as a json path
@@ -134,66 +146,71 @@ def _parse_request_model(schema, prefix=None, parent=None, depth=0):
     """
     args = []
 
-    if schema.properties is not None:
-        for k, v in schema.properties.items():
-            if v.type == "object" and not v.readOnly and v.properties:
-                # nested objects receive a prefix and are otherwise parsed normally
-                pref = prefix + "." + k if prefix else k
+    properties, required = _aggregate_schema_properties(schema)
 
-                args += _parse_request_model(
-                    v,
-                    prefix=pref,
+    if properties is None:
+        return args
+
+    for k, v in properties.items():
+        # Handle nested objects which aren't read-only and have properties
+        if (
+            v.type == "object"
+            and not v.readOnly
+            and len(_aggregate_schema_properties(v)[0]) > 0
+        ):
+            # nested objects receive a prefix and are otherwise parsed normally
+            pref = prefix + "." + k if prefix else k
+
+            args += _parse_request_model(
+                v,
+                prefix=pref,
+                parent=parent,
+                # NOTE: We do not increment the depth because dicts do not have
+                # parent arguments.
+                depth=depth,
+            )
+
+        # Handle arrays of objects that not marked as JSON
+        elif (
+            v.type == "array"
+            and v.items
+            and v.items.type == "object"
+            and v.extensions.get("linode-cli-format") != "json"
+        ):
+            # handle lists of objects as a special case, where each property
+            # of the object in the list is its own argument
+            pref = prefix + "." + k if prefix else k
+
+            # Support specifying this list as JSON
+            args.append(
+                OpenAPIRequestArg(
+                    k,
+                    v.items,
+                    False,
+                    prefix=prefix,
+                    is_parent=True,
                     parent=parent,
-                    # NOTE: We do not increment the depth because dicts do not have
-                    # parent arguments.
                     depth=depth,
                 )
-            elif (
-                v.type == "array"
-                and v.items
-                and v.items.type == "object"
-                and v.extensions.get("linode-cli-format") != "json"
-            ):
-                # handle lists of objects as a special case, where each property
-                # of the object in the list is its own argument
-                pref = prefix + "." + k if prefix else k
+            )
 
-                # Support specifying this list as JSON
-                args.append(
-                    OpenAPIRequestArg(
-                        k,
-                        v.items,
-                        False,
-                        prefix=prefix,
-                        is_parent=True,
-                        parent=parent,
-                        depth=depth,
-                    )
+            args += _parse_request_model(
+                v.items,
+                prefix=pref,
+                parent=pref,
+                depth=depth + 1,
+            )
+        else:
+            args.append(
+                OpenAPIRequestArg(
+                    k,
+                    v,
+                    k in required,
+                    prefix=prefix,
+                    parent=parent,
+                    depth=depth,
                 )
-
-                args += _parse_request_model(
-                    v.items,
-                    prefix=pref,
-                    parent=pref,
-                    depth=depth + 1,
-                )
-            else:
-                # required fields are defined in the schema above the property, so
-                # we have to check here if required fields are defined/if this key
-                # is among them and pass it into the OpenAPIRequestArg class.
-                required = False
-                if schema.required:
-                    required = k in schema.required
-                args.append(
-                    OpenAPIRequestArg(
-                        k,
-                        v,
-                        required,
-                        prefix=prefix,
-                        parent=parent,
-                        depth=depth,
-                    )
-                )
+            )
 
     return args
 
@@ -204,7 +221,7 @@ class OpenAPIRequest:
     on the MediaType object of a requestBody portion of an OpenAPI Operation
     """
 
-    def __init__(self, request):
+    def __init__(self, request: MediaType) -> None:
         """
         :param request: The request's MediaType object in the OpenAPI spec,
                         corresponding to the application/json data the endpoint
@@ -212,15 +229,35 @@ class OpenAPIRequest:
         :type request: openapi3.MediaType
         """
         self.required = request.schema.required
+
         schema_override = request.extensions.get("linode-cli-use-schema")
+
+        schema = request.schema
+
         if schema_override:
             override = type(request)(
                 request.path, {"schema": schema_override}, request._root
             )
             override._resolve_references()
-            self.attrs = _parse_request_model(override.schema)
-        else:
-            self.attrs = _parse_request_model(request.schema)
+            schema = override.schema
+
+        self.attrs = _parse_request_model(schema)
+
+        # attr_routes stores all attribute routes defined using oneOf.
+        # For example, config-create uses one of to isolate HTTP, HTTPS, and TCP request attributes
+        self.attr_routes = {}
+
+        if schema.oneOf is not None:
+            for entry in schema.oneOf:
+                entry_schema = Schema(schema.path, entry, request._root)
+                if entry_schema.title is None:
+                    raise ValueError(
+                        f"No title for oneOf entry in {schema.path}"
+                    )
+
+                self.attr_routes[entry_schema.title] = _parse_request_model(
+                    entry_schema
+                )
 
 
 class OpenAPIFilteringRequest:
@@ -231,7 +268,7 @@ class OpenAPIFilteringRequest:
     endpoints where filters are accepted.
     """
 
-    def __init__(self, response_model):
+    def __init__(self, response_model: OpenAPIResponse) -> None:
         """
         :param response_model: The parsed response model whose properties may be
                                filterable.
@@ -249,3 +286,6 @@ class OpenAPIFilteringRequest:
 
         # actually parse out what we can filter by
         self.attrs = [c for c in response_model.attrs if c.filterable]
+
+        # This doesn't apply since we're building from the response model
+        self.attr_routes = {}

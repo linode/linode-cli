@@ -57,6 +57,7 @@ from linodecli.plugins.obj.website import (
 
 try:
     import boto3
+    from botocore.config import Config
     from botocore.exceptions import ClientError
 
     HAS_BOTO = True
@@ -464,6 +465,16 @@ def _get_boto_client(cluster, access_key, secret_key):
         aws_secret_access_key=secret_key,
         region_name=cluster,
         endpoint_url=BASE_URL_TEMPLATE.format(cluster),
+        config=Config(
+            # This addresses an incompatibility between boto3 1.36.x and
+            # some third-party S3-compatible storage platforms.
+            # In the future we may want to consider manually computing the
+            # CRC32 hash of a file before uploading it.
+            #
+            # See: https://github.com/boto/boto3/issues/4398#issuecomment-2619946229
+            request_checksum_calculation="when_required",
+            response_checksum_validation="when_required",
+        ),
     )
 
     # set this for later use
