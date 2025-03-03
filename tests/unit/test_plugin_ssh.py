@@ -187,10 +187,16 @@ def test_parse_target_address():
         "ipv6": "c001:d00d::1337/128",
     }
 
-    test_namespace = argparse.Namespace(**{"6": False})
+    test_namespace = argparse.Namespace(**{"6": False, "d": False})
 
     address = plugin.parse_target_address(test_namespace, test_target)
     assert address == "123.123.123.123"
+
+    # Hack to work around invalid key
+    setattr(test_namespace, "d", True)
+
+    address = plugin.parse_target_address(test_namespace, test_target)
+    assert address == "123-123-123-123.ip.linodeusercontent.com"
 
     # Hack to work around invalid key
     setattr(test_namespace, "6", True)
