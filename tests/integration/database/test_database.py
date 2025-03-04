@@ -2,7 +2,11 @@ import time
 
 import pytest
 
-from tests.integration.helpers import assert_headers_in_lines, exec_test_command, delete_target_id
+from tests.integration.helpers import (
+    assert_headers_in_lines,
+    delete_target_id,
+    exec_test_command,
+)
 from tests.integration.linodes.helpers_linodes import DEFAULT_LABEL
 
 BASE_CMD = ["linode-cli", "databases"]
@@ -56,15 +60,21 @@ def test_mysql_cluster():
 
     yield database_id
 
-    delete_target_id(target="databases", delete_command="mysql-delete", id=database_id)
+    delete_target_id(
+        target="databases", delete_command="mysql-delete", id=database_id
+    )
 
 
 def test_mysql_suspend_resume(test_mysql_cluster):
     database_id = test_mysql_cluster
-    res = exec_test_command(BASE_CMD + ["mysql-suspend", database_id, "--text", "--delimiter=,"]).stdout.decode()
+    res = exec_test_command(
+        BASE_CMD + ["mysql-suspend", database_id, "--text", "--delimiter=,"]
+    ).stdout.decode()
     assert "Request failed: 400" not in res
 
-    res = exec_test_command(BASE_CMD + ["mysql-resume", database_id, "--text", "--delimiter=,"]).stdout.decode()
+    res = exec_test_command(
+        BASE_CMD + ["mysql-resume", database_id, "--text", "--delimiter=,"]
+    ).stdout.decode()
     assert "Request failed: 400" not in res
 
 
@@ -100,15 +110,22 @@ def test_postgresql_cluster():
 
     yield database_id
 
-    delete_target_id(target="databases", delete_command="postgresql-delete", id=database_id)
+    delete_target_id(
+        target="databases", delete_command="postgresql-delete", id=database_id
+    )
 
 
 def test_postgresql_suspend_resume(test_postgresql_cluster):
     database_id = test_postgresql_cluster
-    res = exec_test_command(BASE_CMD + ["postgresql-suspend", database_id, "--text", "--delimiter=,"]).stdout.decode()
+    res = exec_test_command(
+        BASE_CMD
+        + ["postgresql-suspend", database_id, "--text", "--delimiter=,"]
+    ).stdout.decode()
     assert "Request failed: 400" not in res
 
-    res = exec_test_command(BASE_CMD + ["postgresql-resume", database_id, "--text", "--delimiter=,"]).stdout.decode()
+    res = exec_test_command(
+        BASE_CMD + ["postgresql-resume", database_id, "--text", "--delimiter=,"]
+    ).stdout.decode()
     assert "Request failed: 400" not in res
 
 
