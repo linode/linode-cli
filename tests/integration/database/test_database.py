@@ -1,12 +1,11 @@
+import time
+
 import pytest
 
-from tests.integration.helpers import assert_headers_in_lines, exec_test_command
+from tests.integration.helpers import assert_headers_in_lines, exec_test_command, delete_target_id
+from tests.integration.linodes.helpers_linodes import DEFAULT_LABEL
 
 BASE_CMD = ["linode-cli", "databases"]
-pytestmark = pytest.mark.skip(
-    "This command is currently only available for customers who already have an active "
-    "Managed Database."
-)
 
 
 def test_engines_list():
@@ -18,6 +17,99 @@ def test_engines_list():
     lines = res.splitlines()
     headers = ["id", "engine", "version"]
     assert_headers_in_lines(headers, lines)
+
+
+timestamp = str(time.time_ns())
+mysql_database_label = DEFAULT_LABEL + "-mysql-" + timestamp
+postgresql_database_label = DEFAULT_LABEL + "-postgresql-" + timestamp
+
+
+@pytest.fixture(scope="package", autouse=True)
+def test_mysql_cluster():
+    database_id = (
+        exec_test_command(
+            BASE_CMD
+            + [
+                "mysql-create",
+                "--type",
+                "g6-nanode-1",
+                "--region",
+                "us-ord",
+                "--label",
+                mysql_database_label,
+                "--engine",
+                "mysql/8",
+                "--text",
+                "--delimiter",
+                ",",
+                "--no-headers",
+                "--format",
+                "id",
+                "--no-defaults",
+                "--format",
+                "id",
+            ]
+        )
+        .stdout.decode()
+        .rstrip()
+    )
+
+    yield database_id
+
+    delete_target_id(target="databases", delete_command="mysql-delete", id=database_id)
+
+
+def test_mysql_suspend_resume(test_mysql_cluster):
+    database_id = test_mysql_cluster
+    res = exec_test_command(BASE_CMD + ["mysql-suspend", database_id, "--text", "--delimiter=,"]).stdout.decode()
+    assert "Request failed: 400" not in res
+
+    res = exec_test_command(BASE_CMD + ["mysql-resume", database_id, "--text", "--delimiter=,"]).stdout.decode()
+    assert "Request failed: 400" not in res
+
+
+@pytest.fixture(scope="package", autouse=True)
+def test_postgresql_cluster():
+    database_id = (
+        exec_test_command(
+            BASE_CMD
+            + [
+                "postgresql-create",
+                "--type",
+                "g6-nanode-1",
+                "--region",
+                "us-ord",
+                "--label",
+                postgresql_database_label,
+                "--engine",
+                "postgresql/16",
+                "--text",
+                "--delimiter",
+                ",",
+                "--no-headers",
+                "--format",
+                "id",
+                "--no-defaults",
+                "--format",
+                "id",
+            ]
+        )
+        .stdout.decode()
+        .rstrip()
+    )
+
+    yield database_id
+
+    delete_target_id(target="databases", delete_command="postgresql-delete", id=database_id)
+
+
+def test_postgresql_suspend_resume(test_postgresql_cluster):
+    database_id = test_postgresql_cluster
+    res = exec_test_command(BASE_CMD + ["postgresql-suspend", database_id, "--text", "--delimiter=,"]).stdout.decode()
+    assert "Request failed: 400" not in res
+
+    res = exec_test_command(BASE_CMD + ["postgresql-resume", database_id, "--text", "--delimiter=,"]).stdout.decode()
+    assert "Request failed: 400" not in res
 
 
 @pytest.fixture
