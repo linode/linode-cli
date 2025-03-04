@@ -50,6 +50,11 @@ def call(args, context):  # pylint: disable=too-many-branches
         action="store_true",
         help="If given, uses the Linode's SLAAC address for SSH.",
     )
+    parser.add_argument(
+        "-d",
+        action="store_true",
+        help="If given, uses the Lindoe's domain name for SSH",
+    )
 
     parsed, args = parser.parse_known_args(args)
 
@@ -146,5 +151,8 @@ def parse_target_address(
         # Ignore private IPs
         if ip.startswith("192.168"):
             continue
+
+        if getattr(parsed, "d"):
+            ip = ip.replace(".", "-") + ".ip.linodeusercontent.com"
 
         return ip
