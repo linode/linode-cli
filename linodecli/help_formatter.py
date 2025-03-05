@@ -1,3 +1,7 @@
+"""
+Contains sorting formatter for help menu.
+"""
+
 from argparse import HelpFormatter
 from operator import attrgetter
 
