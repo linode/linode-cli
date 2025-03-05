@@ -199,3 +199,6 @@ def test_image_view(get_image_id):
 
     headers = ["label", "description"]
     assert_headers_in_lines(headers, lines)
+
+    # assert that regions in the output
+    assert "regions" in lines
