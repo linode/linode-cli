@@ -280,7 +280,7 @@ jobs:
       - name: Generate test summary and save to output
         id: set-test-summary
         run: |
-          filename=$(ls | grep -E '^[0-9]{12}_sdk_test_report\.xml$') 
+          filename=$(ls | grep -E '^[0-9]{12}_cli_test_report\.xml$')
           test_output=$(python3 e2e_scripts/tod_scripts/generate_test_summary.py "${filename}")
           {
             echo 'summary<<EOF'
