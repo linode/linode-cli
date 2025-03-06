@@ -173,7 +173,8 @@ def set_acl(get_client, args, **kwargs):  # pylint: disable=unused-argument
 
     try:
         set_acl_func(**set_acl_options)
-    except ClientError:
+    except ClientError as e:
+        print(e, file=sys.stderr)
         sys.exit(ExitCodes.REQUEST_FAILED)
     print("ACL updated")
 
@@ -203,14 +204,16 @@ def show_usage(get_client, args, **kwargs):  # pylint: disable=unused-argument
             bucket_names = [
                 b["Name"] for b in client.list_buckets().get("Buckets", [])
             ]
-        except ClientError:
+        except ClientError as e:
+            print(e, file=sys.stderr)
             sys.exit(ExitCodes.REQUEST_FAILED)
 
     grand_total = 0
     for b in bucket_names:
         try:
             objects = client.list_objects_v2(Bucket=b).get("Contents", [])
-        except ClientError:
+        except ClientError as e:
+            print(e, file=sys.stderr)
             sys.exit(ExitCodes.REQUEST_FAILED)
         total = 0
         obj_count = 0
@@ -358,7 +361,8 @@ def call(
         # we can't do anything - ask for an install
         print(
             "This plugin requires the 'boto3' module.  Please install it by running "
-            "'pip3 install boto3' or 'pip install boto3'"
+            "'pip3 install boto3' or 'pip install boto3'",
+            file=sys.stderr,
         )
 
         sys.exit(
