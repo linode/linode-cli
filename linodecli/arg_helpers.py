@@ -77,7 +77,9 @@ def register_args(parser: ArgumentParser) -> ArgumentParser:
 
 
 # TODO: maybe move to plugins/__init__.py
-def register_plugin(module: str, config: ConfigParser, ops: Dict[str, str]) -> Tuple[str, int]:
+def register_plugin(
+    module: str, config: ConfigParser, ops: Dict[str, str]
+) -> Tuple[str, int]:
     """
     Handle registering a plugin for the Linode CLI.
 
@@ -104,7 +106,7 @@ def register_plugin(module: str, config: ConfigParser, ops: Dict[str, str]) -> T
     # Ensure the module has a 'call' function, which is required for execution
     try:
         call_func = plugin.call
-        del call_func   # Just checking if it exists, so we can discard it
+        del call_func  # Just checking if it exists, so we can discard it
     except AttributeError:
         msg = f"{module} is not a valid Linode CLI plugin - missing call"
         return msg, 11
@@ -149,7 +151,8 @@ def register_plugin(module: str, config: ConfigParser, ops: Dict[str, str]) -> T
         "DEFAULT", "registered-plugins", ",".join(already_registered)
     )
 
-    # Store the module name associated with this plugin in the config and save the updated config to persist changes
+    # Store the module name associated with this plugin in the config
+    # and save the updated config to persist changes
     config.config.set("DEFAULT", f"plugin-name-{plugin_name}", module)
     config.write_config()
 
