@@ -291,7 +291,7 @@ jobs:
 
   notify-slack:
     runs-on: ubuntu-latest
-    needs: [integration_tests]
+    needs: [integration_tests, process-upload-report]
     if: ${{ (success() || failure()) && github.repository == 'linode/linode-cli' }} # Run even if integration tests fail and only on main repository
 
     steps:
