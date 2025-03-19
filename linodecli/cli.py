@@ -23,6 +23,10 @@ from linodecli.output.output_handler import OutputHandler, OutputMode
 
 METHODS = ("get", "post", "put", "delete")
 
+from logging import getLogger
+
+logger = getLogger(__name__)
+
 
 class CLI:  # pylint: disable=too-many-instance-attributes
     """
@@ -54,6 +58,7 @@ class CLI:  # pylint: disable=too-many-instance-attributes
         """
 
         try:
+            logger.debug("Loading and parsing OpenAPI spec: %s", spec_location)
             spec = self._load_openapi_spec(spec_location)
         except Exception as e:
             print(f"Failed to load spec: {e}")
@@ -72,20 +77,59 @@ class CLI:  # pylint: disable=too-many-instance-attributes
             command = path.extensions.get(ext["command"], "default")
             for m in METHODS:
                 operation = getattr(path, m)
-                if operation is None or ext["skip"] in operation.extensions:
+
+                if operation is None:
                     continue
+
+                operation_log_fmt = f"{m.upper()} {path.path[-1]}"
+
+                logger.debug(
+                    "%s: Attempting to generate command for operation",
+                    operation_log_fmt,
+                )
+
+                if ext["skip"] in operation.extensions:
+                    logger.debug(
+                        "%s: Skipping operation due to x-linode-cli-skip extension",
+                        operation_log_fmt,
+                    )
+                    continue
+
                 action = operation.extensions.get(
                     ext["action"], operation.operationId
                 )
                 if not action:
+                    logger.warning(
+                        "%s: Skipping operation due to unresolvable action",
+                        operation_log_fmt,
+                    )
                     continue
+
                 if isinstance(action, list):
                     action = action[0]
+
                 if command not in self.ops:
                     self.ops[command] = {}
-                self.ops[command][action] = OpenAPIOperation(
+
+                operation = OpenAPIOperation(
                     command, operation, m, path.parameters
                 )
+
+                logger.debug(
+                    "%s %s: Successfully built command for operation: "
+                    "command='%s %s'; summary='%s'; paginated=%s; num_args=%s; num_attrs=%s",
+                    operation.method.upper(),
+                    operation.url_path,
+                    operation.command,
+                    operation.action,
+                    operation.summary.rstrip("."),
+                    operation.response_model
+                    and operation.response_model.is_paginated,
+                    len(operation.args),
+                    len(operation.attrs),
+                )
+
+                self.ops[command][action] = operation
 
         # hide the base_url from the spec away
         self.ops["_base_url"] = self.spec.servers[0].url

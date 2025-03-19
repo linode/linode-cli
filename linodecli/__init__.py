@@ -4,6 +4,7 @@ Argument parser for the linode CLI
 """
 
 import argparse
+import logging
 import os
 import sys
 from importlib.metadata import version
@@ -37,6 +38,11 @@ VERSION = __version__
 BASE_URL = "https://api.linode.com/v4"
 
 TEST_MODE = os.getenv("LINODE_CLI_TEST_MODE") == "1"
+
+# Configure the `logging` package log level depending on the --debug flag.
+logging.basicConfig(
+    level=logging.DEBUG if "--debug" in argv else logging.WARNING,
+)
 
 # if any of these arguments are given, we don't need to prompt for configuration
 skip_config = (

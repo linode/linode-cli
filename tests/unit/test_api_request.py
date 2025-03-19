@@ -21,8 +21,6 @@ class TestAPIRequest:
     """
 
     def test_response_debug_info(self):
-        stderr_buf = io.StringIO()
-
         mock_response = SimpleNamespace(
             raw=SimpleNamespace(version=11.1),
             status_code=200,
@@ -31,34 +29,32 @@ class TestAPIRequest:
             content=b"cool body",
         )
 
-        with contextlib.redirect_stderr(stderr_buf):
-            api_request._print_response_debug_info(mock_response)
+        result = api_request._format_response_for_log(mock_response)
 
-        output = stderr_buf.getvalue()
-        assert "< HTTP/1.1 200 OK" in output
-        assert "< cool: test" in output
-        assert "< Body:" in output
-        assert "<   cool body" in output
-        assert "< " in output
+        assert result == [
+            "< HTTP/1.1 200 OK",
+            "< cool: test",
+            "< Body:",
+            "<   cool body",
+            "< ",
+        ]
 
     def test_request_debug_info(self):
-        stderr_buf = io.StringIO()
+        result = api_request._format_request_for_log(
+            SimpleNamespace(__name__="get"),
+            "https://definitely.linode.com/",
+            {"cool": "test", "Authorization": "sensitiveinfo"},
+            "cool body",
+        )
 
-        with contextlib.redirect_stderr(stderr_buf):
-            api_request._print_request_debug_info(
-                SimpleNamespace(__name__="get"),
-                "https://definitely.linode.com/",
-                {"cool": "test", "Authorization": "sensitiveinfo"},
-                "cool body",
-            )
-
-        output = stderr_buf.getvalue()
-        assert "> GET https://definitely.linode.com/" in output
-        assert "> cool: test" in output
-        assert f"> Authorization: Bearer {'*' * 64}" in output
-        assert "> Body:" in output
-        assert ">   cool body" in output
-        assert "> " in output
+        assert result == [
+            "> GET https://definitely.linode.com/",
+            "> cool: test",
+            f"> Authorization: Bearer {'*' * 64}",
+            "> Body:",
+            ">   cool body",
+            "> ",
+        ]
 
     def test_build_request_body(self, mock_cli, create_operation):
         create_operation.allowed_defaults = ["region", "image"]
