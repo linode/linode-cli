@@ -1,6 +1,7 @@
 import json
 from typing import Callable, Optional
 
+import pytest
 from pytest import MonkeyPatch
 
 from tests.integration.helpers import exec_test_command, get_random_text
@@ -260,33 +261,50 @@ def test_types():
 
 # TODO:: Add these two commands once v4.197.1 is released
 
-# def test_endpoints():
-#     data = (
-#         exec_test_command(
-#             CLI_CMD
-#             + [
-#                 "endpoints",
-#                 "--json",
-#             ]
-#         )
-#         .stdout.decode()
-#         .strip()
-#     )
-#
-#     endpoints = json.loads(data)
-#
-#
-# def test_transfers():
-#     data = (
-#         exec_test_command(
-#             CLI_CMD
-#             + [
-#                 "transfers",
-#                 "--json",
-#             ]
-#         )
-#         .stdout.decode()
-#         .strip()
-#     )
-#
-#     transfers = json.loads(data)
+
+def test_endpoints():
+    data = (
+        exec_test_command(
+            CLI_CMD
+            + [
+                "endpoints",
+                "--json",
+            ]
+        )
+        .stdout.decode()
+        .strip()
+    )
+
+    endpoints = json.loads(data)
+
+    assert isinstance(endpoints, list)
+    assert all("region" in e for e in endpoints)
+    assert all("endpoint_type" in e for e in endpoints)
+    assert all("s3_endpoint" in e for e in endpoints)
+
+    us_east = next(e for e in endpoints if e["region"] == "us-east")
+    assert us_east["endpoint_type"] == "E0"
+    assert us_east["s3_endpoint"] == "us-east-1.linodeobjects.com"
+
+
+@pytest.mark.skipif(
+    reason="Skipping until the command is fixed and aligned with techdocs example. Applicable for spec version after 4.197.1"
+)
+def test_transfers():
+    data = (
+        exec_test_command(
+            CLI_CMD
+            + [
+                "transfers",
+                "--json",
+            ]
+        )
+        .stdout.decode()
+        .strip()
+    )
+
+    transfers = json.loads(data)
+
+    assert len(transfers) > 0
+    assert "used" in transfers[0]
+    assert isinstance(transfers[0]["used"], int)
