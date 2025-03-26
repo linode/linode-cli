@@ -18,7 +18,6 @@ from urllib.parse import urlparse
 import openapi3.paths
 from openapi3.paths import Operation, Parameter
 
-from linodecli import logging
 from linodecli.baked.parsing import simplify_description
 from linodecli.baked.request import (
     OpenAPIFilteringRequest,

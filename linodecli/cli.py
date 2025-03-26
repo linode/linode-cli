@@ -8,6 +8,7 @@ import os
 import pickle
 import sys
 from json import JSONDecodeError
+from logging import getLogger
 from sys import version_info
 from typing import IO, Any, ContextManager, Dict
 
@@ -22,8 +23,6 @@ from linodecli.exit_codes import ExitCodes
 from linodecli.output.output_handler import OutputHandler, OutputMode
 
 METHODS = ("get", "post", "put", "delete")
-
-from logging import getLogger
 
 logger = getLogger(__name__)
 

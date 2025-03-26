@@ -109,15 +109,15 @@ def do_request(
         # Multiline log entries aren't ideal, we should consider
         # using single-line structured logging in the future.
         logger.debug(
-            "\n"
-            + "\n".join(_format_request_for_log(method, url, headers, body))
+            "\n%s",
+            "\n".join(_format_request_for_log(method, url, headers, body)),
         )
 
     result = method(url, headers=headers, data=body, verify=API_CA_PATH)
 
     # Print response debug info is requested
     if ctx.debug_request:
-        logger.debug("\n" + "\n".join(_format_response_for_log(result)))
+        logger.debug("\n%s", "\n".join(_format_response_for_log(result)))
 
     # Retry the request if necessary
     while _check_retry(result) and not ctx.no_retry and ctx.retry_count < 3:
@@ -395,7 +395,7 @@ def _format_request_for_log(
 
         result.append(f"> {k}: {v}")
 
-    result.extend(["> Body:", f">   {body or ''}", f"> "])
+    result.extend(["> Body:", f">   {body or ''}", "> "])
 
     return result
 
