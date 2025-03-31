@@ -7,6 +7,7 @@ import json
 import os
 import sys
 import time
+from logging import getLogger
 from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional
 
 import requests
@@ -25,6 +26,8 @@ from .helpers import handle_url_overrides
 
 if TYPE_CHECKING:
     from linodecli.cli import CLI
+
+logger = getLogger(__name__)
 
 
 def get_all_pages(
@@ -103,13 +106,18 @@ def do_request(
 
     # Print response debug info is requested
     if ctx.debug_request:
-        _print_request_debug_info(method, url, headers, body)
+        # Multiline log entries aren't ideal, we should consider
+        # using single-line structured logging in the future.
+        logger.debug(
+            "\n%s",
+            "\n".join(_format_request_for_log(method, url, headers, body)),
+        )
 
     result = method(url, headers=headers, data=body, verify=API_CA_PATH)
 
     # Print response debug info is requested
     if ctx.debug_request:
-        _print_response_debug_info(result)
+        logger.debug("\n%s", "\n".join(_format_response_for_log(result)))
 
     # Retry the request if necessary
     while _check_retry(result) and not ctx.no_retry and ctx.retry_count < 3:
@@ -362,48 +370,61 @@ def _build_request_body(
     return json.dumps(_traverse_request_body(expanded_json))
 
 
-def _print_request_debug_info(
-    method: Any, url: str, headers: Dict[str, Any], body: Optional[str]
-) -> None:
+def _format_request_for_log(
+    method: Any,
+    url: str,
+    headers: Dict[str, str],
+    body: str,
+) -> List[str]:
     """
-    Prints debug info for an HTTP request.
+    Builds a debug output for the given request.
 
-    :param method: An object with a `__name__` attribute representing
-        the HTTP method (e.g., "get", "post").
-    :param url: The full request URL.
-    :param headers: A dictionary of request headers.
-    :param body: The request body as a string, or None if no body exists.
+    :param method: The HTTP method of the request.
+    :param url: The URL of the request.
+    :param headers: The headers of the request.
+    :param body: The body of the request.
+
+    :returns: The lines of the generated debug output.
     """
-    print(f"> {method.__name__.upper()} {url}", file=sys.stderr)
+    result = [f"> {method.__name__.upper()} {url}"]
+
     for k, v in headers.items():
         # If this is the Authorization header, sanitize the token
         if k.lower() == "authorization":
             v = "Bearer " + "*" * 64
-        print(f"> {k}: {v}", file=sys.stderr)
-    print("> Body:", file=sys.stderr)
-    print(">  ", body or "", file=sys.stderr)
-    print("> ", file=sys.stderr)
+
+        result.append(f"> {k}: {v}")
+
+    result.extend(["> Body:", f">   {body or ''}", "> "])
+
+    return result
 
 
-def _print_response_debug_info(response: Any) -> None:
+def _format_response_for_log(
+    response: requests.Response,
+):
     """
-    Prints debug info for a response from requests.
+    Builds a debug output for the given response.
 
-    :param response: The response object returned by a `requests` call.
+    :param response: The HTTP response to format.
+
+    :returns: The lines of the generated debug output.
     """
+
     # these come back as ints, convert to HTTP version
     http_version = response.raw.version / 10
     body = response.content.decode("utf-8", errors="replace")
 
-    print(
-        f"< HTTP/{http_version:.1f} {response.status_code} {response.reason}",
-        file=sys.stderr,
-    )
+    result = [
+        f"< HTTP/{http_version:.1f} {response.status_code} {response.reason}"
+    ]
+
     for k, v in response.headers.items():
-        print(f"< {k}: {v}", file=sys.stderr)
-    print("< Body:", file=sys.stderr)
-    print("<  ", body or "", file=sys.stderr)
-    print("< ", file=sys.stderr)
+        result.append(f"< {k}: {v}")
+
+    result.extend(["< Body:", f"<   {body or ''}", "< "])
+
+    return result
 
 
 def _attempt_warn_old_version(ctx: "CLI", result: Any) -> None:
