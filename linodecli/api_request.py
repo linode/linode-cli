@@ -404,7 +404,7 @@ def _format_response_for_log(
     response: requests.Response,
 ):
     """
-    Builds a debug output for the given request.
+    Builds a debug output for the given response.
 
     :param response: The HTTP response to format.
 
