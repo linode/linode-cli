@@ -356,6 +356,6 @@ def test_generate_url(
         BASE_CMD + ["signurl", bucket, test_file.name, "+300"]
     )
     url = process.stdout.decode()
-    response = requests.get(url)
+    response = requests.get(url.strip("\n"))
     assert response.text == content
     assert response.status_code == 200
