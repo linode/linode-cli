@@ -619,17 +619,24 @@ class CLIConfig:
         :param command: The command the alias is mapped to.
         """
         if not self.config.has_section("custom_aliases"):
-            print(f"Error: No custom aliases have been set.", file=sys.stderr)
+            print("Error: No custom aliases have been set.", file=sys.stderr)
             return
 
         if not self.config.has_option("custom_aliases", alias):
-            print(f"Error: Custom alias '{alias}' does not exist.", file=sys.stderr)
+            print(
+                f"Error: Custom alias '{alias}' does not exist.",
+                file=sys.stderr,
+            )
             return
 
         # Check if the alias maps to the given command
         existing_command = self.config.get("custom_aliases", alias)
         if existing_command != command:
-            print(f"Error: Custom alias '{alias}' is mapped to '{existing_command}', not '{command}'.", file=sys.stderr)
+            print(
+                f"Error: Custom alias '{alias}' is mapped to "
+                f"'{existing_command}', not '{command}'.",
+                file=sys.stderr,
+            )
             return
 
         # Remove the alias and update the config
@@ -642,4 +649,8 @@ class CLIConfig:
 
         :return: A dictionary mapping custom alias names to their respective commands.
         """
-        return dict(self.config.items("custom_aliases")) if self.config.has_section("custom_aliases") else {}
+        return (
+            dict(self.config.items("custom_aliases"))
+            if (self.config.has_section("custom_aliases"))
+            else {}
+        )

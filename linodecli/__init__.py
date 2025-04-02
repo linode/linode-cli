@@ -46,10 +46,7 @@ logging.basicConfig(
 
 # if any of these arguments are given, we don't need to prompt for configuration
 skip_config = (
-    any(
-        c in argv
-        for c in ["--skip-config", "--version", "completion"]
-    )
+    any(c in argv for c in ["--skip-config", "--version", "completion"])
     or TEST_MODE
 )
 
@@ -110,12 +107,16 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
         # if not spec was found and we weren't baking, we're doomed
         sys.exit(ExitCodes.ARGUMENT_ERROR)
 
-    if parsed.command == "set-custom-alias" or parsed.command == "remove-custom-alias":
+    if parsed.command in ("set-custom-alias", "remove-custom-alias"):
         # Ensure both --command and --alias are provided
         # TODO: Can we use argparse for these
         if len(args) == 4:
             if args[0] != "--command" or args[2] != "--alias":
-                print("Usage: linode-cli set-custom-alias --command [COMMAND] --alias [ALIAS]", file=sys.stderr)
+                print(
+                    "Usage: linode-cli set-custom-alias --command "
+                    "[COMMAND] --alias [ALIAS]",
+                    file=sys.stderr,
+                )
                 sys.exit(ExitCodes.ARGUMENT_ERROR)
 
         # Get the indexes for --command and --alias
@@ -123,11 +124,17 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
             command_index = args.index("--command") + 1
             alias_index = args.index("--alias") + 1
         except ValueError:
-            print("Both --command and --alias arguments are required.", file=sys.stderr)
+            print(
+                "Both --command and --alias arguments are required.",
+                file=sys.stderr,
+            )
             sys.exit(ExitCodes.ARGUMENT_ERROR)
 
         if command_index >= len(args) or alias_index >= len(args):
-            print("Both --command and --alias arguments must have valid values.", file=sys.stderr)
+            print(
+                "Both --command and --alias arguments must have valid values.",
+                file=sys.stderr,
+            )
             sys.exit(ExitCodes.ARGUMENT_ERROR)
 
         # Retrieve the command and alias from arguments
@@ -136,7 +143,9 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
 
         # Check if the command is valid
         if command not in cli.ops:
-            print(f"Error: '{command}' is not a valid command.", file=sys.stderr)
+            print(
+                f"Error: '{command}' is not a valid command.", file=sys.stderr
+            )
             sys.exit(ExitCodes.ARGUMENT_ERROR)
 
         # Set the alias if it does not already exist
@@ -145,7 +154,9 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
                 cli.config.set_custom_alias(alias, command)
                 print(f"Custom alias '{alias}' set for command '{command}'")
             else:
-                print(f"Custom alias '{alias}' already set for command '{command}'")
+                print(
+                    f"Custom alias '{alias}' already set for command '{command}'"
+                )
 
         # Remove the alias if it already exists
         if parsed.command == "remove-custom-alias":
@@ -153,7 +164,9 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
                 cli.config.remove_custom_alias(alias, command)
                 print(f"Custom alias '{alias}' removed for command '{command}'")
             else:
-                print(f"Custom alias '{alias}' does not exist for command '{command}'")
+                print(
+                    f"Custom alias '{alias}' does not exist for command '{command}'"
+                )
 
         sys.exit(ExitCodes.SUCCESS)
 
@@ -271,20 +284,23 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
         sys.exit(ExitCodes.UNRECOGNIZED_COMMAND)
 
     # handle a help for a command - either --help or no action triggers this
-    if (
-        parsed.command is not None
-        and parsed.action is None
-    ):
+    if parsed.command is not None and parsed.action is None:
         if parsed.command in cli.ops:
             print_help_command_actions(cli.ops, parsed.command)
             sys.exit(ExitCodes.SUCCESS)
         if parsed.command in cli.config.get_custom_aliases().keys():
-            print_help_command_actions(cli.ops, cli.config.get_custom_aliases()[parsed.command])
+            print_help_command_actions(
+                cli.ops, cli.config.get_custom_aliases()[parsed.command]
+            )
 
     if parsed.command is not None and parsed.action is not None:
         if parsed.help:
             if parsed.command in cli.config.get_custom_aliases().keys():
-                print_help_action(cli, cli.config.get_custom_aliases()[parsed.command], parsed.action)
+                print_help_action(
+                    cli,
+                    cli.config.get_custom_aliases()[parsed.command],
+                    parsed.action,
+                )
             else:
                 print_help_action(cli, parsed.command, parsed.action)
             sys.exit(ExitCodes.SUCCESS)
