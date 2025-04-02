@@ -48,7 +48,7 @@ logging.basicConfig(
 skip_config = (
     any(
         c in argv
-        for c in ["--skip-config", "--help", "--version", "completion"]
+        for c in ["--skip-config", "--version", "completion"]
     )
     or TEST_MODE
 )
@@ -260,7 +260,6 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
         plugin_args.remove(parsed.command)  # don't include the plugin name
         plugins.invoke(parsed.command, plugin_args, context)
         sys.exit(ExitCodes.SUCCESS)
-
     # unknown commands
     if (
         parsed.command not in cli.ops
@@ -275,14 +274,19 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
     if (
         parsed.command is not None
         and parsed.action is None
-        and parsed.command in cli.ops
     ):
-        print_help_command_actions(cli.ops, parsed.command)
-        sys.exit(ExitCodes.SUCCESS)
+        if parsed.command in cli.ops:
+            print_help_command_actions(cli.ops, parsed.command)
+            sys.exit(ExitCodes.SUCCESS)
+        if parsed.command in cli.config.get_custom_aliases().keys():
+            print_help_command_actions(cli.ops, cli.config.get_custom_aliases()[parsed.command])
 
     if parsed.command is not None and parsed.action is not None:
         if parsed.help:
-            print_help_action(cli, parsed.command, parsed.action)
+            if parsed.command in cli.config.get_custom_aliases().keys():
+                print_help_action(cli, cli.config.get_custom_aliases()[parsed.command], parsed.action)
+            else:
+                print_help_action(cli, parsed.command, parsed.action)
             sys.exit(ExitCodes.SUCCESS)
 
         cli.handle_command(parsed.command, parsed.action, args)

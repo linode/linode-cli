@@ -240,9 +240,7 @@ class CLI:  # pylint: disable=too-many-instance-attributes
         if command not in self.ops:
             # Check that the passed command is not an alias before raising an error
             if command in self.config.get_custom_aliases().keys():
-                print(command)
                 command = self.config.get_custom_aliases()[command]
-                print(command)
             else:
                 raise ValueError(f"Command not found: {command}")
 
