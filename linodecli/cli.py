@@ -112,6 +112,7 @@ class CLI:  # pylint: disable=too-many-instance-attributes
                     logger.info(
                         "%s: Using operationId (%s) as action because %s extension is not specified",
                         operation_log_fmt,
+                        action,
                         ext["action"],
                     )
 
