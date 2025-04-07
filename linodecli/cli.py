@@ -73,7 +73,12 @@ class CLI:  # pylint: disable=too-many-instance-attributes
         }
 
         for path in spec.paths.values():
-            command = path.extensions.get(ext["command"], "default")
+            command = path.extensions.get(ext["command"], None)
+            if command is None:
+                raise KeyError(
+                    f"Path {path} is missing {ext['command']} extension"
+                )
+
             for m in METHODS:
                 operation = getattr(path, m)
 
@@ -89,14 +94,22 @@ class CLI:  # pylint: disable=too-many-instance-attributes
 
                 if ext["skip"] in operation.extensions:
                     logger.debug(
-                        "%s: Skipping operation due to x-linode-cli-skip extension",
+                        "%s: Skipping operation due to %s extension",
                         operation_log_fmt,
+                        ext["skip"],
                     )
                     continue
 
-                action = operation.extensions.get(
-                    ext["action"], operation.operationId
-                )
+                action = operation.extensions.get(ext["action"], None)
+
+                if action is None:
+                    action = operation.operationId
+                    logger.info(
+                        "%s: Using operationId (%s) as action because %s extension is not specified",
+                        operation_log_fmt,
+                        ext["action"],
+                    )
+
                 if not action:
                     logger.warning(
                         "%s: Skipping operation due to unresolvable action",
