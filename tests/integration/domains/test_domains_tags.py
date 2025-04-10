@@ -17,7 +17,9 @@ BASE_CMD = ["linode-cli", "domains"]
 # @pytest.mark.skip(reason="BUG 943")
 def test_fail_to_create_master_domain_with_invalid_tags():
     timestamp = str(time.time_ns())
-    bad_tag = "a" * 300  # Tag validation rules changed — '*' is no longer rejected
+    bad_tag = (
+        "a" * 300
+    )  # Tag validation rules changed — '*' is no longer rejected
 
     exec_failing_test_command(
         BASE_CMD
