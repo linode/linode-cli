@@ -119,7 +119,9 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
         alias = parsed.alias
 
         if command not in cli.ops:
-            print(f"Error: '{command}' is not a valid command.", file=sys.stderr)
+            print(
+                f"Error: '{command}' is not a valid command.", file=sys.stderr
+            )
             sys.exit(ExitCodes.ARGUMENT_ERROR)
 
         if parsed.command == "set-custom-alias":
@@ -127,14 +129,18 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
                 cli.config.set_custom_alias(alias, command)
                 print(f"Custom alias '{alias}' set for command '{command}'")
             else:
-                print(f"Custom alias '{alias}' already set for command '{command}'")
+                print(
+                    f"Custom alias '{alias}' already set for command '{command}'"
+                )
 
         if parsed.command == "remove-custom-alias":
             if (alias, command) in cli.config.get_custom_aliases().items():
                 cli.config.remove_custom_alias(alias, command)
                 print(f"Custom alias '{alias}' removed for command '{command}'")
             else:
-                print(f"Custom alias '{alias}' does not exist for command '{command}'")
+                print(
+                    f"Custom alias '{alias}' does not exist for command '{command}'"
+                )
 
         sys.exit(ExitCodes.SUCCESS)
 
