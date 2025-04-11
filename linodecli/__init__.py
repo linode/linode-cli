@@ -108,65 +108,33 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
         sys.exit(ExitCodes.ARGUMENT_ERROR)
 
     if parsed.command in ("set-custom-alias", "remove-custom-alias"):
-        # Ensure both --command and --alias are provided
-        # TODO: Can we use argparse for these
-        if len(args) == 4:
-            if args[0] != "--command" or args[2] != "--alias":
-                print(
-                    "Usage: linode-cli set-custom-alias --command "
-                    "[COMMAND] --alias [ALIAS]",
-                    file=sys.stderr,
-                )
-                sys.exit(ExitCodes.ARGUMENT_ERROR)
-
-        # Get the indexes for --command and --alias
-        try:
-            command_index = args.index("--command") + 1
-            alias_index = args.index("--alias") + 1
-        except ValueError:
+        if not parsed.target_command or not parsed.alias:
             print(
-                "Both --command and --alias arguments are required.",
+                "Both --target-command and --alias must be provided.",
                 file=sys.stderr,
             )
             sys.exit(ExitCodes.ARGUMENT_ERROR)
 
-        if command_index >= len(args) or alias_index >= len(args):
-            print(
-                "Both --command and --alias arguments must have valid values.",
-                file=sys.stderr,
-            )
-            sys.exit(ExitCodes.ARGUMENT_ERROR)
+        command = parsed.target_command
+        alias = parsed.alias
 
-        # Retrieve the command and alias from arguments
-        command = args[command_index]
-        alias = args[alias_index]
-
-        # Check if the command is valid
         if command not in cli.ops:
-            print(
-                f"Error: '{command}' is not a valid command.", file=sys.stderr
-            )
+            print(f"Error: '{command}' is not a valid command.", file=sys.stderr)
             sys.exit(ExitCodes.ARGUMENT_ERROR)
 
-        # Set the alias if it does not already exist
         if parsed.command == "set-custom-alias":
             if (alias, command) not in cli.config.get_custom_aliases().items():
                 cli.config.set_custom_alias(alias, command)
                 print(f"Custom alias '{alias}' set for command '{command}'")
             else:
-                print(
-                    f"Custom alias '{alias}' already set for command '{command}'"
-                )
+                print(f"Custom alias '{alias}' already set for command '{command}'")
 
-        # Remove the alias if it already exists
         if parsed.command == "remove-custom-alias":
             if (alias, command) in cli.config.get_custom_aliases().items():
                 cli.config.remove_custom_alias(alias, command)
                 print(f"Custom alias '{alias}' removed for command '{command}'")
             else:
-                print(
-                    f"Custom alias '{alias}' does not exist for command '{command}'"
-                )
+                print(f"Custom alias '{alias}' does not exist for command '{command}'")
 
         sys.exit(ExitCodes.SUCCESS)
 

@@ -67,6 +67,22 @@ def register_args(parser: ArgumentParser) -> ArgumentParser:
         help="Prints version information and exits.",
     )
 
+    parser.add_argument(
+        "--target-command",
+        "-t",
+        nargs="?",
+        type=str,
+        help="The command to set or remove an alias for.",
+    )
+
+    parser.add_argument(
+        "--alias",
+        "-a",
+        nargs="?",
+        type=str,
+        help="The alias to set or remove.",
+    )
+
     # Register shared argument groups
     register_output_args_shared(parser)
     register_pagination_args_shared(parser)
