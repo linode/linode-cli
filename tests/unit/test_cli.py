@@ -122,6 +122,24 @@ class TestCLI:
             assert m.call_count == 1
             assert parsed_json_http.raw_element == parsed_json_local.raw_element
 
+    def test_bake_missing_cmd_ext(self, mock_cli: CLI):
+        try:
+            mock_cli.bake(
+                str(
+                    os.path.join(
+                        FIXTURES_PATH, "cli_test_bake_missing_cmd_ext.yaml"
+                    )
+                ),
+                save=False,
+            )
+        except KeyError as err:
+            assert (
+                str(err)
+                == "'GET /foo/bar: Missing x-linode-cli-command extension'"
+            )
+        else:
+            raise AssertionError("Expected a KeyError exception")
+
 
 def test_get_all_pages(
     mock_cli: CLI, list_operation: OpenAPIOperation, monkeypatch: MonkeyPatch
