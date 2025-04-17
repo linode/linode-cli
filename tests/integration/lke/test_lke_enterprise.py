@@ -48,7 +48,7 @@ def test_create_lke_enterprise(monkeypatch: MonkeyPatch):
                 "--tier",
                 "enterprise",
                 "--k8s_version",
-                "v1.31.1+lke1",
+                "v1.31.1+lke4",
                 "--node_pools.type",
                 "g6-standard-6",
                 "--node_pools.count",
@@ -74,7 +74,7 @@ def test_create_lke_enterprise(monkeypatch: MonkeyPatch):
     assert_headers_in_lines(headers, output.splitlines())
 
     assert label in output
-    assert "v1.31.1+lke1" in output
+    assert "v1.31.1+lke4" in output
     assert "enterprise" in output
 
     delete_target_id(
