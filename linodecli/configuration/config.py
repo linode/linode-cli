@@ -597,3 +597,60 @@ class CLIConfig:
                 self.write_config()
                 return
             print(f"No user {username}")
+
+    def set_custom_alias(self, alias: str, command: str):
+        """
+        Sets a custom alias for a Linode CLI command.
+
+        :param alias: The custom alias name.
+        :param command: The command the custom alias maps to.
+        """
+        if not self.config.has_section("custom_aliases"):
+            self.config.add_section("custom_aliases")
+
+        self.config.set("custom_aliases", alias, command)
+        self.write_config()
+
+    def remove_custom_alias(self, alias: str, command: str):
+        """
+        Removes a custom alias from the Linode CLI configuration.
+
+        :param alias: The alias name to remove.
+        :param command: The command the alias is mapped to.
+        """
+        if not self.config.has_section("custom_aliases"):
+            print("Error: No custom aliases have been set.", file=sys.stderr)
+            return
+
+        if not self.config.has_option("custom_aliases", alias):
+            print(
+                f"Error: Custom alias '{alias}' does not exist.",
+                file=sys.stderr,
+            )
+            return
+
+        # Check if the alias maps to the given command
+        existing_command = self.config.get("custom_aliases", alias)
+        if existing_command != command:
+            print(
+                f"Error: Custom alias '{alias}' is mapped to "
+                f"'{existing_command}', not '{command}'.",
+                file=sys.stderr,
+            )
+            return
+
+        # Remove the alias and update the config
+        self.config.remove_option("custom_aliases", alias)
+        self.write_config()
+
+    def get_custom_aliases(self) -> Dict[str, str]:
+        """
+        Retrieves all stored custom command aliases from the config.
+
+        :return: A dictionary mapping custom alias names to their respective commands.
+        """
+        return (
+            dict(self.config.items("custom_aliases"))
+            if (self.config.has_section("custom_aliases"))
+            else {}
+        )
