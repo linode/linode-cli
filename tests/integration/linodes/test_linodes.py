@@ -244,9 +244,8 @@ def test_disk_view(test_linode_instance, test_disk_id):
 
 def test_create_linode_disk_encryption_enabled(linode_cloud_firewall):
     test_region = get_random_region_with_caps(
-        required_capabilities=["Linodes", "Disk Encryption"]
+        required_capabilities=["Linodes", "LA Disk Encryption"]
     )
-
     linode_id = create_linode(
         firewall_id=linode_cloud_firewall,
         disk_encryption=True,
@@ -278,7 +277,7 @@ def test_create_linode_disk_encryption_enabled(linode_cloud_firewall):
 
 def test_create_linode_disk_encryption_disabled(linode_cloud_firewall):
     test_region = get_random_region_with_caps(
-        required_capabilities=["Linodes", "Disk Encryption"]
+        required_capabilities=["Linodes", "LA Disk Encryption"]
     )
 
     linode_id = create_linode(
