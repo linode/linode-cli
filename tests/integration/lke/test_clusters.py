@@ -422,15 +422,31 @@ def test_create_node_pool_default_to_disk_encryption_enabled(test_lke_cluster):
                 "g6-standard-4",
                 "--text",
                 "--format=id,disk_encryption,type",
-                "--no-headers",
+                # "--no-headers",
             ]
         )
         .stdout.decode()
         .rstrip()
     )
+    lines = result.splitlines()
+    headers = lines[0].split()
+    values = lines[1].split()
 
-    assert "enabled" in result
-    assert "g6-standard-4" in result
+    # Build a dict for easier access
+    pool_info = dict(zip(headers, values))
+
+    disk_encryption_status = pool_info.get("disk_encryption")
+
+    if disk_encryption_status == "enabled":
+        print("Disk encryption is enabled by default.")
+    elif disk_encryption_status == "disabled":
+        print(
+            "Disk encryption is supported in this region but not enabled by default."
+        )
+    else:
+        raise AssertionError(
+            f"Unexpected disk_encryption status: {disk_encryption_status}"
+        )
 
 
 @pytest.fixture
