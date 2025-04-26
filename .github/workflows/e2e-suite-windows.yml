@@ -20,7 +20,7 @@ on:
         description: 'The number of the PR.'
         required: false
 
-name: PR E2E Tests
+name: Integration Tests on Windows
 
 jobs:
   integration-fork-windows:
@@ -64,9 +64,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.x'
-
-      - name: Install Python deps
-        run: pip install .[obj,dev]
 
       - name: Install the CLI
         run: make install
