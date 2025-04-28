@@ -407,7 +407,7 @@ def test_list_lke_types():
     assert "LKE High Availability" in types
 
 
-def test_create_node_pool_default_to_disk_encryption_enabled(test_lke_cluster):
+def test_create_node_pool_default_to_disk_encryption_disabled(test_lke_cluster):
     cluster_id = test_lke_cluster
 
     result = (
@@ -437,16 +437,8 @@ def test_create_node_pool_default_to_disk_encryption_enabled(test_lke_cluster):
 
     disk_encryption_status = pool_info.get("disk_encryption")
 
-    if disk_encryption_status == "enabled":
-        print("Disk encryption is enabled by default.")
-    elif disk_encryption_status == "disabled":
-        print(
-            "Disk encryption is supported in this region but not enabled by default."
-        )
-    else:
-        raise AssertionError(
-            f"Unexpected disk_encryption status: {disk_encryption_status}"
-        )
+    assert "disabled" in result
+    assert "g6-standard-4" in result
 
 
 @pytest.fixture
