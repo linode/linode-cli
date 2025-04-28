@@ -108,14 +108,14 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
         sys.exit(ExitCodes.ARGUMENT_ERROR)
 
     if parsed.command in ("set-custom-alias", "remove-custom-alias"):
-        if not parsed.target_command or not parsed.alias:
+        if not parsed.alias_command or not parsed.alias:
             print(
-                "Both --target-command and --alias must be provided.",
+                "Both --alias-command and --alias must be provided.",
                 file=sys.stderr,
             )
             sys.exit(ExitCodes.ARGUMENT_ERROR)
 
-        command = parsed.target_command
+        command = parsed.alias_command
         alias = parsed.alias
 
         if command not in cli.ops:
