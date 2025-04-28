@@ -49,11 +49,13 @@ class CLI:  # pylint: disable=too-many-instance-attributes
         self.config = CLIConfig(self.base_url, skip_config=skip_config)
         self.load_baked()
 
-    def bake(self, spec_location: str):
+    def bake(self, spec_location: str, save: bool = True):
         """
         Generates ops and bakes them to a pickle.
 
         :param spec_location: The URL or file path of the OpenAPI spec to parse.
+        :param save: Whether the pickled operations should be saved to a file.
+                     This is primarily intended for unit testing.
         """
 
         try:
@@ -73,7 +75,8 @@ class CLI:  # pylint: disable=too-many-instance-attributes
         }
 
         for path in spec.paths.values():
-            command = path.extensions.get(ext["command"], "default")
+            command = path.extensions.get(ext["command"], None)
+
             for m in METHODS:
                 operation = getattr(path, m)
 
@@ -89,14 +92,31 @@ class CLI:  # pylint: disable=too-many-instance-attributes
 
                 if ext["skip"] in operation.extensions:
                     logger.debug(
-                        "%s: Skipping operation due to x-linode-cli-skip extension",
+                        "%s: Skipping operation due to x-%s extension",
                         operation_log_fmt,
+                        ext["skip"],
                     )
                     continue
 
-                action = operation.extensions.get(
-                    ext["action"], operation.operationId
-                )
+                # We don't do this in the parent loop because certain paths
+                # may only have skipped operations
+                if command is None:
+                    raise KeyError(
+                        f"{operation_log_fmt}: Missing x-{ext['command']} extension"
+                    )
+
+                action = operation.extensions.get(ext["action"], None)
+
+                if action is None:
+                    action = operation.operationId
+                    logger.info(
+                        "%s: Using operationId (%s) as action because "
+                        "%s extension is not specified",
+                        operation_log_fmt,
+                        action,
+                        ext["action"],
+                    )
+
                 if not action:
                     logger.warning(
                         "%s: Skipping operation due to unresolvable action",
@@ -137,7 +157,8 @@ class CLI:  # pylint: disable=too-many-instance-attributes
 
         # finish the baking
         data_file = self._get_data_file()
-        with open(data_file, "wb") as f:
+
+        with open(data_file, "wb") if save else os.devnull as f:
             pickle.dump(self.ops, f)
 
     def load_baked(self):
@@ -238,7 +259,11 @@ class CLI:  # pylint: disable=too-many-instance-attributes
         Finds the corresponding operation for the given command and action.
         """
         if command not in self.ops:
-            raise ValueError(f"Command not found: {command}")
+            # Check that the passed command is not an alias before raising an error
+            if command in self.config.get_custom_aliases().keys():
+                command = self.config.get_custom_aliases()[command]
+            else:
+                raise ValueError(f"Command not found: {command}")
 
         command_dict = self.ops[command]
 
