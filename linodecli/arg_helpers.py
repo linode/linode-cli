@@ -68,8 +68,7 @@ def register_args(parser: ArgumentParser) -> ArgumentParser:
     )
 
     parser.add_argument(
-        "--target-command",
-        "-t",
+        "--alias-command",
         nargs="?",
         type=str,
         help="The command to set or remove an alias for.",
@@ -77,7 +76,6 @@ def register_args(parser: ArgumentParser) -> ArgumentParser:
 
     parser.add_argument(
         "--alias",
-        "-a",
         nargs="?",
         type=str,
         help="The alias to set or remove.",
