@@ -81,6 +81,10 @@ def upload_object(
     for f in files:
         file_path = Path(f).resolve()
         if not file_path.is_file():
+            print(
+                f"Error: '{file_path}' is not a valid file or does not exist.",
+                file=sys.stderr,
+            )
             sys.exit(ExitCodes.FILE_ERROR)
 
         to_upload.append(file_path)
@@ -112,7 +116,8 @@ def upload_object(
         )
         try:
             client.upload_file(**upload_options)
-        except S3UploadFailedError:
+        except S3UploadFailedError as e:
+            print(e, file=sys.stderr)
             sys.exit(ExitCodes.REQUEST_FAILED)
 
     print("Done.")
@@ -174,7 +179,8 @@ def get_object(
     # In the future we should allow the automatic creation of parent directories
     if not destination_parent.exists():
         print(
-            f"ERROR: Output directory {destination_parent} does not exist locally."
+            f"ERROR: Output directory {destination_parent} does not exist locally.",
+            file=sys.stderr,
         )
         sys.exit(ExitCodes.REQUEST_FAILED)
 

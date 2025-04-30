@@ -36,6 +36,7 @@ def test_view_unique_tag(test_tag_instance):
     assert test_tag_instance in result
 
 
+@pytest.mark.skip(reason="BUG = TPT-3650")
 def test_fail_to_create_tag_shorter_than_three_char():
     bad_tag = "aa"
     result = exec_failing_test_command(

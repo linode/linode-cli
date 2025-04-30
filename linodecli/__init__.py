@@ -4,6 +4,7 @@ Argument parser for the linode CLI
 """
 
 import argparse
+import logging
 import os
 import sys
 from importlib.metadata import version
@@ -38,12 +39,14 @@ BASE_URL = "https://api.linode.com/v4"
 
 TEST_MODE = os.getenv("LINODE_CLI_TEST_MODE") == "1"
 
+# Configure the `logging` package log level depending on the --debug flag.
+logging.basicConfig(
+    level=logging.DEBUG if "--debug" in argv else logging.WARNING,
+)
+
 # if any of these arguments are given, we don't need to prompt for configuration
 skip_config = (
-    any(
-        c in argv
-        for c in ["--skip-config", "--help", "--version", "completion"]
-    )
+    any(c in argv for c in ["--skip-config", "--version", "completion"])
     or TEST_MODE
 )
 
@@ -103,6 +106,43 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
     elif cli.ops is None:
         # if not spec was found and we weren't baking, we're doomed
         sys.exit(ExitCodes.ARGUMENT_ERROR)
+
+    if parsed.command in ("set-custom-alias", "remove-custom-alias"):
+        if not parsed.alias_command or not parsed.alias:
+            print(
+                "Both --alias-command and --alias must be provided.",
+                file=sys.stderr,
+            )
+            sys.exit(ExitCodes.ARGUMENT_ERROR)
+
+        command = parsed.alias_command
+        alias = parsed.alias
+
+        if command not in cli.ops:
+            print(
+                f"Error: '{command}' is not a valid command.", file=sys.stderr
+            )
+            sys.exit(ExitCodes.ARGUMENT_ERROR)
+
+        if parsed.command == "set-custom-alias":
+            if (alias, command) not in cli.config.get_custom_aliases().items():
+                cli.config.set_custom_alias(alias, command)
+                print(f"Custom alias '{alias}' set for command '{command}'")
+            else:
+                print(
+                    f"Custom alias '{alias}' already set for command '{command}'"
+                )
+
+        if parsed.command == "remove-custom-alias":
+            if (alias, command) in cli.config.get_custom_aliases().items():
+                cli.config.remove_custom_alias(alias, command)
+                print(f"Custom alias '{alias}' removed for command '{command}'")
+            else:
+                print(
+                    f"Custom alias '{alias}' does not exist for command '{command}'"
+                )
+
+        sys.exit(ExitCodes.SUCCESS)
 
     if parsed.command == "register-plugin":
         if parsed.action is None:
@@ -207,28 +247,36 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
         plugin_args.remove(parsed.command)  # don't include the plugin name
         plugins.invoke(parsed.command, plugin_args, context)
         sys.exit(ExitCodes.SUCCESS)
-
     # unknown commands
     if (
         parsed.command not in cli.ops
         and parsed.command not in plugins.available(cli.config)
         and parsed.command not in HELP_TOPICS
+        and parsed.command not in cli.config.get_custom_aliases().keys()
     ):
         print(f"Unrecognized command {parsed.command}", file=sys.stderr)
         sys.exit(ExitCodes.UNRECOGNIZED_COMMAND)
 
     # handle a help for a command - either --help or no action triggers this
-    if (
-        parsed.command is not None
-        and parsed.action is None
-        and parsed.command in cli.ops
-    ):
-        print_help_command_actions(cli.ops, parsed.command)
-        sys.exit(ExitCodes.SUCCESS)
+    if parsed.command is not None and parsed.action is None:
+        if parsed.command in cli.ops:
+            print_help_command_actions(cli.ops, parsed.command)
+            sys.exit(ExitCodes.SUCCESS)
+        if parsed.command in cli.config.get_custom_aliases().keys():
+            print_help_command_actions(
+                cli.ops, cli.config.get_custom_aliases()[parsed.command]
+            )
 
     if parsed.command is not None and parsed.action is not None:
         if parsed.help:
-            print_help_action(cli, parsed.command, parsed.action)
+            if parsed.command in cli.config.get_custom_aliases().keys():
+                print_help_action(
+                    cli,
+                    cli.config.get_custom_aliases()[parsed.command],
+                    parsed.action,
+                )
+            else:
+                print_help_action(cli, parsed.command, parsed.action)
             sys.exit(ExitCodes.SUCCESS)
 
         cli.handle_command(parsed.command, parsed.action, args)

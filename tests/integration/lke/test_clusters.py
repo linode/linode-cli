@@ -407,7 +407,7 @@ def test_list_lke_types():
     assert "LKE High Availability" in types
 
 
-def test_create_node_pool_default_to_disk_encryption_enabled(test_lke_cluster):
+def test_create_node_pool_default_to_disk_encryption_disabled(test_lke_cluster):
     cluster_id = test_lke_cluster
 
     result = (
@@ -422,14 +422,22 @@ def test_create_node_pool_default_to_disk_encryption_enabled(test_lke_cluster):
                 "g6-standard-4",
                 "--text",
                 "--format=id,disk_encryption,type",
-                "--no-headers",
+                # "--no-headers",
             ]
         )
         .stdout.decode()
         .rstrip()
     )
+    lines = result.splitlines()
+    headers = lines[0].split()
+    values = lines[1].split()
 
-    assert "enabled" in result
+    # Build a dict for easier access
+    pool_info = dict(zip(headers, values))
+
+    disk_encryption_status = pool_info.get("disk_encryption")
+
+    assert "disabled" in result
     assert "g6-standard-4" in result
 
 

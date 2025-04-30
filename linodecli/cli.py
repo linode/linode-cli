@@ -8,6 +8,7 @@ import os
 import pickle
 import sys
 from json import JSONDecodeError
+from logging import getLogger
 from sys import version_info
 from typing import IO, Any, ContextManager, Dict
 
@@ -22,6 +23,8 @@ from linodecli.exit_codes import ExitCodes
 from linodecli.output.output_handler import OutputHandler, OutputMode
 
 METHODS = ("get", "post", "put", "delete")
+
+logger = getLogger(__name__)
 
 
 class CLI:  # pylint: disable=too-many-instance-attributes
@@ -46,14 +49,17 @@ class CLI:  # pylint: disable=too-many-instance-attributes
         self.config = CLIConfig(self.base_url, skip_config=skip_config)
         self.load_baked()
 
-    def bake(self, spec_location: str):
+    def bake(self, spec_location: str, save: bool = True):
         """
         Generates ops and bakes them to a pickle.
 
         :param spec_location: The URL or file path of the OpenAPI spec to parse.
+        :param save: Whether the pickled operations should be saved to a file.
+                     This is primarily intended for unit testing.
         """
 
         try:
+            logger.debug("Loading and parsing OpenAPI spec: %s", spec_location)
             spec = self._load_openapi_spec(spec_location)
         except Exception as e:
             print(f"Failed to load spec: {e}")
@@ -69,23 +75,80 @@ class CLI:  # pylint: disable=too-many-instance-attributes
         }
 
         for path in spec.paths.values():
-            command = path.extensions.get(ext["command"], "default")
+            command = path.extensions.get(ext["command"], None)
+
             for m in METHODS:
                 operation = getattr(path, m)
-                if operation is None or ext["skip"] in operation.extensions:
+
+                if operation is None:
                     continue
-                action = operation.extensions.get(
-                    ext["action"], operation.operationId
+
+                operation_log_fmt = f"{m.upper()} {path.path[-1]}"
+
+                logger.debug(
+                    "%s: Attempting to generate command for operation",
+                    operation_log_fmt,
                 )
-                if not action:
+
+                if ext["skip"] in operation.extensions:
+                    logger.debug(
+                        "%s: Skipping operation due to x-%s extension",
+                        operation_log_fmt,
+                        ext["skip"],
+                    )
                     continue
+
+                # We don't do this in the parent loop because certain paths
+                # may only have skipped operations
+                if command is None:
+                    raise KeyError(
+                        f"{operation_log_fmt}: Missing x-{ext['command']} extension"
+                    )
+
+                action = operation.extensions.get(ext["action"], None)
+
+                if action is None:
+                    action = operation.operationId
+                    logger.info(
+                        "%s: Using operationId (%s) as action because "
+                        "%s extension is not specified",
+                        operation_log_fmt,
+                        action,
+                        ext["action"],
+                    )
+
+                if not action:
+                    logger.warning(
+                        "%s: Skipping operation due to unresolvable action",
+                        operation_log_fmt,
+                    )
+                    continue
+
                 if isinstance(action, list):
                     action = action[0]
+
                 if command not in self.ops:
                     self.ops[command] = {}
-                self.ops[command][action] = OpenAPIOperation(
+
+                operation = OpenAPIOperation(
                     command, operation, m, path.parameters
                 )
+
+                logger.debug(
+                    "%s %s: Successfully built command for operation: "
+                    "command='%s %s'; summary='%s'; paginated=%s; num_args=%s; num_attrs=%s",
+                    operation.method.upper(),
+                    operation.url_path,
+                    operation.command,
+                    operation.action,
+                    operation.summary.rstrip("."),
+                    operation.response_model
+                    and operation.response_model.is_paginated,
+                    len(operation.args),
+                    len(operation.attrs),
+                )
+
+                self.ops[command][action] = operation
 
         # hide the base_url from the spec away
         self.ops["_base_url"] = self.spec.servers[0].url
@@ -94,7 +157,8 @@ class CLI:  # pylint: disable=too-many-instance-attributes
 
         # finish the baking
         data_file = self._get_data_file()
-        with open(data_file, "wb") as f:
+
+        with open(data_file, "wb") if save else os.devnull as f:
             pickle.dump(self.ops, f)
 
     def load_baked(self):
@@ -195,7 +259,11 @@ class CLI:  # pylint: disable=too-many-instance-attributes
         Finds the corresponding operation for the given command and action.
         """
         if command not in self.ops:
-            raise ValueError(f"Command not found: {command}")
+            # Check that the passed command is not an alias before raising an error
+            if command in self.config.get_custom_aliases().keys():
+                command = self.config.get_custom_aliases()[command]
+            else:
+                raise ValueError(f"Command not found: {command}")
 
         command_dict = self.ops[command]
 

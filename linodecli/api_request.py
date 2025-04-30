@@ -7,7 +7,8 @@ import json
 import os
 import sys
 import time
-from typing import Any, Iterable, List, Optional
+from logging import getLogger
+from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional
 
 import requests
 from packaging import version
@@ -23,13 +24,24 @@ from .baked.operation import (
 )
 from .helpers import handle_url_overrides
 
+if TYPE_CHECKING:
+    from linodecli.cli import CLI
 
-def get_all_pages(ctx, operation: OpenAPIOperation, args: List[str]):
+logger = getLogger(__name__)
+
+
+def get_all_pages(
+    ctx: "CLI", operation: OpenAPIOperation, args: List[str]
+) -> Dict[str, Any]:
     """
-    Receive all pages of a resource from multiple
-    API responses then merge into one page.
+    Retrieves all pages of a resource from multiple API responses
+    and merges them into a single page.
 
-    :param ctx: The main CLI object
+    :param ctx: The main CLI object that maintains API request state.
+    :param operation: The OpenAPI operation to be executed.
+    :param args: A list of arguments passed to the API request.
+
+    :return: A dictionary containing the merged results from all pages.
     """
 
     ctx.page_size = 500
@@ -38,6 +50,7 @@ def get_all_pages(ctx, operation: OpenAPIOperation, args: List[str]):
 
     total_pages = result.get("pages")
 
+    # If multiple pages exist, generate results for all additional pages
     if total_pages and total_pages > 1:
         pages_needed = range(2, total_pages + 1)
 
@@ -51,19 +64,25 @@ def get_all_pages(ctx, operation: OpenAPIOperation, args: List[str]):
 
 
 def do_request(
-    ctx,
-    operation,
-    args,
-    filter_header=None,
-    skip_error_handling=False,
+    ctx: "CLI",
+    operation: OpenAPIOperation,
+    args: List[str],
+    filter_header: Optional[dict] = None,
+    skip_error_handling: bool = False,
 ) -> (
     Response
 ):  # pylint: disable=too-many-locals,too-many-branches,too-many-statements
     """
-    Makes a request to an operation's URL and returns the resulting JSON, or
-    prints and error if a non-200 comes back
+    Makes an HTTP request to an API operation's URL and returns the resulting response.
+    Optionally retries the request if specified, handles errors, and supports debugging.
 
-    :param ctx: The main CLI object
+    :param ctx: The main CLI object that maintains API request state.
+    :param operation: The OpenAPI operation to be executed.
+    :param args: A list of arguments passed to the API request.
+    :param filter_header: Optional filter header to be included in the request (default: None).
+    :param skip_error_handling: Whether to skip error handling (default: False).
+
+    :return: The `Response` object returned from the HTTP request.
     """
     # TODO: Revisit using pre-built calls from OpenAPI
     method = getattr(requests, operation.method)
@@ -87,14 +106,20 @@ def do_request(
 
     # Print response debug info is requested
     if ctx.debug_request:
-        _print_request_debug_info(method, url, headers, body)
+        # Multiline log entries aren't ideal, we should consider
+        # using single-line structured logging in the future.
+        logger.debug(
+            "\n%s",
+            "\n".join(_format_request_for_log(method, url, headers, body)),
+        )
 
     result = method(url, headers=headers, data=body, verify=API_CA_PATH)
 
     # Print response debug info is requested
     if ctx.debug_request:
-        _print_response_debug_info(result)
+        logger.debug("\n%s", "\n".join(_format_response_for_log(result)))
 
+    # Retry the request if necessary
     while _check_retry(result) and not ctx.no_retry and ctx.retry_count < 3:
         time.sleep(_get_retry_after(result.headers))
         ctx.retry_count += 1
@@ -102,24 +127,37 @@ def do_request(
 
     _attempt_warn_old_version(ctx, result)
 
+    # If the response is an error and we're not skipping error handling, raise an error
     if not 199 < result.status_code < 399 and not skip_error_handling:
         _handle_error(ctx, result)
 
     return result
 
 
-def _merge_results_data(results: Iterable[dict]):
-    """Merge multiple json response into one"""
+def _merge_results_data(results: Iterable[dict]) -> Optional[Dict[str, Any]]:
+    """
+    Merges multiple JSON responses into one, combining their 'data' fields
+    and setting 'pages' and 'page' to 1 if they exist.
+
+    :param results: An iterable of dictionaries containing JSON response data.
+
+    :return: A merged dictionary containing the combined data or None if no results are provided.
+    """
 
     iterator = iter(results)
     merged_result = next(iterator, None)
+
+    # If there are no results to merge, return None
     if not merged_result:
         return None
 
+    # Set 'pages' and 'page' to 1 if they exist in the first result
     if "pages" in merged_result:
         merged_result["pages"] = 1
     if "page" in merged_result:
         merged_result["page"] = 1
+
+    # Merge the 'data' fields by combining the 'data' from all results
     if "data" in merged_result:
         merged_result["data"] += list(
             itertools.chain.from_iterable(r["data"] for r in iterator)
@@ -128,13 +166,21 @@ def _merge_results_data(results: Iterable[dict]):
 
 
 def _generate_all_pages_results(
-    ctx,
+    ctx: "CLI",
     operation: OpenAPIOperation,
     args: List[str],
     pages_needed: Iterable[int],
-):
+) -> Iterable[dict]:
     """
-    :param ctx: The main CLI object
+    Generates results from multiple pages by iterating through the specified page numbers
+    and yielding the JSON response for each page.e.
+
+    :param ctx: The main CLI object that maintains API request state.
+    :param operation: The OpenAPI operation to be executed.
+    :param args: A list of arguments passed to the API request.
+    :param pages_needed: An iterable of page numbers to request.
+
+    :yield: The JSON response (as a dictionary) for each requested page.
     """
     for p in pages_needed:
         ctx.page = p
@@ -142,8 +188,21 @@ def _generate_all_pages_results(
 
 
 def _build_filter_header(
-    operation, parsed_args, filter_header=None
+    operation: OpenAPIOperation,
+    parsed_args: Any,
+    filter_header: Optional[dict] = None,
 ) -> Optional[str]:
+    """
+    Builds a filter header for a request based on the parsed
+    arguments. This is used for GET requests to filter results according
+    to the specified arguments. If no filter is provided, returns None.
+
+    :param operation: The OpenAPI operation to be executed.
+    :param parsed_args: The parsed arguments from the CLI or request
+    :param filter_header: Optional filter header to be included in the request (default: None).
+
+    :return: A JSON string representing the filter header, or None if no filters are applied.
+    """
     if operation.method != "get":
         # Non-GET operations don't support filters
         return None
@@ -188,7 +247,19 @@ def _build_filter_header(
     return json.dumps(result) if len(result) > 0 else None
 
 
-def _build_request_url(ctx, operation, parsed_args) -> str:
+def _build_request_url(
+    ctx: "CLI", operation: OpenAPIOperation, parsed_args: Any
+) -> str:
+    """
+    Constructs the full request URL for an API operation,
+    incorporating user-defined API host and scheme overrides.
+
+    :param ctx: The main CLI object that maintains API request state.
+    :param operation: The OpenAPI operation to be executed.
+    :param parsed_args: The parsed arguments from the CLI or request.
+
+    :return: The fully constructed request URL as a string.
+    """
     url_base = handle_url_overrides(
         operation.url_base,
         host=ctx.config.get_value("api_host"),
@@ -206,6 +277,7 @@ def _build_request_url(ctx, operation, parsed_args) -> str:
         **vars(parsed_args),
     )
 
+    # Append pagination parameters for GET requests
     if operation.method == "get":
         result += f"?page={ctx.page}&page_size={ctx.page_size}"
 
@@ -214,10 +286,15 @@ def _build_request_url(ctx, operation, parsed_args) -> str:
 
 def _traverse_request_body(o: Any) -> Any:
     """
-    This function traverses is intended to be called immediately before
-    request body serialization and contains special handling for dropping
-    keys with null values and translating ExplicitNullValue instances into
-    serializable null values.
+    Traverses a request body before serialization, handling special cases:
+    - Drops keys with `None` values (implicit null values).
+    - Converts `ExplicitEmptyListValue` instances to empty lists.
+    - Converts `ExplicitNullValue` instances to `None`.
+    - Recursively processes nested dictionaries and lists.
+
+    :param o: The request body object to process.
+
+    :return: A modified version of `o` with appropriate transformations applied.
     """
     if isinstance(o, dict):
         result = {}
@@ -253,7 +330,18 @@ def _traverse_request_body(o: Any) -> Any:
     return o
 
 
-def _build_request_body(ctx, operation, parsed_args) -> Optional[str]:
+def _build_request_body(
+    ctx: "CLI", operation: OpenAPIOperation, parsed_args: Any
+) -> Optional[str]:
+    """
+    Builds the request body for API calls, handling default values and nested structures.
+
+    :param ctx: The main CLI object that maintains API request state.
+    :param operation: The OpenAPI operation to be executed.
+    :param parsed_args: The parsed arguments from the CLI or request.
+
+    :return: A JSON string representing the request body, or None if not applicable.
+    """
     if operation.method == "get":
         # Get operations don't have a body
         return None
@@ -266,7 +354,7 @@ def _build_request_body(ctx, operation, parsed_args) -> Optional[str]:
 
     expanded_json = {}
 
-    # expand paths
+    # Expand dotted keys into nested dictionaries
     for k, v in vars(parsed_args).items():
         if v is None or k in param_names:
             continue
@@ -282,41 +370,71 @@ def _build_request_body(ctx, operation, parsed_args) -> Optional[str]:
     return json.dumps(_traverse_request_body(expanded_json))
 
 
-def _print_request_debug_info(method, url, headers, body):
+def _format_request_for_log(
+    method: Any,
+    url: str,
+    headers: Dict[str, str],
+    body: str,
+) -> List[str]:
     """
-    Prints debug info for an HTTP request
+    Builds a debug output for the given request.
+
+    :param method: The HTTP method of the request.
+    :param url: The URL of the request.
+    :param headers: The headers of the request.
+    :param body: The body of the request.
+
+    :returns: The lines of the generated debug output.
     """
-    print(f"> {method.__name__.upper()} {url}", file=sys.stderr)
+    result = [f"> {method.__name__.upper()} {url}"]
+
     for k, v in headers.items():
         # If this is the Authorization header, sanitize the token
         if k.lower() == "authorization":
             v = "Bearer " + "*" * 64
-        print(f"> {k}: {v}", file=sys.stderr)
-    print("> Body:", file=sys.stderr)
-    print(">  ", body or "", file=sys.stderr)
-    print("> ", file=sys.stderr)
+
+        result.append(f"> {k}: {v}")
+
+    result.extend(["> Body:", f">   {body or ''}", "> "])
+
+    return result
 
 
-def _print_response_debug_info(response):
+def _format_response_for_log(
+    response: requests.Response,
+):
     """
-    Prints debug info for a response from requests
+    Builds a debug output for the given response.
+
+    :param response: The HTTP response to format.
+
+    :returns: The lines of the generated debug output.
     """
+
     # these come back as ints, convert to HTTP version
     http_version = response.raw.version / 10
     body = response.content.decode("utf-8", errors="replace")
 
-    print(
-        f"< HTTP/{http_version:.1f} {response.status_code} {response.reason}",
-        file=sys.stderr,
-    )
+    result = [
+        f"< HTTP/{http_version:.1f} {response.status_code} {response.reason}"
+    ]
+
     for k, v in response.headers.items():
-        print(f"< {k}: {v}", file=sys.stderr)
-    print("< Body:", file=sys.stderr)
-    print("<  ", body or "", file=sys.stderr)
-    print("< ", file=sys.stderr)
+        result.append(f"< {k}: {v}")
+
+    result.extend(["< Body:", f"<   {body or ''}", "< "])
+
+    return result
 
 
-def _attempt_warn_old_version(ctx, result):
+def _attempt_warn_old_version(ctx: "CLI", result: Any) -> None:
+    """
+    Checks if the API version is newer than the CLI version and
+    warns the user if an upgrade is available.
+
+    :param ctx: The main CLI object that maintains API request state.
+    :param result: The HTTP response object from the API request.
+    """
     if ctx.suppress_warnings:
         return
 
@@ -398,9 +516,13 @@ def _attempt_warn_old_version(ctx, result):
             )
 
 
-def _handle_error(ctx, response):
+def _handle_error(ctx: "CLI", response: Any) -> None:
     """
-    Given an error message, properly displays the error to the user and exits.
+    Handles API error responses by displaying a formatted error message
+    and exiting with the appropriate error code.
+
+    :param ctx: The main CLI object that maintains API request state.
+    :param response: The HTTP response object from the API request.
     """
     print(f"Request failed: {response.status_code}", file=sys.stderr)
 
@@ -422,7 +544,9 @@ def _handle_error(ctx, response):
 
 def _check_retry(response):
     """
-    Check for valid retry scenario, returns true if retry is valid
+    Check for valid retry scenario, returns true if retry is valid.
+
+    :param response: The HTTP response object from the API request.
     """
     if response.status_code in (408, 429):
         # request timed out or rate limit exceeded
@@ -436,6 +560,14 @@ def _check_retry(response):
     )
 
 
-def _get_retry_after(headers):
+def _get_retry_after(headers: Dict[str, str]) -> int:
+    """
+    Extracts the "Retry-After" value from the response headers and returns it
+    as an integer representing the number of seconds to wait before retrying.
+
+    :param headers: The HTTP response headers as a dictionary.
+
+    :return: The number of seconds to wait before retrying, or 0 if not specified.
+    """
     retry_str = headers.get("Retry-After", "")
     return int(retry_str) if retry_str else 0

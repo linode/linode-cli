@@ -1,4 +1,4 @@
-name: Integration Tests
+name: Integration Tests on Linux
 
 on:
   workflow_dispatch:
@@ -96,9 +96,6 @@ jobs:
           pr_num: ${{ fromJSON(inputs.pull_request_number) }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Update system packages
-        run: sudo apt-get update -y
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -235,6 +232,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: [integration_tests]
     if: always() && github.repository == 'linode/linode-cli' # Run even if integration tests fail and only on main repository
+    outputs:
+      summary: ${{ steps.set-test-summary.outputs.summary }}
 
     steps:
       - name: Checkout code
@@ -275,14 +274,26 @@ jobs:
           LINODE_CLI_OBJ_ACCESS_KEY: ${{ secrets.LINODE_CLI_OBJ_ACCESS_KEY }}
           LINODE_CLI_OBJ_SECRET_KEY: ${{ secrets.LINODE_CLI_OBJ_SECRET_KEY }}
 
+      - name: Generate test summary and save to output
+        id: set-test-summary
+        run: |
+          filename=$(ls | grep -E '^[0-9]{12}_cli_test_report\.xml$')
+          test_output=$(python3 e2e_scripts/tod_scripts/generate_test_summary.py "${filename}")
+          {
+            echo 'summary<<EOF'
+            echo "$test_output"
+            echo EOF
+          } >> "$GITHUB_OUTPUT"
+
 
   notify-slack:
     runs-on: ubuntu-latest
-    needs: [integration_tests]
+    needs: [integration_tests, process-upload-report]
     if: ${{ (success() || failure()) && github.repository == 'linode/linode-cli' }} # Run even if integration tests fail and only on main repository
 
     steps:
       - name: Notify Slack
+        id: main_message
         uses: slackapi/slack-github-action@v2.0.0
         with:
           method: chat.postMessage
@@ -293,7 +304,7 @@ jobs:
               - type: section
                 text:
                   type: mrkdwn
-                  text: ":rocket: *${{ github.workflow }} Completed in: ${{ github.repository }}* :white_check_mark:"
+                  text: ":rocket: *${{ github.workflow }} Completed in: ${{ github.repository }}* ${{ needs.integration_tests.result == 'success' && ':white_check_mark:' || ':failed:' }}"
               - type: divider
               - type: section
                 fields:
@@ -312,3 +323,14 @@ jobs:
                 elements:
                   - type: mrkdwn
                     text: "Triggered by: :bust_in_silhouette: `${{ github.actor }}`"
+
+      - name: Test summary thread
+        if: success()
+        uses: slackapi/slack-github-action@v2.0.0
+        with:
+          method: chat.postMessage
+          token: ${{ secrets.SLACK_BOT_TOKEN }}
+          payload: |
+            channel: ${{ secrets.SLACK_CHANNEL_ID }}
+            thread_ts: "${{ steps.main_message.outputs.ts }}"
+            text: "${{ needs.process-upload-report.outputs.summary }}"

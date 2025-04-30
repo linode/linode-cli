@@ -39,13 +39,13 @@ jobs:
         run: make requirements
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@53851d14592bedcffcf25ea515637cff71ef929a # pin@v3.3.0
+        uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392 # pin@v3.6.0
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@6524bf65af31da8d45b59e8c27de4bd072b392f5 # pin@v3.8.0
+        uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # pin@v3.10.0
 
       - name: Login to Docker Hub
-        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # pin@v3.3.0
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # pin@v3.4.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -67,7 +67,7 @@ jobs:
           result-encoding: string
 
       - name: Build and push to DockerHub
-        uses: docker/build-push-action@ca877d9245402d1537745e0e356eab47c3520991 # pin@v6.13.0
+        uses: docker/build-push-action@471d1dc4e07e5cdedd4c2171150001c434f0b7a4 # pin@v6.15.0
         with:
           context: .
           file: Dockerfile
@@ -79,7 +79,11 @@ jobs:
             github_token=${{ secrets.GITHUB_TOKEN }}
 
   pypi-release:
+    permissions:
+      # IMPORTANT: this permission is mandatory for trusted publishing
+      id-token: write
     runs-on: ubuntu-latest
+    environment: pypi-release
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -103,5 +107,3 @@ jobs:
 
       - name: Publish the release artifacts to PyPI
         uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc # pin@release/v1.12.4
-        with:
-          password: ${{ secrets.PYPI_API_TOKEN }}
