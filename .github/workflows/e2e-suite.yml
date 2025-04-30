@@ -1,4 +1,4 @@
-name: Integration Tests
+name: Integration Tests on Linux
 
 on:
   workflow_dispatch:
@@ -96,9 +96,6 @@ jobs:
           pr_num: ${{ fromJSON(inputs.pull_request_number) }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Update system packages
-        run: sudo apt-get update -y
 
       - name: Setup Python
         uses: actions/setup-python@v5
