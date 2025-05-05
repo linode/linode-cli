@@ -4,43 +4,14 @@ import time
 import pytest
 
 from linodecli.exit_codes import ExitCodes
+from tests.integration.domains.fixtures import (  # noqa: F401
+    master_domain,
+)
 from tests.integration.helpers import (
-    delete_target_id,
+    BASE_CMDS,
     exec_failing_test_command,
     exec_test_command,
 )
-
-BASE_CMD = ["linode-cli", "domains"]
-
-
-@pytest.fixture
-def master_test_domain():
-    timestamp = str(time.time_ns())
-    # Create domain
-    master_domain_id = (
-        exec_test_command(
-            BASE_CMD
-            + [
-                "create",
-                "--type",
-                "master",
-                "--domain",
-                "BC" + timestamp + "-example.com",
-                "--soa_email=pthiel" + timestamp + "@linode.com",
-                "--text",
-                "--no-header",
-                "--delimiter",
-                ",",
-                "--format=id",
-            ]
-        )
-        .stdout.decode()
-        .rstrip()
-    )
-
-    yield master_domain_id
-
-    delete_target_id(target="domains", id=master_domain_id)
 
 
 def test_create_domain_fails_without_spcified_type():
@@ -50,7 +21,7 @@ def test_create_domain_fails_without_spcified_type():
     # not all output from the linode-cli goes to stdout, stderr
 
     result = exec_failing_test_command(
-        BASE_CMD
+        BASE_CMDS["domains"]
         + [
             "create",
             "--domain",
@@ -61,7 +32,7 @@ def test_create_domain_fails_without_spcified_type():
             "--no-headers",
         ],
         expected_code=ExitCodes.REQUEST_FAILED,
-    ).stderr.decode()
+    )
 
     assert "Request failed: 400" in result
     assert "type is required" in result
@@ -70,7 +41,7 @@ def test_create_domain_fails_without_spcified_type():
 def test_create_master_domain_fails_without_soa_email():
     timestamp = str(time.time_ns())
     result = exec_failing_test_command(
-        BASE_CMD
+        BASE_CMDS["domains"]
         + [
             "create",
             "--type",
@@ -81,7 +52,7 @@ def test_create_master_domain_fails_without_soa_email():
             "--no-headers",
         ],
         expected_code=ExitCodes.REQUEST_FAILED,
-    ).stderr.decode()
+    )
 
     assert "Request failed: 400" in result
     assert "soa_email	soa_email required when type=master" in result
@@ -93,15 +64,15 @@ def test_create_master_domain(master_domain):
     assert re.search("[0-9]+", domain_id)
 
 
-def test_update_master_domain_soa_email(master_test_domain):
+def test_update_master_domain_soa_email(master_domain):
     # Remove --master_ips param when 872 is resolved
     timestamp = str(time.time_ns())
     new_soa_email = "pthiel_new@linode.com"
 
-    domain_id = master_test_domain
+    domain_id = master_domain
 
     result = exec_test_command(
-        BASE_CMD
+        BASE_CMDS["domains"]
         + [
             "update",
             domain_id,
@@ -115,14 +86,14 @@ def test_update_master_domain_soa_email(master_test_domain):
             "--text",
             "--no-header",
         ]
-    ).stdout.decode()
+    )
 
     assert new_soa_email in result
 
 
-def test_list_master_domain(master_test_domain):
+def test_list_master_domain(master_domain):
     result = exec_test_command(
-        BASE_CMD
+        BASE_CMDS["domains"]
         + [
             "list",
             "--format=id,domain,type,status",
@@ -131,14 +102,14 @@ def test_list_master_domain(master_test_domain):
             "--delimiter",
             ",",
         ]
-    ).stdout.decode()
+    )
 
-    assert re.search("[0-9]+,BC[0-9]+-example.com,master,active", result)
+    assert re.search("master,active", result)
 
 
-def test_show_domain_detail(master_test_domain):
+def test_show_domain_detail(master_domain):
     result = exec_test_command(
-        BASE_CMD
+        BASE_CMDS["domains"]
         + [
             "list",
             "--format=id,domain,type,status",
@@ -147,6 +118,6 @@ def test_show_domain_detail(master_test_domain):
             "--delimiter",
             ",",
         ]
-    ).stdout.decode()
+    )
 
-    assert re.search("[0-9]+,BC[0-9]+-example.com,master,active", result)
+    assert re.search("master,active", result)

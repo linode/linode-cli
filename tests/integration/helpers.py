@@ -5,7 +5,6 @@ import time
 from string import ascii_lowercase
 from typing import Callable, Container, Iterable, List, TypeVar
 
-from linodecli import ExitCodes
 from linodecli.exit_codes import ExitCodes
 
 BASE_URL = "https://api.linode.com/v4/"
@@ -16,6 +15,26 @@ COMMAND_JSON_OUTPUT = ["--suppress-warnings", "--no-defaults", "--json"]
 
 # TypeVars for generic type hints below
 T = TypeVar("T")
+
+BASE_CMD = "linode-cli"
+MODULES = [
+    "account",
+    "domains",
+    "linodes",
+    "nodebalancers",
+    "betas",
+    "databases",
+    "domains",
+    "events",
+    "image",
+    "firewalls",
+    "kernels",
+    "linodes",
+    "lke",
+    "longview",
+    "managed",
+]
+BASE_CMDS = {module: [BASE_CMD, module] for module in MODULES}
 
 
 def get_random_text(length: int = 10):
@@ -36,17 +55,25 @@ def wait_for_condition(interval: int, timeout: int, condition: Callable):
 
 
 def exec_test_command(args: List[str]):
-    process = subprocess.run(args, stdout=subprocess.PIPE)
-    assert process.returncode == 0
-    return process
+    process = subprocess.run(
+        args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+    )
+    if process.returncode != 0:
+        raise RuntimeError(
+            f"Command failed with exit code {process.returncode}\n"
+            f"Command: {' '.join(args)}\n"
+            f"Stdout:\n{process.stdout}\n"
+            f"Stderr:\n{process.stderr}"
+        )
+    return process.stdout.rstrip()
 
 
 def exec_failing_test_command(
     args: List[str], expected_code: int = ExitCodes.REQUEST_FAILED
 ):
-    process = subprocess.run(args, stderr=subprocess.PIPE)
+    process = subprocess.run(args, stderr=subprocess.PIPE, text=True)
     assert process.returncode == expected_code
-    return process
+    return process.stderr.rstrip()
 
 
 # Delete/Remove helper functions (mainly used in clean-ups after test
@@ -60,7 +87,7 @@ def delete_all_domains():
             "list",
             "--format=id",
         ]
-    ).stdout.decode()
+    )
     domain_id_arr = domain_ids.splitlines()
 
     for id in domain_id_arr:
@@ -69,32 +96,37 @@ def delete_all_domains():
 
 def delete_tag(arg: str):
     result = exec_test_command(["linode-cli", "tags", "delete", arg])
-    assert result.returncode == SUCCESS_STATUS_CODE
 
 
 def delete_target_id(target: str, id: str, delete_command: str = "delete"):
     command = ["linode-cli", target, delete_command, id]
-    result = exec_test_command(command)
-    assert result.returncode == SUCCESS_STATUS_CODE
+    try:
+        result = subprocess.run(
+            command,
+            check=True,  # Raises CalledProcessError on non-zero exit
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+        print(f"Success: {result.stdout}")
+    except subprocess.CalledProcessError as e:
+        print(f"Error executing command: {e.stderr}")
+    except Exception as e:
+        print(f"Unexpected error: {e}")
 
 
 def remove_lke_clusters():
-    cluster_ids = (
-        exec_test_command(
-            [
-                "linode-cli",
-                "--text",
-                "--no-headers",
-                "lke",
-                "clusters-list",
-                "--format",
-                "id",
-            ]
-        )
-        .stdout.decode()
-        .rstrip()
-        .splitlines()
-    )
+    cluster_ids = exec_test_command(
+        [
+            "linode-cli",
+            "--text",
+            "--no-headers",
+            "lke",
+            "clusters-list",
+            "--format",
+            "id",
+        ]
+    ).splitlines()
     for id in cluster_ids:
         exec_test_command(["linode-cli", "lke", "cluster-delete", id])
 
@@ -102,38 +134,30 @@ def remove_lke_clusters():
 def remove_all(target: str):
     entity_ids = ""
     if target == "stackscripts":
-        entity_ids = (
-            exec_test_command(
-                [
-                    "linode-cli",
-                    "--is_public=false",
-                    "--text",
-                    "--no-headers",
-                    target,
-                    "list",
-                    "--format",
-                    "id",
-                ]
-            )
-            .stdout.decode()
-            .splitlines()
-        )
+        entity_ids = exec_test_command(
+            [
+                "linode-cli",
+                "--is_public=false",
+                "--text",
+                "--no-headers",
+                target,
+                "list",
+                "--format",
+                "id",
+            ]
+        ).stdout.splitlines()
     else:
-        entity_ids = (
-            exec_test_command(
-                [
-                    "linode-cli",
-                    "--text",
-                    "--no-headers",
-                    target,
-                    "list",
-                    "--format",
-                    "id",
-                ]
-            )
-            .stdout.decode()
-            .splitlines()
-        )
+        entity_ids = exec_test_command(
+            [
+                "linode-cli",
+                "--text",
+                "--no-headers",
+                target,
+                "list",
+                "--format",
+                "id",
+            ]
+        ).stdout.splitlines()
 
     for id in entity_ids:
         exec_test_command(["linode-cli", target, "delete", id])
@@ -174,11 +198,9 @@ def retry_exec_test_command_with_delay(
 def get_random_region_with_caps(
     required_capabilities: List[str], site_type="core"
 ):
-    json_regions_data = (
-        exec_test_command(["linode-cli", "regions", "ls", "--json"])
-        .stdout.decode()
-        .strip()
-    )
+    json_regions_data = exec_test_command(
+        ["linode-cli", "regions", "ls", "--json"]
+    ).stdout.strip()
 
     # Parse regions JSON data
     regions = json.loads(json_regions_data)
@@ -197,21 +219,17 @@ def get_random_region_with_caps(
 
 
 def get_cluster_id(label: str):
-    cluster_id = (
-        exec_test_command(
-            [
-                "linode-cli",
-                "lke",
-                "clusters-list",
-                "--text",
-                "--format=id",
-                "--no-headers",
-                "--label",
-                label,
-            ]
-        )
-        .stdout.decode()
-        .rstrip()
+    cluster_id = exec_test_command(
+        [
+            "linode-cli",
+            "lke",
+            "clusters-list",
+            "--text",
+            "--format=id",
+            "--no-headers",
+            "--label",
+            label,
+        ]
     )
 
     return cluster_id

@@ -55,7 +55,7 @@ def check_account_settings():
             "managed",
             "--no-headers",
         ]
-    ).stdout.decode()
+    ).stdout
 
     return result
 
@@ -79,7 +79,7 @@ def test_create_linode_with_backup_disabled(
             "--text",
             "--no-headers",
         ]
-    ).stdout.decode()
+    ).stdout
 
     assert re.search(linode_id + ",False", result)
 
@@ -108,7 +108,7 @@ def test_enable_backups(create_linode_setup):
             "--text",
             "--no-headers",
         ]
-    ).stdout.decode()
+    ).stdout
 
     assert re.search(linode_id + ",True", result)
 
@@ -125,7 +125,7 @@ def test_create_backup_with_backup_enabled(linode_backup_enabled):
             "--text",
             "--no-headers",
         ]
-    ).stdout.decode()
+    ).stdout
 
     assert re.search(linode_id + ",True", result)
 
@@ -150,7 +150,7 @@ def test_take_snapshot_of_linode():
             ",",
             "--no-headers",
         ]
-    ).stdout.decode()
+    ).stdout
     assert re.search(
         "[0-9]+,pending,snapshot,[0-9]+-[0-9]+-[0-9]+T[0-9]+:[0-9]+:[0-9]+,"
         + snapshot_label,
@@ -177,7 +177,7 @@ def test_view_the_snapshot(snapshot_of_linode):
             "--text",
             "--no-headers",
         ]
-    ).stdout.decode()
+    ).stdout
 
     assert re.search(
         "[0-9]+,pending,snapshot,[0-9]+-[0-9]+-[0-9]+T[0-9]+:[0-9]+:[0-9]+,"
@@ -207,7 +207,7 @@ def test_cancel_backups(snapshot_of_linode):
             ",",
             "--no-headers",
         ]
-    ).stdout.decode()
+    ).stdout
     assert re.search(
         "[0-9]+,pending,snapshot,[0-9]+-[0-9]+-[0-9]+T[0-9]+:[0-9]+:[0-9]+,"
         + new_snapshot_label,

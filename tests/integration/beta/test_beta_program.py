@@ -1,15 +1,16 @@
 import pytest
 
-from tests.integration.helpers import assert_headers_in_lines, exec_test_command
-
-BASE_CMD = ["linode-cli", "betas"]
+from tests.integration.beta.helpers import get_beta_id
+from tests.integration.helpers import (
+    BASE_CMDS,
+    assert_headers_in_lines,
+    exec_test_command,
+)
 
 
 def test_beta_list():
-    res = (
-        exec_test_command(BASE_CMD + ["list", "--text", "--delimiter=,"])
-        .stdout.decode()
-        .rstrip()
+    res = exec_test_command(
+        BASE_CMDS["betas"] + ["list", "--text", "--delimiter=,"]
     )
     lines = res.splitlines()
 
@@ -20,43 +21,13 @@ def test_beta_list():
         assert_headers_in_lines(headers, lines)
 
 
-@pytest.fixture
-def get_beta_id():
-    beta_ids = (
-        exec_test_command(
-            BASE_CMD
-            + [
-                "list",
-                "--text",
-                "--no-headers",
-                "--delimiter",
-                ",",
-                "--format",
-                "id",
-            ]
-        )
-        .stdout.decode()
-        .rstrip()
-        .splitlines()
-    )
-    if not beta_ids or beta_ids == [""]:
-        pytest.skip("No betas available to test.")
-
-    first_id = beta_ids[0]
-    yield first_id
-
-
-def test_beta_view(get_beta_id):
-    beta_id = get_beta_id
+def test_beta_view():
+    beta_id = get_beta_id()
     if beta_id is None:
         pytest.skip("No beta program available to test")
     else:
-        res = (
-            exec_test_command(
-                BASE_CMD + ["view", beta_id, "--text", "--delimiter=,"]
-            )
-            .stdout.decode()
-            .rstrip()
+        res = exec_test_command(
+            BASE_CMDS["betas"] + ["view", beta_id, "--text", "--delimiter=,"]
         )
         lines = res.splitlines()
         headers = ["label", "description"]
@@ -64,10 +35,8 @@ def test_beta_view(get_beta_id):
 
 
 def test_beta_enrolled():
-    res = (
-        exec_test_command(BASE_CMD + ["enrolled", "--text", "--delimiter=,"])
-        .stdout.decode()
-        .rstrip()
+    res = exec_test_command(
+        BASE_CMDS["betas"] + ["enrolled", "--text", "--delimiter=,"]
     )
     lines = res.splitlines()
 

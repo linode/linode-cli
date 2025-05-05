@@ -3,116 +3,63 @@ import time
 
 import pytest
 
+from tests.integration.domains.fixtures import (  # noqa: F401
+    master_domain,
+    slave_domain,
+    test_domain_and_record,
+)
 from tests.integration.helpers import (
-    SUCCESS_STATUS_CODE,
+    BASE_CMDS,
     contains_at_least_one_of,
-    delete_target_id,
     exec_test_command,
 )
-
-BASE_CMD = ["linode-cli", "domains"]
-
-
-@pytest.fixture
-def test_domain_and_record():
-    timestamp = str(time.time_ns())
-    # Create domain
-    domain_id = (
-        exec_test_command(
-            BASE_CMD
-            + [
-                "create",
-                "--type",
-                "master",
-                "--domain",
-                timestamp + "example.com",
-                "--soa_email=pthiel@linode.com",
-                "--text",
-                "--no-header",
-                "--format=id",
-            ]
-        )
-        .stdout.decode()
-        .rstrip()
-    )
-
-    # Create record
-    record_id = (
-        exec_test_command(
-            BASE_CMD
-            + [
-                "records-create",
-                "--protocol=tcp",
-                "--type=SRV",
-                "--port=23",
-                "--priority=4",
-                "--service=telnet",
-                "--target=record-setup",
-                "--weight=4",
-                "--text",
-                "--no-header",
-                "--delimiter=,",
-                "--format=id",
-                domain_id,
-            ]
-        )
-        .stdout.decode()
-        .rstrip()
-    )
-
-    yield domain_id, record_id
-
-    delete_target_id(target="domains", id=domain_id)
 
 
 @pytest.mark.smoke
 def test_create_a_domain(master_domain):
     # Current domain list
-    process = exec_test_command(
-        BASE_CMD + ["list", '--format="id"', "--text", "--no-header"]
+    domain_list_before = exec_test_command(
+        BASE_CMDS["domains"]
+        + ["list", '--format="id"', "--text", "--no-header"]
     )
-    output_current = process.stdout.decode()
 
     timestamp = str(time.time_ns())
 
     # Create domain
-    another_domain = (
-        exec_test_command(
-            [
-                "linode-cli",
-                "domains",
-                "create",
-                "--type",
-                "master",
-                "--domain",
-                timestamp + "example.com",
-                "--soa_email",
-                "pthiel_test@linode.com",
-                "--text",
-                "--no-header",
-                "--format",
-                "id",
-            ]
-        )
-        .stdout.decode()
-        .rstrip()
+    another_domain = exec_test_command(
+        [
+            "linode-cli",
+            "domains",
+            "create",
+            "--type",
+            "master",
+            "--domain",
+            timestamp + "example.com",
+            "--soa_email",
+            "pthiel_test@linode.com",
+            "--text",
+            "--no-header",
+            "--format",
+            "id",
+        ]
     )
 
-    process = exec_test_command(
-        BASE_CMD + ["list", "--format=id", "--text", "--no-header"]
+    domain_list_after = exec_test_command(
+        BASE_CMDS["domains"] + ["list", "--format=id", "--text", "--no-header"]
     )
-    output_after = process.stdout.decode()
-
     # Check if list is bigger than previous list
-    assert len(output_after.splitlines()) > len(output_current.splitlines())
+    assert len(domain_list_after.splitlines()) > len(
+        domain_list_before.splitlines()
+    )
+    assert another_domain in domain_list_after
 
 
 @pytest.mark.smoke
 def test_create_domain_srv_record(test_domain_and_record):
     domain_id = test_domain_and_record[0]
 
-    process = exec_test_command(
-        BASE_CMD
+    output = exec_test_command(
+        BASE_CMDS["domains"]
         + [
             "records-create",
             "--protocol=tcp",
@@ -129,18 +76,16 @@ def test_create_domain_srv_record(test_domain_and_record):
         ]
     )
 
-    output = process.stdout.decode()
-
     assert re.search(
-        r"[0-9]+,SRV,_telnet\._tcp,target-test-record\.\d+example\.com,0,4,4\n",
+        r"[0-9]+,SRV,_telnet\._tcp,target-test-record\.\d+example\.com,0,4,4",
         str(output),
     )
 
 
 def test_list_srv_record(test_domain_and_record):
     domain_id = test_domain_and_record[0]
-    process = exec_test_command(
-        BASE_CMD
+    output = exec_test_command(
+        BASE_CMDS["domains"]
         + [
             "records-list",
             domain_id,
@@ -149,10 +94,9 @@ def test_list_srv_record(test_domain_and_record):
             "--delimiter=,",
         ]
     )
-    output = process.stdout.decode()
 
     assert re.search(
-        r"[0-9]+,SRV,_telnet\._tcp,record-setup\.\d+example\.com,0,4,4\n",
+        r"[0-9]+,SRV,_telnet\._tcp,record-setup\.\d+example\.com,0,4,4",
         str(output),
     )
 
@@ -162,8 +106,8 @@ def test_view_domain_record(test_domain_and_record):
     domain_id = test_domain_and_record[0]
     record_id = test_domain_and_record[1]
 
-    process = exec_test_command(
-        BASE_CMD
+    output = exec_test_command(
+        BASE_CMDS["domains"]
         + [
             "records-view",
             domain_id,
@@ -173,10 +117,9 @@ def test_view_domain_record(test_domain_and_record):
             "--delimiter=,",
         ]
     )
-    output = process.stdout.decode()
 
     assert re.search(
-        r"[0-9]+,SRV,_telnet\._tcp,record-setup\.\d+example\.com,0,4,4\n",
+        r"[0-9]+,SRV,_telnet\._tcp,record-setup\.\d+example\.com,0,4,4",
         output,
     )
 
@@ -185,8 +128,8 @@ def test_update_domain_record(test_domain_and_record):
     domain_id = test_domain_and_record[0]
     record_id = test_domain_and_record[1]
 
-    process = exec_test_command(
-        BASE_CMD
+    output = exec_test_command(
+        BASE_CMDS["domains"]
         + [
             "records-update",
             domain_id,
@@ -197,10 +140,9 @@ def test_update_domain_record(test_domain_and_record):
             "--delimiter=,",
         ]
     )
-    output = process.stdout.decode()
 
     assert re.search(
-        r"[0-9]+,SRV,_telnet\._tcp,record-setup-update\.\d+example\.com,0,4,4\n",
+        r"[0-9]+,SRV,_telnet\._tcp,record-setup-update\.\d+example\.com,0,4,4",
         str(output),
     )
 
@@ -209,23 +151,19 @@ def test_delete_a_domain_record(test_domain_and_record):
     domain_id = test_domain_and_record[0]
     record_id = test_domain_and_record[1]
 
-    process = exec_test_command(
-        BASE_CMD + ["records-delete", domain_id, record_id]
+    exec_test_command(
+        BASE_CMDS["domains"] + ["records-delete", domain_id, record_id]
     )
-
-    # Assert on status code returned from deleting domain
-    assert process.returncode == SUCCESS_STATUS_CODE
 
 
 def test_help_records_list(test_domain_and_record):
-    process = exec_test_command(
-        BASE_CMD
+    output = exec_test_command(
+        BASE_CMDS["domains"]
         + [
             "records-list",
             "--help",
         ]
     )
-    output = process.stdout.decode()
 
     assert contains_at_least_one_of(
         output, ["List domain records", "Domain Records List"]

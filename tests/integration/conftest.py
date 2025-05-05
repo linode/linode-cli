@@ -106,7 +106,7 @@ def linode_cloud_firewall():
     if is_valid_ipv4(ipv4_address) or is_valid_ipv6(ipv6_address):
         command.extend(["--rules.inbound", inbound_rule])
 
-    firewall_id = exec_test_command(command).stdout.decode().rstrip()
+    firewall_id = exec_test_command(command)
 
     yield firewall_id
 
@@ -199,68 +199,6 @@ def generate_test_files(
         return file_paths
 
     return _generate_test_files
-
-
-# test helper specific to Domains test suite
-@pytest.fixture
-def master_domain():
-    timestamp = str(time.time_ns())
-
-    domain_id = (
-        exec_test_command(
-            DOMAIN_BASE_CMD
-            + [
-                "create",
-                "--type",
-                "master",
-                "--domain",
-                timestamp + "example.com",
-                "--soa_email",
-                "pthiel_test@linode.com",
-                "--text",
-                "--no-header",
-                "--format",
-                "id",
-            ]
-        )
-        .stdout.decode()
-        .rstrip()
-    )
-
-    yield domain_id
-
-    delete_target_id("domains", id=domain_id)
-
-
-@pytest.fixture
-def slave_domain():
-    timestamp = str(time.time_ns())
-
-    domain_id = (
-        exec_test_command(
-            DOMAIN_BASE_CMD
-            + [
-                "create",
-                "--type",
-                "slave",
-                "--domain",
-                timestamp + "-example.com",
-                "--master_ips",
-                "1.1.1.1",
-                "--text",
-                "--no-header",
-                "--delimiter",
-                ",",
-                "--format=id",
-            ]
-        )
-        .stdout.decode()
-        .rstrip()
-    )
-
-    yield domain_id
-
-    delete_target_id("domains", domain_id)
 
 
 # Test helpers specific to Linodes test suite

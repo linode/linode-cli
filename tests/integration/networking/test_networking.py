@@ -83,7 +83,7 @@ def test_view_an_ip_address(test_linode_id):
             "--text",
             "--no-headers",
         ]
-    ).stdout.rstrip()
+    )
 
     result = exec_test_command(
         BASE_CMD

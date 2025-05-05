@@ -2,48 +2,34 @@ import time
 
 from tests.integration.helpers import exec_test_command
 
-DEFAULT_RANDOM_PASS = (
-    exec_test_command(["openssl", "rand", "-base64", "32"])
-    .stdout.decode()
-    .rstrip()
-)
+DEFAULT_RANDOM_PASS = exec_test_command(["openssl", "rand", "-base64", "32"])
 DEFAULT_REGION = "us-ord"
 
-DEFAULT_TEST_IMAGE = (
-    exec_test_command(
-        [
-            "linode-cli",
-            "images",
-            "list",
-            "--text",
-            "--format",
-            "id",
-            "--no-headers",
-            "--is_public",
-            "True",
-        ]
-    )
-    .stdout.decode()
-    .rstrip()
-    .splitlines()[0]
-)
+DEFAULT_TEST_IMAGE = exec_test_command(
+    [
+        "linode-cli",
+        "images",
+        "list",
+        "--text",
+        "--format",
+        "id",
+        "--no-headers",
+        "--is_public",
+        "True",
+    ]
+).splitlines()[0]
 
-DEFAULT_LINODE_TYPE = (
-    exec_test_command(
-        [
-            "linode-cli",
-            "linodes",
-            "types",
-            "--text",
-            "--no-headers",
-            "--format",
-            "id",
-        ]
-    )
-    .stdout.decode()
-    .rstrip()
-    .splitlines()[0]
-)
+DEFAULT_LINODE_TYPE = exec_test_command(
+    [
+        "linode-cli",
+        "linodes",
+        "types",
+        "--text",
+        "--no-headers",
+        "--format",
+        "id",
+    ]
+).splitlines()[0]
 
 DEFAULT_LABEL = "cli-default"
 
@@ -64,7 +50,7 @@ def wait_until(linode_id: "str", timeout, status: "str", period=5):
                 "--text",
                 "--no-headers",
             ]
-        ).stdout.decode()
+        ).stdout
         if status in result:
             return True
         time.sleep(period)
@@ -75,31 +61,27 @@ def create_linode(
     firewall_id: "str", test_region=DEFAULT_REGION, disk_encryption=False
 ):
     # create linode
-    linode_id = (
-        exec_test_command(
-            [
-                "linode-cli",
-                "linodes",
-                "create",
-                "--type",
-                DEFAULT_LINODE_TYPE,
-                "--region",
-                test_region,
-                "--image",
-                DEFAULT_TEST_IMAGE,
-                "--root_pass",
-                DEFAULT_RANDOM_PASS,
-                "--firewall_id",
-                firewall_id,
-                "--disk_encryption",
-                "enabled" if disk_encryption else "disabled",
-                "--format=id",
-                "--text",
-                "--no-headers",
-            ]
-        )
-        .stdout.decode()
-        .rstrip()
+    linode_id = exec_test_command(
+        [
+            "linode-cli",
+            "linodes",
+            "create",
+            "--type",
+            DEFAULT_LINODE_TYPE,
+            "--region",
+            test_region,
+            "--image",
+            DEFAULT_TEST_IMAGE,
+            "--root_pass",
+            DEFAULT_RANDOM_PASS,
+            "--firewall_id",
+            firewall_id,
+            "--disk_encryption",
+            "enabled" if disk_encryption else "disabled",
+            "--format=id",
+            "--text",
+            "--no-headers",
+        ]
     )
 
     return linode_id
@@ -111,71 +93,57 @@ def create_linode_backup_disabled(
     result = set_backups_enabled_in_account_settings(toggle=False)
 
     # create linode
-    linode_id = (
-        exec_test_command(
-            [
-                "linode-cli",
-                "linodes",
-                "create",
-                "--type",
-                DEFAULT_LINODE_TYPE,
-                "--region",
-                test_region,
-                "--image",
-                DEFAULT_TEST_IMAGE,
-                "--root_pass",
-                DEFAULT_RANDOM_PASS,
-                "--firewall_id",
-                firewall_id,
-                "--format=id",
-                "--text",
-                "--no-headers",
-                "--backups_enabled",
-                "false",
-            ]
-        )
-        .stdout.decode()
-        .rstrip()
+    linode_id = exec_test_command(
+        [
+            "linode-cli",
+            "linodes",
+            "create",
+            "--type",
+            DEFAULT_LINODE_TYPE,
+            "--region",
+            test_region,
+            "--image",
+            DEFAULT_TEST_IMAGE,
+            "--root_pass",
+            DEFAULT_RANDOM_PASS,
+            "--firewall_id",
+            firewall_id,
+            "--format=id",
+            "--text",
+            "--no-headers",
+            "--backups_enabled",
+            "false",
+        ]
     )
 
     return linode_id
 
 
 def shutdown_linodes():
-    linode_ids = (
-        exec_test_command(
-            [
-                BASE_CMD,
-                "linodes",
-                "list",
-                "--format",
-                "id",
-            ]
-        )
-        .stdout.decode()
-        .rstrip()
-        .splitlines()
-    )
+    linode_ids = exec_test_command(
+        [
+            BASE_CMD,
+            "linodes",
+            "list",
+            "--format",
+            "id",
+        ]
+    ).splitlines()
 
     for id in linode_ids:
         exec_test_command(["linode-cli", "linodes", "shutdown", id])
 
 
 def remove_linodes():
-    linode_ids = (
-        exec_test_command(
-            [
-                BASE_CMD,
-                "linodes",
-                "list",
-                "--format",
-                "id",
-            ]
-        )
-        .stdout.decode()
-        .rstrip()
-        .splitlines()
-    )
+    linode_ids = exec_test_command(
+        [
+            BASE_CMD,
+            "linodes",
+            "list",
+            "--format",
+            "id",
+        ]
+    ).splitlines()
 
     for id in linode_ids:
         exec_test_command(["linode-cli", "linodes", "delete", id])
@@ -217,7 +185,7 @@ def create_linode_and_wait(
     if ssh_key:
         command.extend(["--authorized_keys", ssh_key])
 
-    linode_id = exec_test_command(command).stdout.decode().strip()
+    linode_id = exec_test_command(command).stdout.strip()
 
     # wait until linode is running, wait_until returns True when it is in running state
     result = wait_until(linode_id=linode_id, timeout=240, status="running")
@@ -243,27 +211,22 @@ def set_backups_enabled_in_account_settings(toggle: bool):
     else:
         command.extend(["--backups_enabled", "false"])
 
-    result = exec_test_command(command).stdout.decode().rstrip()
+    result = exec_test_command(command)
 
     return result
 
 
 def get_disk_ids(linode_id):
-    disk_ids = (
-        exec_test_command(
-            BASE_CMD
-            + [
-                "disks-list",
-                linode_id,
-                "--text",
-                "--no-headers",
-                "--format",
-                "id",
-            ]
-        )
-        .stdout.decode()
-        .rstrip()
-        .splitlines()
-    )
+    disk_ids = exec_test_command(
+        BASE_CMD
+        + [
+            "disks-list",
+            linode_id,
+            "--text",
+            "--no-headers",
+            "--format",
+            "id",
+        ]
+    ).splitlines()
 
     return disk_ids

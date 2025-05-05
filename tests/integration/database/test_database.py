@@ -1,165 +1,59 @@
-import time
-
-import pytest
-
+from tests.integration.database.fixtures import (  # noqa: F401
+    test_mysql_cluster,
+    test_postgresql_cluster,
+)
+from tests.integration.database.helpers import get_engine_id, get_node_id
 from tests.integration.helpers import (
+    BASE_CMDS,
     assert_headers_in_lines,
-    delete_target_id,
     exec_test_command,
 )
-from tests.integration.linodes.helpers_linodes import DEFAULT_LABEL
-
-BASE_CMD = ["linode-cli", "databases"]
 
 
 def test_engines_list():
-    res = (
-        exec_test_command(BASE_CMD + ["engines", "--text", "--delimiter=,"])
-        .stdout.decode()
-        .rstrip()
+    res = exec_test_command(
+        BASE_CMDS["databases"] + ["engines", "--text", "--delimiter=,"]
     )
     lines = res.splitlines()
     headers = ["id", "engine", "version"]
     assert_headers_in_lines(headers, lines)
 
 
-timestamp = str(time.time_ns())
-mysql_database_label = DEFAULT_LABEL + "-mysql-" + timestamp
-postgresql_database_label = DEFAULT_LABEL + "-postgresql-" + timestamp
-
-
-@pytest.fixture(scope="package", autouse=True)
-def test_mysql_cluster():
-    database_id = (
-        exec_test_command(
-            BASE_CMD
-            + [
-                "mysql-create",
-                "--type",
-                "g6-nanode-1",
-                "--region",
-                "us-ord",
-                "--label",
-                mysql_database_label,
-                "--engine",
-                "mysql/8",
-                "--text",
-                "--delimiter",
-                ",",
-                "--no-headers",
-                "--format",
-                "id",
-                "--no-defaults",
-                "--format",
-                "id",
-            ]
-        )
-        .stdout.decode()
-        .rstrip()
-    )
-
-    yield database_id
-
-    delete_target_id(
-        target="databases", delete_command="mysql-delete", id=database_id
-    )
-
-
 def test_mysql_suspend_resume(test_mysql_cluster):
     database_id = test_mysql_cluster
     res = exec_test_command(
-        BASE_CMD + ["mysql-suspend", database_id, "--text", "--delimiter=,"]
-    ).stdout.decode()
+        BASE_CMDS["databases"]
+        + ["mysql-suspend", database_id, "--text", "--delimiter=,"]
+    )
     assert "Request failed: 400" not in res
 
     res = exec_test_command(
-        BASE_CMD + ["mysql-resume", database_id, "--text", "--delimiter=,"]
-    ).stdout.decode()
+        BASE_CMDS["databases"]
+        + ["mysql-resume", database_id, "--text", "--delimiter=,"]
+    )
     assert "Request failed: 400" not in res
-
-
-@pytest.fixture(scope="package", autouse=True)
-def test_postgresql_cluster():
-    database_id = (
-        exec_test_command(
-            BASE_CMD
-            + [
-                "postgresql-create",
-                "--type",
-                "g6-nanode-1",
-                "--region",
-                "us-ord",
-                "--label",
-                postgresql_database_label,
-                "--engine",
-                "postgresql/16",
-                "--text",
-                "--delimiter",
-                ",",
-                "--no-headers",
-                "--format",
-                "id",
-                "--no-defaults",
-                "--format",
-                "id",
-            ]
-        )
-        .stdout.decode()
-        .rstrip()
-    )
-
-    yield database_id
-
-    delete_target_id(
-        target="databases", delete_command="postgresql-delete", id=database_id
-    )
 
 
 def test_postgresql_suspend_resume(test_postgresql_cluster):
     database_id = test_postgresql_cluster
     res = exec_test_command(
-        BASE_CMD
+        BASE_CMDS["databases"]
         + ["postgresql-suspend", database_id, "--text", "--delimiter=,"]
-    ).stdout.decode()
+    )
     assert "Request failed: 400" not in res
 
     res = exec_test_command(
-        BASE_CMD + ["postgresql-resume", database_id, "--text", "--delimiter=,"]
-    ).stdout.decode()
+        BASE_CMDS["databases"]
+        + ["postgresql-resume", database_id, "--text", "--delimiter=,"]
+    )
     assert "Request failed: 400" not in res
 
 
-@pytest.fixture
-def get_engine_id():
-    engine_id = (
-        exec_test_command(
-            BASE_CMD
-            + [
-                "engines",
-                "--text",
-                "--no-headers",
-                "--delimiter",
-                ",",
-                "--format",
-                "id",
-            ]
-        )
-        .stdout.decode()
-        .rstrip()
-        .splitlines()
-    )
-    first_id = engine_id[0]
-    yield first_id
-
-
-def test_engines_view(get_engine_id):
-    engine_id = get_engine_id
-    res = (
-        exec_test_command(
-            BASE_CMD + ["engine-view", engine_id, "--text", "--delimiter=,"]
-        )
-        .stdout.decode()
-        .rstrip()
+def test_engines_view():
+    engine_id = get_engine_id()
+    res = exec_test_command(
+        BASE_CMDS["databases"]
+        + ["engine-view", engine_id, "--text", "--delimiter=,"]
     )
 
     lines = res.splitlines()
@@ -169,10 +63,8 @@ def test_engines_view(get_engine_id):
 
 
 def test_databases_list():
-    res = (
-        exec_test_command(BASE_CMD + ["list", "--text", "--delimiter=,"])
-        .stdout.decode()
-        .rstrip()
+    res = exec_test_command(
+        BASE_CMDS["databases"] + ["list", "--text", "--delimiter=,"]
     )
 
     lines = res.splitlines()
@@ -182,10 +74,8 @@ def test_databases_list():
 
 
 def test_mysql_list():
-    res = (
-        exec_test_command(BASE_CMD + ["mysql-list", "--text", "--delimiter=,"])
-        .stdout.decode()
-        .rstrip()
+    res = exec_test_command(
+        BASE_CMDS["databases"] + ["mysql-list", "--text", "--delimiter=,"]
     )
 
     lines = res.splitlines()
@@ -196,12 +86,8 @@ def test_mysql_list():
 
 
 def test_postgresql_list():
-    res = (
-        exec_test_command(
-            BASE_CMD + ["postgresql-list", "--text", "--delimiter=,"]
-        )
-        .stdout.decode()
-        .rstrip()
+    res = exec_test_command(
+        BASE_CMDS["databases"] + ["postgresql-list", "--text", "--delimiter=,"]
     )
 
     lines = res.splitlines()
@@ -212,47 +98,19 @@ def test_postgresql_list():
 
 
 def test_databases_types():
-    res = (
-        exec_test_command(BASE_CMD + ["types", "--text", "--delimiter=,"])
-        .stdout.decode()
-        .rstrip()
+    res = exec_test_command(
+        BASE_CMDS["databases"] + ["types", "--text", "--delimiter=,"]
     )
     lines = res.splitlines()
     headers = ["id", "label", "_split"]
     assert_headers_in_lines(headers, lines)
 
 
-@pytest.fixture
-def get_node_id():
-    node_id = (
-        exec_test_command(
-            BASE_CMD
-            + [
-                "types",
-                "--text",
-                "--no-headers",
-                "--delimiter",
-                ",",
-                "--format",
-                "id",
-            ]
-        )
-        .stdout.decode()
-        .rstrip()
-        .splitlines()
-    )
-    first_id = node_id[0]
-    yield first_id
-
-
-def test_databases_type_view(get_node_id):
-    node_id = get_node_id
-    res = (
-        exec_test_command(
-            BASE_CMD + ["type-view", node_id, "--text", "--delimiter=,"]
-        )
-        .stdout.decode()
-        .rstrip()
+def test_databases_type_view():
+    node_id = get_node_id()
+    res = exec_test_command(
+        BASE_CMDS["databases"]
+        + ["type-view", node_id, "--text", "--delimiter=,"]
     )
     lines = res.splitlines()
 
