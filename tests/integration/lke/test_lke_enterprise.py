@@ -1,6 +1,6 @@
 import json
+import re
 
-import pytest
 from pytest import MonkeyPatch
 
 from tests.integration.helpers import (
@@ -87,7 +87,6 @@ def test_create_lke_enterprise(monkeypatch: MonkeyPatch):
     )
 
 
-@pytest.mark.skip(reason="Commnad not available in spec < v4.198.0")
 def test_lke_tiered_versions_list():
     enterprise_tier_info_list = (
         exec_test_command(
@@ -106,7 +105,7 @@ def test_lke_tiered_versions_list():
 
     enterprise_ti = parsed[0]
 
-    assert enterprise_ti.get("id") == "v1.31.1+lke4"
+    assert re.match(r"^v\d+\.\d+\.\d+\+lke\d+$", enterprise_ti.get("id"))
     assert enterprise_ti.get("tier") == "enterprise"
 
     standard_tier_info_list = (
@@ -130,7 +129,6 @@ def test_lke_tiered_versions_list():
     assert s_ti_list[1].get("tier") == "standard"
 
 
-@pytest.mark.skip(reason="Commnad not available in spec < v4.198.0")
 def test_lke_tiered_versions_view():
     enterprise_tier_info = (
         exec_test_command(
