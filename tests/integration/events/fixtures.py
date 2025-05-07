@@ -4,7 +4,7 @@ from tests.integration.helpers import (
     BASE_CMDS,
     delete_target_id,
     exec_test_command,
-    get_random_text
+    get_random_text,
 )
 
 

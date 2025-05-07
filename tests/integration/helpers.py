@@ -27,6 +27,7 @@ MODULES = [
     "domains",
     "events",
     "image",
+    "image-upload",
     "firewalls",
     "kernels",
     "linodes",
@@ -72,7 +73,15 @@ def exec_failing_test_command(
     args: List[str], expected_code: int = ExitCodes.REQUEST_FAILED
 ):
     process = subprocess.run(args, stderr=subprocess.PIPE, text=True)
-    assert process.returncode == expected_code
+
+    if process.returncode != expected_code:
+        raise AssertionError(
+            f"Expected exit code {expected_code}, got {process.returncode}\n"
+            f"Command: {' '.join(args)}\n"
+            f"Stdout:\n{process.stdout}\n"
+            f"Stderr: {process.stderr}"
+        )
+
     return process.stderr.rstrip()
 
 
