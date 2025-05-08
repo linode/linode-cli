@@ -26,6 +26,7 @@ from linodecli.baked.request import (
 )
 from linodecli.baked.response import OpenAPIResponse
 from linodecli.exit_codes import ExitCodes
+from linodecli.help_formatter import SortingHelpFormatter
 from linodecli.output.output_handler import OutputHandler
 from linodecli.overrides import OUTPUT_OVERRIDES
 
@@ -852,6 +853,7 @@ class OpenAPIOperation:
         #  build an argparse
         parser = argparse.ArgumentParser(
             prog=f"linode-cli {self.command} {self.action}",
+            formatter_class=SortingHelpFormatter,
             description=self.summary,
         )
         for param in self.params:
