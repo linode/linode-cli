@@ -18,6 +18,7 @@ from linodecli.exit_codes import ExitCodes
 from linodecli.helpers import API_CA_PATH, API_VERSION_OVERRIDE
 
 from .baked.operation import (
+    ExplicitEmptyDictValue,
     ExplicitEmptyListValue,
     ExplicitNullValue,
     OpenAPIOperation,
@@ -303,13 +304,17 @@ def _traverse_request_body(o: Any) -> Any:
             if v is None:
                 continue
 
-            # Values that are expected to be serialized as empty lists
-            # and explicit None values are converted here.
+            # Values that are expected to be serialized as empty
+            # dicts, lists, and explicit None values are converted here.
             # See: operation.py
             # NOTE: These aren't handled at the top-level of this function
             # because we don't want them filtered out in the step below.
             if isinstance(v, ExplicitEmptyListValue):
                 result[k] = []
+                continue
+
+            if isinstance(v, ExplicitEmptyDictValue):
+                result[k] = {}
                 continue
 
             if isinstance(v, ExplicitNullValue):

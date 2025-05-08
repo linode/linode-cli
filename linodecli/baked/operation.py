@@ -12,7 +12,7 @@ import sys
 from collections import defaultdict
 from getpass import getpass
 from os import environ, path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 from urllib.parse import urlparse
 
 import openapi3.paths
@@ -48,7 +48,9 @@ def parse_boolean(value: str) -> bool:
     raise argparse.ArgumentTypeError("Expected a boolean value")
 
 
-def parse_dict(value: str) -> dict:
+def parse_dict(
+    value: str,
+) -> Union[Dict[str, Any], "ExplicitEmptyDictValue", "ExplicitEmptyListValue"]:
     """
     A helper function to decode incoming JSON data as python dicts.  This is
     intended to be passed to the `type=` kwarg for ArgumentParaser.add_argument.
@@ -57,14 +59,27 @@ def parse_dict(value: str) -> dict:
     :type value: str
 
     :returns: The dict value of the input.
-    :rtype: dict
+    :rtype: dict, ExplicitEmptyDictValue, or ExplicitEmptyListValue
     """
     if not isinstance(value, str):
         raise argparse.ArgumentTypeError("Expected a JSON string")
+
     try:
-        return json.loads(value)
+        result = json.loads(value)
     except Exception as e:
         raise argparse.ArgumentTypeError("Expected a JSON string") from e
+
+    # This is necessary because empty dicts and lists are excluded from requests
+    # by default, but we still want to support user-defined empty dict
+    # strings. This is particularly helpful when updating LKE node pool
+    # labels and taints.
+    if isinstance(result, dict) and result == {}:
+        return ExplicitEmptyDictValue()
+
+    if isinstance(result, list) and result == []:
+        return ExplicitEmptyListValue()
+
+    return result
 
 
 TYPES = {
@@ -87,6 +102,12 @@ class ExplicitNullValue:
 class ExplicitEmptyListValue:
     """
     A special type used to explicitly pass empty lists to the API.
+    """
+
+
+class ExplicitEmptyDictValue:
+    """
+    A special type used to explicitly pass empty dictionaries to the API.
     """
 
 
