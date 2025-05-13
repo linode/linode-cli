@@ -1,6 +1,6 @@
 from tests.integration.database.fixtures import (  # noqa: F401
-    test_mysql_cluster,
-    test_postgresql_cluster,
+    mysql_cluster,
+    postgresql_cluster,
 )
 from tests.integration.database.helpers import get_engine_id, get_node_id
 from tests.integration.helpers import (
@@ -19,8 +19,8 @@ def test_engines_list():
     assert_headers_in_lines(headers, lines)
 
 
-def test_mysql_suspend_resume(test_mysql_cluster):
-    database_id = test_mysql_cluster
+def test_mysql_suspend_resume(mysql_cluster):
+    database_id = mysql_cluster
     res = exec_test_command(
         BASE_CMDS["databases"]
         + ["mysql-suspend", database_id, "--text", "--delimiter=,"]
@@ -34,8 +34,8 @@ def test_mysql_suspend_resume(test_mysql_cluster):
     assert "Request failed: 400" not in res
 
 
-def test_postgresql_suspend_resume(test_postgresql_cluster):
-    database_id = test_postgresql_cluster
+def test_postgresql_suspend_resume(postgresql_cluster):
+    database_id = postgresql_cluster
     res = exec_test_command(
         BASE_CMDS["databases"]
         + ["postgresql-suspend", database_id, "--text", "--delimiter=,"]

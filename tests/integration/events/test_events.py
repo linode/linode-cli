@@ -3,7 +3,7 @@ import re
 import pytest
 
 from tests.integration.events.fixtures import (  # noqa: F401
-    events_test_domain_id,
+    events_create_domain,
 )
 from tests.integration.helpers import BASE_CMDS, exec_test_command
 
@@ -136,8 +136,8 @@ def test_filter_events_by_entity_id():
     )
 
 
-def test_create_domain_and_filter_domain_events(events_test_domain_id):
-    domain_id = events_test_domain_id
+def test_create_domain_and_filter_domain_events(events_create_domain):
+    domain_id = events_create_domain
     output = exec_test_command(
         BASE_CMDS["events"]
         + [

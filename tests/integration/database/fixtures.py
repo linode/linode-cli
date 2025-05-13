@@ -8,8 +8,8 @@ from tests.integration.helpers import (
 )
 
 
-@pytest.fixture(scope="package", autouse=True)
-def test_postgresql_cluster():
+@pytest.fixture(scope="module")
+def postgresql_cluster():
     postgresql_database_label = get_random_text(5) + "_postgresql"
 
     database_id = exec_test_command(
@@ -43,8 +43,8 @@ def test_postgresql_cluster():
     )
 
 
-@pytest.fixture(scope="package", autouse=True)
-def test_mysql_cluster():
+@pytest.fixture(scope="module")
+def mysql_cluster():
     mysql_database_label = get_random_text(5) + "_mysql"
 
     database_id = exec_test_command(

@@ -1,18 +1,15 @@
-import time
-
 import pytest
 
 from tests.integration.helpers import (
     BASE_CMDS,
     delete_target_id,
     exec_test_command,
+    get_random_text,
 )
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def master_domain():
-    timestamp = str(time.time_ns())
-
     domain_id = exec_test_command(
         BASE_CMDS["domains"]
         + [
@@ -20,7 +17,7 @@ def master_domain():
             "--type",
             "master",
             "--domain",
-            timestamp + "example.com",
+            get_random_text(5) + "-example.com",
             "--soa_email",
             "pthiel_test@linode.com",
             "--text",
@@ -35,10 +32,8 @@ def master_domain():
     delete_target_id("domains", id=domain_id)
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def slave_domain():
-    timestamp = str(time.time_ns())
-
     domain_id = exec_test_command(
         BASE_CMDS["domains"]
         + [
@@ -46,7 +41,7 @@ def slave_domain():
             "--type",
             "slave",
             "--domain",
-            timestamp + "-example.com",
+            get_random_text(5) + "-example.com",
             "--master_ips",
             "1.1.1.1",
             "--text",
@@ -62,9 +57,8 @@ def slave_domain():
     delete_target_id("domains", domain_id)
 
 
-@pytest.fixture
-def test_domain_and_record():
-    timestamp = str(time.time_ns())
+@pytest.fixture(scope="function")
+def domain_and_record():
     # Create domain
     domain_id = exec_test_command(
         BASE_CMDS["domains"]
@@ -73,7 +67,7 @@ def test_domain_and_record():
             "--type",
             "master",
             "--domain",
-            timestamp + "example.com",
+            get_random_text(5) + "-example.com",
             "--soa_email=pthiel@linode.com",
             "--text",
             "--no-header",

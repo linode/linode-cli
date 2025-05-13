@@ -11,7 +11,7 @@ FIREWALL_LABEL = "label-fw-test-" + get_random_text(5)
 
 
 @pytest.fixture(scope="session")
-def test_firewall_id():
+def firewall_id():
     firewall_id = exec_test_command(
         BASE_CMDS["firewalls"]
         + [

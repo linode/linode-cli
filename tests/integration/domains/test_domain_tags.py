@@ -9,12 +9,11 @@ from tests.integration.helpers import (
     delete_target_id,
     exec_failing_test_command,
     exec_test_command,
+    get_random_text
 )
 
 
-# @pytest.mark.skip(reason="BUG 943")
 def test_fail_to_create_master_domain_with_invalid_tags():
-    timestamp = str(time.time_ns())
     bad_tag = (
         "a" * 300
     )  # Tag validation rules changed — '*' is no longer rejected
@@ -26,8 +25,8 @@ def test_fail_to_create_master_domain_with_invalid_tags():
             "--type",
             "master",
             "--domain",
-            timestamp + "example.com",
-            "--soa_email=" + timestamp + "pthiel@linode.com",
+            get_random_text(5) + "example.com",
+            "--soa_email=" + get_random_text(5) + "pthiel@linode.com",
             "--text",
             "--no-header",
             "--format=id",
@@ -38,9 +37,7 @@ def test_fail_to_create_master_domain_with_invalid_tags():
     )
 
 
-# @pytest.mark.skip(reason="BUG 943")
 def test_fail_to_create_slave_domain_with_invalid_tags():
-    timestamp = str(time.time_ns())
     bad_tag = "*"
 
     exec_failing_test_command(
@@ -50,8 +47,8 @@ def test_fail_to_create_slave_domain_with_invalid_tags():
             "--type",
             "slave",
             "--domain",
-            timestamp + "example.com",
-            "--soa_email=" + timestamp + "pthiel@linode.com",
+            get_random_text(5) + "example.com",
+            "--soa_email=" + get_random_text(5) + "pthiel@linode.com",
             "--text",
             "--no-header",
             "--format=id",
@@ -64,7 +61,6 @@ def test_fail_to_create_slave_domain_with_invalid_tags():
 
 @pytest.mark.smoke
 def test_create_master_domain_with_tags():
-    timestamp = str(time.time_ns())
     tag = "foo"
 
     output = exec_test_command(
@@ -74,8 +70,8 @@ def test_create_master_domain_with_tags():
             "--type",
             "master",
             "--domain",
-            timestamp + "-example.com",
-            "--soa_email=" + timestamp + "pthiel@linode.com",
+            get_random_text(5) + "-example.com",
+            "--soa_email=" + get_random_text(5) + "pthiel@linode.com",
             "--text",
             "--no-header",
             "--delimiter=,",
@@ -93,7 +89,6 @@ def test_create_master_domain_with_tags():
 
 
 def test_delete_domain_and_tag():
-    timestamp = str(int(time.time()))
     tag = "zoo"
 
     domain_id = exec_test_command(
@@ -103,8 +98,8 @@ def test_delete_domain_and_tag():
             "--type",
             "master",
             "--domain",
-            timestamp + "-example.com",
-            "--soa_email=" + timestamp + "pthiel@linode.com",
+            get_random_text(5) + "-example.com",
+            "--soa_email=" + get_random_text(5) + "pthiel@linode.com",
             "--text",
             "--no-header",
             "--delimiter=,",

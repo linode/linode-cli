@@ -86,90 +86,18 @@ def exec_failing_test_command(
 
 
 # Delete/Remove helper functions (mainly used in clean-ups after test
-def delete_all_domains():
-    domain_ids = exec_test_command(
-        [
-            "linode-cli",
-            "--text",
-            "--no-headers",
-            "domains",
-            "list",
-            "--format=id",
-        ]
-    )
-    domain_id_arr = domain_ids.splitlines()
-
-    for id in domain_id_arr:
-        exec_test_command(["linode-cli", "domains", "delete", id])
-
-
-def delete_tag(arg: str):
-    result = exec_test_command(["linode-cli", "tags", "delete", arg])
-
-
 def delete_target_id(target: str, id: str, delete_command: str = "delete"):
     command = ["linode-cli", target, delete_command, id]
     try:
-        result = subprocess.run(
+        subprocess.run(
             command,
             check=True,  # Raises CalledProcessError on non-zero exit
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
         )
-        print(f"Success: {result.stdout}")
-    except subprocess.CalledProcessError as e:
-        print(f"Error executing command: {e.stderr}")
     except Exception as e:
-        print(f"Unexpected error: {e}")
-
-
-def remove_lke_clusters():
-    cluster_ids = exec_test_command(
-        [
-            "linode-cli",
-            "--text",
-            "--no-headers",
-            "lke",
-            "clusters-list",
-            "--format",
-            "id",
-        ]
-    ).splitlines()
-    for id in cluster_ids:
-        exec_test_command(["linode-cli", "lke", "cluster-delete", id])
-
-
-def remove_all(target: str):
-    entity_ids = ""
-    if target == "stackscripts":
-        entity_ids = exec_test_command(
-            [
-                "linode-cli",
-                "--is_public=false",
-                "--text",
-                "--no-headers",
-                target,
-                "list",
-                "--format",
-                "id",
-            ]
-        ).stdout.splitlines()
-    else:
-        entity_ids = exec_test_command(
-            [
-                "linode-cli",
-                "--text",
-                "--no-headers",
-                target,
-                "list",
-                "--format",
-                "id",
-            ]
-        ).stdout.splitlines()
-
-    for id in entity_ids:
-        exec_test_command(["linode-cli", target, "delete", id])
+        raise RuntimeError(f"Error executing command '{' '.join(command)}': {e}")
 
 
 def count_lines(text: str):

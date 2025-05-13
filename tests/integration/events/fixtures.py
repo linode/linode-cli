@@ -8,8 +8,8 @@ from tests.integration.helpers import (
 )
 
 
-@pytest.fixture
-def events_test_domain_id():
+@pytest.fixture(scope="function")
+def events_create_domain():
     # Create domain
     domain_id = exec_test_command(
         BASE_CMDS["domains"]

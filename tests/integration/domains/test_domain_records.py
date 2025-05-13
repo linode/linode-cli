@@ -6,7 +6,7 @@ import pytest
 from tests.integration.domains.fixtures import (  # noqa: F401
     master_domain,
     slave_domain,
-    test_domain_and_record,
+    domain_and_record,
 )
 from tests.integration.helpers import (
     BASE_CMDS,
@@ -55,8 +55,8 @@ def test_create_a_domain(master_domain):
 
 
 @pytest.mark.smoke
-def test_create_domain_srv_record(test_domain_and_record):
-    domain_id = test_domain_and_record[0]
+def test_create_domain_srv_record(domain_and_record):
+    domain_id = domain_and_record[0]
 
     output = exec_test_command(
         BASE_CMDS["domains"]
@@ -77,13 +77,13 @@ def test_create_domain_srv_record(test_domain_and_record):
     )
 
     assert re.search(
-        r"[0-9]+,SRV,_telnet\._tcp,target-test-record\.\d+example\.com,0,4,4",
+        r"[0-9]+,SRV,_telnet\._tcp,target-test-record\.\w+-example\.com,0,4,4",
         str(output),
     )
 
 
-def test_list_srv_record(test_domain_and_record):
-    domain_id = test_domain_and_record[0]
+def test_list_srv_record(domain_and_record):
+    domain_id = domain_and_record[0]
     output = exec_test_command(
         BASE_CMDS["domains"]
         + [
@@ -96,15 +96,15 @@ def test_list_srv_record(test_domain_and_record):
     )
 
     assert re.search(
-        r"[0-9]+,SRV,_telnet\._tcp,record-setup\.\d+example\.com,0,4,4",
+        r"[0-9]+,SRV,_telnet\._tcp,record-setup\.\w+-example\.com,0,4,4",
         str(output),
     )
 
 
 @pytest.mark.smoke
-def test_view_domain_record(test_domain_and_record):
-    domain_id = test_domain_and_record[0]
-    record_id = test_domain_and_record[1]
+def test_view_domain_record(domain_and_record):
+    domain_id = domain_and_record[0]
+    record_id = domain_and_record[1]
 
     output = exec_test_command(
         BASE_CMDS["domains"]
@@ -119,14 +119,14 @@ def test_view_domain_record(test_domain_and_record):
     )
 
     assert re.search(
-        r"[0-9]+,SRV,_telnet\._tcp,record-setup\.\d+example\.com,0,4,4",
+        r"[0-9]+,SRV,_telnet\._tcp,record-setup\.\w+-example\.com,0,4,4",
         output,
     )
 
 
-def test_update_domain_record(test_domain_and_record):
-    domain_id = test_domain_and_record[0]
-    record_id = test_domain_and_record[1]
+def test_update_domain_record(domain_and_record):
+    domain_id = domain_and_record[0]
+    record_id = domain_and_record[1]
 
     output = exec_test_command(
         BASE_CMDS["domains"]
@@ -142,21 +142,21 @@ def test_update_domain_record(test_domain_and_record):
     )
 
     assert re.search(
-        r"[0-9]+,SRV,_telnet\._tcp,record-setup-update\.\d+example\.com,0,4,4",
+        r"[0-9]+,SRV,_telnet\._tcp,record-setup-update\.\w+-example\.com,0,4,4",
         str(output),
     )
 
 
-def test_delete_a_domain_record(test_domain_and_record):
-    domain_id = test_domain_and_record[0]
-    record_id = test_domain_and_record[1]
+def test_delete_a_domain_record(domain_and_record):
+    domain_id = domain_and_record[0]
+    record_id = domain_and_record[1]
 
     exec_test_command(
         BASE_CMDS["domains"] + ["records-delete", domain_id, record_id]
     )
 
 
-def test_help_records_list(test_domain_and_record):
+def test_help_records_list(domain_and_record):
     output = exec_test_command(
         BASE_CMDS["domains"]
         + [

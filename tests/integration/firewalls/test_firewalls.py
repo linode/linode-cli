@@ -5,7 +5,7 @@ import pytest
 from linodecli.exit_codes import ExitCodes
 from tests.integration.firewalls.fixtures import (  # noqa: F401
     FIREWALL_LABEL,
-    test_firewall_id,
+    firewall_id,
 )
 from tests.integration.helpers import (
     BASE_CMDS,
@@ -17,8 +17,8 @@ from tests.integration.helpers import (
 
 
 @pytest.mark.smoke
-def test_view_firewall(test_firewall_id):
-    firewall_id = test_firewall_id
+def test_view_firewall(firewall_id):
+    firewall_id = firewall_id
 
     result = exec_test_command(
         BASE_CMDS["firewalls"]
@@ -35,8 +35,8 @@ def test_view_firewall(test_firewall_id):
     assert re.search(firewall_id + "," + FIREWALL_LABEL + ",enabled", result)
 
 
-def test_list_firewall(test_firewall_id):
-    firewall_id = test_firewall_id
+def test_list_firewall(firewall_id):
+    firewall_id = firewall_id
 
     result = exec_test_command(
         BASE_CMDS["firewalls"]
@@ -115,7 +115,7 @@ def test_fails_to_create_firewall_without_outbound_policy():
     assert "outbound_policy is required" in result
 
 
-def test_firewall_label_must_be_unique_upon_creation(test_firewall_id):
+def test_firewall_label_must_be_unique_upon_creation(firewall_id):
     result = exec_failing_test_command(
         BASE_CMDS["firewalls"]
         + [
@@ -167,8 +167,8 @@ def test_create_firewall_with_inbound_and_outbound_args():
     delete_target_id(target="firewalls", id=firewall_id)
 
 
-def test_update_firewall(test_firewall_id):
-    firewall_id = test_firewall_id
+def test_update_firewall(firewall_id):
+    firewall_id = firewall_id
     updated_tag = "updated-tag" + get_random_text(5)
     updated_label = "updated-" + get_random_text(5)
 
