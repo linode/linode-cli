@@ -15,17 +15,71 @@ def get_completions(ops, help_flag, action):
         return (
             "linode-cli completion [SHELL]\n\n"
             "Prints shell completions for the requested shell to stdout.\n"
-            "Currently, only completions for bash and fish are available."
+            "Currently, only completions for bash, fish, and zsh are available."
         )
     if action == "bash":
         return get_bash_completions(ops)
     if action == "fish":
         return get_fish_completions(ops)
+    if action == "zsh":
+        return get_zsh_completions(ops)
     return (
-        "Completions are only available for bash and fish at this time.\n\n"
+        "Completions are only available for bash, fish, and zsh at this time.\n\n"
         "To retrieve these, please invoke as\n"
-        "`linode-cli completion bash` or `linode-cli completion fish`"
+        "`linode-cli completion bash`, `linode-cli completion fish`, or `linode-cli completion zsh`"
     )
+
+
+def get_zsh_completions(ops):
+    """
+    Generates and returns Zsh shell completions based on the baked spec
+    """
+    completion_template = Template(
+        """#compdef linode-cli linode lin
+
+# This is a generated file by Linode-CLI! Do not modify!
+local -a subcommands
+subcommands=(
+'$subcommands --help'
+)
+
+local -a command
+local -a opts
+
+_arguments -C \\
+  "1: :($subcommands)" \\
+  '*:: :->subcmds' && return 0
+
+if (( CURRENT == 2 )); then
+  case $words[1] in
+    $command_items
+  esac
+fi
+"""
+    )
+
+    command_template = Template(
+        """$command)
+      command=(
+          '$actions --help'
+      )
+      _describe -t commands "$command command" command
+      ;;"""
+    )
+
+    command_blocks = [
+        command_template.safe_substitute(
+            command=op, actions=" ".join(list(actions.keys()))
+        )
+        for op, actions in ops.items()
+    ]
+
+    rendered = completion_template.safe_substitute(
+        subcommands=" ".join(ops.keys()),
+        command_items="\n".join(command_blocks),
+    )
+
+    return rendered
 
 
 def get_fish_completions(ops):
