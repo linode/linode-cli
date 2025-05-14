@@ -15,6 +15,27 @@ from tests.integration.helpers import (
 BASE_CMD = ["linode-cli", "lke"]
 
 
+def get_lke_enterprise_id():
+    enterprise_tier_info_list = (
+        exec_test_command(
+            BASE_CMD
+            + [
+                "tiered-versions-list",
+                "enterprise",
+                "--json",
+            ]
+        )
+        .stdout.decode()
+        .rstrip()
+    )
+
+    parsed = json.loads(enterprise_tier_info_list)
+
+    enterprise_ti = parsed[0]
+
+    return enterprise_ti.get("id")
+
+
 def test_enterprise_tier_available_in_types(monkeypatch: MonkeyPatch):
     monkeypatch.setenv("LINODE_CLI_API_VERSION", "v4beta")
     lke_types = (
@@ -41,6 +62,8 @@ def test_create_lke_enterprise(monkeypatch: MonkeyPatch):
         required_capabilities=["Linodes", "Kubernetes Enterprise"]
     )
 
+    k8s_version = get_lke_enterprise_id()
+
     output = (
         exec_test_command(
             BASE_CMD
@@ -51,7 +74,7 @@ def test_create_lke_enterprise(monkeypatch: MonkeyPatch):
                 "--tier",
                 "enterprise",
                 "--k8s_version",
-                "v1.31.1+lke4",
+                k8s_version,
                 "--node_pools.type",
                 "g6-standard-6",
                 "--node_pools.count",
@@ -77,7 +100,7 @@ def test_create_lke_enterprise(monkeypatch: MonkeyPatch):
     assert_headers_in_lines(headers, output.splitlines())
 
     assert label in output
-    assert "v1.31.1+lke4" in output
+    assert k8s_version in output
     assert "enterprise" in output
 
     delete_target_id(
@@ -122,21 +145,22 @@ def test_lke_tiered_versions_list():
     )
 
     s_ti_list = json.loads(standard_tier_info_list)
+    version_pattern = r"^\d+\.\d+$"
 
-    assert s_ti_list[0].get("id") == "1.32"
-    assert s_ti_list[0].get("tier") == "standard"
-    assert s_ti_list[1].get("id") == "1.31"
-    assert s_ti_list[1].get("tier") == "standard"
+    for item in s_ti_list:
+        assert re.match(version_pattern, item.get("id"))
+        assert item.get("tier") == "standard"
 
 
 def test_lke_tiered_versions_view():
+    enterprise_id = get_lke_enterprise_id()
     enterprise_tier_info = (
         exec_test_command(
             BASE_CMD
             + [
                 "tiered-version-view",
                 "enterprise",
-                "v1.31.1+lke4",
+                enterprise_id,
                 "--json",
             ]
         )
@@ -148,7 +172,7 @@ def test_lke_tiered_versions_view():
 
     enterprise_ti = parsed[0]
 
-    assert enterprise_ti.get("id") == "v1.31.1+lke4"
+    assert enterprise_ti.get("id") == enterprise_id
     assert enterprise_ti.get("tier") == "enterprise"
 
     standard_tier_info = (
@@ -169,5 +193,4 @@ def test_lke_tiered_versions_view():
 
     stardard_ti = parsed[0]
 
-    assert stardard_ti.get("id") == "1.31"
     assert stardard_ti.get("tier") == "standard"
