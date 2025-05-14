@@ -4,8 +4,8 @@ from tests.integration.helpers import (
 )
 
 
-def get_node_id():
-    node_ids = exec_test_command(
+def get_db_type_id():
+    db_type_ids = exec_test_command(
         BASE_CMDS["databases"]
         + [
             "types",
@@ -17,7 +17,7 @@ def get_node_id():
             "id",
         ]
     ).splitlines()
-    return node_ids[0] if node_ids else None
+    return db_type_ids[0] if db_type_ids else None
 
 
 def get_engine_id():

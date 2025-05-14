@@ -4,9 +4,9 @@ import time
 import pytest
 
 from tests.integration.domains.fixtures import (  # noqa: F401
+    domain_and_record,
     master_domain,
     slave_domain,
-    domain_and_record,
 )
 from tests.integration.helpers import (
     BASE_CMDS,

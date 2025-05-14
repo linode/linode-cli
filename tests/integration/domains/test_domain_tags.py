@@ -1,5 +1,4 @@
 import re
-import time
 
 import pytest
 
@@ -9,7 +8,7 @@ from tests.integration.helpers import (
     delete_target_id,
     exec_failing_test_command,
     exec_test_command,
-    get_random_text
+    get_random_text,
 )
 
 

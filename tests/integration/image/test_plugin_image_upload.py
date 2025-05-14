@@ -12,7 +12,6 @@ from tests.integration.helpers import (
     get_random_text,
 )
 from tests.integration.image.fixtures import fake_image_file  # noqa: F401
-from tests.integration.image.helpers import get_first_image_id
 
 BASE_CMD = BASE_CMDS["image-upload"] + ["--region", "us-iad"]
 
@@ -111,7 +110,21 @@ def test_image_list():
 
 
 def test_image_view():
-    image_id = get_first_image_id()
+    image_ids = exec_test_command(
+        [
+            "linode-cli",
+            "images",
+            "list",
+            "--text",
+            "--no-headers",
+            "--delimiter",
+            ",",
+            "--format",
+            "id",
+        ]
+    ).splitlines()
+    image_id = image_ids[0].split(",")[0]
+
     res = exec_test_command(
         [
             "linode-cli",

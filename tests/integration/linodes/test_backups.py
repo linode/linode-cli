@@ -12,10 +12,6 @@ from tests.integration.linodes.helpers_linodes import (
     set_backups_enabled_in_account_settings,
 )
 
-# ##################################################################
-# #  WARNING: THIS TEST WILL DELETE ALL OF YOUR LINODES            #
-# #  WARNING: USE A SEPARATE TEST ACCOUNT WHEN RUNNING THESE TESTS #
-# ##################################################################
 snapshot_label = "test_snapshot1"
 
 

@@ -2,7 +2,7 @@ from tests.integration.database.fixtures import (  # noqa: F401
     mysql_cluster,
     postgresql_cluster,
 )
-from tests.integration.database.helpers import get_engine_id, get_node_id
+from tests.integration.database.helpers import get_db_type_id, get_engine_id
 from tests.integration.helpers import (
     BASE_CMDS,
     assert_headers_in_lines,
@@ -107,10 +107,10 @@ def test_databases_types():
 
 
 def test_databases_type_view():
-    node_id = get_node_id()
+    db_type_id = get_db_type_id()
     res = exec_test_command(
         BASE_CMDS["databases"]
-        + ["type-view", node_id, "--text", "--delimiter=,"]
+        + ["type-view", db_type_id, "--text", "--delimiter=,"]
     )
     lines = res.splitlines()
 

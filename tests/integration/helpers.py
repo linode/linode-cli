@@ -97,7 +97,9 @@ def delete_target_id(target: str, id: str, delete_command: str = "delete"):
             text=True,
         )
     except Exception as e:
-        raise RuntimeError(f"Error executing command '{' '.join(command)}': {e}")
+        raise RuntimeError(
+            f"Error executing command '{' '.join(command)}': {e}"
+        )
 
 
 def count_lines(text: str):
