@@ -249,9 +249,11 @@ class OpenAPIResponse:
         elif self.is_paginated:
             # for paginated responses, the model we're parsing is the item in the paginated
             # response, not the pagination envelope
-            self.attrs = _parse_response_model(
-                response.schema.properties["data"].items
+            data_schema = response.schema.properties["data"]
+            target_schema = (
+                data_schema.items if data_schema.items else data_schema
             )
+            self.attrs = _parse_response_model(target_schema)
         else:
             self.attrs = _parse_response_model(response.schema)
 
