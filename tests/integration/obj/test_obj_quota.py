@@ -4,10 +4,6 @@ import random
 from tests.integration.helpers import exec_test_command
 from tests.integration.obj.conftest import CLI_CMD
 
-# │ object-storage-quota-usage-view │ Get Object Storage quota usage data.          │
-# │ object-storage-quota-view       │ Get an Object Storage quota.                  │
-# │ object-storage-quotas           │ List Object Storage quotas.
-
 
 def get_quota_id():
     response = (

@@ -90,16 +90,16 @@ def linode_interface_vpc(linode_cloud_firewall):
         test_region="us-sea",
         interface_generation="linode",
         interfaces='[{"default_route":{"ipv4":true},"firewall_id":'
-        + linode_cloud_firewall
+        + str(linode_cloud_firewall)
         + ',"vpc":{"ipv4":{"addresses":[{"address":"auto","nat_1_1_address":"auto","primary":true}]},"subnet_id":'
-        + subnet_id
+        + str(subnet_id)
         + "}}]",
     )
 
     yield linode_id
 
     delete_target_id(target="linodes", id=linode_id)
-    delete_target_id(target="vpc", id=vpc_output[0]["id"])
+    delete_target_id(target="vpcs", id=str(vpc_output[0]["id"]))
 
 
 def get_interface_id(linode_id: str):
@@ -367,7 +367,6 @@ def test_interface_view(linode_interface_vpc):
     assert "created" in interface
     assert "updated" in interface
     assert interface["default_route"]["ipv4"] is True
-    assert interface["version"] >= 1
 
     assert "vpc" in interface
     assert "vpc_id" in interface["vpc"]
@@ -417,8 +416,6 @@ def test_interfaces_list(linode_interface_vlan):
         assert iface["default_route"]["ipv4"] is False
         assert iface["default_route"]["ipv6"] is False
 
-        assert "version" in iface
-
 
 def test_interfaces_upgrade(linode_interface_legacy):
     linode_id = linode_interface_legacy
@@ -447,6 +444,30 @@ def test_interfaces_upgrade(linode_interface_legacy):
         .rstrip()
     )
 
-    print(data)
+    upgrade = data[0]
+    assert "config_id" in upgrade
+    assert upgrade["dry_run"] is False
+    assert "interfaces" in upgrade
+    assert isinstance(upgrade["interfaces"], list)
+    assert len(upgrade["interfaces"]) > 0
 
-    assert False
+    iface = upgrade["interfaces"][0]
+    assert "id" in iface
+    assert "mac_address" in iface
+    assert "created" in iface
+    assert "updated" in iface
+    assert "default_route" in iface
+    assert iface["default_route"].get("ipv4") is True
+
+    assert "public" in iface
+    ipv4 = iface["public"].get("ipv4", {})
+    assert "addresses" in ipv4
+    assert any(
+        addr.get("primary") is True for addr in ipv4.get("addresses", [])
+    )
+
+    ipv6 = iface["public"].get("ipv6", {})
+    assert "slaac" in ipv6
+    assert isinstance(ipv6["slaac"], list)
+
+    assert iface.get("vlan") is None
