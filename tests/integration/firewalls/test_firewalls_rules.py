@@ -1,13 +1,16 @@
 import json
 import re
-import time
 
 import pytest
 
-from tests.integration.helpers import delete_target_id, exec_test_command
+from tests.integration.helpers import (
+    delete_target_id,
+    exec_test_command,
+    get_random_text,
+)
 
 BASE_CMD = ["linode-cli", "firewalls", "rules-update"]
-FIREWALL_LABEL = "label-fw-test" + str(int(time.time()))
+FIREWALL_LABEL = "fw-" + get_random_text(5)
 
 
 @pytest.fixture
@@ -35,7 +38,7 @@ def test_firewall_id():
     )
 
     yield firewall_id
-    # teardown - delete all firewalls
+
     delete_target_id(target="firewalls", id=firewall_id)
 
 
@@ -81,8 +84,7 @@ def test_add_multiple_rules(test_firewall_id):
 
 
 def test_swap_rules():
-    timestamp = str(time.time_ns())
-    firewall_label = "label-fw-test" + timestamp
+    firewall_label = "fw-" + get_random_text(5)
     inbound_rule_1 = '{"ports": "22", "protocol": "TCP", "addresses": {"ipv4": ["198.0.0.1/32"]}, "action": "ACCEPT", "label": "swap_rule_1"}'
     inbound_rule_2 = '{"ports": "22", "protocol": "TCP", "addresses": {"ipv4": ["198.0.0.2/32"]}, "action": "ACCEPT", "label": "swap_rule_2"}'
     inbound_rules = "[" + inbound_rule_1 + "," + inbound_rule_2 + "]"
@@ -160,8 +162,7 @@ def test_update_inbound_and_outbound_policy(test_firewall_id):
 
 
 def test_remove_one_rule_via_rules_update():
-    timestamp = str(time.time_ns())
-    firewall_label = "label-fw-test" + timestamp
+    firewall_label = "fw-" + get_random_text(5)
     inbound_rule_1 = '{"ports": "22", "protocol": "TCP", "addresses": {"ipv4": ["198.0.0.1/32"]}, "action": "ACCEPT", "label": "test_rule_1"}'
     inbound_rule_2 = '{"ports": "22", "protocol": "TCP", "addresses": {"ipv4": ["198.0.0.2/32"]}, "action": "ACCEPT", "label": "rule_to_delete"}'
     inbound_rules = "[" + inbound_rule_1 + "," + inbound_rule_2 + "]"

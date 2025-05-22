@@ -22,7 +22,7 @@ def test_help_page_for_non_aliased_actions():
     assert contains_at_least_one_of(
         wrapped_output,
         [
-            "API Documentation:  https://www.linode.com/docs/api/linode-instances/#linodes-list",
+            "API Documentation: https://techdocs.akamai.com/linode-api/reference/get-linode",
             "API Documentation:  https://techdocs.akamai.com/linode-api/reference/get-linode-instances",
         ],
     )
@@ -44,7 +44,7 @@ def test_help_page_for_aliased_actions():
     assert contains_at_least_one_of(
         wrapped_output,
         [
-            "API Documentation:  https://www.linode.com/docs/api/linode-instances/#linodes-list",
+            "API Documentation: https://techdocs.akamai.com/linode-api/reference/get-linode",
             "API Documentation:  https://techdocs.akamai.com/linode-api/reference/get-linode-instances",
         ],
     )
