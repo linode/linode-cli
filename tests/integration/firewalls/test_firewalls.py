@@ -3,6 +3,7 @@ import re
 import time
 
 import pytest
+from pytest import MonkeyPatch
 
 from linodecli.exit_codes import ExitCodes
 from tests.integration.helpers import (
@@ -290,7 +291,8 @@ def test_firewall_settings_update_and_list(test_firewall_id):
             assert firewall_ids[key] == int(test_firewall_id)
 
 
-def test_firewall_templates_list():
+def test_firewall_templates_list(monkeypatch: MonkeyPatch):
+    monkeypatch.setenv("LINODE_CLI_API_VERSION", "v4beta")
     data = json.loads(
         exec_test_command(BASE_CMD + ["templates-list", "--json"])
         .stdout.decode()
@@ -318,7 +320,8 @@ def test_firewall_templates_list():
             assert "addresses" in rule
 
 
-def test_firewall_template_view():
+def test_firewall_template_view(monkeypatch: MonkeyPatch):
+    monkeypatch.setenv("LINODE_CLI_API_VERSION", "v4beta")
     for slug in ["akamai-non-prod", "vpc", "public"]:
         data = json.loads(
             exec_test_command(BASE_CMD + ["template-view", slug, "--json"])

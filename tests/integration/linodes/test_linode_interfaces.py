@@ -1,6 +1,7 @@
 import json
 
 import pytest
+from pytest import MonkeyPatch
 
 from tests.integration.helpers import (
     delete_target_id,
@@ -43,7 +44,7 @@ def linode_interface_vlan(linode_cloud_firewall):
 
     yield linode_id
 
-    # delete_target_id(target="linodes", id=linode_id)
+    delete_target_id(target="linodes", id=linode_id)
 
 
 @pytest.fixture(scope="session")
@@ -143,7 +144,8 @@ def get_ipv4_addr(linode_id: "str"):
     return str(ipv4_addr)
 
 
-def test_interface_add(linode_cloud_firewall):
+def test_interface_add(linode_cloud_firewall, monkeypatch: MonkeyPatch):
+    monkeypatch.setenv("LINODE_CLI_API_VERSION", "v4beta")
     linode_id = create_linode(
         firewall_id=linode_cloud_firewall,
         test_region="us-sea",
@@ -214,9 +216,10 @@ def test_interface_add(linode_cloud_firewall):
     delete_target_id(target="linodes", id=linode_id)
 
 
-def test_interface_firewalls_list(linode_interface_public):
-    linode_id = linode_interface_public
+def test_interface_firewalls_list(linode_interface_public, monkeypatch: MonkeyPatch):
+    monkeypatch.setenv("LINODE_CLI_API_VERSION", "v4beta")
 
+    linode_id = linode_interface_public
     interface_id = get_interface_id(linode_id)
 
     data = json.loads(
@@ -247,9 +250,10 @@ def test_interface_firewalls_list(linode_interface_public):
     assert "rules" in firewall and isinstance(firewall["rules"], dict)
 
 
-def test_interface_settings_update(linode_interface_public):
-    linode_id = linode_interface_public
+def test_interface_settings_update(linode_interface_public, monkeypatch: MonkeyPatch):
+    monkeypatch.setenv("LINODE_CLI_API_VERSION", "v4beta")
 
+    linode_id = linode_interface_public
     interface_id = get_interface_id(linode_id)
 
     data = json.loads(
@@ -286,7 +290,9 @@ def test_interface_settings_update(linode_interface_public):
     assert default_route["ipv6_eligible_interface_ids"] == [int(interface_id)]
 
 
-def test_interface_update(linode_interface_public):
+def test_interface_update(linode_interface_public, monkeypatch: MonkeyPatch):
+    monkeypatch.setenv("LINODE_CLI_API_VERSION", "v4beta")
+
     linode_id = linode_interface_public
     interface_id = get_interface_id(linode_id)
     ipv4_addr = get_ipv4_addr(linode_id)
@@ -340,9 +346,10 @@ def test_interface_update(linode_interface_public):
     assert all("range" in r and r["range"].endswith("/64") for r in ipv6_ranges)
 
 
-def test_interface_view(linode_interface_vpc):
-    linode_id = linode_interface_vpc
+def test_interface_view(linode_interface_vpc, monkeypatch: MonkeyPatch):
+    monkeypatch.setenv("LINODE_CLI_API_VERSION", "v4beta")
 
+    linode_id = linode_interface_vpc
     interface_id = get_interface_id(linode_id)
 
     data = json.loads(
@@ -379,7 +386,8 @@ def test_interface_view(linode_interface_vpc):
     )
 
 
-def test_interfaces_list(linode_interface_vlan):
+def test_interfaces_list(linode_interface_vlan, monkeypatch: MonkeyPatch):
+    monkeypatch.setenv("LINODE_CLI_API_VERSION", "v4beta")
     linode_id = linode_interface_vlan
 
     data = json.loads(
@@ -418,7 +426,9 @@ def test_interfaces_list(linode_interface_vlan):
 
 
 @pytest.mark.flaky(reruns=3, reruns_delay=2)
-def test_interfaces_upgrade(linode_interface_legacy):
+def test_interfaces_upgrade(linode_interface_legacy, monkeypatch: MonkeyPatch):
+    monkeypatch.setenv("LINODE_CLI_API_VERSION", "v4beta")
+
     linode_id = linode_interface_legacy
 
     # wait boot/provisioning
