@@ -216,7 +216,9 @@ def test_interface_add(linode_cloud_firewall, monkeypatch: MonkeyPatch):
     delete_target_id(target="linodes", id=linode_id)
 
 
-def test_interface_firewalls_list(linode_interface_public, monkeypatch: MonkeyPatch):
+def test_interface_firewalls_list(
+    linode_interface_public, monkeypatch: MonkeyPatch
+):
     monkeypatch.setenv("LINODE_CLI_API_VERSION", "v4beta")
 
     linode_id = linode_interface_public
@@ -250,7 +252,9 @@ def test_interface_firewalls_list(linode_interface_public, monkeypatch: MonkeyPa
     assert "rules" in firewall and isinstance(firewall["rules"], dict)
 
 
-def test_interface_settings_update(linode_interface_public, monkeypatch: MonkeyPatch):
+def test_interface_settings_update(
+    linode_interface_public, monkeypatch: MonkeyPatch
+):
     monkeypatch.setenv("LINODE_CLI_API_VERSION", "v4beta")
 
     linode_id = linode_interface_public
