@@ -36,8 +36,16 @@ def wait_for_condition(interval: int, timeout: int, condition: Callable):
 
 
 def exec_test_command(args: List[str]):
-    process = subprocess.run(args, stdout=subprocess.PIPE)
-    assert process.returncode == 0
+    process = subprocess.run(
+        args, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+    )
+    if process.returncode != 0:
+        raise RuntimeError(
+            f"Command failed with exit code {process.returncode}\n"
+            f"Command: {' '.join(args)}\n"
+            f"Stdout:\n{process.stdout.decode()}\n"
+            f"Stderr:\n{process.stderr.decode()}"
+        )
     return process
 
 

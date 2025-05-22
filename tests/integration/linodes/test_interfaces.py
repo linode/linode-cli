@@ -17,6 +17,7 @@ timestamp = str(time.time_ns())
 linode_label = DEFAULT_LABEL + timestamp
 
 
+@pytest.mark.skip("interface argument deprecated")
 @pytest.fixture
 def linode_with_vpc_interface(linode_cloud_firewall):
     vpc_json = create_vpc_w_subnet()
