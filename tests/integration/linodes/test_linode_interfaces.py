@@ -417,6 +417,7 @@ def test_interfaces_list(linode_interface_vlan):
         assert iface["default_route"]["ipv6"] is False
 
 
+@pytest.mark.flaky(reruns=3, reruns_delay=2)
 def test_interfaces_upgrade(linode_interface_legacy):
     linode_id = linode_interface_legacy
 

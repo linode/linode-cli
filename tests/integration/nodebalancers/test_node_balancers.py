@@ -169,7 +169,7 @@ def create_linode_to_add(linode_cloud_firewall):
 
 def test_fail_to_create_nodebalancer_without_region():
     result = exec_failing_test_command(
-        BASE_CMD + ["create", "--text", "--no-headers"],
+        BASE_CMD + ["create", "--text", "--no-headers", "--no-defaults"],
         ExitCodes.REQUEST_FAILED,
     ).stderr.decode()
     assert "Request failed: 400" in result

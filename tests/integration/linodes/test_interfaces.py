@@ -17,58 +17,6 @@ timestamp = str(time.time_ns())
 linode_label = DEFAULT_LABEL + timestamp
 
 
-@pytest.mark.skip("interface argument deprecated")
-@pytest.fixture
-def linode_with_vpc_interface(linode_cloud_firewall):
-    vpc_json = create_vpc_w_subnet()
-
-    vpc_region = vpc_json["region"]
-    vpc_id = str(vpc_json["id"])
-    subnet_id = str(vpc_json["subnets"][0]["id"])
-
-    linode_json = json.loads(
-        exec_test_command(
-            BASE_CMD
-            + [
-                "create",
-                "--type",
-                "g6-nanode-1",
-                "--region",
-                vpc_region,
-                "--image",
-                DEFAULT_TEST_IMAGE,
-                "--root_pass",
-                DEFAULT_RANDOM_PASS,
-                "--firewall_id",
-                linode_cloud_firewall,
-                "--interfaces.purpose",
-                "vpc",
-                "--interfaces.primary",
-                "true",
-                "--interfaces.subnet_id",
-                subnet_id,
-                "--interfaces.ipv4.nat_1_1",
-                "any",
-                "--interfaces.ipv4.vpc",
-                "10.0.0.5",
-                "--interfaces.ip_ranges",
-                json.dumps(["10.0.0.6/32"]),
-                "--interfaces.purpose",
-                "public",
-                "--json",
-                "--suppress-warnings",
-            ]
-        )
-        .stdout.decode()
-        .rstrip()
-    )[0]
-
-    yield linode_json, vpc_json
-
-    delete_target_id(target="linodes", id=str(linode_json["id"]))
-    delete_target_id(target="vpcs", id=vpc_id)
-
-
 @pytest.fixture
 def linode_with_vpc_interface_as_json(linode_cloud_firewall):
     vpc_json = create_vpc_w_subnet()
@@ -149,10 +97,6 @@ def assert_interface_configuration(
 
     assert not public_interface["primary"]
     assert public_interface["purpose"] == "public"
-
-
-def test_with_vpc_interface(linode_with_vpc_interface):
-    assert_interface_configuration(*linode_with_vpc_interface)
 
 
 def test_with_vpc_interface_as_json(linode_with_vpc_interface_as_json):
