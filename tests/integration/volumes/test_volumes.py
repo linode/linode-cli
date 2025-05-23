@@ -84,6 +84,7 @@ def test_fail_to_create_volume_without_region():
             "10",
             "--text",
             "--no-headers",
+            "--no-defaults",
         ],
         ExitCodes.REQUEST_FAILED,
     ).stderr.decode()

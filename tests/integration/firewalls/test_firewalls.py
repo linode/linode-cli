@@ -1,17 +1,20 @@
+import json
 import re
 import time
 
 import pytest
+from pytest import MonkeyPatch
 
 from linodecli.exit_codes import ExitCodes
 from tests.integration.helpers import (
     delete_target_id,
     exec_failing_test_command,
     exec_test_command,
+    get_random_text,
 )
 
 BASE_CMD = ["linode-cli", "firewalls"]
-FIREWALL_LABEL = "label-fw-test" + str(int(time.time()))
+FIREWALL_LABEL = "fw-" + get_random_text(5)
 
 
 @pytest.fixture
@@ -253,3 +256,87 @@ def test_update_firewall(test_firewall_id):
     )
 
     assert re.search(firewall_id + "," + updated_label + ",enabled", result)
+
+
+@pytest.mark.skip("skip until there is a way to delete default firewall")
+def test_firewall_settings_update_and_list(test_firewall_id):
+    for cmd in [
+        BASE_CMD
+        + [
+            "firewall-settings-update",
+            "--default_firewall_ids.vpc_interfac",
+            test_firewall_id,
+            "--default_firewall_ids.public_interface",
+            test_firewall_id,
+            "--default_firewall_ids.nodebalancer",
+            test_firewall_id,
+            "--default_firewall_ids.linode",
+            test_firewall_id,
+            "--json",
+        ],
+        BASE_CMD
+        + [
+            "firewall-settings-list",
+            "--json",
+        ],
+    ]:
+        data = json.loads(exec_test_command(cmd).stdout.decode().rstrip())
+        firewall_ids = data[0]["default_firewall_ids"]
+        for key in [
+            "linode",
+            "nodebalancer",
+            "public_interface",
+            "vpc_interface",
+        ]:
+            assert firewall_ids[key] == int(test_firewall_id)
+
+
+def test_firewall_templates_list(monkeypatch: MonkeyPatch):
+    monkeypatch.setenv("LINODE_CLI_API_VERSION", "v4beta")
+    data = json.loads(
+        exec_test_command(BASE_CMD + ["templates-list", "--json"])
+        .stdout.decode()
+        .rstrip()
+    )
+
+    slugs = {template["slug"] for template in data}
+    expected_slugs = {"akamai-non-prod", "vpc", "public"}
+    assert expected_slugs.issubset(slugs)
+
+    for template in data:
+        assert "slug" in template
+        assert "rules" in template
+        rules = template["rules"]
+
+        assert "inbound_policy" in rules
+        assert "outbound_policy" in rules
+        assert isinstance(rules.get("inbound", []), list)
+        assert isinstance(rules.get("outbound", []), list)
+
+        for rule in rules.get("inbound", []):
+            assert "action" in rule
+            assert "protocol" in rule
+            assert "label" in rule
+            assert "addresses" in rule
+
+
+def test_firewall_template_view(monkeypatch: MonkeyPatch):
+    monkeypatch.setenv("LINODE_CLI_API_VERSION", "v4beta")
+    for slug in ["akamai-non-prod", "vpc", "public"]:
+        data = json.loads(
+            exec_test_command(BASE_CMD + ["template-view", slug, "--json"])
+            .stdout.decode()
+            .rstrip()
+        )
+        template = data[0]
+
+        assert template["slug"] == slug
+        assert "rules" in template
+        assert "inbound" in template["rules"]
+        assert "outbound" in template["rules"]
+        assert "inbound_policy" in template["rules"]
+        assert "outbound_policy" in template["rules"]
+        assert template["rules"]["inbound_policy"] == "DROP"
+        assert template["rules"]["outbound_policy"] == "ACCEPT"
+        assert isinstance(template["rules"]["inbound"], list)
+        assert isinstance(template["rules"]["outbound"], list)
