@@ -179,7 +179,7 @@ def postgresql_db_engine_config(linode_cloud_firewall):
     delete_target_id("databases", str(database["id"]), "postgresql-delete")
 
 
-# POSTGRES
+# POSTGRESQL
 def test_postgresql_engine_config_view():
     pg_configs = json.loads(
         exec_test_command(
@@ -532,6 +532,7 @@ def mysql_db_engine_config(linode_cloud_firewall):
 
     delete_target_id("databases", str(database["id"]), "mysql-delete")
 
+# MYSQL
 
 def test_mysql_engine_config_view():
     mysql_config = json.loads(
