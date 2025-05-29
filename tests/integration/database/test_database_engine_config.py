@@ -532,7 +532,9 @@ def mysql_db_engine_config(linode_cloud_firewall):
 
     delete_target_id("databases", str(database["id"]), "mysql-delete")
 
+
 # MYSQL
+
 
 def test_mysql_engine_config_view():
     mysql_config = json.loads(
