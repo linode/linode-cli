@@ -1,8 +1,6 @@
 import json
 import re
 
-import pytest
-
 from tests.integration.helpers import (
     delete_target_id,
     exec_test_command,
@@ -10,36 +8,6 @@ from tests.integration.helpers import (
 )
 
 BASE_CMD = ["linode-cli", "firewalls", "rules-update"]
-FIREWALL_LABEL = "fw-" + get_random_text(5)
-
-
-@pytest.fixture
-def test_firewall_id():
-    firewall_id = (
-        exec_test_command(
-            [
-                "linode-cli",
-                "firewalls",
-                "create",
-                "--label",
-                FIREWALL_LABEL,
-                "--rules.outbound_policy",
-                "ACCEPT",
-                "--rules.inbound_policy",
-                "DROP",
-                "--text",
-                "--no-headers",
-                "--format",
-                "id",
-            ]
-        )
-        .stdout.decode()
-        .rstrip()
-    )
-
-    yield firewall_id
-
-    delete_target_id(target="firewalls", id=firewall_id)
 
 
 def test_add_rule_to_existing_firewall(test_firewall_id):
@@ -85,9 +53,24 @@ def test_add_multiple_rules(test_firewall_id):
 
 def test_swap_rules():
     firewall_label = "fw-" + get_random_text(5)
-    inbound_rule_1 = '{"ports": "22", "protocol": "TCP", "addresses": {"ipv4": ["198.0.0.1/32"]}, "action": "ACCEPT", "label": "swap_rule_1"}'
-    inbound_rule_2 = '{"ports": "22", "protocol": "TCP", "addresses": {"ipv4": ["198.0.0.2/32"]}, "action": "ACCEPT", "label": "swap_rule_2"}'
-    inbound_rules = "[" + inbound_rule_1 + "," + inbound_rule_2 + "]"
+    inbound_rules_obj = [
+        {
+            "ports": "22",
+            "protocol": "TCP",
+            "addresses": {"ipv4": ["198.0.0.1/32"]},
+            "action": "ACCEPT",
+            "label": "swap_rule_1",
+        },
+        {
+            "ports": "22",
+            "protocol": "TCP",
+            "addresses": {"ipv4": ["198.0.0.2/32"]},
+            "action": "ACCEPT",
+            "label": "swap_rule_2",
+        },
+    ]
+    inbound_rules = json.dumps(inbound_rules_obj)
+
     firewall_id = (
         exec_test_command(
             [
@@ -112,25 +95,19 @@ def test_swap_rules():
         .rstrip()
     )
 
-    swapped_rules = "[" + inbound_rule_2 + "," + inbound_rule_1 + "]"
+    swapped_rules_obj = list(reversed(inbound_rules_obj))
+    swapped_rules = json.dumps(swapped_rules_obj)
 
-    # swapping rules
     result = json.loads(
         exec_test_command(
-            BASE_CMD
-            + [
-                firewall_id,
-                "--inbound",
-                swapped_rules,
-                "--json",
-            ]
+            BASE_CMD + [firewall_id, "--inbound", swapped_rules, "--json"]
         )
         .stdout.decode()
         .rstrip()
     )
 
-    assert result[0]["inbound"][0] == json.loads(inbound_rule_2)
-    assert result[0]["inbound"][1] == json.loads(inbound_rule_1)
+    assert result[0]["inbound"][0] == swapped_rules_obj[0]
+    assert result[0]["inbound"][1] == swapped_rules_obj[1]
 
     delete_target_id(target="firewalls", id=firewall_id)
 

@@ -10,51 +10,22 @@ from tests.integration.helpers import (
     delete_target_id,
     exec_failing_test_command,
     exec_test_command,
-    get_random_text,
 )
 
 BASE_CMD = ["linode-cli", "firewalls"]
-FIREWALL_LABEL = "fw-" + get_random_text(5)
-
-
-@pytest.fixture
-def test_firewall_id():
-    firewall_id = (
-        exec_test_command(
-            BASE_CMD
-            + [
-                "create",
-                "--label",
-                FIREWALL_LABEL,
-                "--rules.outbound_policy",
-                "ACCEPT",
-                "--rules.inbound_policy",
-                "DROP",
-                "--text",
-                "--no-headers",
-                "--format",
-                "id",
-            ]
-        )
-        .stdout.decode()
-        .rstrip()
-    )
-
-    yield firewall_id
-
-    delete_target_id(target="firewalls", id=firewall_id)
 
 
 @pytest.mark.smoke
-def test_view_firewall(test_firewall_id):
-    firewall_id = test_firewall_id
+def test_view_firewall(test_firewall_id, test_firewall_label):
+    fw_id = test_firewall_id
+    fw_label = test_firewall_label
 
     result = (
         exec_test_command(
             BASE_CMD
             + [
                 "view",
-                firewall_id,
+                fw_id,
                 "--no-headers",
                 "--text",
                 "--delimiter",
@@ -65,12 +36,12 @@ def test_view_firewall(test_firewall_id):
         .rstrip()
     )
 
-    assert re.search(firewall_id + "," + FIREWALL_LABEL + ",enabled", result)
+    assert f"{fw_id},{fw_label},enabled" in result
 
 
-def test_list_firewall(test_firewall_id):
-    firewall_id = test_firewall_id
-
+def test_list_firewall(test_firewall_id, test_firewall_label):
+    fw_id = test_firewall_id
+    fw_label = test_firewall_label
     result = (
         exec_test_command(
             BASE_CMD + ["list", "--no-headers", "--text", "--delimiter", ","]
@@ -79,7 +50,7 @@ def test_list_firewall(test_firewall_id):
         .rstrip()
     )
 
-    assert re.search(firewall_id + "," + FIREWALL_LABEL + ",enabled", result)
+    assert f"{fw_id},{fw_label},enabled" in result
 
 
 @pytest.mark.smoke
@@ -166,14 +137,15 @@ def test_fails_to_create_firewall_without_outbound_policy():
     assert "outbound_policy is required" in result
 
 
-def test_firewall_label_must_be_unique_upon_creation(test_firewall_id):
+def test_firewall_label_must_be_unique_upon_creation(test_firewall_label):
+    fw_label = test_firewall_label
     result = (
         exec_failing_test_command(
             BASE_CMD
             + [
                 "create",
                 "--label",
-                FIREWALL_LABEL,
+                fw_label,
                 "--rules.outbound_policy",
                 "ACCEPT",
                 "--rules.inbound_policy",
