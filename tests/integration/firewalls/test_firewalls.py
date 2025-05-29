@@ -230,39 +230,6 @@ def test_update_firewall(test_firewall_id):
     assert re.search(firewall_id + "," + updated_label + ",enabled", result)
 
 
-@pytest.mark.skip("skip until there is a way to delete default firewall")
-def test_firewall_settings_update_and_list(test_firewall_id):
-    for cmd in [
-        BASE_CMD
-        + [
-            "firewall-settings-update",
-            "--default_firewall_ids.vpc_interfac",
-            test_firewall_id,
-            "--default_firewall_ids.public_interface",
-            test_firewall_id,
-            "--default_firewall_ids.nodebalancer",
-            test_firewall_id,
-            "--default_firewall_ids.linode",
-            test_firewall_id,
-            "--json",
-        ],
-        BASE_CMD
-        + [
-            "firewall-settings-list",
-            "--json",
-        ],
-    ]:
-        data = json.loads(exec_test_command(cmd).stdout.decode().rstrip())
-        firewall_ids = data[0]["default_firewall_ids"]
-        for key in [
-            "linode",
-            "nodebalancer",
-            "public_interface",
-            "vpc_interface",
-        ]:
-            assert firewall_ids[key] == int(test_firewall_id)
-
-
 def test_firewall_templates_list(monkeypatch: MonkeyPatch):
     monkeypatch.setenv("LINODE_CLI_API_VERSION", "v4beta")
     data = json.loads(
