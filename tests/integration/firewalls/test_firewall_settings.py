@@ -2,9 +2,7 @@ import json
 
 import pytest
 
-from linodecli.exit_codes import ExitCodes
 from tests.integration.helpers import (
-    delete_target_id,
     exec_test_command,
 )
 
@@ -60,19 +58,13 @@ def test_firewall_settings_defaults(test_firewall_id, test_firewall_label):
         ), f"{key} ID ({val}) not found in firewall list"
 
 
-@pytest.mark.skip("skip until there is a way to delete default firewall")
-def test_update_firewall_defaults(test_firewall_id):
-    # fetch current default firewall IDs
-    settings_result = exec_test_command(
-        BASE_CMD + ["firewall-settings-list", "--json"]
-    ).stdout.decode()
-    settings = json.loads(settings_result)
-    default_ids_before = settings[0]["default_firewall_ids"]
+def test_update_firewall_defaults(test_firewall_id, restore_firewall_defaults):
+    old_default_id = restore_firewall_defaults["linode"]
 
-    # remember the old default so we can delete it later
-    old_default_id = str(default_ids_before["linode"])
+    if old_default_id is None:
+        pytest.skip("No default firewall configured for this account")
 
-    # list all firewall IDs
+    # list firewall IDs
     list_result = (
         exec_test_command(
             BASE_CMD + ["list", "--no-headers", "--text", "--delimiter", ","]
@@ -88,10 +80,10 @@ def test_update_firewall_defaults(test_firewall_id):
         test_firewall_id in firewall_ids
     ), f"{test_firewall_id} not found in firewall list"
 
-    # pick a new ID different from the old default
-    new_id = next(fid for fid in firewall_ids if fid != old_default_id)
+    # select a different firewall to use temporarily
+    new_id = next(fid for fid in firewall_ids if fid != str(old_default_id))
 
-    # update all defaults to the new one
+    # update all defaults
     result = exec_test_command(
         BASE_CMD
         + [
@@ -107,9 +99,9 @@ def test_update_firewall_defaults(test_firewall_id):
             "--json",
         ]
     )
-    assert result.returncode == ExitCodes.SUCCESS, result.stderr.decode()
+    assert result.returncode == 0, result.stderr.decode()
 
-    # fetch settings again and verify the update
+    # verify update
     settings_after = json.loads(
         exec_test_command(
             BASE_CMD + ["firewall-settings-list", "--json"]
@@ -119,7 +111,4 @@ def test_update_firewall_defaults(test_firewall_id):
     for key, val in settings_after.items():
         assert (
             str(val) == new_id
-        ), f"{key} was not updated (expected {new_id}, got {val})"
-
-    # delete the old default firewall resource
-    delete_target_id(target="firewalls", id=old_default_id)
+        ), f"{key} not updated (expected {new_id}, got {val})"

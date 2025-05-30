@@ -1,3 +1,5 @@
+import json
+
 import pytest
 
 from tests.integration.helpers import (
@@ -46,3 +48,22 @@ def test_firewall_id(_firewall_id_and_label):
 def test_firewall_label(_firewall_id_and_label):
     """Only the label, for tests that need it explicitly."""
     return _firewall_id_and_label[1]
+
+
+@pytest.fixture
+def restore_firewall_defaults():
+    # Fetch and store current default firewall settings
+    result = exec_test_command(BASE_CMD + ["firewall-settings-list", "--json"])
+    settings = json.loads(result.stdout.decode())
+    original_defaults = settings[0]["default_firewall_ids"]
+
+    yield original_defaults
+
+    # Restore the original defaults after test
+    args = []
+    for key, val in original_defaults.items():
+        if val is not None:
+            args.extend([f"--default_firewall_ids.{key}", str(val)])
+
+    if args:
+        exec_test_command(BASE_CMD + ["firewall-settings-update"] + args)
