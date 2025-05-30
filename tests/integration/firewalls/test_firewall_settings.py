@@ -59,32 +59,51 @@ def test_firewall_settings_defaults(test_firewall_id, test_firewall_label):
 
 
 def test_update_firewall_defaults(test_firewall_id, restore_firewall_defaults):
-    old_default_id = restore_firewall_defaults["linode"]
+    # Fetch current default firewall settings
+    settings = json.loads(
+        exec_test_command(
+            BASE_CMD + ["firewall-settings-list", "--json"]
+        ).stdout.decode()
+    )
+    default_ids_before = settings[0]["default_firewall_ids"]
 
-    if old_default_id is None:
-        pytest.skip("No default firewall configured for this account")
+    # Skip if no default firewall configured at all
+    if all(v is None for v in default_ids_before.values()):
+        pytest.skip("Skipping: no default firewall configured for the account.")
 
-    # list firewall IDs
-    list_result = (
+    old_default_id = (
+        str(default_ids_before["linode"])
+        if default_ids_before["linode"]
+        else None
+    )
+
+    # List all firewalls
+    firewall_list = (
         exec_test_command(
             BASE_CMD + ["list", "--no-headers", "--text", "--delimiter", ","]
         )
         .stdout.decode()
         .strip()
     )
+
     firewall_ids = [
-        line.split(",")[0].strip() for line in list_result.splitlines() if line
+        line.split(",")[0].strip()
+        for line in firewall_list.splitlines()
+        if line
     ]
 
     assert (
         test_firewall_id in firewall_ids
     ), f"{test_firewall_id} not found in firewall list"
 
-    # select a different firewall to use temporarily
-    new_id = next(fid for fid in firewall_ids if fid != str(old_default_id))
+    new_id = next(
+        fid
+        for fid in firewall_ids
+        if old_default_id is None or fid != old_default_id
+    )
 
-    # update all defaults
-    result = exec_test_command(
+    # Update all default firewall IDs to the new one
+    exec_test_command(
         BASE_CMD
         + [
             "firewall-settings-update",
@@ -99,16 +118,15 @@ def test_update_firewall_defaults(test_firewall_id, restore_firewall_defaults):
             "--json",
         ]
     )
-    assert result.returncode == 0, result.stderr.decode()
 
-    # verify update
-    settings_after = json.loads(
+    # Verify update
+    updated_settings = json.loads(
         exec_test_command(
             BASE_CMD + ["firewall-settings-list", "--json"]
         ).stdout.decode()
     )[0]["default_firewall_ids"]
 
-    for key, val in settings_after.items():
+    for key, val in updated_settings.items():
         assert (
             str(val) == new_id
-        ), f"{key} not updated (expected {new_id}, got {val})"
+        ), f"{key} was not updated (expected {new_id}, got {val})"
