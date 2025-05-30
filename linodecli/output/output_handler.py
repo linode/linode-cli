@@ -331,27 +331,30 @@ class OutputHandler:  # pylint: disable=too-few-public-methods,too-many-instance
         # Special handling for JSON headers.
         # We're only interested in the last part of the column name, unless the last
         # part is a dotted key. If the last part is a dotted key, include the entire dotted key.
-        parsedHeader = []
-        terminal_keys = get_terminal_keys(data[0])
-
-        for v in header:
-            parts = v.split(".")
-            if (
-                len(parts) >= 2
-                and ".".join([parts[-2], parts[-1]]) in terminal_keys
-            ):
-                parsedHeader.append(".".join([parts[-2], parts[-1]]))
-            else:
-                parsedHeader.append(parts[-1])
 
         content = []
         if len(data) and isinstance(data[0], dict):  # we got delimited json in
+            parsed_header = []
+            terminal_keys = get_terminal_keys(data[0])
+
+            for v in header:
+                parts = v.split(".")
+                if (
+                    len(parts) >= 2
+                    and ".".join([parts[-2], parts[-1]]) in terminal_keys
+                ):
+                    parsed_header.append(".".join([parts[-2], parts[-1]]))
+                else:
+                    parsed_header.append(parts[-1])
+
             # parse down to the value we display
             for row in data:
-                content.append(self._select_json_elements(parsedHeader, row))
+                content.append(self._select_json_elements(parsed_header, row))
         else:  # this is a list
+            header = [v.split(".")[-1] for v in header]
+
             for row in data:
-                content.append(dict(zip(parsedHeader, row)))
+                content.append(dict(zip(header, row)))
 
         print(
             json.dumps(
