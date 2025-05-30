@@ -9,7 +9,10 @@ from openapi3.schemas import Schema
 
 from linodecli.baked.parsing import simplify_description
 from linodecli.baked.response import OpenAPIResponse
-from linodecli.baked.util import _aggregate_schema_properties
+from linodecli.baked.util import (
+    _aggregate_schema_properties,
+    escape_arg_segment,
+)
 
 
 class OpenAPIRequestArg:
@@ -152,6 +155,8 @@ def _parse_request_model(
         return args
 
     for k, v in properties.items():
+        k = escape_arg_segment(k)
+
         # Handle nested objects which aren't read-only and have properties
         if (
             v.type == "object"
