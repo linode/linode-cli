@@ -47,6 +47,30 @@ def output_override(command: str, action: str, output_mode: OutputMode):
     return inner
 
 
+@output_override("databases", "mysql-config-view", OutputMode.table)
+def handle_databases_mysql_config_view(
+    operation, output_handler, json_data
+) -> bool:
+    # pylint: disable=unused-argument
+    """
+    Override the output of 'linode-cli databases mysql-config-view'
+    to properly display the mysql engine config.
+    """
+    return databases_mysql_config_view_output(json_data)
+
+
+@output_override("databases", "postgres-config-view", OutputMode.table)
+def handle_databases_postgres_config_view(
+    operation, output_handler, json_data
+) -> bool:
+    # pylint: disable=unused-argument
+    """
+    Override the output of 'linode-cli databases postgres-config-view'
+    to properly display the postgresql engine config.
+    """
+    return databases_postgres_config_view_output(json_data)
+
+
 @output_override("domains", "zone-file", OutputMode.delimited)
 def handle_domains_zone_file(operation, output_handler, json_data) -> bool:
     # pylint: disable=unused-argument
@@ -286,6 +310,100 @@ def pg_view_output(json_data) -> bool:
                 row.append(Align(str(json_data[header]), align="left"))
 
     output.add_row(*row)
+
+    console = Console()
+    console.print(output)
+
+    return False
+
+
+def add_param_row(output, param_name, param_data):
+    """
+    Construct and add a row to the output table for DB Config view overrides.
+    """
+    param_type = str(param_data.get("type", ""))
+    example = str(param_data.get("example", ""))
+    minimum = str(param_data.get("minimum", ""))
+    maximum = str(param_data.get("maximum", ""))
+    min_length = str(param_data.get("minLength", ""))
+    max_length = str(param_data.get("maxLength", ""))
+    pattern = str(param_data.get("pattern", ""))
+    requires_restart = "YES" if param_data.get("requires_restart") else "NO"
+    description = param_data.get("description", "")
+
+    output.add_row(
+        param_name,
+        param_type,
+        example,
+        minimum,
+        maximum,
+        min_length,
+        max_length,
+        pattern,
+        requires_restart,
+        Align(description, align="left"),
+    )
+
+
+def databases_mysql_config_view_output(json_data) -> bool:
+    """
+    Parse and format the MySQL configuration output table.
+    """
+    output = Table(header_style="bold", show_lines=True)
+
+    output.add_column("Parameter", style="bold")
+    output.add_column("Type", justify="center")
+    output.add_column("Example", justify="center")
+    output.add_column("Min", justify="center")
+    output.add_column("Max", justify="center")
+    output.add_column("Min Length", justify="center")
+    output.add_column("Max Length", justify="center")
+    output.add_column("Pattern", justify="center")
+    output.add_column("Requires Restart", justify="center")
+    output.add_column("Description", style="dim")
+
+    for field, params in json_data.items():
+        if field in ["binlog_retention_period"]:
+            add_param_row(output, field, params)
+        else:
+            for key, val in params.items():
+                param_name = f"{field}.{key}"
+                add_param_row(output, param_name, val)
+
+    console = Console()
+    console.print(output)
+
+    return False
+
+
+def databases_postgres_config_view_output(json_data) -> bool:
+    """
+    Parse and format the PostgreSQL configuration output table.
+    """
+    output = Table(header_style="bold", show_lines=True)
+
+    output.add_column("Parameter", style="bold")
+    output.add_column("Type", justify="center")
+    output.add_column("Example", justify="center")
+    output.add_column("Min", justify="center")
+    output.add_column("Max", justify="center")
+    output.add_column("Min Length", justify="center")
+    output.add_column("Max Length", justify="center")
+    output.add_column("Pattern", justify="center")
+    output.add_column("Requires Restart", justify="center")
+    output.add_column("Description", style="dim")
+
+    for field, params in json_data.items():
+        if field in [
+            "pg_stat_monitor_enable",
+            "shared_buffers_percentage",
+            "work_mem",
+        ]:
+            add_param_row(output, field, params)
+        else:
+            for key, val in params.items():
+                param_name = f"{field}.{key}"
+                add_param_row(output, param_name, val)
 
     console = Console()
     console.print(output)
