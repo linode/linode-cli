@@ -442,8 +442,6 @@ def test_postgresql_db_engine_config_update(postgresql_db_engine_config):
     for key in expected_pg_keys:
         assert key in pg_config
 
-    print(pg_config)
-
     assert pg_config["autovacuum_max_workers"] == 15
     assert pg_config["bgwriter_lru_multiplier"] == 3.5
     assert pg_config["pg_partman_bgw.interval"] == 7200
