@@ -25,6 +25,7 @@ from linodecli.baked.request import (
     OpenAPIRequestArg,
 )
 from linodecli.baked.response import OpenAPIResponse
+from linodecli.baked.util import unescape_arg_segment
 from linodecli.exit_codes import ExitCodes
 from linodecli.output.output_handler import OutputHandler
 from linodecli.overrides import OUTPUT_OVERRIDES
@@ -649,6 +650,9 @@ class OpenAPIOperation:
             if arg.read_only:
                 continue
 
+            arg_name_unescaped = unescape_arg_segment(arg.name)
+            arg_path_unescaped = unescape_arg_segment(arg.path)
+
             arg_type = (
                 arg.item_type if arg.datatype == "array" else arg.datatype
             )
@@ -660,15 +664,17 @@ class OpenAPIOperation:
             if arg.datatype == "array":
                 # special handling for input arrays
                 parser.add_argument(
-                    "--" + arg.path,
-                    metavar=arg.name,
+                    "--" + arg_path_unescaped,
+                    dest=arg.path,
+                    metavar=arg_name_unescaped,
                     action=ArrayAction,
                     type=arg_type_handler,
                 )
             elif arg.is_child:
                 parser.add_argument(
-                    "--" + arg.path,
-                    metavar=arg.name,
+                    "--" + arg_path_unescaped,
+                    dest=arg.path,
+                    metavar=arg_name_unescaped,
                     action=ListArgumentAction,
                     type=arg_type_handler,
                 )
@@ -677,7 +683,7 @@ class OpenAPIOperation:
                 if arg.datatype == "string" and arg.format == "password":
                     # special case - password input
                     parser.add_argument(
-                        "--" + arg.path,
+                        "--" + arg_path_unescaped,
                         nargs="?",
                         action=PasswordPromptAction,
                     )
@@ -687,15 +693,17 @@ class OpenAPIOperation:
                     "ssl-key",
                 ):
                     parser.add_argument(
-                        "--" + arg.path,
-                        metavar=arg.name,
+                        "--" + arg_path_unescaped,
+                        dest=arg.path,
+                        metavar=arg_name_unescaped,
                         action=OptionalFromFileAction,
                         type=arg_type_handler,
                     )
                 else:
                     parser.add_argument(
-                        "--" + arg.path,
-                        metavar=arg.name,
+                        "--" + arg_path_unescaped,
+                        dest=arg.path,
+                        metavar=arg_name_unescaped,
                         type=arg_type_handler,
                     )
 
