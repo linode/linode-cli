@@ -1,5 +1,4 @@
 import json
-import time
 from typing import Any, Dict
 
 import pytest
@@ -8,13 +7,9 @@ from tests.integration.conftest import create_vpc_w_subnet
 from tests.integration.helpers import delete_target_id, exec_test_command
 from tests.integration.linodes.helpers_linodes import (
     BASE_CMD,
-    DEFAULT_LABEL,
     DEFAULT_RANDOM_PASS,
     DEFAULT_TEST_IMAGE,
 )
-
-timestamp = str(time.time_ns())
-linode_label = DEFAULT_LABEL + timestamp
 
 
 @pytest.fixture
