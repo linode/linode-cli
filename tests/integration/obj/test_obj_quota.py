@@ -7,7 +7,7 @@ from tests.integration.obj.conftest import CLI_CMD
 
 def get_quota_id():
     response = (
-        exec_test_command(CLI_CMD + ["object-storage-quotas", "--json"])
+        exec_test_command(CLI_CMD + ["get-object-storage-quotas", "--json"])
         .stdout.decode()
         .rstrip()
     )
@@ -22,7 +22,7 @@ def get_quota_id():
 
 def test_obj_quotas_list():
     response = (
-        exec_test_command(CLI_CMD + ["object-storage-quotas", "--json"])
+        exec_test_command(CLI_CMD + ["get-object-storage-quotas", "--json"])
         .stdout.decode()
         .rstrip()
     )
@@ -49,7 +49,7 @@ def test_obj_quota_view():
 
     response = (
         exec_test_command(
-            CLI_CMD + ["object-storage-quota-view", quota_id, "--json"]
+            CLI_CMD + ["get-object-storage-quota", quota_id, "--json"]
         )
         .stdout.decode()
         .rstrip()
@@ -81,7 +81,7 @@ def test_obj_quota_usage_view():
 
     response = (
         exec_test_command(
-            CLI_CMD + ["object-storage-quota-usage-view", quota_id, "--json"]
+            CLI_CMD + ["get-object-storage-quota-usage", quota_id, "--json"]
         )
         .stdout.decode()
         .rstrip()
