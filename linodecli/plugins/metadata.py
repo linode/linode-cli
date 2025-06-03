@@ -17,6 +17,7 @@ from rich import print as rprint
 from rich.table import Table
 
 from linodecli.exit_codes import ExitCodes
+from linodecli.help_formatter import SortingHelpFormatter
 from linodecli.helpers import register_debug_arg
 
 PLUGIN_BASE = "linode-cli metadata"
@@ -184,7 +185,11 @@ def get_metadata_parser():
     """
     Builds argparser for Metadata plug-in
     """
-    parser = ArgumentParser(PLUGIN_BASE, add_help=False)
+    parser = ArgumentParser(
+        PLUGIN_BASE,
+        add_help=False,
+        formatter_class=SortingHelpFormatter
+    )
 
     register_debug_arg(parser)
 
