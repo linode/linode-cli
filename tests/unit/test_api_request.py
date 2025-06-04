@@ -12,7 +12,11 @@ import pytest
 import requests
 
 from linodecli import api_request
-from linodecli.baked.operation import ExplicitEmptyListValue, ExplicitNullValue
+from linodecli.baked.operation import (
+    ExplicitEmptyDictValue,
+    ExplicitEmptyListValue,
+    ExplicitNullValue,
+)
 
 
 class TestAPIRequest:
@@ -597,6 +601,7 @@ class TestAPIRequest:
                     "baz": ExplicitNullValue(),
                 },
                 "cool": [],
+                "pretty_cool": ExplicitEmptyDictValue(),
                 "cooler": ExplicitEmptyListValue(),
                 "coolest": ExplicitNullValue(),
             }
@@ -614,6 +619,7 @@ class TestAPIRequest:
                 "foo": "bar",
                 "baz": None,
             },
+            "pretty_cool": {},
             "cooler": [],
             "coolest": None,
         }

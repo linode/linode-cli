@@ -18,10 +18,12 @@ from linodecli.exit_codes import ExitCodes
 from linodecli.helpers import API_CA_PATH, API_VERSION_OVERRIDE
 
 from .baked.operation import (
+    ExplicitEmptyDictValue,
     ExplicitEmptyListValue,
     ExplicitNullValue,
     OpenAPIOperation,
 )
+from .baked.util import get_path_segments
 from .helpers import handle_url_overrides
 
 if TYPE_CHECKING:
@@ -303,13 +305,17 @@ def _traverse_request_body(o: Any) -> Any:
             if v is None:
                 continue
 
-            # Values that are expected to be serialized as empty lists
-            # and explicit None values are converted here.
+            # Values that are expected to be serialized as empty
+            # dicts, lists, and explicit None values are converted here.
             # See: operation.py
             # NOTE: These aren't handled at the top-level of this function
             # because we don't want them filtered out in the step below.
             if isinstance(v, ExplicitEmptyListValue):
                 result[k] = []
+                continue
+
+            if isinstance(v, ExplicitEmptyDictValue):
+                result[k] = {}
                 continue
 
             if isinstance(v, ExplicitNullValue):
@@ -359,13 +365,15 @@ def _build_request_body(
         if v is None or k in param_names:
             continue
 
+        path_segments = get_path_segments(k)
+
         cur = expanded_json
-        for part in k.split(".")[:-1]:
+        for part in path_segments[:-1]:
             if part not in cur:
                 cur[part] = {}
             cur = cur[part]
 
-        cur[k.split(".")[-1]] = v
+        cur[path_segments[-1]] = v
 
     return json.dumps(_traverse_request_body(expanded_json))
 

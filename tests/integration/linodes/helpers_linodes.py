@@ -58,31 +58,40 @@ def wait_until(linode_id: "str", timeout, status: "str", period=5):
 
 
 def create_linode(
-    firewall_id: "str", test_region=DEFAULT_REGION, disk_encryption=False
+    firewall_id: str,
+    test_region=DEFAULT_REGION,
+    disk_encryption=False,
+    interface_generation: str = None,
+    interfaces: str = None,
 ):
-    # create linode
-    linode_id = exec_test_command(
-        [
-            "linode-cli",
-            "linodes",
-            "create",
-            "--type",
-            DEFAULT_LINODE_TYPE,
-            "--region",
-            test_region,
-            "--image",
-            DEFAULT_TEST_IMAGE,
-            "--root_pass",
-            DEFAULT_RANDOM_PASS,
-            "--firewall_id",
-            firewall_id,
-            "--disk_encryption",
-            "enabled" if disk_encryption else "disabled",
-            "--format=id",
-            "--text",
-            "--no-headers",
-        ]
-    )
+    # Base command
+    command = [
+        "linode-cli",
+        "linodes",
+        "create",
+        "--type",
+        DEFAULT_LINODE_TYPE,
+        "--region",
+        test_region,
+        "--image",
+        DEFAULT_TEST_IMAGE,
+        "--root_pass",
+        DEFAULT_RANDOM_PASS,
+        "--firewall_id",
+        firewall_id,
+        "--disk_encryption",
+        "enabled" if disk_encryption else "disabled",
+    ]
+
+    if interface_generation:
+        command.extend(["--interface_generation", interface_generation])
+
+    if interfaces:
+        command.extend(["--interfaces", interfaces])
+
+    command.extend(["--format=id", "--text", "--no-headers"])
+
+    linode_id = exec_test_command(command)
 
     return linode_id
 
@@ -185,7 +194,7 @@ def create_linode_and_wait(
     if ssh_key:
         command.extend(["--authorized_keys", ssh_key])
 
-    linode_id = exec_test_command(command).stdout.strip()
+    linode_id = exec_test_command(command)
 
     # wait until linode is running, wait_until returns True when it is in running state
     result = wait_until(linode_id=linode_id, timeout=240, status="running")

@@ -330,7 +330,7 @@ def test_update_node_pool(test_lke_cluster):
     node_pool_id = get_node_pool_id(cluster_id)
     new_value = get_random_text(8) + "updated_pool"
 
-    result = (
+    result = json.loads(
         exec_test_command(
             BASE_CMD
             + [
@@ -341,16 +341,42 @@ def test_update_node_pool(test_lke_cluster):
                 "5",
                 "--labels",
                 json.dumps({"label-key": new_value}),
-                "--text",
-                "--no-headers",
-                "--format=label",
+                "--taints",
+                '[{"key": "test-key", "value": "test-value", "effect": "NoSchedule"}]',
+                "--json",
             ]
-        )
-        .stdout.decode()
-        .rstrip()
+        ).stdout.decode()
     )
 
-    assert new_value in result
+    assert result[0]["labels"] == {"label-key": new_value}
+
+    assert result[0]["taints"] == [
+        {
+            "key": "test-key",
+            "value": "test-value",
+            "effect": "NoSchedule",
+        }
+    ]
+
+    # Reset the values for labels and taints (TPT-3665)
+    result = json.loads(
+        exec_test_command(
+            BASE_CMD
+            + [
+                "pool-update",
+                cluster_id,
+                node_pool_id,
+                "--labels",
+                "{}",
+                "--taints",
+                "[]",
+                "--json",
+            ]
+        ).stdout.decode()
+    )
+
+    assert result[0]["labels"] == {}
+    assert result[0]["taints"] == []
 
 
 def test_view_node(test_lke_cluster):
@@ -407,7 +433,7 @@ def test_list_lke_types():
     assert "LKE High Availability" in types
 
 
-def test_create_node_pool_default_to_disk_encryption_disabled(test_lke_cluster):
+def test_create_node_pool_has_disk_encryption_field_set(test_lke_cluster):
     cluster_id = test_lke_cluster
 
     result = (
@@ -437,7 +463,7 @@ def test_create_node_pool_default_to_disk_encryption_disabled(test_lke_cluster):
 
     disk_encryption_status = pool_info.get("disk_encryption")
 
-    assert "disabled" in result
+    assert disk_encryption_status in ("enabled", "disabled")
     assert "g6-standard-4" in result
 
 

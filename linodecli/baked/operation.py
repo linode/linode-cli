@@ -12,7 +12,7 @@ import sys
 from collections import defaultdict
 from getpass import getpass
 from os import environ, path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 from urllib.parse import urlparse
 
 import openapi3.paths
@@ -25,6 +25,7 @@ from linodecli.baked.request import (
     OpenAPIRequestArg,
 )
 from linodecli.baked.response import OpenAPIResponse
+from linodecli.baked.util import unescape_arg_segment
 from linodecli.exit_codes import ExitCodes
 from linodecli.output.output_handler import OutputHandler
 from linodecli.overrides import OUTPUT_OVERRIDES
@@ -48,7 +49,9 @@ def parse_boolean(value: str) -> bool:
     raise argparse.ArgumentTypeError("Expected a boolean value")
 
 
-def parse_dict(value: str) -> dict:
+def parse_dict(
+    value: str,
+) -> Union[Dict[str, Any], "ExplicitEmptyDictValue", "ExplicitEmptyListValue"]:
     """
     A helper function to decode incoming JSON data as python dicts.  This is
     intended to be passed to the `type=` kwarg for ArgumentParaser.add_argument.
@@ -57,14 +60,27 @@ def parse_dict(value: str) -> dict:
     :type value: str
 
     :returns: The dict value of the input.
-    :rtype: dict
+    :rtype: dict, ExplicitEmptyDictValue, or ExplicitEmptyListValue
     """
     if not isinstance(value, str):
         raise argparse.ArgumentTypeError("Expected a JSON string")
+
     try:
-        return json.loads(value)
+        result = json.loads(value)
     except Exception as e:
         raise argparse.ArgumentTypeError("Expected a JSON string") from e
+
+    # This is necessary because empty dicts and lists are excluded from requests
+    # by default, but we still want to support user-defined empty dict
+    # strings. This is particularly helpful when updating LKE node pool
+    # labels and taints.
+    if isinstance(result, dict) and result == {}:
+        return ExplicitEmptyDictValue()
+
+    if isinstance(result, list) and result == []:
+        return ExplicitEmptyListValue()
+
+    return result
 
 
 TYPES = {
@@ -87,6 +103,12 @@ class ExplicitNullValue:
 class ExplicitEmptyListValue:
     """
     A special type used to explicitly pass empty lists to the API.
+    """
+
+
+class ExplicitEmptyDictValue:
+    """
+    A special type used to explicitly pass empty dictionaries to the API.
     """
 
 
@@ -628,6 +650,9 @@ class OpenAPIOperation:
             if arg.read_only:
                 continue
 
+            arg_name_unescaped = unescape_arg_segment(arg.name)
+            arg_path_unescaped = unescape_arg_segment(arg.path)
+
             arg_type = (
                 arg.item_type if arg.datatype == "array" else arg.datatype
             )
@@ -639,15 +664,17 @@ class OpenAPIOperation:
             if arg.datatype == "array":
                 # special handling for input arrays
                 parser.add_argument(
-                    "--" + arg.path,
-                    metavar=arg.name,
+                    "--" + arg_path_unescaped,
+                    dest=arg.path,
+                    metavar=arg_name_unescaped,
                     action=ArrayAction,
                     type=arg_type_handler,
                 )
             elif arg.is_child:
                 parser.add_argument(
-                    "--" + arg.path,
-                    metavar=arg.name,
+                    "--" + arg_path_unescaped,
+                    dest=arg.path,
+                    metavar=arg_name_unescaped,
                     action=ListArgumentAction,
                     type=arg_type_handler,
                 )
@@ -656,7 +683,7 @@ class OpenAPIOperation:
                 if arg.datatype == "string" and arg.format == "password":
                     # special case - password input
                     parser.add_argument(
-                        "--" + arg.path,
+                        "--" + arg_path_unescaped,
                         nargs="?",
                         action=PasswordPromptAction,
                     )
@@ -666,15 +693,17 @@ class OpenAPIOperation:
                     "ssl-key",
                 ):
                     parser.add_argument(
-                        "--" + arg.path,
-                        metavar=arg.name,
+                        "--" + arg_path_unescaped,
+                        dest=arg.path,
+                        metavar=arg_name_unescaped,
                         action=OptionalFromFileAction,
                         type=arg_type_handler,
                     )
                 else:
                     parser.add_argument(
-                        "--" + arg.path,
-                        metavar=arg.name,
+                        "--" + arg_path_unescaped,
+                        dest=arg.path,
+                        metavar=arg_name_unescaped,
                         type=arg_type_handler,
                     )
 

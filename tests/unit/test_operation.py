@@ -5,6 +5,8 @@ import json
 
 from linodecli.baked import operation
 from linodecli.baked.operation import (
+    TYPES,
+    ExplicitEmptyDictValue,
     ExplicitEmptyListValue,
     ExplicitNullValue,
     OpenAPIOperation,
@@ -276,6 +278,41 @@ class TestOperation:
         # User specifies a normal value and an empty list value
         result = parser.parse_args(["--foo", "foo", "--foo", "[]"])
         assert getattr(result, "foo") == ["foo", "[]"]
+
+    def test_object_arg_action_basic(self):
+        """
+        Tests a basic array argument condition..
+        """
+
+        parser = argparse.ArgumentParser(
+            prog=f"foo",
+        )
+
+        parser.add_argument(
+            "--foo",
+            metavar="foo",
+            type=TYPES["object"],
+        )
+
+        # User specifies a normal object (dict)
+        result = parser.parse_args(["--foo", '{"test-key": "test-value"}'])
+        assert getattr(result, "foo") == {"test-key": "test-value"}
+
+        # User specifies a normal object (list)
+        result = parser.parse_args(["--foo", '[{"test-key": "test-value"}]'])
+        assert getattr(result, "foo") == [{"test-key": "test-value"}]
+
+        # User wants an explicitly empty object (dict)
+        result = parser.parse_args(["--foo", "{}"])
+        assert isinstance(getattr(result, "foo"), ExplicitEmptyDictValue)
+
+        # User wants an explicitly empty object (list)
+        result = parser.parse_args(["--foo", "[]"])
+        assert isinstance(getattr(result, "foo"), ExplicitEmptyListValue)
+
+        # User doesn't specify the list
+        result = parser.parse_args([])
+        assert getattr(result, "foo") is None
 
     def test_resolve_api_components(self, get_openapi_for_api_components_tests):
         root = get_openapi_for_api_components_tests
