@@ -1,3 +1,5 @@
+import json
+
 import pytest
 
 from tests.integration.helpers import assert_headers_in_lines, exec_test_command
@@ -250,16 +252,79 @@ def test_account_login_view(get_login_id):
     assert_headers_in_lines(headers, lines)
 
 
+@pytest.fixture
 def test_account_setting_view():
-    res = (
+    expected_headers = [
+        "longview_subscription",
+        "network_helper",
+        "interfaces_for_new_linodes",
+    ]
+
+    settings_text = (
         exec_test_command(BASE_CMD + ["settings", "--text", "--delimiter=,"])
         .stdout.decode()
-        .rstrip()
+        .strip()
     )
-    lines = res.splitlines()
+    lines = settings_text.splitlines()
+    headers = lines[0].split(",")
 
-    headers = ["longview_subscription", "network_helper"]
-    assert_headers_in_lines(headers, lines)
+    for expected in expected_headers:
+        assert (
+            expected in headers
+        ), f"Expected header '{expected}' not found in CLI output"
+
+    # Fetch current interfaces setting
+    settings_json = exec_test_command(
+        BASE_CMD + ["settings", "--json"]
+    ).stdout.decode()
+    original_value = json.loads(settings_json)[0]["interfaces_for_new_linodes"]
+
+    yield original_value
+
+    # Restore original setting after test
+    exec_test_command(
+        BASE_CMD
+        + [
+            "settings-update",
+            "--interfaces_for_new_linodes",
+            original_value,
+        ]
+    )
+
+
+def test_update_interfaces_setting(test_account_setting_view):
+    original_value = test_account_setting_view
+
+    # Define valid values different from the original
+    valid_options = [
+        "legacy_config_only",
+        "legacy_config_default_but_linode_allowed",
+        "linode_default_but_legacy_config_allowed",
+        "linode_only",
+    ]
+
+    # Select a different value for testing
+    new_value = next(val for val in valid_options if val != original_value)
+
+    # Update the setting
+    exec_test_command(
+        BASE_CMD
+        + [
+            "settings-update",
+            "--interfaces_for_new_linodes",
+            new_value,
+        ]
+    )
+
+    # Verify the setting was updated
+    updated_json = exec_test_command(
+        BASE_CMD + ["settings", "--json"]
+    ).stdout.decode()
+    updated_value = json.loads(updated_json)[0]["interfaces_for_new_linodes"]
+
+    assert (
+        updated_value == new_value
+    ), f"Expected {new_value}, got {updated_value}"
 
 
 def test_user_list():
