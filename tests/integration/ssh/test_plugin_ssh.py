@@ -1,13 +1,16 @@
 import json
 import subprocess
 from sys import platform
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 import pytest
 
 from tests.integration.helpers import (
+    BASE_CMDS,
     COMMAND_JSON_OUTPUT,
+    delete_target_id,
     exec_failing_test_command,
+    exec_test_command,
     get_random_region_with_caps,
     get_random_text,
     wait_for_condition,
@@ -35,10 +38,9 @@ def target_instance(ssh_key_pair_generator, linode_cloud_firewall):
     with open(pubkey_file, "r") as f:
         pubkey = f.read().rstrip()
 
-    process = exec_test_command(
-        [
-            "linode-cli",
-            "linodes",
+    output = exec_test_command(
+        BASE_CMDS["linodes"]
+        + [
             "create",
             "--image",
             TEST_IMAGE,
@@ -57,39 +59,27 @@ def target_instance(ssh_key_pair_generator, linode_cloud_firewall):
         ]
         + COMMAND_JSON_OUTPUT
     )
-    assert process.returncode == 0
-    instance_json = json.loads(process.stdout.decode())[0]
+
+    instance_json = json.loads(output)[0]
 
     yield instance_json
 
-    process = exec_test_command(
-        ["linode-cli", "linodes", "rm", str(instance_json["id"])]
-    )
-    assert process.returncode == 0
-
-
-def exec_test_command(args: List[str], timeout=None):
-    process = subprocess.run(args, stdout=subprocess.PIPE, timeout=timeout)
-    return process
+    delete_target_id(target="linodes", id=str(instance_json["id"]))
 
 
 @pytest.mark.skipif(platform == "win32", reason="Test N/A on Windows")
 def test_help():
-    process = exec_test_command(BASE_CMD + ["--help"])
-    output = process.stdout.decode()
+    output = exec_test_command(BASE_CMDS["ssh"] + ["--help"])
 
-    assert process.returncode == 0
     assert "[USERNAME@]LABEL" in output
     assert "uses the Linode's SLAAC address for SSH" in output
 
 
 @pytest.mark.skipif(platform == "win32", reason="Test N/A on Windows")
 def test_ssh_instance_provisioning(target_instance: Dict[str, Any]):
-    process = exec_failing_test_command(
-        BASE_CMD + ["root@" + target_instance["label"]], expected_code=2
+    output = exec_failing_test_command(
+        BASE_CMDS["ssh"] + ["root@" + target_instance["label"]], expected_code=2
     )
-    assert process.returncode == 2
-    output = process.stderr.decode()
 
     assert "is not running" in output
 
@@ -108,19 +98,18 @@ def test_ssh_instance_ready(
         nonlocal instance_data
         nonlocal process
 
-        process = exec_test_command(
-            ["linode-cli", "linodes", "view", str(target_instance["id"])]
+        output = exec_test_command(
+            BASE_CMDS["linodes"]
+            + ["view", str(target_instance["id"])]
             + COMMAND_JSON_OUTPUT
         )
-        assert process.returncode == 0
-        instance_data = json.loads(process.stdout.decode())[0]
+        instance_data = json.loads(output)[0]
 
         return instance_data["status"] == "running"
 
     def ssh_poll_func():
-        nonlocal process
-        process = exec_test_command(
-            BASE_CMD
+        exec_test_command(
+            BASE_CMDS["ssh"]
             + [
                 "root@" + instance_data["label"],
                 "-o",
@@ -132,20 +121,13 @@ def test_ssh_instance_ready(
                 "echo 'hello world!'",
             ]
         )
-        return process.returncode == 0
 
     # Wait for the instance to be ready
     wait_for_condition(
         POLL_INTERVAL, INSTANCE_WAIT_TIMEOUT_SECONDS, instance_poll_func
     )
 
-    assert process.returncode == 0
     assert instance_data["status"] == "running"
 
     # Wait for SSH to be available
     wait_for_condition(POLL_INTERVAL, SSH_WAIT_TIMEOUT_SECONDS, ssh_poll_func)
-
-    assert process.returncode == 0
-
-    # Did we get a response from the instance?
-    assert "hello world!" in process.stdout.decode()

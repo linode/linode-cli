@@ -1,7 +1,7 @@
 import json
 import re
-import pytest
 
+import pytest
 from pytest import MonkeyPatch
 
 from linodecli.exit_codes import ExitCodes
@@ -232,8 +232,6 @@ def test_firewall_templates_list(monkeypatch: MonkeyPatch):
     monkeypatch.setenv("LINODE_CLI_API_VERSION", "v4beta")
     data = json.loads(
         exec_test_command(BASE_CMDS["firewalls"] + ["templates-list", "--json"])
-        .stdout.decode()
-        .rstrip()
     )
 
     slugs = {template["slug"] for template in data}
@@ -261,9 +259,9 @@ def test_firewall_template_view(monkeypatch: MonkeyPatch):
     monkeypatch.setenv("LINODE_CLI_API_VERSION", "v4beta")
     for slug in ["akamai-non-prod", "vpc", "public"]:
         data = json.loads(
-            exec_test_command(BASE_CMDS["firewalls"] + ["template-view", slug, "--json"])
-            .stdout.decode()
-            .rstrip()
+            exec_test_command(
+                BASE_CMDS["firewalls"] + ["template-view", slug, "--json"]
+            )
         )
         template = data[0]
 

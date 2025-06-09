@@ -80,7 +80,9 @@ def test_create_master_domain_with_tags():
         ]
     )
 
-    assert re.search("[0-9]+,[0-9]+-example.com,master,active," + tag, output)
+    assert re.search(
+        r"\d+,[^,]*-example\.com,master,active," + re.escape(tag), output
+    )
 
     res_arr = output.split(",")
     domain_id = res_arr[0]

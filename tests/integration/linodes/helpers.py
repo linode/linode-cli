@@ -1,6 +1,7 @@
+import json
 import time
 
-from tests.integration.helpers import exec_test_command
+from tests.integration.helpers import BASE_CMDS, exec_test_command
 
 DEFAULT_RANDOM_PASS = exec_test_command(["openssl", "rand", "-base64", "32"])
 DEFAULT_REGION = "us-ord"
@@ -33,8 +34,6 @@ DEFAULT_LINODE_TYPE = exec_test_command(
 
 DEFAULT_LABEL = "cli-default"
 
-BASE_CMD = ["linode-cli", "linodes"]
-
 
 def wait_until(linode_id: "str", timeout, status: "str", period=5):
     must_end = time.time() + timeout
@@ -50,7 +49,7 @@ def wait_until(linode_id: "str", timeout, status: "str", period=5):
                 "--text",
                 "--no-headers",
             ]
-        ).stdout
+        )
         if status in result:
             return True
         time.sleep(period)
@@ -65,9 +64,7 @@ def create_linode(
     interfaces: str = None,
 ):
     # Base command
-    command = [
-        "linode-cli",
-        "linodes",
+    command = BASE_CMDS["linodes"] + [
         "create",
         "--type",
         DEFAULT_LINODE_TYPE,
@@ -99,13 +96,12 @@ def create_linode(
 def create_linode_backup_disabled(
     firewall_id: "str", test_region=DEFAULT_REGION
 ):
-    result = set_backups_enabled_in_account_settings(toggle=False)
+    set_backups_enabled_in_account_settings(toggle=False)
 
     # create linode
     linode_id = exec_test_command(
-        [
-            "linode-cli",
-            "linodes",
+        BASE_CMDS["linodes"]
+        + [
             "create",
             "--type",
             DEFAULT_LINODE_TYPE,
@@ -131,7 +127,7 @@ def create_linode_backup_disabled(
 def shutdown_linodes():
     linode_ids = exec_test_command(
         [
-            BASE_CMD,
+            BASE_CMDS["linodes"],
             "linodes",
             "list",
             "--format",
@@ -146,7 +142,7 @@ def shutdown_linodes():
 def remove_linodes():
     linode_ids = exec_test_command(
         [
-            BASE_CMD,
+            BASE_CMDS["linodes"],
             "linodes",
             "list",
             "--format",
@@ -227,7 +223,7 @@ def set_backups_enabled_in_account_settings(toggle: bool):
 
 def get_disk_ids(linode_id):
     disk_ids = exec_test_command(
-        BASE_CMD
+        BASE_CMDS["linodes"]
         + [
             "disks-list",
             linode_id,
@@ -239,3 +235,96 @@ def get_disk_ids(linode_id):
     ).splitlines()
 
     return disk_ids
+
+
+# Backups
+def check_account_settings():
+    acc_settings = exec_test_command(
+        [
+            "linode-cli",
+            "account",
+            "settings",
+            "--text",
+            "--format",
+            "managed",
+            "--no-headers",
+        ]
+    )
+
+    return acc_settings
+
+
+# Config
+
+
+def get_subnet_id(vpc_id):
+    subnet_id = exec_test_command(
+        [
+            "linode-cli",
+            "vpcs",
+            "subnets-list",
+            vpc_id,
+            "--text",
+            "--format=id",
+            "--no-headers",
+        ]
+    )
+
+    return subnet_id
+
+
+# Interfaces
+def get_interface_id(linode_id: str):
+    data = json.loads(
+        exec_test_command(
+            [
+                "linode-cli",
+                "linodes",
+                "interfaces-list",
+                linode_id,
+                "--json",
+            ]
+        )
+    )
+
+    interface_id = data[0]["interfaces"]["id"]
+
+    return str(interface_id)
+
+
+def get_ipv4_addr(linode_id: "str"):
+    data = json.loads(
+        exec_test_command(
+            [
+                "linode-cli",
+                "linodes",
+                "ips-list",
+                linode_id,
+                "--json",
+            ]
+        )
+    )
+
+    ipv4_public = data[0]["ipv4"]["public"]
+    ipv4_addr = ipv4_public[0]["address"] if ipv4_public else None
+
+    return str(ipv4_addr)
+
+
+def get_disk_id(test_linode_instance):
+    linode_id = test_linode_instance
+    disk_id = exec_test_command(
+        BASE_CMDS["linodes"]
+        + [
+            "disks-list",
+            linode_id,
+            "--text",
+            "--no-headers",
+            "--delimiter",
+            ",",
+            "--format",
+            "id",
+        ]
+    ).splitlines()
+    first_id = disk_id[0].split(",")[0]
+    return first_id

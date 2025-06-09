@@ -16,7 +16,7 @@ COMMAND_JSON_OUTPUT = ["--suppress-warnings", "--no-defaults", "--json"]
 # TypeVars for generic type hints below
 T = TypeVar("T")
 
-BASE_CMD = "linode-cli"
+
 MODULES = [
     "account",
     "domains",
@@ -34,8 +34,22 @@ MODULES = [
     "lke",
     "longview",
     "managed",
+    "networking",
+    "obj",
+    "object-storage",
+    "placement",
+    "profile",
+    "regions",
+    "ssh",
+    "stackscripts",
+    "tickets",
+    "tags",
+    "users",
+    "vlans",
+    "volumes",
+    "vpcs",
 ]
-BASE_CMDS = {module: [BASE_CMD, module] for module in MODULES}
+BASE_CMDS = {module: ["linode-cli", module] for module in MODULES}
 
 
 def get_random_text(length: int = 10):
@@ -85,7 +99,7 @@ def exec_failing_test_command(
     return process.stderr.rstrip()
 
 
-# Delete/Remove helper functions (mainly used in clean-ups after test
+# Delete/Remove helper functions (mainly used in clean-ups after tests)
 def delete_target_id(target: str, id: str, delete_command: str = "delete"):
     command = ["linode-cli", target, delete_command, id]
     try:
@@ -119,11 +133,11 @@ def retry_exec_test_command_with_delay(
     args: List[str], retries: int = 3, delay: int = 2
 ):
     for attempt in range(retries):
-        process = subprocess.run(args, stdout=subprocess.PIPE)
+        process = subprocess.run(args, stdout=subprocess.PIPE, text=True)
 
         # Check if the command succeeded
         if process.returncode == 0:
-            return process
+            return process.stdout.rstrip()
         else:
             print(
                 f"Attempt {attempt + 1} failed, retrying in {delay} seconds..."
@@ -131,7 +145,7 @@ def retry_exec_test_command_with_delay(
             time.sleep(delay)
 
     assert process.returncode == 0, f"Command failed after {retries} retries"
-    return process
+    return process.stdout.rstrip()
 
 
 def get_random_region_with_caps(
@@ -139,7 +153,7 @@ def get_random_region_with_caps(
 ):
     json_regions_data = exec_test_command(
         ["linode-cli", "regions", "ls", "--json"]
-    ).stdout.strip()
+    )
 
     # Parse regions JSON data
     regions = json.loads(json_regions_data)
@@ -155,20 +169,3 @@ def get_random_region_with_caps(
     matching_region_ids = [region["id"] for region in matching_regions]
 
     return random.choice(matching_region_ids) if matching_region_ids else None
-
-
-def get_cluster_id(label: str):
-    cluster_id = exec_test_command(
-        [
-            "linode-cli",
-            "lke",
-            "clusters-list",
-            "--text",
-            "--format=id",
-            "--no-headers",
-            "--label",
-            label,
-        ]
-    )
-
-    return cluster_id

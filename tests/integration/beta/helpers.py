@@ -1,3 +1,5 @@
+import pytest
+
 from tests.integration.helpers import (
     BASE_CMDS,
     exec_test_command,
