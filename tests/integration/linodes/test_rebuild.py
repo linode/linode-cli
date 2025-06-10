@@ -9,7 +9,7 @@ from tests.integration.helpers import (
     exec_test_command,
     retry_exec_test_command_with_delay,
 )
-from tests.integration.linodes.fixtures import (  # noqa: #401
+from tests.integration.linodes.fixtures import (  # noqa: F401
     linode_for_rebuild_tests,
 )
 from tests.integration.linodes.helpers import (

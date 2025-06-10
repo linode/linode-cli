@@ -8,7 +8,7 @@ from tests.integration.helpers import (
     exec_failing_test_command,
     exec_test_command,
 )
-from tests.integration.linodes.fixtures import (  # noqa: #401
+from tests.integration.linodes.fixtures import (  # noqa: F401
     linode_instance_for_resize_tests,
 )
 from tests.integration.linodes.helpers import (

@@ -10,7 +10,7 @@ from tests.integration.helpers import (
     exec_test_command,
     get_random_text,
 )
-from tests.integration.volumes.fixtures import volume_instance_id  # noqa: #401
+from tests.integration.volumes.fixtures import volume_instance_id  # noqa: F401
 
 
 def test_fail_to_create_volume_under_10gb():

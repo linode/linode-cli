@@ -4,7 +4,7 @@ from tests.integration.helpers import (
     exec_test_command,
     get_random_text,
 )
-from tests.integration.placements.fixtures import (  # noqa: #401
+from tests.integration.placements.fixtures import (  # noqa: F401
     linode_for_placement_tests,
     placement_group,
 )

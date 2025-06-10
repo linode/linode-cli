@@ -13,7 +13,9 @@ from tests.integration.helpers import (
 )
 from tests.integration.linodes.helpers import (
     DEFAULT_LABEL,
+    DEFAULT_LINODE_TYPE,
     DEFAULT_RANDOM_PASS,
+    DEFAULT_REGION,
     DEFAULT_TEST_IMAGE,
     create_linode,
     create_linode_and_wait,

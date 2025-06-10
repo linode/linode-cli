@@ -1,7 +1,6 @@
 import json
-import subprocess
 from sys import platform
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 import pytest
 
@@ -91,12 +90,10 @@ def test_ssh_instance_ready(
 ):
     pubkey, privkey = ssh_key_pair_generator
 
-    process: Optional[subprocess.CompletedProcess] = None
     instance_data = {}
 
     def instance_poll_func():
         nonlocal instance_data
-        nonlocal process
 
         output = exec_test_command(
             BASE_CMDS["linodes"]
@@ -108,7 +105,7 @@ def test_ssh_instance_ready(
         return instance_data["status"] == "running"
 
     def ssh_poll_func():
-        exec_test_command(
+        output = exec_test_command(
             BASE_CMDS["ssh"]
             + [
                 "root@" + instance_data["label"],
@@ -121,6 +118,8 @@ def test_ssh_instance_ready(
                 "echo 'hello world!'",
             ]
         )
+
+        return "hello world!" in output
 
     # Wait for the instance to be ready
     wait_for_condition(

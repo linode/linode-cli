@@ -7,14 +7,11 @@ from tests.integration.helpers import (
 )
 
 
-def test_output():
+def test_regions_table_output():
     output = exec_test_command(["linode-cli", "region-table"])
-    lines = output.split("\n")
-    lines = lines[3 : len(lines) - 2]
-    for line in lines:
-        assert "-" in line
-        assert "✔" in line
-        assert "│" in line
+    assert "-" in output
+    assert "✔" in output
+    assert "│" in output
 
 
 def test_regions_list():

@@ -8,7 +8,7 @@ from tests.integration.helpers import (
     exec_failing_test_command,
     exec_test_command,
 )
-from tests.integration.nodebalancers.fixtures import (  # noqa: #401
+from tests.integration.nodebalancers.fixtures import (  # noqa: F401
     linode_to_add,
     nodebalancer_w_config_and_node,
     nodebalancer_with_default_conf,

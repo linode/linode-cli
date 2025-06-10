@@ -7,7 +7,7 @@ from tests.integration.helpers import (
     exec_failing_test_command,
     exec_test_command,
 )
-from tests.integration.volumes.fixtures import volume_instance_id  # noqa: #401
+from tests.integration.volumes.fixtures import volume_instance_id  # noqa: F401
 
 
 def test_resize_fails_to_smaller_volume(volume_instance_id):

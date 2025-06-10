@@ -11,7 +11,7 @@ from tests.integration.helpers import (
     get_random_text,
     retry_exec_test_command_with_delay,
 )
-from tests.integration.lke.fixtures import lke_cluster, node_pool  # noqa: #401
+from tests.integration.lke.fixtures import lke_cluster, node_pool  # noqa: F401
 from tests.integration.lke.helpers import (
     get_cluster_id,
     get_lke_version_id,

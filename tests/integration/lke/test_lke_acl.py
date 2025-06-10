@@ -4,7 +4,7 @@ from tests.integration.helpers import (
     exec_test_command,
     retry_exec_test_command_with_delay,
 )
-from tests.integration.lke.fixtures import lke_cluster_acl  # noqa: #401
+from tests.integration.lke.fixtures import lke_cluster_acl  # noqa: F401
 
 
 def test_cluster_acl_view(lke_cluster_acl):
