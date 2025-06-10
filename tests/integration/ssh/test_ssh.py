@@ -5,8 +5,12 @@ from sys import platform
 
 import pytest
 
-from tests.integration.helpers import delete_target_id, exec_test_command
-from tests.integration.linodes.helpers_linodes import create_linode_and_wait
+from tests.integration.helpers import (
+    BASE_CMDS,
+    delete_target_id,
+    exec_test_command,
+)
+from tests.integration.linodes.helpers import create_linode_and_wait
 
 BASE_CMD = ["linode-cli", "ssh"]
 NUM_OF_RETRIES = 10
@@ -20,40 +24,31 @@ def linode_in_running_state(ssh_key_pair_generator, linode_cloud_firewall):
     with open(pubkey_file, "r") as f:
         pubkey = f.read().rstrip()
 
-    res = (
-        exec_test_command(
-            [
-                "linode-cli",
-                "images",
-                "list",
-                "--format",
-                "id",
-                "--text",
-                "--no-headers",
-            ]
-        )
-        .stdout.decode()
-        .rstrip()
+    res = exec_test_command(
+        [
+            "linode-cli",
+            "images",
+            "list",
+            "--format",
+            "id",
+            "--text",
+            "--no-headers",
+        ]
     )
 
     alpine_image = re.findall(r"linode/alpine[^\s]+", res)[0]
 
-    plan = (
-        exec_test_command(
-            [
-                "linode-cli",
-                "linodes",
-                "types",
-                "--format",
-                "id",
-                "--text",
-                "--no-headers",
-            ]
-        )
-        .stdout.decode()
-        .rstrip()
-        .splitlines()[0]
-    )
+    plan = exec_test_command(
+        [
+            "linode-cli",
+            "linodes",
+            "types",
+            "--format",
+            "id",
+            "--text",
+            "--no-headers",
+        ]
+    ).splitlines()[0]
 
     linode_id = create_linode_and_wait(
         test_plan=plan,
@@ -68,7 +63,7 @@ def linode_in_running_state(ssh_key_pair_generator, linode_cloud_firewall):
 
 @pytest.mark.skipif(platform == "win32", reason="Test N/A on Windows")
 def test_display_ssh_plugin_usage_info():
-    result = exec_test_command(BASE_CMD + ["-h"]).stdout.decode()
+    result = exec_test_command(BASE_CMDS["ssh"] + ["-h"])
     assert "[USERNAME@]LABEL" in result
     assert "uses the Linode's SLAAC address for SSH" in result
 
@@ -89,22 +84,18 @@ def test_ssh_to_linode_and_get_kernel_version(
     linode_id = linode_in_running_state
     pubkey_file, privkey_file = ssh_key_pair_generator
 
-    linode_label = (
-        exec_test_command(
-            [
-                "linode-cli",
-                "linodes",
-                "list",
-                "--id",
-                linode_id,
-                "--format",
-                "label",
-                "--text",
-                "--no-headers",
-            ]
-        )
-        .stdout.decode()
-        .rstrip()
+    linode_label = exec_test_command(
+        [
+            "linode-cli",
+            "linodes",
+            "list",
+            "--id",
+            linode_id,
+            "--format",
+            "label",
+            "--text",
+            "--no-headers",
+        ]
     )
 
     time.sleep(SSH_SLEEP_PERIOD)
@@ -126,22 +117,18 @@ def test_check_vm_for_ipv4_connectivity(
 ):
     pubkey_file, privkey_file = ssh_key_pair_generator
     linode_id = linode_in_running_state
-    linode_label = (
-        exec_test_command(
-            [
-                "linode-cli",
-                "linodes",
-                "list",
-                "--id",
-                linode_id,
-                "--format",
-                "label",
-                "--text",
-                "--no-headers",
-            ]
-        )
-        .stdout.decode()
-        .rstrip()
+    linode_label = exec_test_command(
+        [
+            "linode-cli",
+            "linodes",
+            "list",
+            "--id",
+            linode_id,
+            "--format",
+            "label",
+            "--text",
+            "--no-headers",
+        ]
     )
 
     time.sleep(SSH_SLEEP_PERIOD)

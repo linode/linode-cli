@@ -2,30 +2,32 @@ import re
 
 import pytest
 
-from tests.integration.helpers import exec_test_command
-
-BASE_CMD = ["linode-cli", "kernels", "list", "--text", "--no-headers"]
+from tests.integration.helpers import BASE_CMDS, exec_test_command
 
 
 def test_list_available_kernels():
-    process = exec_test_command(BASE_CMD + ["--format", "id"])
-    output = process.stdout.decode()
+    output = exec_test_command(
+        BASE_CMDS["kernels"]
+        + ["list", "--text", "--no-headers", "--format", "id"]
+    )
 
     for line in output.splitlines():
         assert "linode" in line
 
 
 def test_fields_from_kernels_list():
-    process = exec_test_command(
-        BASE_CMD
+    output = exec_test_command(
+        BASE_CMDS["kernels"]
         + [
+            "list",
+            "--text",
+            "--no-headers",
             "--delimiter",
             ",",
             "--format",
             "id,version,kvm,architecture,pvops,deprecated,built",
         ]
     )
-    output = process.stdout.decode()
 
     for line in output.splitlines():
         assert re.search(
@@ -36,15 +38,16 @@ def test_fields_from_kernels_list():
 
 @pytest.mark.smoke
 def test_view_kernel():
-    process = exec_test_command(BASE_CMD + ["--format", "id"])
-    output = process.stdout.decode()
+    output = exec_test_command(
+        BASE_CMDS["kernels"]
+        + ["list", "--text", "--no-headers", "--format", "id"]
+    )
 
     lines = output.splitlines()
 
-    process = exec_test_command(
-        [
-            "linode-cli",
-            "kernels",
+    output = exec_test_command(
+        BASE_CMDS["kernels"]
+        + [
             "view",
             str(lines[0]),
             "--format",
@@ -54,7 +57,6 @@ def test_view_kernel():
             ",",
         ]
     )
-    output = process.stdout.decode()
 
     assert "id,version,kvm,architecture,pvops,deprecated,built" in output
 

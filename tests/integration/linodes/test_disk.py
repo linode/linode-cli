@@ -1,40 +1,17 @@
-import pytest
-
 from tests.integration.helpers import (
+    BASE_CMDS,
     assert_headers_in_lines,
-    delete_target_id,
     exec_test_command,
-    get_random_region_with_caps,
     get_random_text,
     retry_exec_test_command_with_delay,
     wait_for_condition,
 )
-from tests.integration.linodes.helpers_linodes import (
-    BASE_CMD,
-    create_linode_and_wait,
-    get_disk_ids,
-    wait_until,
+from tests.integration.linodes.fixtures import (  # noqa: F401
+    linode_instance_disk_tests,
 )
-
-TEST_REGION = get_random_region_with_caps(required_capabilities=["Linodes"])
-
-
-@pytest.fixture(scope="session", autouse=True)
-def linode_instance_disk_tests(linode_cloud_firewall):
-    linode_id = create_linode_and_wait(
-        firewall_id=linode_cloud_firewall,
-        disk_encryption=False,
-        test_region=TEST_REGION,
-        test_plan="g6-standard-4",
-    )
-
-    retry_exec_test_command_with_delay(BASE_CMD + ["shutdown", linode_id])
-
-    wait_until(linode_id=linode_id, timeout=240, status="offline")
-
-    yield linode_id
-
-    delete_target_id(target="linodes", id=linode_id)
+from tests.integration.linodes.helpers import (
+    get_disk_ids,
+)
 
 
 def test_disk_resize_clone_and_create(linode_instance_disk_tests):
@@ -44,7 +21,7 @@ def test_disk_resize_clone_and_create(linode_instance_disk_tests):
 
     # resize disk
     retry_exec_test_command_with_delay(
-        BASE_CMD
+        BASE_CMDS["linodes"]
         + [
             "disk-resize",
             linode_id,
@@ -57,20 +34,16 @@ def test_disk_resize_clone_and_create(linode_instance_disk_tests):
     )
 
     def disk_poll_func():
-        status = (
-            exec_test_command(
-                BASE_CMD
-                + [
-                    "disk-view",
-                    linode_id,
-                    disk_id,
-                    "--text",
-                    "--no-headers",
-                    "--format=status",
-                ]
-            )
-            .stdout.decode()
-            .rstrip()
+        status = exec_test_command(
+            BASE_CMDS["linodes"]
+            + [
+                "disk-view",
+                linode_id,
+                disk_id,
+                "--text",
+                "--no-headers",
+                "--format=status",
+            ]
         )
 
         return status == "ready"
@@ -79,20 +52,16 @@ def test_disk_resize_clone_and_create(linode_instance_disk_tests):
     wait_for_condition(15, 150, disk_poll_func)
 
     # clone disk
-    res = (
-        retry_exec_test_command_with_delay(
-            BASE_CMD
-            + [
-                "disk-clone",
-                linode_id,
-                disk_id,
-                "--text",
-            ],
-            retries=3,
-            delay=10,
-        )
-        .stdout.decode()
-        .rstrip()
+    res = retry_exec_test_command_with_delay(
+        BASE_CMDS["linodes"]
+        + [
+            "disk-clone",
+            linode_id,
+            disk_id,
+            "--text",
+        ],
+        retries=3,
+        delay=10,
     )
 
     headers = ["id", "label", "status", "size", "filesystem", "disk_encryption"]
@@ -105,23 +74,19 @@ def test_disk_resize_clone_and_create(linode_instance_disk_tests):
     label = get_random_text(5) + "disk"
 
     # create new disk
-    res = (
-        retry_exec_test_command_with_delay(
-            BASE_CMD
-            + [
-                "disk-create",
-                linode_id,
-                "--size",
-                "15",
-                "--label",
-                label,
-                "--text",
-            ],
-            retries=3,
-            delay=10,
-        )
-        .stdout.decode()
-        .rstrip()
+    res = retry_exec_test_command_with_delay(
+        BASE_CMDS["linodes"]
+        + [
+            "disk-create",
+            linode_id,
+            "--size",
+            "15",
+            "--label",
+            label,
+            "--text",
+        ],
+        retries=3,
+        delay=10,
     )
 
     headers = ["id", "label", "status", "size", "filesystem", "disk_encryption"]
@@ -130,15 +95,14 @@ def test_disk_resize_clone_and_create(linode_instance_disk_tests):
 
     assert label in res
     assert "15" in res
-    # assert "disabled" in res
 
 
 def test_disk_reset_password(linode_instance_disk_tests):
     linode_id = linode_instance_disk_tests
     disk_id = get_disk_ids(linode_id)[1]
 
-    res = retry_exec_test_command_with_delay(
-        BASE_CMD
+    retry_exec_test_command_with_delay(
+        BASE_CMDS["linodes"]
         + [
             "disk-reset-password",
             linode_id,
@@ -151,8 +115,6 @@ def test_disk_reset_password(linode_instance_disk_tests):
         delay=10,
     )
 
-    assert res.returncode == 0
-
 
 def test_disk_update(linode_instance_disk_tests):
     linode_id = linode_instance_disk_tests
@@ -160,24 +122,18 @@ def test_disk_update(linode_instance_disk_tests):
 
     update_label = get_random_text(5) + "newdisk"
 
-    res = (
-        (
-            retry_exec_test_command_with_delay(
-                BASE_CMD
-                + [
-                    "disk-update",
-                    linode_id,
-                    disk_id,
-                    "--label",
-                    update_label,
-                    "--text",
-                ],
-                retries=3,
-                delay=10,
-            )
-        )
-        .stdout.decode()
-        .rstrip()
+    res = retry_exec_test_command_with_delay(
+        BASE_CMDS["linodes"]
+        + [
+            "disk-update",
+            linode_id,
+            disk_id,
+            "--label",
+            update_label,
+            "--text",
+        ],
+        retries=3,
+        delay=10,
     )
 
     headers = ["id", "label", "status", "size", "filesystem", "disk_encryption"]
@@ -189,19 +145,13 @@ def test_disk_update(linode_instance_disk_tests):
 def test_disks_list(linode_instance_disk_tests):
     linode_id = linode_instance_disk_tests
 
-    res = (
-        (
-            retry_exec_test_command_with_delay(
-                BASE_CMD
-                + [
-                    "disks-list",
-                    linode_id,
-                    "--text",
-                ]
-            )
-        )
-        .stdout.decode()
-        .rstrip()
+    res = retry_exec_test_command_with_delay(
+        BASE_CMDS["linodes"]
+        + [
+            "disks-list",
+            linode_id,
+            "--text",
+        ]
     )
 
     headers = ["id", "label", "status", "size", "filesystem", "disk_encryption"]

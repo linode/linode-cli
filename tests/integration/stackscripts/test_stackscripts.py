@@ -1,48 +1,24 @@
 import re
-import time
 
 import pytest
 
 from linodecli.exit_codes import ExitCodes
 from tests.integration.helpers import (
+    BASE_CMDS,
     delete_target_id,
     exec_failing_test_command,
     exec_test_command,
+    get_random_text,
 )
-from tests.integration.linodes.helpers_linodes import DEFAULT_RANDOM_PASS
+from tests.integration.linodes.helpers import DEFAULT_RANDOM_PASS
 
-BASE_CMD = ["linode-cli", "stackscripts"]
-DEF_LABEL = "stack_script_" + str(int(time.time()))
-
-
-def get_linode_image_lists():
-    all_images = (
-        (
-            exec_test_command(
-                [
-                    "linode-cli",
-                    "images",
-                    "list",
-                    "--format",
-                    "id",
-                    "--text",
-                    "--no-headers",
-                ]
-            )
-        )
-        .stdout.decode()
-        .rstrip()
-    )
-
-    images = re.findall(r"linode/[^\s]+", all_images)
-
-    return images
+DEF_LABEL = "stack_script_" + get_random_text(5)
 
 
 @pytest.fixture(scope="package", autouse=True)
 def test_stackscript_id():
     result = exec_test_command(
-        BASE_CMD
+        BASE_CMDS["stackscripts"]
         + [
             "create",
             "--script",
@@ -57,7 +33,7 @@ def test_stackscript_id():
             "--delimiter",
             ",",
         ]
-    ).stdout.decode()
+    )
 
     assert re.search(
         "[0-9]+,.*,"
@@ -74,11 +50,11 @@ def test_stackscript_id():
 
 
 def test_list_stackscripts():
-    result = exec_test_command(BASE_CMD + ["list", "--text"]).stdout.decode()
+    result = exec_test_command(BASE_CMDS["stackscripts"] + ["list", "--text"])
     assert "id	username	label	images	is_public	created	updated" in result
 
     result = exec_test_command(
-        BASE_CMD
+        BASE_CMDS["stackscripts"]
         + [
             "list",
             "--text",
@@ -88,7 +64,7 @@ def test_list_stackscripts():
             "--delimiter",
             ",",
         ]
-    ).stdout.decode()
+    )
 
     output = result.splitlines()
 
@@ -97,7 +73,7 @@ def test_list_stackscripts():
 
 def test_test_stackscript_id_fails_without_image():
     result = exec_failing_test_command(
-        BASE_CMD
+        BASE_CMDS["stackscripts"]
         + [
             "create",
             "--script",
@@ -111,7 +87,7 @@ def test_test_stackscript_id_fails_without_image():
             ",",
         ],
         ExitCodes.REQUEST_FAILED,
-    ).stderr.decode()
+    )
 
     assert "Request failed: 400" in result
     assert "images is required" in result
@@ -119,7 +95,7 @@ def test_test_stackscript_id_fails_without_image():
 
 def test_view_private_stackscript():
     result = exec_test_command(
-        BASE_CMD
+        BASE_CMDS["stackscripts"]
         + [
             "list",
             "--text",
@@ -129,7 +105,7 @@ def test_view_private_stackscript():
             "--delimiter",
             ",",
         ]
-    ).stdout.decode()
+    )
 
     assert re.search(
         "[0-9]+,.*,"
@@ -143,30 +119,21 @@ def test_view_private_stackscript():
 def test_update_stackscript_compatible_image(test_stackscript_id):
     images = get_linode_image_lists()
     private_stackscript = test_stackscript_id
-    result = (
-        exec_test_command(
-            BASE_CMD
-            + [
-                "update",
-                "--images",
-                images[0],
-                private_stackscript,
-                "--text",
-                "--no-headers",
-                "--delimiter",
-                ",",
-            ]
-        )
-        .stdout.decode()
-        .rstrip()
+    result = exec_test_command(
+        BASE_CMDS["stackscripts"]
+        + [
+            "update",
+            "--images",
+            images[0],
+            private_stackscript,
+            "--text",
+            "--no-headers",
+            "--delimiter",
+            ",",
+        ]
     )
 
-    assert re.search(
-        "[0-9]+,.*,stack_script_[0-9]+,"
-        + images[0]
-        + ",False,[0-9]+-[0-9]+-[0-9]+T[0-9]+:[0-9]+:[0-9]+,[0-9]+-[0-9]+-[0-9]+T[0-9]+:[0-9]+:[0-9]+",
-        result,
-    )
+    assert images[0] in result
 
 
 def test_update_stackscript_to_be_compatible_with_multiple_images(
@@ -176,7 +143,7 @@ def test_update_stackscript_to_be_compatible_with_multiple_images(
     private_stackscript = test_stackscript_id
 
     result = exec_test_command(
-        BASE_CMD
+        BASE_CMDS["stackscripts"]
         + [
             "update",
             "--images",
@@ -189,7 +156,7 @@ def test_update_stackscript_to_be_compatible_with_multiple_images(
             "--delimiter",
             ",",
         ]
-    ).stdout.decode()
+    )
     assert images[0] in result
     assert images[1] in result
 
@@ -220,7 +187,7 @@ def test_fail_to_deploy_stackscript_to_linode_from_incompatible_image(
             "--text",
         ],
         ExitCodes.REQUEST_FAILED,
-    ).stderr.decode()
+    )
 
     assert "image is not valid" in result
     assert "Request failed: 400" in result
@@ -256,7 +223,7 @@ def test_deploy_linode_from_stackscript(test_stackscript_id):
             "id,region,type,image",
             "--no-headers",
         ]
-    ).stdout.decode()
+    )
 
     assert re.search(
         "[0-9]+," + linode_region + "," + linode_plan + "," + images[0], result
@@ -265,3 +232,21 @@ def test_deploy_linode_from_stackscript(test_stackscript_id):
     linode_id = result.split(",")[0]
 
     delete_target_id("linodes", linode_id)
+
+
+def get_linode_image_lists():
+    all_images = exec_test_command(
+        [
+            "linode-cli",
+            "images",
+            "list",
+            "--format",
+            "id",
+            "--text",
+            "--no-headers",
+        ]
+    )
+
+    images = re.findall(r"linode/[^\s]+", all_images)
+
+    return images

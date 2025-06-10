@@ -1,47 +1,22 @@
 import pytest
 
 from tests.integration.helpers import (
-    delete_target_id,
+    BASE_CMDS,
     exec_test_command,
     retry_exec_test_command_with_delay,
 )
-from tests.integration.linodes.helpers_linodes import (
-    BASE_CMD,
-    create_linode_and_wait,
+from tests.integration.linodes.fixtures import (  # noqa: F401
+    linode_in_running_state_for_reboot,
+    linode_instance_basic,
+)
+from tests.integration.linodes.helpers import (
     wait_until,
 )
 
 
-@pytest.fixture
-def test_linode_id(linode_cloud_firewall):
-    linode_id = create_linode_and_wait(firewall_id=linode_cloud_firewall)
-
-    yield linode_id
-
-    delete_target_id(target="linodes", id=linode_id)
-
-
-@pytest.fixture
-def linode_in_running_state(linode_cloud_firewall):
-    linode_id = create_linode_and_wait(firewall_id=linode_cloud_firewall)
-
-    yield linode_id
-
-    delete_target_id("linodes", linode_id)
-
-
-@pytest.fixture
-def linode_in_running_state_for_reboot(linode_cloud_firewall):
-    linode_id = create_linode_and_wait(firewall_id=linode_cloud_firewall)
-
-    yield linode_id
-
-    delete_target_id("linodes", linode_id)
-
-
 @pytest.mark.smoke
-def test_create_linode_and_boot(test_linode_id):
-    linode_id = test_linode_id
+def test_create_linode_and_boot(linode_instance_basic):
+    linode_id = linode_instance_basic
 
     # returns false if status is not running after 240s
     result = wait_until(linode_id=linode_id, timeout=240, status="running")
@@ -56,7 +31,9 @@ def test_reboot_linode(linode_in_running_state_for_reboot):
 
     # reboot linode from "running" status
     retry_exec_test_command_with_delay(
-        BASE_CMD + ["reboot", linode_id, "--text", "--no-headers"], 3, 20
+        BASE_CMDS["linodes"] + ["reboot", linode_id, "--text", "--no-headers"],
+        3,
+        20,
     )
 
     assert wait_until(
@@ -65,8 +42,8 @@ def test_reboot_linode(linode_in_running_state_for_reboot):
 
 
 @pytest.mark.flaky(reruns=3, reruns_delay=2)
-def test_shutdown_linode(test_linode_id):
-    linode_id = test_linode_id
+def test_shutdown_linode(linode_instance_basic):
+    linode_id = linode_instance_basic
 
     # returns false if status is not running after 240s after reboot
     assert wait_until(
@@ -74,7 +51,7 @@ def test_shutdown_linode(test_linode_id):
     ), "Linode status has not changed to running from provisioning"
 
     # shutdown linode that is in running state
-    exec_test_command(BASE_CMD + ["shutdown", linode_id])
+    exec_test_command(BASE_CMDS["linodes"] + ["shutdown", linode_id])
 
     result = wait_until(linode_id=linode_id, timeout=180, status="offline")
 

@@ -1,30 +1,12 @@
 import json
 import random
 
-from tests.integration.helpers import exec_test_command
-from tests.integration.obj.conftest import CLI_CMD
-
-
-def get_quota_id():
-    response = (
-        exec_test_command(CLI_CMD + ["get-object-storage-quotas", "--json"])
-        .stdout.decode()
-        .rstrip()
-    )
-
-    quotas = json.loads(response)
-    if not quotas:
-        return None
-
-    random_quota = random.choice(quotas)
-    return random_quota["quota_id"]
+from tests.integration.helpers import BASE_CMDS, exec_test_command
 
 
 def test_obj_quotas_list():
-    response = (
-        exec_test_command(CLI_CMD + ["get-object-storage-quotas", "--json"])
-        .stdout.decode()
-        .rstrip()
+    response = exec_test_command(
+        BASE_CMDS["object-storage"] + ["get-object-storage-quotas", "--json"]
     )
 
     quotas = json.loads(response)
@@ -47,12 +29,9 @@ def test_obj_quotas_list():
 def test_obj_quota_view():
     quota_id = get_quota_id()
 
-    response = (
-        exec_test_command(
-            CLI_CMD + ["get-object-storage-quota", quota_id, "--json"]
-        )
-        .stdout.decode()
-        .rstrip()
+    response = exec_test_command(
+        BASE_CMDS["object-storage"]
+        + ["get-object-storage-quota", quota_id, "--json"]
     )
 
     data = json.loads(response)
@@ -79,12 +58,9 @@ def test_obj_quota_view():
 def test_obj_quota_usage_view():
     quota_id = get_quota_id()
 
-    response = (
-        exec_test_command(
-            CLI_CMD + ["get-object-storage-quota-usage", quota_id, "--json"]
-        )
-        .stdout.decode()
-        .rstrip()
+    response = exec_test_command(
+        BASE_CMDS["object-storage"]
+        + ["get-object-storage-quota-usage", quota_id, "--json"]
     )
 
     data = json.loads(response)
@@ -95,3 +71,16 @@ def test_obj_quota_usage_view():
     assert "usage" in item
     assert isinstance(item["quota_limit"], int)
     assert isinstance(item["usage"], int)
+
+
+def get_quota_id():
+    response = exec_test_command(
+        BASE_CMDS["object-storage"] + ["get-object-storage-quotas", "--json"]
+    )
+
+    quotas = json.loads(response)
+    if not quotas:
+        return None
+
+    random_quota = random.choice(quotas)
+    return random_quota["quota_id"]

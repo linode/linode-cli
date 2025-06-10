@@ -1,21 +1,19 @@
-import time
-
 import pytest
 
-from tests.integration.helpers import exec_test_command
+from tests.integration.helpers import (
+    BASE_CMDS,
+    exec_test_command,
+    get_random_text,
+)
 
 BASE_CMD = ["linode-cli", "users"]
-unique_user = "test-user-" + str(int(time.time()))
+unique_user = "test-user-" + get_random_text(5)
 
 
 @pytest.fixture(scope="package", autouse=True)
 def teardown_fixture():
     yield "setup"
-    remove_users()
-
-
-def remove_users():
-    exec_test_command(BASE_CMD + ["delete", unique_user])
+    exec_test_command(BASE_CMDS["users"] + ["delete", unique_user])
 
 
 @pytest.fixture
@@ -37,10 +35,10 @@ def test_create_user():
 
 
 def test_display_users():
-    exec_test_command(BASE_CMD + ["list"])
+    exec_test_command(BASE_CMDS["users"] + ["list"])
 
 
 @pytest.mark.smoke
 @pytest.mark.usefixtures("test_create_user")
 def test_view_user():
-    exec_test_command(BASE_CMD + ["view", unique_user])
+    exec_test_command(BASE_CMDS["users"] + ["view", unique_user])
