@@ -103,7 +103,7 @@ def nodebalancer_w_config_and_node(linode_cloud_firewall):
     delete_target_id(target="linodes", id=linode_id)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def linode_to_add(linode_cloud_firewall):
     linode = exec_test_command(
         BASE_CMDS["linodes"]
@@ -140,7 +140,7 @@ def linode_to_add(linode_cloud_firewall):
     delete_target_id("linodes", linode_id)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def nodebalancer_with_default_conf(linode_cloud_firewall):
     result = exec_test_command(
         BASE_CMDS["nodebalancers"]

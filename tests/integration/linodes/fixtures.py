@@ -28,7 +28,7 @@ from tests.integration.linodes.helpers import (
 
 
 # Backups
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def linode_basic_with_firewall(linode_cloud_firewall):
     linode_id = create_linode(firewall_id=linode_cloud_firewall)
 
@@ -37,7 +37,7 @@ def linode_basic_with_firewall(linode_cloud_firewall):
     delete_target_id("linodes", linode_id)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def linode_backup_enabled(linode_cloud_firewall):
     # create linode with backups enabled
     linode_id = exec_test_command(
@@ -68,7 +68,7 @@ def linode_backup_enabled(linode_cloud_firewall):
     delete_target_id("linodes", linode_id)
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def linode_backup_disabled(linode_cloud_firewall):
     res = set_backups_enabled_in_account_settings(toggle=False)
 
@@ -84,7 +84,7 @@ def linode_backup_disabled(linode_cloud_firewall):
     delete_target_id("linodes", linode_id)
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def snapshot_of_linode():
     # get linode id after creation and wait for "running" status
     linode_id = create_linode_and_wait()
@@ -116,7 +116,7 @@ TEST_REGION = get_random_region_with_caps(
 )
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def linode_instance_config_tests(linode_cloud_firewall):
     linode_id = create_linode(
         firewall_id=linode_cloud_firewall,
@@ -129,7 +129,7 @@ def linode_instance_config_tests(linode_cloud_firewall):
     delete_target_id(target="linodes", id=linode_id)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def linode_disk_config(linode_instance_config_tests):
     linode_id = linode_instance_config_tests
 
@@ -154,7 +154,7 @@ def linode_disk_config(linode_instance_config_tests):
     yield config_id
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def test_vpc_w_subnet(request):
     vpc_json = create_vpc_w_subnet()
     vpc_id = str(vpc_json["id"])
@@ -162,7 +162,7 @@ def test_vpc_w_subnet(request):
     yield vpc_id
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def cleanup_vpc(request, test_vpc_w_subnet):
     # Register finalizer to delete VPC after the entire session, with a delay
     def delayed_cleanup():
@@ -172,7 +172,7 @@ def cleanup_vpc(request, test_vpc_w_subnet):
     request.addfinalizer(delayed_cleanup)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def config_vpc_interface(
     linode_instance_config_tests, linode_disk_config, test_vpc_w_subnet
 ):
@@ -241,7 +241,7 @@ def create_vpc_w_subnet():
 
 
 # Disks
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def linode_instance_disk_tests(linode_cloud_firewall):
     test_region = get_random_region_with_caps(required_capabilities=["Linodes"])
     linode_id = create_linode_and_wait(
@@ -263,7 +263,7 @@ def linode_instance_disk_tests(linode_cloud_firewall):
 
 
 # Interfaces
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def linode_with_vpc_interface_as_json(linode_cloud_firewall):
     vpc_json = create_vpc_w_subnet()
 
@@ -312,7 +312,7 @@ def linode_with_vpc_interface_as_json(linode_cloud_firewall):
 
 
 # Interfaces new
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def linode_interface_public(linode_cloud_firewall):
     linode_id = create_linode(
         firewall_id=linode_cloud_firewall,
@@ -323,12 +323,17 @@ def linode_interface_public(linode_cloud_firewall):
         + "}]",
     )
 
+    wait_until(linode_id=linode_id, timeout=300, status="running")
+
+    # shutdown linode
+    wait_until(linode_id=linode_id, timeout=60, status="offline")
+
     yield linode_id
 
     delete_target_id(target="linodes", id=linode_id)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def linode_interface_vlan(linode_cloud_firewall):
     linode_id = create_linode(
         firewall_id=linode_cloud_firewall,
@@ -342,7 +347,7 @@ def linode_interface_vlan(linode_cloud_firewall):
     delete_target_id(target="linodes", id=linode_id)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def linode_interface_legacy(linode_cloud_firewall):
     linode_id = create_linode(
         firewall_id=linode_cloud_firewall,
@@ -355,7 +360,7 @@ def linode_interface_legacy(linode_cloud_firewall):
     delete_target_id(target="linodes", id=linode_id)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def linode_interface_vpc(linode_cloud_firewall):
     vpc_output = json.loads(
         exec_test_command(
@@ -397,7 +402,7 @@ def linode_interface_vpc(linode_cloud_firewall):
 
 
 # Linodes
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def test_linode_instance(linode_cloud_firewall):
     linode_label = DEFAULT_LABEL + get_random_text(5)
 
@@ -435,7 +440,7 @@ def test_linode_instance(linode_cloud_firewall):
 
 
 # Linode Power Status
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def linode_instance_basic(linode_cloud_firewall):
     linode_id = create_linode_and_wait(firewall_id=linode_cloud_firewall)
 
@@ -444,7 +449,7 @@ def linode_instance_basic(linode_cloud_firewall):
     delete_target_id(target="linodes", id=linode_id)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def linode_in_running_state(linode_cloud_firewall):
     linode_id = create_linode_and_wait(firewall_id=linode_cloud_firewall)
 
@@ -463,7 +468,7 @@ def linode_in_running_state_for_reboot(linode_cloud_firewall):
 
 
 # Rebuild
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def linode_for_rebuild_tests(linode_cloud_firewall):
     test_region = get_random_region_with_caps(
         required_capabilities=["Linodes", "Disk Encryption"]
@@ -480,7 +485,7 @@ def linode_for_rebuild_tests(linode_cloud_firewall):
 
 
 # Resize
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def linode_instance_for_resize_tests(linode_cloud_firewall):
     plan = exec_test_command(
         BASE_CMDS["linodes"]
@@ -502,7 +507,7 @@ def linode_instance_for_resize_tests(linode_cloud_firewall):
 
 
 # Linodes
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def linode_wo_image(linode_cloud_firewall):
     label = get_random_text(5) + "-label"
     linode_id = exec_test_command(
@@ -532,7 +537,7 @@ def linode_wo_image(linode_cloud_firewall):
     delete_target_id(target="linodes", id=linode_id)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def linode_min_req(linode_cloud_firewall):
     result = exec_test_command(
         BASE_CMDS["linodes"]
@@ -563,7 +568,7 @@ def linode_min_req(linode_cloud_firewall):
     delete_target_id(target="linodes", id=linode_id)
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def linode_with_label(linode_cloud_firewall):
     label = "cli" + get_random_text(5)
     result = exec_test_command(

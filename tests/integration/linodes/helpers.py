@@ -124,36 +124,6 @@ def create_linode_backup_disabled(
     return linode_id
 
 
-def shutdown_linodes():
-    linode_ids = exec_test_command(
-        [
-            BASE_CMDS["linodes"],
-            "linodes",
-            "list",
-            "--format",
-            "id",
-        ]
-    ).splitlines()
-
-    for id in linode_ids:
-        exec_test_command(["linode-cli", "linodes", "shutdown", id])
-
-
-def remove_linodes():
-    linode_ids = exec_test_command(
-        [
-            BASE_CMDS["linodes"],
-            "linodes",
-            "list",
-            "--format",
-            "id",
-        ]
-    ).splitlines()
-
-    for id in linode_ids:
-        exec_test_command(["linode-cli", "linodes", "delete", id])
-
-
 def create_linode_and_wait(
     firewall_id: "str",
     ssh_key="",
