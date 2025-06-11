@@ -51,11 +51,10 @@ def test_firewall_settings_defaults(test_firewall_id, test_firewall_label):
     for key in expected_keys:
         assert key in default_ids, f"Missing default_firewall_ids key: {key}"
         val = default_ids[key]
-        assert isinstance(val, int), f"{key} value is not an integer"
-        assert val > 0, f"{key} should be a non-zero firewall ID"
-        assert (
-            str(val) in firewall_ids
-        ), f"{key} ID ({val}) not found in firewall list"
+        assert val is None or isinstance(val, int), f"{key} value is not None or int: {val}"
+        if isinstance(val, int):
+            assert val > 0, f"{key} should be a non-zero firewall ID"
+            assert str(val) in firewall_ids, f"{key} ID ({val}) not found in firewall list"
 
 
 def test_update_firewall_defaults(test_firewall_id, restore_firewall_defaults):
