@@ -321,8 +321,6 @@ def _help_group_arguments(
     groups = []
     ungrouped = []
 
-    # def __recurse_group(group_mapping: Dict[str, List[OpenAPIRequestArg]]) -> List[OpenAPIRequestArg]:
-
     for k, group in sorted(
         path_to_args.items(), key=lambda a: (len(a[0]), a[0], len(a[1]))
     ):

@@ -29,6 +29,7 @@ def _aggregate_schema_properties(
     ):
         if isinstance(entry, dict):
             # TODO: Figure out why this happens (openapi3 package bug?)
+            # pylint: disable=protected-access
             entry = Schema(path, entry, schema._root)
 
         if entry.properties is None:
