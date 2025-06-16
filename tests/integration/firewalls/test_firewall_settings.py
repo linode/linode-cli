@@ -3,20 +3,16 @@ import json
 import pytest
 
 from tests.integration.helpers import (
+    BASE_CMDS,
     exec_test_command,
 )
-
-BASE_CMD = ["linode-cli", "firewalls"]
 
 
 def test_firewall_settings_defaults(test_firewall_id, test_firewall_label):
     # list all firewalls and extract the IDs
-    list_result = (
-        exec_test_command(
-            BASE_CMD + ["list", "--no-headers", "--text", "--delimiter", ","]
-        )
-        .stdout.decode()
-        .strip()
+    list_result = exec_test_command(
+        BASE_CMDS["firewalls"]
+        + ["list", "--no-headers", "--text", "--delimiter", ","]
     )
 
     firewall_lines = list_result.splitlines()
@@ -30,8 +26,8 @@ def test_firewall_settings_defaults(test_firewall_id, test_firewall_label):
 
     # get the default firewall settings
     settings_result = exec_test_command(
-        BASE_CMD + ["firewall-settings-list", "--json"]
-    ).stdout.decode()
+        BASE_CMDS["firewalls"] + ["firewall-settings-list", "--json"]
+    )
 
     settings = json.loads(settings_result)
     assert (
@@ -65,8 +61,8 @@ def test_update_firewall_defaults(test_firewall_id, restore_firewall_defaults):
     # Fetch current default firewall settings
     settings = json.loads(
         exec_test_command(
-            BASE_CMD + ["firewall-settings-list", "--json"]
-        ).stdout.decode()
+            BASE_CMDS["firewalls"] + ["firewall-settings-list", "--json"]
+        )
     )
     default_ids_before = settings[0]["default_firewall_ids"]
 
@@ -81,12 +77,9 @@ def test_update_firewall_defaults(test_firewall_id, restore_firewall_defaults):
     )
 
     # List all firewalls
-    firewall_list = (
-        exec_test_command(
-            BASE_CMD + ["list", "--no-headers", "--text", "--delimiter", ","]
-        )
-        .stdout.decode()
-        .strip()
+    firewall_list = exec_test_command(
+        BASE_CMDS["firewalls"]
+        + ["list", "--no-headers", "--text", "--delimiter", ","]
     )
 
     firewall_ids = [
@@ -107,7 +100,7 @@ def test_update_firewall_defaults(test_firewall_id, restore_firewall_defaults):
 
     # Update all default firewall IDs to the new one
     exec_test_command(
-        BASE_CMD
+        BASE_CMDS["firewalls"]
         + [
             "firewall-settings-update",
             "--default_firewall_ids.linode",
@@ -125,8 +118,8 @@ def test_update_firewall_defaults(test_firewall_id, restore_firewall_defaults):
     # Verify update
     updated_settings = json.loads(
         exec_test_command(
-            BASE_CMD + ["firewall-settings-list", "--json"]
-        ).stdout.decode()
+            BASE_CMDS["firewalls"] + ["firewall-settings-list", "--json"]
+        )
     )[0]["default_firewall_ids"]
 
     for key, val in updated_settings.items():

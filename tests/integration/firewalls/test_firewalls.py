@@ -14,7 +14,9 @@ from tests.integration.helpers import (
     delete_target_id,
     exec_failing_test_command,
     exec_test_command,
+    get_random_text,
 )
+
 
 @pytest.mark.smoke
 def test_view_firewall(firewall_id):
@@ -33,7 +35,7 @@ def test_view_firewall(firewall_id):
     )
 
     assert re.search(firewall_id + "," + FIREWALL_LABEL + ",enabled", result)
-    
+
 
 def test_list_firewall(firewall_id):
     firewall_id = firewall_id

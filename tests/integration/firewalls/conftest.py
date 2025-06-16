@@ -3,12 +3,11 @@ import json
 import pytest
 
 from tests.integration.helpers import (
+    BASE_CMDS,
     delete_target_id,
     exec_test_command,
     get_random_text,
 )
-
-BASE_CMD = ["linode-cli", "firewalls"]
 
 
 @pytest.fixture(scope="function")
@@ -17,7 +16,7 @@ def _firewall_id_and_label():
     label = "fw-" + get_random_text(5)
     # create it and capture the ID
     result = exec_test_command(
-        BASE_CMD
+        BASE_CMDS["firewalls"]
         + [
             "create",
             "--label",
@@ -32,7 +31,7 @@ def _firewall_id_and_label():
             "id",
         ]
     )
-    fw_id = result.stdout.decode().strip()
+    fw_id = result
     yield fw_id, label
     # cleanup
     delete_target_id(target="firewalls", id=fw_id)
@@ -53,8 +52,10 @@ def test_firewall_label(_firewall_id_and_label):
 @pytest.fixture
 def restore_firewall_defaults():
     # Fetch and store current default firewall settings
-    result = exec_test_command(BASE_CMD + ["firewall-settings-list", "--json"])
-    settings = json.loads(result.stdout.decode())
+    result = exec_test_command(
+        BASE_CMDS["firewalls"] + ["firewall-settings-list", "--json"]
+    )
+    settings = json.loads(result)
     original_defaults = settings[0]["default_firewall_ids"]
 
     yield original_defaults
@@ -66,4 +67,6 @@ def restore_firewall_defaults():
             args.extend([f"--default_firewall_ids.{key}", str(val)])
 
     if args:
-        exec_test_command(BASE_CMD + ["firewall-settings-update"] + args)
+        exec_test_command(
+            BASE_CMDS["firewalls"] + ["firewall-settings-update"] + args
+        )
