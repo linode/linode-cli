@@ -4,13 +4,6 @@ import re
 from tests.integration.firewalls.fixtures import (  # noqa: F401
     firewall_id,
 )
-from tests.integration.helpers import (
-    BASE_CMDS,
-    delete_target_id,
-    exec_test_command,
-    get_random_text,
-)
-
 
 def test_add_rule_to_existing_firewall(firewall_id):
     firewall_id = firewall_id
@@ -81,9 +74,9 @@ def test_swap_rules():
         ]
     )
 
-    swapped_rules = "[" + inbound_rule_2 + "," + inbound_rule_1 + "]"
+    swapped_rules_obj = list(reversed(inbound_rules_obj))
+    swapped_rules = json.dumps(swapped_rules_obj)
 
-    # swapping rules
     result = json.loads(
         exec_test_command(
             BASE_CMDS["firewalls"]
@@ -97,8 +90,8 @@ def test_swap_rules():
         )
     )
 
-    assert result[0]["inbound"][0] == json.loads(inbound_rule_2)
-    assert result[0]["inbound"][1] == json.loads(inbound_rule_1)
+    assert result[0]["inbound"][0] == swapped_rules_obj[0]
+    assert result[0]["inbound"][1] == swapped_rules_obj[1]
 
     delete_target_id(target="firewalls", id=firewall_id)
 
