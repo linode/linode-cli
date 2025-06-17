@@ -1,16 +1,27 @@
 import json
 from dataclasses import dataclass
-from typing import Callable, Optional
+from pathlib import Path
+from typing import Callable, List, Optional
 
 import pytest
 from pytest import MonkeyPatch
 
 from linodecli.plugins.obj import ENV_ACCESS_KEY_NAME, ENV_SECRET_KEY_NAME
-from tests.integration.helpers import exec_test_command, get_random_text
+from tests.integration.helpers import (
+    BASE_CMDS,
+    exec_test_command,
+    get_random_text,
+)
 
 REGION = "us-southeast-1"
-CLI_CMD = ["linode-cli", "object-storage"]
 BASE_CMD = ["linode-cli", "obj", "--cluster", REGION]
+
+"""
+Complicated type alias for fixtures and other stuff.
+"""
+
+GetTestFilesType = Callable[[Optional[int], Optional[str]], List[Path]]
+GetTestFileType = Callable[[Optional[str], Optional[str], Optional[int]], Path]
 
 
 @dataclass
@@ -85,42 +96,40 @@ def static_site_error():
 def keys():
     response = json.loads(
         exec_test_command(
-            CLI_CMD
+            BASE_CMDS["object-storage"]
             + [
                 "keys-create",
                 "--label",
                 "cli-integration-test-obj-key",
                 "--json",
             ],
-        ).stdout.decode()
+        )
     )[0]
     _keys = Keys(
         access_key=response.get("access_key"),
         secret_key=response.get("secret_key"),
     )
     yield _keys
-    exec_test_command(CLI_CMD + ["keys-delete", str(response.get("id"))])
+    exec_test_command(
+        BASE_CMDS["object-storage"] + ["keys-delete", str(response.get("id"))]
+    )
 
 
 @pytest.fixture(scope="session")
 def test_key():
     label = get_random_text(10)
-    key = (
-        exec_test_command(
-            CLI_CMD
-            + [
-                "keys-create",
-                "--label",
-                label,
-                "--text",
-                "--no-headers",
-                "--format=id",
-            ]
-        )
-        .stdout.decode()
-        .strip()
+    key = exec_test_command(
+        BASE_CMDS["object-storage"]
+        + [
+            "keys-create",
+            "--label",
+            label,
+            "--text",
+            "--no-headers",
+            "--format=id",
+        ]
     )
 
     yield key
 
-    exec_test_command(CLI_CMD + ["keys-delete", key])
+    exec_test_command(BASE_CMDS["object-storage"] + ["keys-delete", key])
