@@ -1,67 +1,32 @@
 import os
 import time
 
-import pytest
-
 from linodecli.exit_codes import ExitCodes
 from tests.integration.helpers import (
-    delete_target_id,
+    BASE_CMDS,
     exec_failing_test_command,
     exec_test_command,
 )
-
-BASE_CMD = ["linode-cli", "volumes"]
-timestamp = str(time.time_ns())
-VOLUME_CREATION_WAIT = 5
+from tests.integration.volumes.fixtures import volume_instance_id  # noqa: F401
 
 
-@pytest.fixture(scope="package")
-def test_volume_id():
-    volume_id = (
-        exec_test_command(
-            BASE_CMD
-            + [
-                "create",
-                "--label",
-                "A" + timestamp,
-                "--region",
-                "us-ord",
-                "--size",
-                "10",
-                "--text",
-                "--no-headers",
-                "--delimiter",
-                ",",
-                "--format",
-                "id",
-            ]
-        )
-        .stdout.decode()
-        .rstrip()
-    )
-
-    yield volume_id
-
-    delete_target_id(target="volumes", id=volume_id)
-
-
-def test_resize_fails_to_smaller_volume(test_volume_id):
-    volume_id = test_volume_id
-    time.sleep(VOLUME_CREATION_WAIT)
+def test_resize_fails_to_smaller_volume(volume_instance_id):
+    volume_id = volume_instance_id
+    time.sleep(5)
     result = exec_failing_test_command(
-        BASE_CMD
+        BASE_CMDS["volumes"]
         + ["resize", volume_id, "--size", "5", "--text", "--no-headers"],
         ExitCodes.REQUEST_FAILED,
-    ).stderr.decode()
+    )
 
     assert "Request failed: 400" in result
     assert "Storage volumes can only be resized up" in result
 
 
-def test_resize_fails_to_volume_larger_than_1024gb(test_volume_id):
-    volume_id = test_volume_id
+def test_resize_fails_to_volume_larger_than_1024gb(volume_instance_id):
+    volume_id = volume_instance_id
     result = exec_failing_test_command(
-        BASE_CMD
+        BASE_CMDS["volumes"]
         + [
             "resize",
             volume_id,
@@ -71,7 +36,7 @@ def test_resize_fails_to_volume_larger_than_1024gb(test_volume_id):
             "--no-headers",
         ],
         ExitCodes.REQUEST_FAILED,
-    ).stderr.decode()
+    )
 
     if "test" == os.environ.get(
         "TEST_ENVIRONMENT", None
@@ -87,17 +52,17 @@ def test_resize_fails_to_volume_larger_than_1024gb(test_volume_id):
         )
 
 
-def test_resize_volume(test_volume_id):
-    volume_id = test_volume_id
+def test_resize_volume(volume_instance_id):
+    volume_id = volume_instance_id
 
     exec_test_command(
-        BASE_CMD
+        BASE_CMDS["volumes"]
         + ["resize", volume_id, "--size", "11", "--text", "--no-headers"]
     )
 
     result = exec_test_command(
-        BASE_CMD
+        BASE_CMDS["volumes"]
         + ["view", volume_id, "--format", "size", "--text", "--no-headers"]
-    ).stdout.decode()
+    )
 
     assert "11" in result

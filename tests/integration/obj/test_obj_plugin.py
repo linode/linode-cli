@@ -6,9 +6,15 @@ import requests
 from pytest import MonkeyPatch
 
 from linodecli.plugins.obj.list import TRUNCATED_MSG
-from tests.integration.fixture_types import GetTestFilesType, GetTestFileType
 from tests.integration.helpers import count_lines, exec_test_command
-from tests.integration.obj.conftest import BASE_CMD, REGION, Keys, patch_keys
+from tests.integration.obj.conftest import (
+    BASE_CMD,
+    REGION,
+    GetTestFilesType,
+    GetTestFileType,
+    Keys,
+    patch_keys,
+)
 
 
 def test_obj_single_file_single_bucket(
@@ -22,7 +28,7 @@ def test_obj_single_file_single_bucket(
     bucket_name = create_bucket()
     exec_test_command(BASE_CMD + ["put", str(file_path), bucket_name])
     process = exec_test_command(BASE_CMD + ["la"])
-    output = process.stdout.decode()
+    output = process
 
     assert f"{bucket_name}/{file_path.name}" in output
 
@@ -30,22 +36,22 @@ def test_obj_single_file_single_bucket(
     assert str(file_size) in output
 
     process = exec_test_command(BASE_CMD + ["ls"])
-    output = process.stdout.decode()
+    output = process
     assert bucket_name in output
     assert file_path.name not in output
 
     process = exec_test_command(BASE_CMD + ["ls", bucket_name])
-    output = process.stdout.decode()
+    output = process
     assert bucket_name not in output
     assert str(file_size) in output
     assert file_path.name in output
 
     downloaded_file_path = file_path.parent / f"downloaded_{file_path.name}"
-    process = exec_test_command(
+    exec_test_command(
         BASE_CMD
         + ["get", bucket_name, file_path.name, str(downloaded_file_path)]
     )
-    output = process.stdout.decode()
+
     with open(downloaded_file_path) as f2, open(file_path) as f1:
         assert f1.read() == f2.read()
 
@@ -62,26 +68,23 @@ def test_obj_single_file_single_bucket_with_prefix(
     exec_test_command(
         BASE_CMD + ["put", str(file_path), f"{bucket_name}/prefix"]
     )
-    process = exec_test_command(BASE_CMD + ["la"])
-    output = process.stdout.decode()
+    output = exec_test_command(BASE_CMD + ["la"])
 
     assert f"{bucket_name}/prefix/{file_path.name}" in output
 
     file_size = file_path.stat().st_size
     assert str(file_size) in output
 
-    process = exec_test_command(BASE_CMD + ["ls"])
-    output = process.stdout.decode()
+    output = exec_test_command(BASE_CMD + ["ls"])
     assert bucket_name in output
     assert file_path.name not in output
 
-    process = exec_test_command(BASE_CMD + ["ls", bucket_name])
-    output = process.stdout.decode()
+    output = exec_test_command(BASE_CMD + ["ls", bucket_name])
     assert bucket_name not in output
     assert "prefix" in output
 
     downloaded_file_path = file_path.parent / f"downloaded_{file_path.name}"
-    process = exec_test_command(
+    exec_test_command(
         BASE_CMD
         + [
             "get",
@@ -90,7 +93,6 @@ def test_obj_single_file_single_bucket_with_prefix(
             str(downloaded_file_path),
         ]
     )
-    output = process.stdout.decode()
     with open(downloaded_file_path) as f2, open(file_path) as f1:
         assert f1.read() == f2.read()
 
@@ -108,26 +110,23 @@ def test_obj_single_file_single_bucket_with_prefix_ltrim(
     exec_test_command(
         BASE_CMD + ["put", str(file_path), f"{bucket_name}/bkprefix"]
     )
-    process = exec_test_command(BASE_CMD + ["la"])
-    output = process.stdout.decode()
+    output = exec_test_command(BASE_CMD + ["la"])
 
     assert f"{bucket_name}/bkprefix/{file_path.name}" in output
 
     file_size = file_path.stat().st_size
     assert str(file_size) in output
 
-    process = exec_test_command(BASE_CMD + ["ls"])
-    output = process.stdout.decode()
+    output = exec_test_command(BASE_CMD + ["ls"])
     assert bucket_name in output
     assert file_path.name not in output
 
-    process = exec_test_command(BASE_CMD + ["ls", bucket_name])
-    output = process.stdout.decode()
+    output = exec_test_command(BASE_CMD + ["ls", bucket_name])
     assert bucket_name not in output
     assert "bkprefix" in output
 
     downloaded_file_path = file_path.parent / f"downloaded_{file_path.name}"
-    process = exec_test_command(
+    output = exec_test_command(
         BASE_CMD
         + [
             "get",
@@ -136,7 +135,6 @@ def test_obj_single_file_single_bucket_with_prefix_ltrim(
             str(downloaded_file_path),
         ]
     )
-    output = process.stdout.decode()
     with open(downloaded_file_path) as f2, open(file_path) as f1:
         assert f1.read() == f2.read()
 
@@ -153,10 +151,9 @@ def test_multi_files_multi_bucket(
     file_paths = generate_test_files(number)
     for bucket in bucket_names:
         for file in file_paths:
-            process = exec_test_command(
+            output = exec_test_command(
                 BASE_CMD + ["put", str(file.resolve()), bucket]
             )
-            output = process.stdout.decode()
             assert "100.0%" in output
             assert "Done" in output
 
@@ -197,34 +194,30 @@ def test_all_rows(
     bucket_name = create_bucket()
     file_paths = generate_test_files(number)
 
-    process = exec_test_command(
+    output = exec_test_command(
         BASE_CMD
         + ["put"]
         + [str(file.resolve()) for file in file_paths]
         + [bucket_name]
     )
-    output = process.stdout.decode()
     assert "100.0%" in output
     assert "Done" in output
 
-    process = exec_test_command(
+    output = exec_test_command(
         BASE_CMD + ["ls", bucket_name, "--page-size", "2", "--page", "1"]
     )
-    output = process.stdout.decode()
     assert TRUNCATED_MSG in output
     assert count_lines(output) == 3
 
-    process = exec_test_command(
+    output = exec_test_command(
         BASE_CMD + ["ls", bucket_name, "--page-size", "999"]
     )
-    output = process.stdout.decode()
     assert TRUNCATED_MSG not in output
     assert count_lines(output) == 5
 
-    process = exec_test_command(
+    output = exec_test_command(
         BASE_CMD + ["ls", bucket_name, "--page-size", "2", "--all-rows"]
     )
-    output = process.stdout.decode()
     assert TRUNCATED_MSG not in output
     assert count_lines(output) == 5
 
@@ -289,14 +282,13 @@ def test_static_site(
     assert response.status_code == 404
     assert "Error!" in response.text
 
-    process = exec_test_command(BASE_CMD + ["ws-info", bucket])
-    output = process.stdout.decode()
+    output = exec_test_command(BASE_CMD + ["ws-info", bucket])
     assert f"Bucket {bucket}: Website configuration" in output
     assert f"Website endpoint: {ws_endpoint}" in output
     assert f"Index document: {index_file.name}" in output
     assert f"Error document: {error_file.name}" in output
 
-    process = exec_test_command(BASE_CMD + ["ws-delete", bucket])
+    exec_test_command(BASE_CMD + ["ws-delete", bucket])
     response = requests.get(ws_url)
     assert response.status_code == 404
 
@@ -324,17 +316,14 @@ def test_show_usage(
         BASE_CMD + ["put", str(large_file1), str(large_file2), bucket2]
     )
 
-    process = exec_test_command(BASE_CMD + ["du"])
-    output = process.stdout.decode()
+    output = exec_test_command(BASE_CMD + ["du"])
     assert "MB Total" in output
 
-    process = exec_test_command(BASE_CMD + ["du", bucket1])
-    output = process.stdout.decode()
+    output = exec_test_command(BASE_CMD + ["du", bucket1])
     assert "10.0 MB" in output
     assert "1 objects" in output
 
-    process = exec_test_command(BASE_CMD + ["du", bucket2])
-    output = process.stdout.decode()
+    output = exec_test_command(BASE_CMD + ["du", bucket2])
     assert "30.0 MB" in output
     assert "2 objects" in output
 
@@ -352,10 +341,9 @@ def test_generate_url(
 
     exec_test_command(BASE_CMD + ["put", str(test_file), bucket])
 
-    process = exec_test_command(
+    url = exec_test_command(
         BASE_CMD + ["signurl", bucket, test_file.name, "+300"]
     )
-    url = process.stdout.decode()
     response = requests.get(url.strip("\n"))
     assert response.text == content
     assert response.status_code == 200

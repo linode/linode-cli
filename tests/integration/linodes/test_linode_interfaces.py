@@ -6,142 +6,19 @@ from pytest import MonkeyPatch
 from tests.integration.helpers import (
     delete_target_id,
     exec_test_command,
-    get_random_text,
 )
-from tests.integration.linodes.helpers_linodes import (
-    DEFAULT_LABEL,
+from tests.integration.linodes.fixtures import (  # noqa: F401
+    linode_interface_legacy,
+    linode_interface_public,
+    linode_interface_vlan,
+    linode_interface_vpc,
+)
+from tests.integration.linodes.helpers import (
     create_linode,
+    get_interface_id,
+    get_ipv4_addr,
     wait_until,
 )
-
-linode_label = DEFAULT_LABEL + get_random_text(5)
-
-
-@pytest.fixture(scope="session")
-def linode_interface_public(linode_cloud_firewall):
-    linode_id = create_linode(
-        firewall_id=linode_cloud_firewall,
-        test_region="us-sea",
-        interface_generation="linode",
-        interfaces='[{"public": {"ipv4": {"addresses": [{"primary": true}]}}, "default_route": {"ipv4": true, "ipv6": true }, "firewall_id":'
-        + linode_cloud_firewall
-        + "}]",
-    )
-
-    yield linode_id
-
-    delete_target_id(target="linodes", id=linode_id)
-
-
-@pytest.fixture(scope="session")
-def linode_interface_vlan(linode_cloud_firewall):
-    linode_id = create_linode(
-        firewall_id=linode_cloud_firewall,
-        test_region="us-sea",
-        interface_generation="linode",
-        interfaces='[{"vlan": {"ipam_address": "10.0.0.1/24","vlan_label": "my-vlan"}}]',
-    )
-
-    yield linode_id
-
-    delete_target_id(target="linodes", id=linode_id)
-
-
-@pytest.fixture(scope="session")
-def linode_interface_legacy(linode_cloud_firewall):
-    linode_id = create_linode(
-        firewall_id=linode_cloud_firewall,
-        test_region="us-sea",
-        interface_generation="legacy_config",
-    )
-
-    yield linode_id
-
-    delete_target_id(target="linodes", id=linode_id)
-
-
-@pytest.fixture(scope="session")
-def linode_interface_vpc(linode_cloud_firewall):
-    vpc_output = json.loads(
-        exec_test_command(
-            [
-                "linode-cli",
-                "vpcs",
-                "create",
-                "--label",
-                get_random_text(5) + "-vpc",
-                "--region",
-                "us-sea",
-                "--subnets.ipv4",
-                "10.0.0.0/24",
-                "--subnets.label",
-                get_random_text(5) + "-vpc",
-                "--json",
-                "--suppress-warnings",
-            ]
-        )
-        .stdout.decode()
-        .rstrip()
-    )
-
-    subnet_id = vpc_output[0]["subnets"][0]["id"]
-
-    linode_id = create_linode(
-        firewall_id=linode_cloud_firewall,
-        test_region="us-sea",
-        interface_generation="linode",
-        interfaces='[{"default_route":{"ipv4":true},"firewall_id":'
-        + str(linode_cloud_firewall)
-        + ',"vpc":{"ipv4":{"addresses":[{"address":"auto","nat_1_1_address":"auto","primary":true}]},"subnet_id":'
-        + str(subnet_id)
-        + "}}]",
-    )
-
-    yield linode_id
-
-    delete_target_id(target="linodes", id=linode_id)
-    delete_target_id(target="vpcs", id=str(vpc_output[0]["id"]))
-
-
-def get_interface_id(linode_id: str):
-    data = json.loads(
-        exec_test_command(
-            [
-                "linode-cli",
-                "linodes",
-                "interfaces-list",
-                linode_id,
-                "--json",
-            ]
-        )
-        .stdout.decode()
-        .rstrip()
-    )
-
-    interface_id = data[0]["interfaces"]["id"]
-
-    return str(interface_id)
-
-
-def get_ipv4_addr(linode_id: "str"):
-    data = json.loads(
-        exec_test_command(
-            [
-                "linode-cli",
-                "linodes",
-                "ips-list",
-                linode_id,
-                "--json",
-            ]
-        )
-        .stdout.decode()
-        .rstrip()
-    )
-
-    ipv4_public = data[0]["ipv4"]["public"]
-    ipv4_addr = ipv4_public[0]["address"] if ipv4_public else None
-
-    return str(ipv4_addr)
 
 
 def test_interface_add(linode_cloud_firewall, monkeypatch: MonkeyPatch):
@@ -188,8 +65,6 @@ def test_interface_add(linode_cloud_firewall, monkeypatch: MonkeyPatch):
                 "--json",
             ]
         )
-        .stdout.decode()
-        .rstrip()
     )
 
     interface = data[0]
@@ -235,8 +110,6 @@ def test_interface_firewalls_list(
                 "--json",
             ]
         )
-        .stdout.decode()
-        .rstrip()
     )
 
     firewall = data[0]
@@ -280,8 +153,6 @@ def test_interface_settings_update(
                 "--json",
             ]
         )
-        .stdout.decode()
-        .rstrip()
     )
 
     settings = data[0]
@@ -328,8 +199,6 @@ def test_interface_update(linode_interface_public, monkeypatch: MonkeyPatch):
                 "--json",
             ]
         )
-        .stdout.decode()
-        .rstrip()
     )
 
     assert data[0]["id"] == int(interface_id)
@@ -367,8 +236,6 @@ def test_interface_view(linode_interface_vpc, monkeypatch: MonkeyPatch):
                 "--json",
             ]
         )
-        .stdout.decode()
-        .rstrip()
     )
 
     interface = data[0]
@@ -404,8 +271,6 @@ def test_interfaces_list(linode_interface_vlan, monkeypatch: MonkeyPatch):
                 "--json",
             ]
         )
-        .stdout.decode()
-        .rstrip()
     )
 
     assert len(data) >= 1  # At least one interface listed
@@ -455,8 +320,6 @@ def test_interfaces_upgrade(linode_interface_legacy, monkeypatch: MonkeyPatch):
                 "--json",
             ]
         )
-        .stdout.decode()
-        .rstrip()
     )
 
     upgrade = data[0]

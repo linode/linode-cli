@@ -4,15 +4,17 @@ from typing import Callable, Optional
 import pytest
 from pytest import MonkeyPatch
 
-from tests.integration.helpers import exec_test_command, get_random_text
-from tests.integration.obj.conftest import CLI_CMD, REGION, Keys
+from tests.integration.helpers import (
+    BASE_CMDS,
+    exec_test_command,
+    get_random_text,
+)
+from tests.integration.obj.conftest import REGION, Keys
 
 
 def test_clusters_list():
-    response = (
-        exec_test_command(CLI_CMD + ["clusters-list", "--json"])
-        .stdout.decode()
-        .rstrip()
+    response = exec_test_command(
+        BASE_CMDS["object-storage"] + ["clusters-list", "--json"]
     )
 
     clusters = json.loads(response)
@@ -38,10 +40,8 @@ def test_clusters_list():
 
 
 def test_clusters_view():
-    response = (
-        exec_test_command(CLI_CMD + ["clusters-view", REGION, "--json"])
-        .stdout.decode()
-        .rstrip()
+    response = exec_test_command(
+        BASE_CMDS["object-storage"] + ["clusters-view", REGION, "--json"]
     )
 
     clusters = json.loads(response)
@@ -74,20 +74,16 @@ def test_keys_create(
     bucket_name = create_bucket()
     region = "us-southeast"  # Fixed typo
     label = get_random_text(10)
-    response = (
-        exec_test_command(
-            CLI_CMD
-            + [
-                "keys-create",
-                "--label",
-                label,
-                "--bucket_access",
-                f'[{{"region": "{region}", "bucket_name": "{bucket_name}", "permissions": "read_write"}}]',
-                "--json",
-            ]
-        )
-        .stdout.decode()
-        .rstrip()
+    response = exec_test_command(
+        BASE_CMDS["object-storage"]
+        + [
+            "keys-create",
+            "--label",
+            label,
+            "--bucket_access",
+            f'[{{"region": "{region}", "bucket_name": "{bucket_name}", "permissions": "read_write"}}]',
+            "--json",
+        ]
     )
 
     data = json.loads(response)
@@ -110,48 +106,42 @@ def test_keys_create(
     assert region_info["s3_endpoint"].endswith(".linodeobjects.com")
     assert region_info["endpoint_type"] == "E0"
 
-    exec_test_command(CLI_CMD + ["keys-delete", str(key["id"])])
+    exec_test_command(
+        BASE_CMDS["object-storage"] + ["keys-delete", str(key["id"])]
+    )
 
 
 def test_keys_delete():
     label = get_random_text(10)
 
-    key = (
-        exec_test_command(
-            CLI_CMD
-            + [
-                "keys-create",
-                "--label",
-                label,
-                "--text",
-                "--no-headers",
-                "--format=id",
-            ]
-        )
-        .stdout.decode()
-        .strip()
+    key = exec_test_command(
+        BASE_CMDS["object-storage"]
+        + [
+            "keys-create",
+            "--label",
+            label,
+            "--text",
+            "--no-headers",
+            "--format=id",
+        ]
     )
 
     assert key, "Key creation failed, received empty key ID"
 
     # Delete the key
-    exec_test_command(CLI_CMD + ["keys-delete", key])
+    exec_test_command(BASE_CMDS["object-storage"] + ["keys-delete", key])
 
     # Verify deletion by listing keys
-    keys_list = (
-        exec_test_command(CLI_CMD + ["keys-list", "--text"])
-        .stdout.decode()
-        .strip()
+    keys_list = exec_test_command(
+        BASE_CMDS["object-storage"] + ["keys-list", "--text"]
     )
 
     assert key not in keys_list, f"Key {key} still exists after deletion!"
 
 
 def test_keys_list(test_key):
-    keys_list = (
-        exec_test_command(CLI_CMD + ["keys-list", "--text"])
-        .stdout.decode()
-        .strip()
+    keys_list = exec_test_command(
+        BASE_CMDS["object-storage"] + ["keys-list", "--text"]
     )
 
     assert test_key in keys_list
@@ -160,38 +150,30 @@ def test_keys_list(test_key):
 def test_keys_update(test_key):
     update_label = get_random_text(10)
 
-    updated_key_resp = (
-        exec_test_command(
-            CLI_CMD
-            + [
-                "keys-update",
-                test_key,
-                "--label",
-                update_label,
-                "--region",
-                "us-east",
-                "--json",
-            ]
-        )
-        .stdout.decode()
-        .strip()
+    updated_key_resp = exec_test_command(
+        BASE_CMDS["object-storage"]
+        + [
+            "keys-update",
+            test_key,
+            "--label",
+            update_label,
+            "--region",
+            "us-east",
+            "--json",
+        ]
     )
 
     assert update_label in updated_key_resp
 
 
 def test_keys_view(test_key):
-    view_resp = (
-        exec_test_command(
-            CLI_CMD
-            + [
-                "keys-view",
-                test_key,
-                "--json",
-            ]
-        )
-        .stdout.decode()
-        .strip()
+    view_resp = exec_test_command(
+        BASE_CMDS["object-storage"]
+        + [
+            "keys-view",
+            test_key,
+            "--json",
+        ]
     )
 
     data = json.loads(view_resp)
@@ -211,16 +193,12 @@ def test_keys_view(test_key):
 
 
 def test_types():
-    data = (
-        exec_test_command(
-            CLI_CMD
-            + [
-                "types",
-                "--json",
-            ]
-        )
-        .stdout.decode()
-        .strip()
+    data = exec_test_command(
+        BASE_CMDS["object-storage"]
+        + [
+            "types",
+            "--json",
+        ]
     )
 
     types = json.loads(data)
@@ -260,16 +238,12 @@ def test_types():
 
 
 def test_endpoints():
-    data = (
-        exec_test_command(
-            CLI_CMD
-            + [
-                "endpoints",
-                "--json",
-            ]
-        )
-        .stdout.decode()
-        .strip()
+    data = exec_test_command(
+        BASE_CMDS["object-storage"]
+        + [
+            "endpoints",
+            "--json",
+        ]
     )
 
     endpoints = json.loads(data)
@@ -288,16 +262,12 @@ def test_endpoints():
     reason="Skipping until the command is fixed and aligned with techdocs example. Applicable for spec version after 4.197.1"
 )
 def test_transfers():
-    data = (
-        exec_test_command(
-            CLI_CMD
-            + [
-                "transfers",
-                "--json",
-            ]
-        )
-        .stdout.decode()
-        .strip()
+    data = exec_test_command(
+        BASE_CMDS["object-storage"]
+        + [
+            "transfers",
+            "--json",
+        ]
     )
 
     transfers = json.loads(data)
