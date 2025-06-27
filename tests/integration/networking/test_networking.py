@@ -49,9 +49,16 @@ def has_shared_ip(linode_id: int, ip: str) -> bool:
             ["linode-cli", "linodes", "ips-list", "--json", linode_id]
         )
     )[0]["ipv4"]["shared"]
+    for entry in shared_ips:
+        if entry["address"] == ip:
+            # Validate presence and type of interface_id
+            assert "interface_id" in entry
+            assert entry["interface_id"] is None or isinstance(
+                entry["interface_id"], int
+            )
+            return True
 
-    # Ensure there is a matching shared IP
-    return len([v for v in shared_ips if v["address"] == ip]) > 0
+    return False
 
 
 def test_display_ips_for_available_linodes(test_linode_id):
@@ -92,15 +99,24 @@ def test_view_an_ip_address(test_linode_id):
         BASE_CMDS["networking"]
         + [
             "ip-view",
-            "--text",
-            "--no-headers",
-            "--delimiter",
-            ",",
+            "--json",
             linode_ipv4,
         ]
     )
 
-    assert re.search(r"^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}", result)
+    data = json.loads(result)
+    if isinstance(data, list):
+        data = data[0]
+    # Validate that the address is a proper IPv4 address
+    assert re.match(r"^[0-9]{1,3}(\.[0-9]{1,3}){3}$", data["address"])
+
+    # Validate that interface_id is present and either None or int
+    assert (
+        "interface_id" in data
+    ), "`interface_id` field missing in IP view response"
+    assert data["interface_id"] is None or isinstance(
+        data["interface_id"], int
+    ), f"`interface_id` is not None or int: {data['interface_id']}"
 
 
 def test_allocate_additional_private_ipv4_address(test_linode_id):
