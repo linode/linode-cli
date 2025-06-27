@@ -212,10 +212,8 @@ def test_account_setting_view():
         "interfaces_for_new_linodes",
     ]
 
-    settings_text = (
-        exec_test_command(BASE_CMDS + ["settings", "--text", "--delimiter=,"])
-        .stdout.decode()
-        .strip()
+    settings_text = exec_test_command(
+        BASE_CMDS["account"] + ["settings", "--text", "--delimiter=,"]
     )
     lines = settings_text.splitlines()
     headers = lines[0].split(",")
@@ -227,15 +225,15 @@ def test_account_setting_view():
 
     # Fetch current interfaces setting
     settings_json = exec_test_command(
-        BASE_CMDS + ["settings", "--json"]
-    ).stdout.decode()
+        BASE_CMDS["account"] + ["settings", "--json"]
+    )
     original_value = json.loads(settings_json)[0]["interfaces_for_new_linodes"]
 
     yield original_value
 
     # Restore original setting after test
     exec_test_command(
-        BASE_CMDS
+        BASE_CMDS["account"]
         + [
             "settings-update",
             "--interfaces_for_new_linodes",
@@ -260,7 +258,7 @@ def test_update_interfaces_setting(test_account_setting_view):
 
     # Update the setting
     exec_test_command(
-        BASE_CMDS
+        BASE_CMDS["account"]
         + [
             "settings-update",
             "--interfaces_for_new_linodes",
@@ -270,8 +268,8 @@ def test_update_interfaces_setting(test_account_setting_view):
 
     # Verify the setting was updated
     updated_json = exec_test_command(
-        BASE_CMDS + ["settings", "--json"]
-    ).stdout.decode()
+        BASE_CMDS["account"] + ["settings", "--json"]
+    )
     updated_value = json.loads(updated_json)[0]["interfaces_for_new_linodes"]
 
     assert (
