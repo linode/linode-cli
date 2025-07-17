@@ -132,7 +132,7 @@ def _get_kubeconfig_by_label(cluster_label, client):
 # Loads a yaml file
 def _load_config(filepath):
     with open(filepath, "r", encoding="utf-8") as file_descriptor:
-        data = yaml.load(file_descriptor, Loader=yaml.Loader)
+        data = yaml.safe_load(file_descriptor)
 
     if not data:
         print(f"Could not load file at {filepath}", file=sys.stderr)
