@@ -126,7 +126,7 @@ class CLIConfig:
         default_user = self.default_username()
 
         for sec in self.config.sections():
-            if sec != "DEFAULT" and sec != "custom_aliases":
+            if sec not in ("DEFAULT", "custom_aliases"):
                 print(f'{"*" if sec == default_user else " "}  {sec}')
 
         sys.exit(ExitCodes.SUCCESS)
