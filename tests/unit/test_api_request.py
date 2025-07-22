@@ -10,8 +10,9 @@ from unittest.mock import Mock, patch
 
 import pytest
 import requests
+from _pytest.capture import CaptureFixture
 
-from linodecli import api_request
+from linodecli import ExitCodes, api_request
 from linodecli.baked.operation import (
     ExplicitEmptyDictValue,
     ExplicitEmptyListValue,
@@ -161,6 +162,54 @@ class TestAPIRequest:
                 }
             )
             == result
+        )
+
+    def test_build_request_body(self, mock_cli, create_operation):
+        body = {"foo": "bar"}
+
+        mock_cli.raw_body = json.dumps(body)
+
+        result = api_request._build_request_body(
+            mock_cli,
+            create_operation,
+            SimpleNamespace(),
+        )
+        assert json.loads(result) == body
+
+    def test_build_request_body_conflict(
+        self, mock_cli, create_operation, capsys: CaptureFixture
+    ):
+        mock_cli.raw_body = json.dumps({"foo": "bar"})
+
+        with pytest.raises(SystemExit) as err:
+            api_request._build_request_body(
+                mock_cli,
+                create_operation,
+                SimpleNamespace(foo="bar", bar="foo"),
+            )
+
+        assert err.value.code == ExitCodes.ARGUMENT_ERROR
+        assert (
+            "--raw-body cannot be specified with action arguments: --bar, --foo"
+            in capsys.readouterr().err
+        )
+
+    def test_build_request_body_get(
+        self, mock_cli, list_operation, capsys: CaptureFixture
+    ):
+        mock_cli.raw_body = json.dumps({"foo": "bar"})
+
+        with pytest.raises(SystemExit) as err:
+            api_request._build_request_body(
+                mock_cli,
+                list_operation,
+                SimpleNamespace(),
+            )
+
+        assert err.value.code == ExitCodes.ARGUMENT_ERROR
+        assert (
+            "--raw-body cannot be specified for actions with method get"
+            in capsys.readouterr().err
         )
 
     def test_build_request_url_get(self, mock_cli, list_operation):

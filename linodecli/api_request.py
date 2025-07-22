@@ -348,8 +348,15 @@ def _build_request_body(
 
     :return: A JSON string representing the request body, or None if not applicable.
     """
-    if operation.method == "get":
-        # Get operations don't have a body
+    if operation.method in ("get", "delete"):
+        # GET and DELETE operations don't have a body
+        if ctx.raw_body is not None:
+            print(
+                f"--raw-body cannot be specified for actions with method {operation.method}",
+                file=sys.stderr,
+            )
+            sys.exit(ExitCodes.ARGUMENT_ERROR)
+
         return None
 
     # Merge defaults into body if applicable
@@ -360,11 +367,28 @@ def _build_request_body(
 
     expanded_json = {}
 
-    # Expand dotted keys into nested dictionaries
-    for k, v in vars(parsed_args).items():
-        if v is None or k in param_names:
-            continue
+    body_args = [
+        (k, v)
+        for k, v in vars(parsed_args).items()
+        if v is not None and k not in param_names
+    ]
 
+    # If the user has specified the --raw-body argument,
+    # return it.
+    if ctx.raw_body is not None:
+        if len(body_args) > 0:
+            print(
+                "--raw-body cannot be specified with action arguments: {}".format(
+                    ", ".join(sorted(f"--{key}" for key, _ in body_args)),
+                ),
+                file=sys.stderr,
+            )
+            sys.exit(ExitCodes.ARGUMENT_ERROR)
+
+        return ctx.raw_body
+
+    # Expand dotted keys into nested dictionaries
+    for k, v in body_args:
         path_segments = get_path_segments(k)
 
         cur = expanded_json

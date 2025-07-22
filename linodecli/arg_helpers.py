@@ -81,6 +81,13 @@ def register_args(parser: ArgumentParser) -> ArgumentParser:
         help="The alias to set or remove.",
     )
 
+    parser.add_argument(
+        "--raw-body",
+        type=str,
+        help="The raw body to use for the request body. "
+        + "This can only be used if action-specific arguments are not specified.",
+    )
+
     # Register shared argument groups
     register_output_args_shared(parser)
     register_pagination_args_shared(parser)
