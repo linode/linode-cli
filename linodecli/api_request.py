@@ -378,9 +378,8 @@ def _build_request_body(
     if ctx.raw_body is not None:
         if len(body_args) > 0:
             print(
-                "--raw-body cannot be specified with action arguments: {}".format(
-                    ", ".join(sorted(f"--{key}" for key, _ in body_args)),
-                ),
+                "--raw-body cannot be specified with action arguments: "
+                + ", ".join(sorted(f"--{key}" for key, _ in body_args)),
                 file=sys.stderr,
             )
             sys.exit(ExitCodes.ARGUMENT_ERROR)
