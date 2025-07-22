@@ -85,7 +85,8 @@ def register_args(parser: ArgumentParser) -> ArgumentParser:
         "--raw-body",
         type=str,
         help="The raw body to use for the request body. "
-        + "This can only be used if action-specific arguments are not specified.",
+        + "This argument cannot be used if action-specific arguments are specified. "
+        + "Additionally, this argument can only be used with POST and PUT actions.",
     )
 
     # Register shared argument groups
