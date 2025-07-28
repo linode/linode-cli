@@ -359,35 +359,40 @@ def _build_request_body(
 
         return None
 
-    # Merge defaults into body if applicable
-    if ctx.defaults:
-        parsed_args = ctx.config.update(parsed_args, operation.allowed_defaults)
-
     param_names = {param.name for param in operation.params}
 
-    expanded_json = {}
-
-    body_args = [
-        (k, v)
-        for k, v in vars(parsed_args).items()
-        if v is not None and k not in param_names
-    ]
+    # Returns whether the given argument should be included in the request body
+    def __should_include(key: str, value: Any) -> bool:
+        return value is not None and key not in param_names
 
     # If the user has specified the --raw-body argument,
     # return it.
     if ctx.raw_body is not None:
-        if len(body_args) > 0:
+        specified_keys = [
+            k for k, v in vars(parsed_args).items() if __should_include(k, v)
+        ]
+
+        if len(specified_keys) > 0:
             print(
                 "--raw-body cannot be specified with action arguments: "
-                + ", ".join(sorted(f"--{key}" for key, _ in body_args)),
+                + ", ".join(sorted(f"--{key}" for key in specified_keys)),
                 file=sys.stderr,
             )
             sys.exit(ExitCodes.ARGUMENT_ERROR)
 
         return ctx.raw_body
 
+    # Merge defaults into body if applicable
+    if ctx.defaults:
+        parsed_args = ctx.config.update(parsed_args, operation.allowed_defaults)
+
+    expanded_json = {}
+
     # Expand dotted keys into nested dictionaries
-    for k, v in body_args:
+    for k, v in vars(parsed_args).items():
+        if not __should_include(k, v):
+            continue
+
         path_segments = get_path_segments(k)
 
         cur = expanded_json

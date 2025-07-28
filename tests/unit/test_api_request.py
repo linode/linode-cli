@@ -164,7 +164,7 @@ class TestAPIRequest:
             == result
         )
 
-    def test_build_request_body(self, mock_cli, create_operation):
+    def test_build_request_body_raw(self, mock_cli, create_operation):
         body = {"foo": "bar"}
 
         mock_cli.raw_body = json.dumps(body)
@@ -176,7 +176,24 @@ class TestAPIRequest:
         )
         assert json.loads(result) == body
 
-    def test_build_request_body_conflict(
+    def test_build_request_body_raw_with_defaults(
+        self, mock_cli, create_operation
+    ):
+        body = {"foo": "bar"}
+        mock_cli.raw_body = json.dumps(body)
+
+        mock_cli.defaults = True
+        mock_cli.config.get = lambda user, key, **kwargs: {"foo": "baz"}
+        create_operation.allowed_defaults = ["foo"]
+
+        result = api_request._build_request_body(
+            mock_cli,
+            create_operation,
+            SimpleNamespace(),
+        )
+        assert json.loads(result) == body
+
+    def test_build_request_body_raw_conflict(
         self, mock_cli, create_operation, capsys: CaptureFixture
     ):
         mock_cli.raw_body = json.dumps({"foo": "bar"})
@@ -194,7 +211,7 @@ class TestAPIRequest:
             in capsys.readouterr().err
         )
 
-    def test_build_request_body_get(
+    def test_build_request_body_raw_get(
         self, mock_cli, list_operation, capsys: CaptureFixture
     ):
         mock_cli.raw_body = json.dumps({"foo": "bar"})
