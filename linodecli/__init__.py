@@ -80,6 +80,7 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
     cli.page = parsed.page
     cli.page_size = parsed.page_size
     cli.debug_request = parsed.debug
+    cli.raw_body = parsed.raw_body
 
     if parsed.as_user and not skip_config:
         cli.config.set_user(parsed.as_user)
