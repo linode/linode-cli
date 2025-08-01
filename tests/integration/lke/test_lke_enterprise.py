@@ -138,7 +138,7 @@ def test_lke_tiered_versions_view():
         + [
             "tiered-version-view",
             "standard",
-            "1.31",
+            "1.33",
             "--json",
         ]
     )
