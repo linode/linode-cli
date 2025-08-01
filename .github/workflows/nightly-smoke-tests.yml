@@ -46,7 +46,7 @@ jobs:
 
       - name: Notify Slack
         if: always() && github.repository == 'linode/linode-cli' # Run even if integration tests fail and only on main repository
-        uses: slackapi/slack-github-action@v2.1.0
+        uses: slackapi/slack-github-action@v2.1.1
         with:
           method: chat.postMessage
           token: ${{ secrets.SLACK_BOT_TOKEN }}
