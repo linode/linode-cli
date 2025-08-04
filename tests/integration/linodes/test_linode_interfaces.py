@@ -1,4 +1,5 @@
 import json
+import time
 
 import pytest
 from pytest import MonkeyPatch
@@ -132,6 +133,8 @@ def test_interface_settings_update(
 
     linode_id = linode_interface_public
     interface_id = get_interface_id(linode_id)
+
+    time.sleep(10)
 
     data = json.loads(
         exec_test_command(
