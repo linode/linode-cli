@@ -2,57 +2,15 @@ import json
 
 import pytest
 
+from tests.integration.database.helpers import (
+    get_expected_keys_pg_engine_config,
+)
 from tests.integration.helpers import (
+    BASE_CMDS,
     delete_target_id,
     exec_test_command,
     get_random_text,
 )
-
-BASE_CMD = ["linode-cli", "databases"]
-
-
-def get_expected_keys_pg_engine_config():
-    # Basic checks for pg config keys
-    return [
-        "autovacuum_analyze_scale_factor",
-        "autovacuum_analyze_threshold",
-        "autovacuum_max_workers",
-        "autovacuum_naptime",
-        "autovacuum_vacuum_cost_delay",
-        "autovacuum_vacuum_cost_limit",
-        "autovacuum_vacuum_scale_factor",
-        "autovacuum_vacuum_threshold",
-        "bgwriter_delay",
-        "bgwriter_flush_after",
-        "bgwriter_lru_maxpages",
-        "bgwriter_lru_multiplier",
-        "deadlock_timeout",
-        "default_toast_compression",
-        "idle_in_transaction_session_timeout",
-        "jit",
-        "max_files_per_process",
-        "max_locks_per_transaction",
-        "max_logical_replication_workers",
-        "max_parallel_workers",
-        "max_parallel_workers_per_gather",
-        "max_pred_locks_per_transaction",
-        "max_replication_slots",
-        "max_slot_wal_keep_size",
-        "max_stack_depth",
-        "max_standby_archive_delay",
-        "max_standby_streaming_delay",
-        "max_wal_senders",
-        "max_worker_processes",
-        "password_encryption",
-        "temp_file_limit",
-        "timezone",
-        "track_activity_query_size",
-        "track_commit_timestamp",
-        "track_functions",
-        "track_io_timing",
-        "wal_sender_timeout",
-        "wal_writer_delay",
-    ]
 
 
 @pytest.fixture(scope="session")
@@ -60,7 +18,7 @@ def postgresql_db_engine_config(linode_cloud_firewall):
     label = get_random_text(5) + "-postgresql-db"
     database = json.loads(
         exec_test_command(
-            BASE_CMD
+            BASE_CMDS["databases"]
             + [
                 "postgresql-create",
                 "--engine",
@@ -170,8 +128,6 @@ def postgresql_db_engine_config(linode_cloud_firewall):
                 "--json",
             ]
         )
-        .stdout.decode()
-        .rstrip()
     )[0]
 
     yield database["id"]
@@ -183,14 +139,12 @@ def postgresql_db_engine_config(linode_cloud_firewall):
 def test_postgresql_engine_config_view():
     pg_configs = json.loads(
         exec_test_command(
-            BASE_CMD
+            BASE_CMDS["databases"]
             + [
                 "postgres-config-view",
                 "--json",
             ]
         )
-        .stdout.decode()
-        .rstrip()
     )
 
     assert "pg" in pg_configs[0]
@@ -263,14 +217,12 @@ def test_postgresql_list_with_engine_config(postgresql_db_engine_config):
 
     postgres_dbs = json.loads(
         exec_test_command(
-            BASE_CMD
+            BASE_CMDS["databases"]
             + [
                 "postgresql-list",
                 "--json",
             ]
         )
-        .stdout.decode()
-        .rstrip()
     )
 
     # Find the DB with the matching ID
@@ -303,15 +255,13 @@ def test_postgresql_db_engine_config_view(postgresql_db_engine_config):
     postgres_db_id = postgresql_db_engine_config
     postgres_db = json.loads(
         exec_test_command(
-            BASE_CMD
+            BASE_CMDS["databases"]
             + [
                 "postgresql-view",
                 str(postgres_db_id),
                 "--json",
             ]
         )
-        .stdout.decode()
-        .rstrip()
     )
 
     db = postgres_db[0]
@@ -330,7 +280,7 @@ def test_postgresql_db_engine_config_update(postgresql_db_engine_config):
     postgres_db_id = postgresql_db_engine_config
     updated_db = json.loads(
         exec_test_command(
-            BASE_CMD
+            BASE_CMDS["databases"]
             + [
                 "postgresql-update",
                 str(postgres_db_id),
@@ -427,8 +377,6 @@ def test_postgresql_db_engine_config_update(postgresql_db_engine_config):
                 "--json",
             ]
         )
-        .stdout.decode()
-        .rstrip()
     )
 
     db = updated_db[0]
@@ -452,7 +400,7 @@ def mysql_db_engine_config(linode_cloud_firewall):
     label = get_random_text(5) + "-mysql-db"
     database = json.loads(
         exec_test_command(
-            BASE_CMD
+            BASE_CMDS["databases"]
             + [
                 "mysql-create",
                 "--engine",
@@ -522,8 +470,6 @@ def mysql_db_engine_config(linode_cloud_firewall):
                 "--json",
             ]
         )
-        .stdout.decode()
-        .rstrip()
     )[0]
 
     yield database["id"]
@@ -537,14 +483,12 @@ def mysql_db_engine_config(linode_cloud_firewall):
 def test_mysql_engine_config_view():
     mysql_config = json.loads(
         exec_test_command(
-            BASE_CMD
+            BASE_CMDS["databases"]
             + [
                 "mysql-config-view",
                 "--json",
             ]
         )
-        .stdout.decode()
-        .rstrip()
     )
 
     assert "mysql" in mysql_config[0]
@@ -576,14 +520,12 @@ def test_mysql_list_with_engine_config(mysql_db_engine_config):
 
     mysql_dbs = json.loads(
         exec_test_command(
-            BASE_CMD
+            BASE_CMDS["databases"]
             + [
                 "mysql-list",
                 "--json",
             ]
         )
-        .stdout.decode()
-        .rstrip()
     )
 
     # Find the DB with the matching ID
@@ -631,15 +573,13 @@ def test_mysql_db_view_with_engine_config(mysql_db_engine_config):
 
     mysql_db = json.loads(
         exec_test_command(
-            BASE_CMD
+            BASE_CMDS["databases"]
             + [
                 "mysql-view",
                 str(mysql_db_id),
                 "--json",
             ]
         )
-        .stdout.decode()
-        .rstrip()
     )
 
     db = mysql_db[0]
@@ -667,7 +607,7 @@ def test_mysql_db_engine_config_update(mysql_db_engine_config):
 
     mysql_db = json.loads(
         exec_test_command(
-            BASE_CMD
+            BASE_CMDS["databases"]
             + [
                 "mysql-update",
                 str(mysql_db_id),
@@ -728,8 +668,6 @@ def test_mysql_db_engine_config_update(mysql_db_engine_config):
                 "--json",
             ]
         )
-        .stdout.decode()
-        .rstrip()
     )[0]
 
     # Assertions for updated values
