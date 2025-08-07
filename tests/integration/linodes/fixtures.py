@@ -375,12 +375,8 @@ def linode_interface_public(linode_cloud_firewall):
         interfaces='[{"public": {"ipv4": {"addresses": [{"primary": true}]}}, "default_route": {"ipv4": true, "ipv6": true }, "firewall_id":'
         + linode_cloud_firewall
         + "}]",
+        booted=False,
     )
-
-    wait_until(linode_id=linode_id, timeout=300, status="running")
-
-    # TODO: add support of creating a offline linode in `create_linode` then remove this workaround
-    exec_test_command(BASE_CMDS["linodes"] + ["shutdown", linode_id])
 
     wait_until(linode_id=linode_id, timeout=60, status="offline")
 
