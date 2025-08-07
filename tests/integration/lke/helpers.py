@@ -56,9 +56,7 @@ def get_pool_nodesid(cluster_id):
 
     nodepools = json.loads(response)
 
-    first_node_id = nodepools[0]["nodes"][0]["id"]
-
-    return first_node_id
+    return nodepools[0]["nodes"][0]["id"]
 
 
 def get_lke_enterprise_id():
