@@ -298,50 +298,58 @@ def _help_group_arguments(
     """
     Returns help page groupings for a list of POST/PUT arguments.
     """
+    args = [arg for arg in args if not arg.read_only]
     args_sorted = sorted(args, key=lambda a: a.path)
 
-    groups_tmp = defaultdict(list)
+    paths = {tuple(arg.path.split(".")) for arg in args_sorted}
+    path_to_args = defaultdict(list)
 
-    # Initial grouping by root parent
     for arg in args_sorted:
-        if arg.read_only:
-            continue
+        arg_path = tuple(arg.path.split("."))
 
-        groups_tmp[arg.path.split(".", 1)[0]].append(arg)
+        if not arg.is_parent:
+            # Parent arguments are grouped in with their children
+            arg_path = arg_path[:-1]
+
+        # Find first common parent
+        while len(arg_path) > 1 and arg_path not in paths:
+            arg_path = arg_path[:-1]
+
+        path_to_args[arg_path].append(arg)
 
     group_required = []
     groups = []
     ungrouped = []
 
-    for group in groups_tmp.values():
-        # If the group has more than one element,
-        # leave it as is in the result
-        if len(group) > 1:
+    for k, group in sorted(
+        path_to_args.items(), key=lambda a: (len(a[0]), a[0], len(a[1]))
+    ):
+        if len(k) > 0 and len(group) > 1:
+            # This is a named subgroup
             groups.append(
                 # Args should be ordered by least depth -> required -> path
                 sorted(group, key=lambda v: (v.depth, not v.required, v.path)),
             )
             continue
 
-        target_arg = group[0]
-
         # If the group's argument is required,
-        # add it to the required group
-        if target_arg.required:
-            group_required.append(target_arg)
-            continue
+        # add it to the top-level required group
+        for arg in group:
+            if arg.required:
+                group_required.append(arg)
+                continue
 
-        # Add ungrouped arguments (single value groups) to the
-        # "ungrouped" group.
-        ungrouped.append(target_arg)
+            # Add ungrouped arguments (single value groups) to the
+            # "ungrouped" group.
+            ungrouped.append(arg)
 
     result = []
 
     if len(group_required) > 0:
-        result.append(group_required)
+        result.append(sorted(group_required, key=lambda v: v.path))
 
     if len(ungrouped) > 0:
-        result.append(ungrouped)
+        result.append(sorted(ungrouped, key=lambda v: v.path))
 
     result += groups
 

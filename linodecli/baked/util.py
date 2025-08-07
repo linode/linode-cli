@@ -24,28 +24,39 @@ def _aggregate_schema_properties(
     properties = {}
     required = defaultdict(lambda: 0)
 
-    def _handle_schema(_schema: Schema):
-        if _schema.properties is None:
+    def __inner(
+        path: List[str],
+        entry: Schema,
+    ):
+        if isinstance(entry, dict):
+            # TODO: Figure out why this happens (openapi3 package bug?)
+            # pylint: disable=protected-access
+            entry = Schema(path, entry, schema._root)
+
+        if entry.properties is None:
+            # If there aren't any properties, this might be a
+            # composite schema
+            for composition_field in ["oneOf", "allOf", "anyOf"]:
+                for i, nested_entry in enumerate(
+                    getattr(entry, composition_field) or []
+                ):
+                    __inner(
+                        schema.path + [composition_field, str(i)],
+                        nested_entry,
+                    )
+
             return
+
+        # This is a valid option
+        properties.update(entry.properties)
 
         nonlocal schema_count
         schema_count += 1
 
-        properties.update(dict(_schema.properties))
+        for key in entry.required or []:
+            required[key] += 1
 
-        # Aggregate required keys and their number of usages.
-        if _schema.required is not None:
-            for key in _schema.required:
-                required[key] += 1
-
-    _handle_schema(schema)
-
-    one_of = schema.oneOf or []
-    any_of = schema.anyOf or []
-
-    for entry in one_of + any_of:
-        # pylint: disable=protected-access
-        _handle_schema(Schema(schema.path, entry, schema._root))
+    __inner(schema.path, schema)
 
     return (
         properties,
