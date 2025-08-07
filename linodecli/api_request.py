@@ -23,6 +23,7 @@ from .baked.operation import (
     ExplicitNullValue,
     OpenAPIOperation,
 )
+from .baked.util import get_path_segments
 from .helpers import handle_url_overrides
 
 if TYPE_CHECKING:
@@ -347,30 +348,60 @@ def _build_request_body(
 
     :return: A JSON string representing the request body, or None if not applicable.
     """
-    if operation.method == "get":
-        # Get operations don't have a body
+    if operation.method in ("get", "delete"):
+        # GET and DELETE operations don't have a body
+        if ctx.raw_body is not None:
+            print(
+                f"--raw-body cannot be specified for actions with method {operation.method}",
+                file=sys.stderr,
+            )
+            sys.exit(ExitCodes.ARGUMENT_ERROR)
+
         return None
+
+    param_names = {param.name for param in operation.params}
+
+    # Returns whether the given argument should be included in the request body
+    def __should_include(key: str, value: Any) -> bool:
+        return value is not None and key not in param_names
+
+    # If the user has specified the --raw-body argument,
+    # return it.
+    if ctx.raw_body is not None:
+        specified_keys = [
+            k for k, v in vars(parsed_args).items() if __should_include(k, v)
+        ]
+
+        if len(specified_keys) > 0:
+            print(
+                "--raw-body cannot be specified with action arguments: "
+                + ", ".join(sorted(f"--{key}" for key in specified_keys)),
+                file=sys.stderr,
+            )
+            sys.exit(ExitCodes.ARGUMENT_ERROR)
+
+        return ctx.raw_body
 
     # Merge defaults into body if applicable
     if ctx.defaults:
         parsed_args = ctx.config.update(parsed_args, operation.allowed_defaults)
 
-    param_names = {param.name for param in operation.params}
-
     expanded_json = {}
 
     # Expand dotted keys into nested dictionaries
     for k, v in vars(parsed_args).items():
-        if v is None or k in param_names:
+        if not __should_include(k, v):
             continue
 
+        path_segments = get_path_segments(k)
+
         cur = expanded_json
-        for part in k.split(".")[:-1]:
+        for part in path_segments[:-1]:
             if part not in cur:
                 cur[part] = {}
             cur = cur[part]
 
-        cur[k.split(".")[-1]] = v
+        cur[path_segments[-1]] = v
 
     return json.dumps(_traverse_request_body(expanded_json))
 

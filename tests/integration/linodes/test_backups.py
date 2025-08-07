@@ -3,72 +3,28 @@ import re
 
 import pytest
 
-from tests.integration.helpers import delete_target_id, exec_test_command
-from tests.integration.linodes.helpers_linodes import (
-    BASE_CMD,
-    create_linode,
+from tests.integration.helpers import BASE_CMDS, exec_test_command
+from tests.integration.linodes.fixtures import (  # noqa: F401
+    linode_backup_disabled,
+    linode_backup_enabled,
+    linode_basic_with_firewall,
+)
+from tests.integration.linodes.helpers import (
+    check_account_settings,
     create_linode_and_wait,
-    create_linode_backup_disabled,
     set_backups_enabled_in_account_settings,
 )
-
-# ##################################################################
-# #  WARNING: THIS TEST WILL DELETE ALL OF YOUR LINODES            #
-# #  WARNING: USE A SEPARATE TEST ACCOUNT WHEN RUNNING THESE TESTS #
-# ##################################################################
-snapshot_label = "test_snapshot1"
-
-
-@pytest.fixture
-def create_linode_setup(linode_cloud_firewall):
-    linode_id = create_linode(firewall_id=linode_cloud_firewall)
-
-    yield linode_id
-
-    delete_target_id("linodes", linode_id)
-
-
-@pytest.fixture
-def create_linode_backup_disabled_setup(linode_cloud_firewall):
-    res = set_backups_enabled_in_account_settings(toggle=False)
-
-    if res == "True":
-        raise ValueError(
-            "Backups are unexpectedly enabled before setting up the test."
-        )
-
-    linode_id = create_linode_backup_disabled(firewall_id=linode_cloud_firewall)
-
-    yield linode_id
-
-    delete_target_id("linodes", linode_id)
-
-
-def check_account_settings():
-    result = exec_test_command(
-        [
-            "linode-cli",
-            "account",
-            "settings",
-            "--text",
-            "--format",
-            "managed",
-            "--no-headers",
-        ]
-    ).stdout.decode()
-
-    return result
 
 
 @pytest.mark.skipif(
     check_account_settings(), reason="Account is managed, skipping the test.."
 )
 def test_create_linode_with_backup_disabled(
-    create_linode_backup_disabled_setup,
+    linode_backup_disabled,
 ):
-    linode_id = create_linode_backup_disabled_setup
+    linode_id = linode_backup_disabled
     result = exec_test_command(
-        BASE_CMD
+        BASE_CMDS["linodes"]
         + [
             "list",
             "--id",
@@ -79,7 +35,7 @@ def test_create_linode_with_backup_disabled(
             "--text",
             "--no-headers",
         ]
-    ).stdout.decode()
+    )
 
     assert re.search(linode_id + ",False", result)
 
@@ -89,17 +45,18 @@ def test_create_linode_with_backup_disabled(
 
 
 @pytest.mark.smoke
-def test_enable_backups(create_linode_setup):
+def test_enable_backups(linode_basic_with_firewall):
     # get linode id
-    linode_id = create_linode_setup
+    linode_id = linode_basic_with_firewall
 
     # enable backup
     exec_test_command(
-        BASE_CMD + ["backups-enable", linode_id, "--text", "--no-headers"]
+        BASE_CMDS["linodes"]
+        + ["backups-enable", linode_id, "--text", "--no-headers"]
     )
 
     result = exec_test_command(
-        BASE_CMD
+        BASE_CMDS["linodes"]
         + [
             "list",
             "--format=id,backups.enabled",
@@ -108,7 +65,7 @@ def test_enable_backups(create_linode_setup):
             "--text",
             "--no-headers",
         ]
-    ).stdout.decode()
+    )
 
     assert re.search(linode_id + ",True", result)
 
@@ -116,7 +73,7 @@ def test_enable_backups(create_linode_setup):
 def test_create_backup_with_backup_enabled(linode_backup_enabled):
     linode_id = linode_backup_enabled
     result = exec_test_command(
-        BASE_CMD
+        BASE_CMDS["linodes"]
         + [
             "list",
             "--format=id,backups.enabled",
@@ -125,7 +82,7 @@ def test_create_backup_with_backup_enabled(linode_backup_enabled):
             "--text",
             "--no-headers",
         ]
-    ).stdout.decode()
+    )
 
     assert re.search(linode_id + ",True", result)
 
@@ -138,8 +95,10 @@ def test_take_snapshot_of_linode():
     # get linode id after creation and wait for "running" status
     linode_id = create_linode_and_wait()
 
+    snapshot_label = "test_snapshot1"
+
     result = exec_test_command(
-        BASE_CMD
+        BASE_CMDS["linodes"]
         + [
             "snapshot",
             linode_id,
@@ -150,7 +109,7 @@ def test_take_snapshot_of_linode():
             ",",
             "--no-headers",
         ]
-    ).stdout.decode()
+    )
     assert re.search(
         "[0-9]+,pending,snapshot,[0-9]+-[0-9]+-[0-9]+T[0-9]+:[0-9]+:[0-9]+,"
         + snapshot_label,
@@ -168,7 +127,7 @@ def test_view_the_snapshot(snapshot_of_linode):
     new_snapshot_label = snapshot_of_linode[1]
 
     result = exec_test_command(
-        BASE_CMD
+        BASE_CMDS["linodes"]
         + [
             "backups-list",
             linode_id,
@@ -177,7 +136,7 @@ def test_view_the_snapshot(snapshot_of_linode):
             "--text",
             "--no-headers",
         ]
-    ).stdout.decode()
+    )
 
     assert re.search(
         "[0-9]+,pending,snapshot,[0-9]+-[0-9]+-[0-9]+T[0-9]+:[0-9]+:[0-9]+,"
@@ -196,7 +155,7 @@ def test_cancel_backups(snapshot_of_linode):
     new_snapshot_label = snapshot_of_linode[1]
 
     result = exec_test_command(
-        BASE_CMD
+        BASE_CMDS["linodes"]
         + [
             "snapshot",
             linode_id,
@@ -207,7 +166,7 @@ def test_cancel_backups(snapshot_of_linode):
             ",",
             "--no-headers",
         ]
-    ).stdout.decode()
+    )
     assert re.search(
         "[0-9]+,pending,snapshot,[0-9]+-[0-9]+-[0-9]+T[0-9]+:[0-9]+:[0-9]+,"
         + new_snapshot_label,
@@ -216,5 +175,6 @@ def test_cancel_backups(snapshot_of_linode):
 
     # cancel snapshot
     exec_test_command(
-        BASE_CMD + ["backups-cancel", linode_id, "--text", "--no-headers"]
+        BASE_CMDS["linodes"]
+        + ["backups-cancel", linode_id, "--text", "--no-headers"]
     )

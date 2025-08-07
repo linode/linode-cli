@@ -2,6 +2,7 @@
 Provides various utility functions for use in baking logic.
 """
 
+import re
 from collections import defaultdict
 from typing import Any, Dict, List, Set, Tuple
 
@@ -62,3 +63,58 @@ def _aggregate_schema_properties(
         # We only want to mark fields that are required by ALL subschema as required
         set(key for key, count in required.items() if count == schema_count),
     )
+
+
+ESCAPED_PATH_DELIMITER_PATTERN = re.compile(r"(?<!\\)\.")
+
+
+def escape_arg_segment(segment: str) -> str:
+    """
+    Escapes periods in a segment by prefixing them with a backslash.
+
+    :param segment: The input string segment to escape.
+    :return: The escaped segment with periods replaced by '\\.'.
+    """
+    return segment.replace(".", "\\.")
+
+
+def unescape_arg_segment(segment: str) -> str:
+    """
+    Reverses the escaping of periods in a segment, turning '\\.' back into '.'.
+
+    :param segment: The input string segment to unescape.
+    :return: The unescaped segment with '\\.' replaced by '.'.
+    """
+    return segment.replace("\\.", ".")
+
+
+def get_path_segments(path: str) -> List[str]:
+    """
+    Splits a path string into segments using a delimiter pattern,
+    and unescapes any escaped delimiters in the resulting segments.
+
+    :param path: The full path string to split and unescape.
+    :return: A list of unescaped path segments.
+    """
+    return [
+        unescape_arg_segment(seg)
+        for seg in ESCAPED_PATH_DELIMITER_PATTERN.split(path)
+    ]
+
+
+def get_terminal_keys(data: Dict[str, Any]) -> List[str]:
+    """
+    Recursively retrieves all terminal (non-dict) keys from a nested dictionary.
+
+    :param data: The input dictionary, possibly nested.
+    :return: A list of all terminal keys (keys whose values are not dictionaries).
+    """
+    ret = []
+
+    for k, v in data.items():
+        if isinstance(v, dict):
+            ret.extend(get_terminal_keys(v))  # recurse into nested dicts
+        else:
+            ret.append(k)  # terminal key
+
+    return ret

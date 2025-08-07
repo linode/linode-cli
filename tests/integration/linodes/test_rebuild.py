@@ -4,40 +4,24 @@ import pytest
 
 from linodecli.exit_codes import ExitCodes
 from tests.integration.helpers import (
-    delete_target_id,
+    BASE_CMDS,
     exec_failing_test_command,
     exec_test_command,
-    get_random_region_with_caps,
     retry_exec_test_command_with_delay,
 )
-from tests.integration.linodes.helpers_linodes import (
-    BASE_CMD,
+from tests.integration.linodes.fixtures import (  # noqa: F401
+    linode_for_rebuild_tests,
+)
+from tests.integration.linodes.helpers import (
     DEFAULT_RANDOM_PASS,
-    create_linode_and_wait,
     wait_until,
 )
-
-
-@pytest.fixture
-def linode_for_rebuild_tests(linode_cloud_firewall):
-    test_region = get_random_region_with_caps(
-        required_capabilities=["Linodes", "Disk Encryption"]
-    )
-    linode_id = create_linode_and_wait(
-        firewall_id=linode_cloud_firewall,
-        disk_encryption=False,
-        test_region=test_region,
-    )
-
-    yield linode_id
-
-    delete_target_id(target="linodes", id=linode_id)
 
 
 @pytest.mark.flaky(reruns=3, reruns_delay=2)
 def test_rebuild_fails_without_image(linode_for_rebuild_tests):
     result = exec_failing_test_command(
-        BASE_CMD
+        BASE_CMDS["linodes"]
         + [
             "rebuild",
             "--root_pass",
@@ -47,7 +31,7 @@ def test_rebuild_fails_without_image(linode_for_rebuild_tests):
             "--no-headers",
         ],
         ExitCodes.REQUEST_FAILED,
-    ).stderr.decode()
+    )
 
     assert "Request failed: 400" in result
     assert "You must specify an image" in result
@@ -58,7 +42,7 @@ def test_rebuild_fails_with_invalid_image(linode_for_rebuild_tests):
     rebuild_image = "bad/image"
 
     result = exec_failing_test_command(
-        BASE_CMD
+        BASE_CMDS["linodes"]
         + [
             "rebuild",
             "--image",
@@ -69,7 +53,7 @@ def test_rebuild_fails_with_invalid_image(linode_for_rebuild_tests):
             "--text",
             "--no-headers",
         ]
-    ).stderr.decode()
+    )
 
     assert "Request failed: 400" in result
 
@@ -85,7 +69,7 @@ def test_rebuild_a_linode(linode_for_rebuild_tests):
 
     # trigger rebuild
     exec_test_command(
-        BASE_CMD
+        BASE_CMDS["linodes"]
         + [
             "rebuild",
             "--image",
@@ -96,7 +80,7 @@ def test_rebuild_a_linode(linode_for_rebuild_tests):
             "--no-headers",
             linode_id,
         ]
-    ).stdout.decode()
+    )
 
     # check status for rebuilding
     assert wait_until(
@@ -109,7 +93,7 @@ def test_rebuild_a_linode(linode_for_rebuild_tests):
     ), "linode failed to change status to running from rebuilding.."
 
     result = exec_test_command(
-        BASE_CMD
+        BASE_CMDS["linodes"]
         + ["view", linode_id, "--format", "image", "--text", "--no-headers"]
     ).stdout.decode()
     assert rebuild_image in result
@@ -126,7 +110,7 @@ def test_rebuild_linode_disk_encryption_enabled(linode_for_rebuild_tests):
 
     # trigger rebuild
     retry_exec_test_command_with_delay(
-        BASE_CMD
+        BASE_CMDS["linodes"]
         + [
             "rebuild",
             linode_id,
@@ -141,7 +125,7 @@ def test_rebuild_linode_disk_encryption_enabled(linode_for_rebuild_tests):
         ],
         retries=3,
         delay=10,
-    ).stdout.decode()
+    )
 
     # check status for rebuilding
     assert wait_until(
@@ -154,7 +138,7 @@ def test_rebuild_linode_disk_encryption_enabled(linode_for_rebuild_tests):
     ), "linode failed to change status to running from rebuilding.."
 
     result = exec_test_command(
-        BASE_CMD
+        BASE_CMDS["linodes"]
         + [
             "view",
             linode_id,
@@ -164,7 +148,7 @@ def test_rebuild_linode_disk_encryption_enabled(linode_for_rebuild_tests):
             "--no-headers",
             "--format=id,image,disk_encryption",
         ]
-    ).stdout.decode()
+    )
 
     assert "enabled" in result
     assert rebuild_image in result
@@ -181,7 +165,7 @@ def test_rebuild_linode_disk_encryption_disabled(linode_for_rebuild_tests):
 
     # trigger rebuild
     retry_exec_test_command_with_delay(
-        BASE_CMD
+        BASE_CMDS["linodes"]
         + [
             "rebuild",
             linode_id,
@@ -196,7 +180,7 @@ def test_rebuild_linode_disk_encryption_disabled(linode_for_rebuild_tests):
         ],
         retries=3,
         delay=10,
-    ).stdout.decode()
+    )
 
     # check status for rebuilding
     assert wait_until(
@@ -209,7 +193,7 @@ def test_rebuild_linode_disk_encryption_disabled(linode_for_rebuild_tests):
     ), "linode failed to change status to running from rebuilding.."
 
     result = retry_exec_test_command_with_delay(
-        BASE_CMD
+        BASE_CMDS["linodes"]
         + [
             "view",
             linode_id,
@@ -221,7 +205,7 @@ def test_rebuild_linode_disk_encryption_disabled(linode_for_rebuild_tests):
         ],
         retries=3,
         delay=10,
-    ).stdout.decode()
+    )
 
     assert "disabled" in result
     assert rebuild_image in result
