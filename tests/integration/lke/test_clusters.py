@@ -140,12 +140,14 @@ def test_cluster_dashboard_url(lke_cluster):
 def test_node_pool_list(lke_cluster):
     cluster_id = lke_cluster
     res = exec_test_command(
-        BASE_CMDS["lke"] + ["pools-list", cluster_id, "--text", "--delimiter=,"]
+        BASE_CMDS["lke"] + ["pools-list", cluster_id, "--json"]
     )
-    lines = res.splitlines()
+    data = json.loads(res)
 
-    headers = ["nodes.id", "nodes.instance_id"]
-    assert_headers_in_lines(headers, lines)
+    for pool in data:
+        for node in pool.get("nodes", []):
+            assert "id" in node
+            assert "instance_id" in node
 
 
 def test_view_pool(lke_cluster):
