@@ -6,6 +6,7 @@ from tests.integration.helpers import (
     exec_test_command,
 )
 from tests.integration.linodes.fixtures import (  # noqa: F401
+    linode_with_vpc_interface_as_args,
     linode_with_vpc_interface_as_json,
 )
 
@@ -38,6 +39,10 @@ def assert_interface_configuration(
 
     assert not public_interface["primary"]
     assert public_interface["purpose"] == "public"
+
+
+def test_with_vpc_interface_as_args(linode_with_vpc_interface_as_args):
+    assert_interface_configuration(*linode_with_vpc_interface_as_args)
 
 
 def test_with_vpc_interface_as_json(linode_with_vpc_interface_as_json):
