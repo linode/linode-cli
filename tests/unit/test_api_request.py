@@ -14,8 +14,8 @@ from _pytest.capture import CaptureFixture
 
 from linodecli import ExitCodes, api_request
 from linodecli.baked.operation import (
-    ExplicitEmptyDictValue,
     ExplicitEmptyListValue,
+    ExplicitJsonValue,
     ExplicitNullValue,
 )
 
@@ -667,7 +667,7 @@ class TestAPIRequest:
                     "baz": ExplicitNullValue(),
                 },
                 "cool": [],
-                "pretty_cool": ExplicitEmptyDictValue(),
+                "pretty_cool": ExplicitJsonValue(json_value={}),
                 "cooler": ExplicitEmptyListValue(),
                 "coolest": ExplicitNullValue(),
             }

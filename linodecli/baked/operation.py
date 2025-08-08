@@ -74,12 +74,6 @@ class ExplicitEmptyListValue:
     """
 
 
-class ExplicitEmptyDictValue:
-    """
-    A special type used to explicitly pass empty dictionaries to the API.
-    """
-
-
 @dataclass
 class ExplicitJsonValue:
     """

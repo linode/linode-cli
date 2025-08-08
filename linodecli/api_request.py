@@ -18,7 +18,6 @@ from linodecli.exit_codes import ExitCodes
 from linodecli.helpers import API_CA_PATH, API_VERSION_OVERRIDE
 
 from .baked.operation import (
-    ExplicitEmptyDictValue,
     ExplicitEmptyListValue,
     ExplicitJsonValue,
     ExplicitNullValue,
@@ -313,10 +312,6 @@ def _traverse_request_body(o: Any) -> Any:
             # because we don't want them filtered out in the step below.
             if isinstance(v, ExplicitEmptyListValue):
                 result[k] = []
-                continue
-
-            if isinstance(v, ExplicitEmptyDictValue):
-                result[k] = {}
                 continue
 
             if isinstance(v, ExplicitNullValue):
