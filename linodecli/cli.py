@@ -10,7 +10,7 @@ import sys
 from json import JSONDecodeError
 from logging import getLogger
 from sys import version_info
-from typing import IO, Any, ContextManager, Dict
+from typing import IO, Any, Dict
 
 import requests
 import yaml
@@ -311,7 +311,7 @@ class CLI:  # pylint: disable=too-many-instance-attributes
     @contextlib.contextmanager
     def _get_spec_file_reader(
         spec_location: str,
-    ) -> ContextManager[IO]:
+    ):
         """
         Returns a reader for an OpenAPI spec file from the given location.
 
