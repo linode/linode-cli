@@ -20,6 +20,7 @@ from linodecli.helpers import API_CA_PATH, API_VERSION_OVERRIDE
 from .baked.operation import (
     ExplicitEmptyDictValue,
     ExplicitEmptyListValue,
+    ExplicitJsonValue,
     ExplicitNullValue,
     OpenAPIOperation,
 )
@@ -320,6 +321,10 @@ def _traverse_request_body(o: Any) -> Any:
 
             if isinstance(v, ExplicitNullValue):
                 result[k] = None
+                continue
+
+            if isinstance(v, ExplicitJsonValue):
+                result[k] = v.json_value
                 continue
 
             value = _traverse_request_body(v)
