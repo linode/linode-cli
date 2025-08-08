@@ -81,6 +81,14 @@ def register_args(parser: ArgumentParser) -> ArgumentParser:
         help="The alias to set or remove.",
     )
 
+    parser.add_argument(
+        "--raw-body",
+        type=str,
+        help="The raw JSON to use as the request body of an action. "
+        + "This argument cannot be used if action-specific arguments are specified. "
+        + "Additionally, this argument can only be used with POST and PUT actions.",
+    )
+
     # Register shared argument groups
     register_output_args_shared(parser)
     register_pagination_args_shared(parser)

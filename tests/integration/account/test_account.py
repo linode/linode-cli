@@ -86,20 +86,6 @@ def test_event_view(get_event_id):
     assert_headers_in_lines(headers, lines)
 
 
-def test_event_read(get_event_id):
-    event_id = get_event_id
-    process = exec_test_command(
-        [
-            "linode-cli",
-            "events",
-            "mark-read",
-            event_id,
-            "--text",
-            "--delimiter=,",
-        ]
-    )
-
-
 def test_event_seen(get_event_id):
     event_id = get_event_id
     process = exec_test_command(

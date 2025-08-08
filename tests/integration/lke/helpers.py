@@ -45,22 +45,18 @@ def get_node_pool_id(cluster_id):
 
 
 def get_pool_nodesid(cluster_id):
-    cluster_id
-    nodepool_id = exec_test_command(
+    response = exec_test_command(
         BASE_CMDS["lke"]
         + [
             "pools-list",
             cluster_id,
-            "--text",
-            "--no-headers",
-            "--format",
-            "nodes.id",
+            "--json",
         ]
-    ).splitlines()
+    )
 
-    first_id = nodepool_id[0]
+    nodepools = json.loads(response)
 
-    return first_id
+    return nodepools[0]["nodes"][0]["id"]
 
 
 def get_lke_enterprise_id():

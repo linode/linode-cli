@@ -44,6 +44,7 @@ class CLI:  # pylint: disable=too-many-instance-attributes
         self.base_url = base_url
         self.spec_version = "None"
         self.suppress_warnings = False
+        self.raw_body = None
 
         self.output_handler = OutputHandler()
         self.config = CLIConfig(self.base_url, skip_config=skip_config)
