@@ -311,6 +311,60 @@ def linode_with_vpc_interface_as_json(linode_cloud_firewall):
     delete_target_id(target="vpcs", id=vpc_id)
 
 
+@pytest.fixture
+def linode_with_vpc_interface_as_args(linode_cloud_firewall):
+    """
+    NOTE: This is fixture exists to accommodate a regression test.
+          For new tests, use linode_with_vpc_interface_as_json.
+    """
+
+    vpc_json = create_vpc_w_subnet()
+
+    vpc_region = vpc_json["region"]
+    vpc_id = str(vpc_json["id"])
+    subnet_id = str(vpc_json["subnets"][0]["id"])
+
+    linode_json = json.loads(
+        exec_test_command(
+            BASE_CMDS["linodes"]
+            + [
+                "create",
+                "--type",
+                "g6-nanode-1",
+                "--region",
+                vpc_region,
+                "--image",
+                DEFAULT_TEST_IMAGE,
+                "--root_pass",
+                DEFAULT_RANDOM_PASS,
+                "--firewall_id",
+                linode_cloud_firewall,
+                "--interfaces.purpose",
+                "vpc",
+                "--interfaces.primary",
+                "true",
+                "--interfaces.subnet_id",
+                subnet_id,
+                "--interfaces.ipv4.nat_1_1",
+                "any",
+                "--interfaces.ipv4.vpc",
+                "10.0.0.5",
+                "--interfaces.ip_ranges",
+                json.dumps(["10.0.0.6/32"]),
+                "--interfaces.purpose",
+                "public",
+                "--json",
+                "--suppress-warnings",
+            ]
+        )
+    )[0]
+
+    yield linode_json, vpc_json
+
+    delete_target_id(target="linodes", id=str(linode_json["id"]))
+    delete_target_id(target="vpcs", id=vpc_id)
+
+
 # Interfaces new
 @pytest.fixture(scope="module")
 def linode_interface_public(linode_cloud_firewall):
@@ -321,11 +375,9 @@ def linode_interface_public(linode_cloud_firewall):
         interfaces='[{"public": {"ipv4": {"addresses": [{"primary": true}]}}, "default_route": {"ipv4": true, "ipv6": true }, "firewall_id":'
         + linode_cloud_firewall
         + "}]",
+        booted=False,
     )
 
-    wait_until(linode_id=linode_id, timeout=300, status="running")
-
-    # shutdown linode
     wait_until(linode_id=linode_id, timeout=60, status="offline")
 
     yield linode_id
