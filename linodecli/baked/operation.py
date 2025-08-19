@@ -10,9 +10,11 @@ import platform
 import re
 import sys
 from collections import defaultdict
+from collections.abc import Callable
+from dataclasses import dataclass
 from getpass import getpass
 from os import environ, path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
 from urllib.parse import urlparse
 
 import openapi3.paths
@@ -49,46 +51,12 @@ def parse_boolean(value: str) -> bool:
     raise argparse.ArgumentTypeError("Expected a boolean value")
 
 
-def parse_dict(
-    value: str,
-) -> Union[Dict[str, Any], "ExplicitEmptyDictValue", "ExplicitEmptyListValue"]:
-    """
-    A helper function to decode incoming JSON data as python dicts.  This is
-    intended to be passed to the `type=` kwarg for ArgumentParaser.add_argument.
-
-    :param value: The json string to be parsed into dict.
-    :type value: str
-
-    :returns: The dict value of the input.
-    :rtype: dict, ExplicitEmptyDictValue, or ExplicitEmptyListValue
-    """
-    if not isinstance(value, str):
-        raise argparse.ArgumentTypeError("Expected a JSON string")
-
-    try:
-        result = json.loads(value)
-    except Exception as e:
-        raise argparse.ArgumentTypeError("Expected a JSON string") from e
-
-    # This is necessary because empty dicts and lists are excluded from requests
-    # by default, but we still want to support user-defined empty dict
-    # strings. This is particularly helpful when updating LKE node pool
-    # labels and taints.
-    if isinstance(result, dict) and result == {}:
-        return ExplicitEmptyDictValue()
-
-    if isinstance(result, list) and result == []:
-        return ExplicitEmptyListValue()
-
-    return result
-
-
 TYPES = {
     "string": str,
     "integer": int,
     "boolean": parse_boolean,
     "array": list,
-    "object": parse_dict,
+    "object": lambda value: ExplicitJsonValue(json_value=json.loads(value)),
     "number": float,
 }
 
@@ -106,13 +74,16 @@ class ExplicitEmptyListValue:
     """
 
 
-class ExplicitEmptyDictValue:
+@dataclass
+class ExplicitJsonValue:
     """
-    A special type used to explicitly pass empty dictionaries to the API.
+    A special type used to explicitly pass raw JSON from user input as is.
     """
 
+    json_value: Any
 
-def wrap_parse_nullable_value(arg_type: str) -> TYPES:
+
+def wrap_parse_nullable_value(arg_type: str) -> Callable[[Any], Any]:
     """
     A helper function to parse `null` as None for nullable CLI args.
     This is intended to be called and passed to the `type=` kwarg for ArgumentParser.add_argument.
