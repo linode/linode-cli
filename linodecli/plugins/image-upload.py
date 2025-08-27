@@ -70,9 +70,7 @@ def call(args, context):
     """
     parser = inherit_plugin_args(
         argparse.ArgumentParser(
-            PLUGIN_BASE,
-            add_help=True,
-            formatter_class=SortingHelpFormatter
+            PLUGIN_BASE, add_help=True, formatter_class=SortingHelpFormatter
         )
     )
 

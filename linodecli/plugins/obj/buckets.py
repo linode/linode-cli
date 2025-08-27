@@ -20,8 +20,7 @@ def create_bucket(
     """
     parser = inherit_plugin_args(
         ArgumentParser(
-            PLUGIN_BASE + " mb",
-            formatter_class=SortingHelpFormatter
+            PLUGIN_BASE + " mb", formatter_class=SortingHelpFormatter
         )
     )
 
@@ -49,8 +48,7 @@ def delete_bucket(
     """
     parser = inherit_plugin_args(
         ArgumentParser(
-            PLUGIN_BASE + " rb",
-            formatter_class=SortingHelpFormatter
+            PLUGIN_BASE + " rb", formatter_class=SortingHelpFormatter
         )
     )
 

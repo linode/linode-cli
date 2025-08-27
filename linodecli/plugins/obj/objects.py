@@ -39,8 +39,7 @@ def upload_object(
     """
     parser = inherit_plugin_args(
         ArgumentParser(
-            PLUGIN_BASE + " put",
-            formatter_class=SortingHelpFormatter
+            PLUGIN_BASE + " put", formatter_class=SortingHelpFormatter
         )
     )
 
@@ -139,8 +138,7 @@ def get_object(
     """
     parser = inherit_plugin_args(
         ArgumentParser(
-            PLUGIN_BASE + " get",
-            formatter_class=SortingHelpFormatter
+            PLUGIN_BASE + " get", formatter_class=SortingHelpFormatter
         )
     )
 
@@ -220,8 +218,7 @@ def delete_object(
     """
     parser = inherit_plugin_args(
         ArgumentParser(
-            PLUGIN_BASE + " del",
-            formatter_class=SortingHelpFormatter
+            PLUGIN_BASE + " del", formatter_class=SortingHelpFormatter
         )
     )
 

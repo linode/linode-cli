@@ -34,8 +34,7 @@ def list_objects_or_buckets(
     """
     parser = inherit_plugin_args(
         ArgumentParser(
-            PLUGIN_BASE + " ls",
-            formatter_class=SortingHelpFormatter
+            PLUGIN_BASE + " ls", formatter_class=SortingHelpFormatter
         )
     )
 
@@ -139,8 +138,7 @@ def list_all_objects(
     # this is for printing help when --help is in the args
     parser = inherit_plugin_args(
         ArgumentParser(
-            PLUGIN_BASE + " la",
-            formatter_class=SortingHelpFormatter
+            PLUGIN_BASE + " la", formatter_class=SortingHelpFormatter
         )
     )
 

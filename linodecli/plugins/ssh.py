@@ -37,7 +37,7 @@ def call(args, context):  # pylint: disable=too-many-branches
         argparse.ArgumentParser(
             "linode-cli ssh",
             add_help=True,
-            formatter_class=SortingHelpFormatter
+            formatter_class=SortingHelpFormatter,
         )
     )
 

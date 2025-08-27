@@ -186,9 +186,7 @@ def get_metadata_parser():
     Builds argparser for Metadata plug-in
     """
     parser = ArgumentParser(
-        PLUGIN_BASE,
-        add_help=False,
-        formatter_class=SortingHelpFormatter
+        PLUGIN_BASE, add_help=False, formatter_class=SortingHelpFormatter
     )
 
     register_debug_arg(parser)

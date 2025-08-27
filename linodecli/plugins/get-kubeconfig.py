@@ -24,9 +24,7 @@ def call(args, context):
     The entrypoint for this plugin
     """
     parser = argparse.ArgumentParser(
-        PLUGIN_BASE,
-        add_help=True,
-        formatter_class=SortingHelpFormatter
+        PLUGIN_BASE, add_help=True, formatter_class=SortingHelpFormatter
     )
 
     group = parser.add_mutually_exclusive_group()

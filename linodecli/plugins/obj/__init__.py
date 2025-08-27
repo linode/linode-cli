@@ -71,8 +71,8 @@ def generate_url(get_client, args, **kwargs):  # pylint: disable=unused-argument
     """
     parser = inherit_plugin_args(
         ArgumentParser(
-            PLUGIN_BASE + " signurl",
-            formatter_class=SortingHelpFormatter)
+            PLUGIN_BASE + " signurl", formatter_class=SortingHelpFormatter
+        )
     )
 
     parser.add_argument(
@@ -126,8 +126,7 @@ def set_acl(get_client, args, **kwargs):  # pylint: disable=unused-argument
     """
     parser = inherit_plugin_args(
         ArgumentParser(
-            PLUGIN_BASE + " setacl",
-            formatter_class=SortingHelpFormatter
+            PLUGIN_BASE + " setacl", formatter_class=SortingHelpFormatter
         )
     )
 
@@ -195,8 +194,7 @@ def show_usage(get_client, args, **kwargs):  # pylint: disable=unused-argument
     """
     parser = inherit_plugin_args(
         ArgumentParser(
-            PLUGIN_BASE + " du",
-            formatter_class=SortingHelpFormatter
+            PLUGIN_BASE + " du", formatter_class=SortingHelpFormatter
         )
     )
 
@@ -307,9 +305,7 @@ def get_obj_args_parser():
     """
     parser = inherit_plugin_args(
         ArgumentParser(
-            PLUGIN_BASE,
-            add_help=False,
-            formatter_class=SortingHelpFormatter
+            PLUGIN_BASE, add_help=False, formatter_class=SortingHelpFormatter
         )
     )
 

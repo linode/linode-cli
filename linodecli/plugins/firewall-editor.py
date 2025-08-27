@@ -585,7 +585,7 @@ def call(args, context):
         argparse.ArgumentParser(
             "firewall-editor",
             add_help=True,
-            formatter_class=SortingHelpFormatter
+            formatter_class=SortingHelpFormatter,
         )
     )
 

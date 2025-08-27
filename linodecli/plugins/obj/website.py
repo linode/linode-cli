@@ -17,8 +17,7 @@ def enable_static_site(
     """
     parser = inherit_plugin_args(
         ArgumentParser(
-            PLUGIN_BASE + " ws-create",
-            formatter_class=SortingHelpFormatter
+            PLUGIN_BASE + " ws-create", formatter_class=SortingHelpFormatter
         )
     )
 
@@ -82,8 +81,7 @@ def static_site_info(
     """
     parser = inherit_plugin_args(
         ArgumentParser(
-            PLUGIN_BASE + " ws-info",
-            formatter_class=SortingHelpFormatter
+            PLUGIN_BASE + " ws-info", formatter_class=SortingHelpFormatter
         )
     )
 
@@ -122,8 +120,7 @@ def disable_static_site(
     """
     parser = inherit_plugin_args(
         ArgumentParser(
-            PLUGIN_BASE + " du",
-            formatter_class=SortingHelpFormatter
+            PLUGIN_BASE + " du", formatter_class=SortingHelpFormatter
         )
     )
 
