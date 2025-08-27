@@ -1,0 +1,72 @@
+import json
+
+import pytest
+
+from tests.integration.helpers import (
+    BASE_CMDS,
+    delete_target_id,
+    exec_test_command,
+    get_random_text,
+)
+
+
+@pytest.fixture(scope="function")
+def _firewall_id_and_label():
+    # generate a unique label
+    label = "fw-" + get_random_text(5)
+    # create it and capture the ID
+    result = exec_test_command(
+        BASE_CMDS["firewalls"]
+        + [
+            "create",
+            "--label",
+            label,
+            "--rules.outbound_policy",
+            "ACCEPT",
+            "--rules.inbound_policy",
+            "DROP",
+            "--text",
+            "--no-headers",
+            "--format",
+            "id",
+        ]
+    )
+    fw_id = result
+    yield fw_id, label
+    # cleanup
+    delete_target_id(target="firewalls", id=fw_id)
+
+
+@pytest.fixture(scope="function")
+def test_firewall_id(_firewall_id_and_label):
+    """Only the ID, so old tests keep working."""
+    return _firewall_id_and_label[0]
+
+
+@pytest.fixture(scope="function")
+def test_firewall_label(_firewall_id_and_label):
+    """Only the label, for tests that need it explicitly."""
+    return _firewall_id_and_label[1]
+
+
+@pytest.fixture
+def restore_firewall_defaults():
+    # Fetch and store current default firewall settings
+    result = exec_test_command(
+        BASE_CMDS["firewalls"] + ["firewall-settings-list", "--json"]
+    )
+    settings = json.loads(result)
+    original_defaults = settings[0]["default_firewall_ids"]
+
+    yield original_defaults
+
+    # Restore the original defaults after test
+    args = []
+    for key, val in original_defaults.items():
+        if val is not None:
+            args.extend([f"--default_firewall_ids.{key}", str(val)])
+
+    if args:
+        exec_test_command(
+            BASE_CMDS["firewalls"] + ["firewall-settings-update"] + args
+        )

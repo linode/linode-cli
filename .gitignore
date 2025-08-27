@@ -14,3 +14,4 @@ test/.env
 MANIFEST
 venv
 openapi*.yaml
+openapi*.json

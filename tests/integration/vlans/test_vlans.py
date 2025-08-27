@@ -1,19 +1,17 @@
-from tests.integration.helpers import assert_headers_in_lines, exec_test_command
-
-BASE_CMD = ["linode-cli", "vlans"]
+from tests.integration.helpers import (
+    BASE_CMDS,
+    assert_headers_in_lines,
+    exec_test_command,
+)
 
 
 def test_list_vlans():
-    types = (
-        exec_test_command(
-            BASE_CMD
-            + [
-                "ls",
-                "--text",
-            ]
-        )
-        .stdout.decode()
-        .rstrip()
+    types = exec_test_command(
+        BASE_CMDS["vlans"]
+        + [
+            "ls",
+            "--text",
+        ]
     )
 
     headers = ["region", "label", "linodes"]
@@ -23,16 +21,12 @@ def test_list_vlans():
 
 
 def test_list_vlans_help_menu():
-    help_menu = (
-        exec_test_command(
-            BASE_CMD
-            + [
-                "ls",
-                "--h",
-            ]
-        )
-        .stdout.decode()
-        .rstrip()
+    help_menu = exec_test_command(
+        BASE_CMDS["vlans"]
+        + [
+            "ls",
+            "--h",
+        ]
     )
 
     assert "linode-cli vlans ls" in help_menu
@@ -43,16 +37,12 @@ def test_list_vlans_help_menu():
 
 
 def test_delete_vlans_help_menu():
-    help_menu = (
-        exec_test_command(
-            BASE_CMD
-            + [
-                "delete",
-                "--h",
-            ]
-        )
-        .stdout.decode()
-        .rstrip()
+    help_menu = exec_test_command(
+        BASE_CMDS["vlans"]
+        + [
+            "delete",
+            "--h",
+        ]
     )
 
     assert "linode-cli vlans delete [LABEL] [REGIONID]" in help_menu

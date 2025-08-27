@@ -12,6 +12,8 @@ VERSION_FILE := ./linodecli/version.py
 VERSION_MODULE_DOCSTRING ?= \"\"\"\nThe version of the Linode CLI.\n\"\"\"\n\n
 LINODE_CLI_VERSION ?= "0.0.0.dev"
 
+BAKE_FLAGS := --debug
+
 .PHONY: install
 install: check-prerequisites requirements build
 	pip3 install --force dist/*.whl
@@ -21,7 +23,7 @@ bake: clean
 ifeq ($(SKIP_BAKE), 1)
 	@echo Skipping bake stage
 else
-	python3 -m linodecli bake ${SPEC} --skip-config
+	python3 -m linodecli bake ${SPEC} --skip-config $(BAKE_FLAGS)
 	cp data-3 linodecli/
 endif
 
@@ -62,7 +64,7 @@ test-unit:
 	@mkdir -p /tmp/linode/.config
 	@orig_xdg_config_home=$${XDG_CONFIG_HOME:-}; \
 	export LINODE_CLI_TEST_MODE=1 XDG_CONFIG_HOME=/tmp/linode/.config; \
-	pytest -v tests/unit; \
+	pytest -vv tests/unit; \
 	exit_code=$$?; \
 	export XDG_CONFIG_HOME=$$orig_xdg_config_home; \
 	exit $$exit_code

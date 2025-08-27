@@ -23,17 +23,6 @@ from tests.integration.helpers import (
     get_random_region_with_caps,
     get_random_text,
 )
-from tests.integration.linodes.helpers_linodes import (
-    DEFAULT_LINODE_TYPE,
-    DEFAULT_RANDOM_PASS,
-    DEFAULT_REGION,
-    DEFAULT_TEST_IMAGE,
-    create_linode_and_wait,
-)
-
-DOMAIN_BASE_CMD = ["linode-cli", "domains"]
-LINODE_BASE_CMD = ["linode-cli", "linodes"]
-NODEBALANCER_BASE_CMD = ["linode-cli", "nodebalancers"]
 
 
 @pytest.fixture(autouse=True, scope="session")
@@ -106,7 +95,7 @@ def linode_cloud_firewall():
     if is_valid_ipv4(ipv4_address) or is_valid_ipv6(ipv6_address):
         command.extend(["--rules.inbound", inbound_rule])
 
-    firewall_id = exec_test_command(command).stdout.decode().rstrip()
+    firewall_id = exec_test_command(command)
 
     yield firewall_id
 
@@ -201,271 +190,6 @@ def generate_test_files(
     return _generate_test_files
 
 
-# test helper specific to Domains test suite
-@pytest.fixture
-def master_domain():
-    timestamp = str(time.time_ns())
-
-    domain_id = (
-        exec_test_command(
-            DOMAIN_BASE_CMD
-            + [
-                "create",
-                "--type",
-                "master",
-                "--domain",
-                timestamp + "example.com",
-                "--soa_email",
-                "pthiel_test@linode.com",
-                "--text",
-                "--no-header",
-                "--format",
-                "id",
-            ]
-        )
-        .stdout.decode()
-        .rstrip()
-    )
-
-    yield domain_id
-
-    delete_target_id("domains", id=domain_id)
-
-
-@pytest.fixture
-def slave_domain():
-    timestamp = str(time.time_ns())
-
-    domain_id = (
-        exec_test_command(
-            DOMAIN_BASE_CMD
-            + [
-                "create",
-                "--type",
-                "slave",
-                "--domain",
-                timestamp + "-example.com",
-                "--master_ips",
-                "1.1.1.1",
-                "--text",
-                "--no-header",
-                "--delimiter",
-                ",",
-                "--format=id",
-            ]
-        )
-        .stdout.decode()
-        .rstrip()
-    )
-
-    yield domain_id
-
-    delete_target_id("domains", domain_id)
-
-
-# Test helpers specific to Linodes test suite
-@pytest.fixture
-def linode_with_label(linode_cloud_firewall):
-    timestamp = str(time.time_ns())
-    label = "cli" + timestamp
-    result = (
-        exec_test_command(
-            LINODE_BASE_CMD
-            + [
-                "create",
-                "--type",
-                "g6-nanode-1",
-                "--region",
-                "us-ord",
-                "--image",
-                DEFAULT_TEST_IMAGE,
-                "--label",
-                label,
-                "--root_pass",
-                DEFAULT_RANDOM_PASS,
-                "--firewall_id",
-                linode_cloud_firewall,
-                "--text",
-                "--delimiter",
-                ",",
-                "--no-headers",
-                "--format",
-                "label,region,type,image,id",
-                "--no-defaults",
-            ]
-        )
-        .stdout.decode()
-        .rstrip()
-    )
-
-    yield result
-    res_arr = result.split(",")
-    linode_id = res_arr[4]
-    delete_target_id(target="linodes", id=linode_id)
-
-
-@pytest.fixture
-def linode_min_req(linode_cloud_firewall):
-    result = (
-        exec_test_command(
-            LINODE_BASE_CMD
-            + [
-                "create",
-                "--type",
-                "g6-nanode-1",
-                "--region",
-                "us-ord",
-                "--root_pass",
-                DEFAULT_RANDOM_PASS,
-                "--firewall_id",
-                linode_cloud_firewall,
-                "--no-defaults",
-                "--text",
-                "--delimiter",
-                ",",
-                "--no-headers",
-                "--format",
-                "id,region,type",
-            ]
-        )
-        .stdout.decode()
-        .rstrip()
-    )
-
-    yield result
-
-    res_arr = result.split(",")
-    linode_id = res_arr[0]
-    delete_target_id(target="linodes", id=linode_id)
-
-
-@pytest.fixture
-def linode_wo_image(linode_cloud_firewall):
-    label = "cli" + str(int(time.time()) + randint(10, 1000))
-    linode_id = (
-        exec_test_command(
-            LINODE_BASE_CMD
-            + [
-                "create",
-                "--no-defaults",
-                "--label",
-                label,
-                "--type",
-                DEFAULT_LINODE_TYPE,
-                "--region",
-                DEFAULT_REGION,
-                "--root_pass",
-                DEFAULT_RANDOM_PASS,
-                "--firewall_id",
-                linode_cloud_firewall,
-                "--format",
-                "id",
-                "--no-headers",
-                "--text",
-            ]
-        )
-        .stdout.decode()
-        .rstrip()
-    )
-
-    yield linode_id
-
-    delete_target_id(target="linodes", id=linode_id)
-
-
-@pytest.fixture
-def linode_backup_enabled(linode_cloud_firewall):
-    # create linode with backups enabled
-    linode_id = (
-        exec_test_command(
-            [
-                "linode-cli",
-                "linodes",
-                "create",
-                "--backups_enabled",
-                "true",
-                "--type",
-                DEFAULT_LINODE_TYPE,
-                "--region",
-                DEFAULT_REGION,
-                "--image",
-                DEFAULT_TEST_IMAGE,
-                "--root_pass",
-                DEFAULT_RANDOM_PASS,
-                "--firewall_id",
-                linode_cloud_firewall,
-                "--text",
-                "--no-headers",
-                "--format=id",
-            ]
-        )
-        .stdout.decode()
-        .rstrip()
-    )
-
-    yield linode_id
-
-    delete_target_id("linodes", linode_id)
-
-
-@pytest.fixture
-def snapshot_of_linode():
-    timestamp = str(time.time_ns())
-    # get linode id after creation and wait for "running" status
-    linode_id = create_linode_and_wait()
-    new_snapshot_label = "test_snapshot" + timestamp
-
-    result = exec_test_command(
-        LINODE_BASE_CMD
-        + [
-            "snapshot",
-            linode_id,
-            "--label",
-            new_snapshot_label,
-            "--text",
-            "--delimiter",
-            ",",
-            "--no-headers",
-        ]
-    ).stdout.decode()
-
-    yield linode_id, new_snapshot_label
-
-    delete_target_id("linodes", linode_id)
-
-
-# Test helpers specific to Nodebalancers test suite
-@pytest.fixture
-def nodebalancer_with_default_conf(linode_cloud_firewall):
-    result = (
-        exec_test_command(
-            NODEBALANCER_BASE_CMD
-            + [
-                "create",
-                "--region",
-                "us-ord",
-                "--firewall_id",
-                linode_cloud_firewall,
-                "--text",
-                "--delimiter",
-                ",",
-                "--format",
-                "id,label,region,hostname,client_conn_throttle",
-                "--suppress-warnings",
-                "--no-headers",
-            ]
-        )
-        .stdout.decode()
-        .rstrip()
-    )
-
-    yield result
-
-    res_arr = result.split(",")
-    nodebalancer_id = res_arr[0]
-    delete_target_id(target="nodebalancers", id=nodebalancer_id)
-
-
 def create_vpc_w_subnet():
     """
     Creates and returns a VPC and a corresponding subnet.
@@ -478,8 +202,8 @@ def create_vpc_w_subnet():
     """
 
     region = get_random_region_with_caps(required_capabilities=["VPCs"])
-    vpc_label = str(time.time_ns()) + "label"
-    subnet_label = str(time.time_ns()) + "label"
+    vpc_label = get_random_text(5) + "label"
+    subnet_label = get_random_text(5) + "label"
 
     vpc_json = json.loads(
         exec_test_command(
@@ -499,8 +223,6 @@ def create_vpc_w_subnet():
                 "--suppress-warnings",
             ]
         )
-        .stdout.decode()
-        .rstrip()
     )[0]
 
     return vpc_json
@@ -511,45 +233,3 @@ def pytest_configure(config):
     config.addinivalue_line(
         "markers", "smoke: mark test as part of smoke test suite"
     )
-
-
-@pytest.fixture
-def support_test_linode_id(linode_cloud_firewall):
-    timestamp = str(time.time_ns())
-    label = "cli" + timestamp
-
-    res = (
-        exec_test_command(
-            LINODE_BASE_CMD
-            + [
-                "create",
-                "--type",
-                "g6-nanode-1",
-                "--region",
-                "us-mia",
-                "--image",
-                DEFAULT_TEST_IMAGE,
-                "--label",
-                label,
-                "--root_pass",
-                DEFAULT_RANDOM_PASS,
-                "--firewall_id",
-                linode_cloud_firewall,
-                "--text",
-                "--delimiter",
-                ",",
-                "--no-headers",
-                "--format",
-                "id",
-                "--no-defaults",
-            ]
-        )
-        .stdout.decode()
-        .rstrip()
-    )
-
-    linode_id = res
-
-    yield linode_id
-
-    delete_target_id(target="linodes", id=linode_id)

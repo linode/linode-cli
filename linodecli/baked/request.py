@@ -9,7 +9,10 @@ from openapi3.schemas import Schema
 
 from linodecli.baked.parsing import simplify_description
 from linodecli.baked.response import OpenAPIResponse
-from linodecli.baked.util import _aggregate_schema_properties
+from linodecli.baked.util import (
+    _aggregate_schema_properties,
+    escape_arg_segment,
+)
 
 
 class OpenAPIRequestArg:
@@ -45,6 +48,8 @@ class OpenAPIRequestArg:
         :type parent: Optional[str]
         :param depth: The depth of this argument, or how many parent arguments this argument has.
         :type depth: int
+        :param option_variants: A mapping of options, defined using oneOf in the to spec,
+                                to a variant of this argument.
         """
         #: The name of this argument, mostly used for display and docs
         self.name = name
@@ -144,6 +149,7 @@ def _parse_request_model(
     :returns: The flattened request model, as a list
     :rtype: list[OpenAPIRequestArg]
     """
+
     args = []
 
     properties, required = _aggregate_schema_properties(schema)
@@ -152,6 +158,8 @@ def _parse_request_model(
         return args
 
     for k, v in properties.items():
+        k = escape_arg_segment(k)
+
         # Handle nested objects which aren't read-only and have properties
         if (
             v.type == "object"

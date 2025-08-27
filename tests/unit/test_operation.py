@@ -5,7 +5,9 @@ import json
 
 from linodecli.baked import operation
 from linodecli.baked.operation import (
+    TYPES,
     ExplicitEmptyListValue,
+    ExplicitJsonValue,
     ExplicitNullValue,
     OpenAPIOperation,
 )
@@ -193,7 +195,7 @@ class TestOperation:
                 "field_string": "test1",
                 "field_int": 123,
                 "field_dict": {"nested_string": "test2", "nested_int": 789},
-                "field_array": ["foo", "bar"],
+                "field_array": ExplicitJsonValue(json_value=["foo", "bar"]),
                 "nullable_string": None,  # We expect this to be filtered out later
             },
             {"field_int": 456, "field_dict": {"nested_string": "test3"}},
@@ -214,7 +216,7 @@ class TestOperation:
             ["--object_list", json.dumps(expected)]
         )
 
-        assert result.object_list == expected
+        assert result.object_list.json_value == expected
 
     def test_parse_args_conflicting_parent_child(self, create_operation):
         stderr_buf = io.StringIO()
@@ -276,6 +278,49 @@ class TestOperation:
         # User specifies a normal value and an empty list value
         result = parser.parse_args(["--foo", "foo", "--foo", "[]"])
         assert getattr(result, "foo") == ["foo", "[]"]
+
+    def test_object_arg_action_basic(self):
+        """
+        Tests a basic array argument condition..
+        """
+
+        parser = argparse.ArgumentParser(
+            prog=f"foo",
+        )
+
+        parser.add_argument(
+            "--foo",
+            metavar="foo",
+            type=TYPES["object"],
+        )
+
+        # User specifies a normal object (dict)
+        result = parser.parse_args(["--foo", '{"test-key": "test-value"}'])
+        foo = getattr(result, "foo")
+        assert isinstance(foo, ExplicitJsonValue)
+        assert foo.json_value == {"test-key": "test-value"}
+
+        # User specifies a normal object (list)
+        result = parser.parse_args(["--foo", '[{"test-key": "test-value"}]'])
+        foo = getattr(result, "foo")
+        assert isinstance(foo, ExplicitJsonValue)
+        assert foo.json_value == [{"test-key": "test-value"}]
+
+        # User wants an explicitly empty object (dict)
+        result = parser.parse_args(["--foo", "{}"])
+        foo = getattr(result, "foo")
+        assert isinstance(foo, ExplicitJsonValue)
+        assert foo.json_value == {}
+
+        # User wants an explicitly empty object (list)
+        result = parser.parse_args(["--foo", "[]"])
+        foo = getattr(result, "foo")
+        assert isinstance(foo, ExplicitJsonValue)
+        assert foo.json_value == []
+
+        # User doesn't specify the list
+        result = parser.parse_args([])
+        assert getattr(result, "foo") is None
 
     def test_resolve_api_components(self, get_openapi_for_api_components_tests):
         root = get_openapi_for_api_components_tests

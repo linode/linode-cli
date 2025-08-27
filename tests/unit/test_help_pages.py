@@ -14,54 +14,174 @@ class TestHelpPages:
         # NOTE: We use SimpleNamespace here so we can do deep comparisons using ==
         args = [
             SimpleNamespace(
-                read_only=False, required=False, depth=0, path="foobaz"
+                read_only=False,
+                required=False,
+                depth=0,
+                path="foobaz",
+                parent=None,
+                is_parent=False,
             ),
             SimpleNamespace(
-                read_only=False, required=False, depth=0, path="foobar"
+                read_only=False,
+                required=False,
+                depth=0,
+                path="foobar",
+                parent=None,
+                is_parent=False,
             ),
             SimpleNamespace(
-                read_only=False, required=True, depth=0, path="barfoo"
+                read_only=False,
+                required=True,
+                depth=0,
+                path="barfoo",
+                parent=None,
+                is_parent=False,
             ),
             SimpleNamespace(
-                read_only=False, required=False, depth=0, path="foo"
+                read_only=False,
+                required=False,
+                depth=0,
+                path="foo",
+                parent=None,
+                is_parent=True,
             ),
             SimpleNamespace(
-                read_only=False, required=False, depth=1, path="foo.bar"
+                read_only=False,
+                required=False,
+                depth=1,
+                path="foo.bar",
+                parent="foo",
+                is_parent=False,
             ),
             SimpleNamespace(
-                read_only=False, required=False, depth=1, path="foo.foo"
+                read_only=False,
+                required=False,
+                depth=1,
+                path="foo.foo",
+                parent="foo",
+                is_parent=False,
             ),
             SimpleNamespace(
-                read_only=False, required=True, depth=1, path="foo.baz"
+                read_only=False,
+                required=True,
+                depth=1,
+                path="foo.baz",
+                parent="foo",
+                is_parent=True,
+            ),
+            SimpleNamespace(
+                read_only=False,
+                required=True,
+                depth=1,
+                path="foo.foobar",
+                parent="foo",
+                is_parent=False,
+            ),
+            SimpleNamespace(
+                read_only=False,
+                required=True,
+                depth=2,
+                path="foo.baz.foo",
+                parent="foo.baz",
+                is_parent=False,
+            ),
+            SimpleNamespace(
+                read_only=False,
+                required=True,
+                depth=2,
+                path="foo.baz.bar",
+                parent="foo.baz",
+                is_parent=False,
             ),
         ]
 
         expected = [
             [
                 SimpleNamespace(
-                    read_only=False, required=True, path="barfoo", depth=0
+                    read_only=False,
+                    required=True,
+                    path="barfoo",
+                    depth=0,
+                    parent=None,
+                    is_parent=False,
                 ),
             ],
             [
                 SimpleNamespace(
-                    read_only=False, required=False, path="foobar", depth=0
+                    read_only=False,
+                    required=False,
+                    path="foobar",
+                    depth=0,
+                    parent=None,
+                    is_parent=False,
                 ),
                 SimpleNamespace(
-                    read_only=False, required=False, path="foobaz", depth=0
+                    read_only=False,
+                    required=False,
+                    path="foobaz",
+                    depth=0,
+                    parent=None,
+                    is_parent=False,
                 ),
             ],
             [
                 SimpleNamespace(
-                    read_only=False, required=False, path="foo", depth=0
+                    read_only=False,
+                    required=False,
+                    path="foo",
+                    depth=0,
+                    parent=None,
+                    is_parent=True,
                 ),
                 SimpleNamespace(
-                    read_only=False, required=True, path="foo.baz", depth=1
+                    read_only=False,
+                    required=True,
+                    depth=1,
+                    path="foo.foobar",
+                    parent="foo",
+                    is_parent=False,
                 ),
                 SimpleNamespace(
-                    read_only=False, required=False, path="foo.bar", depth=1
+                    read_only=False,
+                    required=False,
+                    path="foo.bar",
+                    depth=1,
+                    parent="foo",
+                    is_parent=False,
                 ),
                 SimpleNamespace(
-                    read_only=False, required=False, path="foo.foo", depth=1
+                    read_only=False,
+                    required=False,
+                    path="foo.foo",
+                    depth=1,
+                    parent="foo",
+                    is_parent=False,
+                ),
+            ],
+            [
+                SimpleNamespace(
+                    read_only=False,
+                    required=True,
+                    path="foo.baz",
+                    depth=1,
+                    parent="foo",
+                    is_parent=True,
+                ),
+                SimpleNamespace(
+                    read_only=False,
+                    required=True,
+                    depth=2,
+                    path="foo.baz.bar",
+                    parent="foo.baz",
+                    is_parent=False,
+                ),
+                SimpleNamespace(
+                    read_only=False,
+                    required=True,
+                    depth=2,
+                    path="foo.baz.foo",
+                    parent="foo.baz",
+                    is_parent=False,
                 ),
             ],
         ]

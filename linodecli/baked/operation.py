@@ -5,10 +5,13 @@ CLI Operation logic
 import argparse
 import glob
 import json
+import logging
 import platform
 import re
 import sys
 from collections import defaultdict
+from collections.abc import Callable
+from dataclasses import dataclass
 from getpass import getpass
 from os import environ, path
 from typing import Any, Dict, List, Optional, Tuple
@@ -24,6 +27,7 @@ from linodecli.baked.request import (
     OpenAPIRequestArg,
 )
 from linodecli.baked.response import OpenAPIResponse
+from linodecli.baked.util import unescape_arg_segment
 from linodecli.exit_codes import ExitCodes
 from linodecli.help_formatter import SortingHelpFormatter
 from linodecli.output.output_handler import OutputHandler
@@ -48,31 +52,12 @@ def parse_boolean(value: str) -> bool:
     raise argparse.ArgumentTypeError("Expected a boolean value")
 
 
-def parse_dict(value: str) -> dict:
-    """
-    A helper function to decode incoming JSON data as python dicts.  This is
-    intended to be passed to the `type=` kwarg for ArgumentParaser.add_argument.
-
-    :param value: The json string to be parsed into dict.
-    :type value: str
-
-    :returns: The dict value of the input.
-    :rtype: dict
-    """
-    if not isinstance(value, str):
-        raise argparse.ArgumentTypeError("Expected a JSON string")
-    try:
-        return json.loads(value)
-    except Exception as e:
-        raise argparse.ArgumentTypeError("Expected a JSON string") from e
-
-
 TYPES = {
     "string": str,
     "integer": int,
     "boolean": parse_boolean,
     "array": list,
-    "object": parse_dict,
+    "object": lambda value: ExplicitJsonValue(json_value=json.loads(value)),
     "number": float,
 }
 
@@ -90,7 +75,16 @@ class ExplicitEmptyListValue:
     """
 
 
-def wrap_parse_nullable_value(arg_type: str) -> TYPES:
+@dataclass
+class ExplicitJsonValue:
+    """
+    A special type used to explicitly pass raw JSON from user input as is.
+    """
+
+    json_value: Any
+
+
+def wrap_parse_nullable_value(arg_type: str) -> Callable[[Any], Any]:
     """
     A helper function to parse `null` as None for nullable CLI args.
     This is intended to be called and passed to the `type=` kwarg for ArgumentParser.add_argument.
@@ -401,9 +395,10 @@ class OpenAPIOperation:
         self.docs_url = self._resolve_operation_docs_url(operation)
 
         if self.docs_url is None:
-            print(
-                f"INFO: Could not resolve docs URL for {operation}",
-                file=sys.stderr,
+            logging.warning(
+                "%s %s Could not resolve docs URL for operation",
+                self.method.upper(),
+                self.url_path,
             )
 
         code_samples_ext = operation.extensions.get("code-samples")
@@ -426,6 +421,13 @@ class OpenAPIOperation:
         Return a list of attributes from the request schema
         """
         return self.request.attr_routes if self.request else []
+
+    @property
+    def attrs(self):
+        """
+        Return a list of attributes from the request schema
+        """
+        return self.response_model.attrs if self.response_model else []
 
     @staticmethod
     def _flatten_url_path(tag: str) -> str:
@@ -620,6 +622,9 @@ class OpenAPIOperation:
             if arg.read_only:
                 continue
 
+            arg_name_unescaped = unescape_arg_segment(arg.name)
+            arg_path_unescaped = unescape_arg_segment(arg.path)
+
             arg_type = (
                 arg.item_type if arg.datatype == "array" else arg.datatype
             )
@@ -631,15 +636,17 @@ class OpenAPIOperation:
             if arg.datatype == "array":
                 # special handling for input arrays
                 parser.add_argument(
-                    "--" + arg.path,
-                    metavar=arg.name,
+                    "--" + arg_path_unescaped,
+                    dest=arg.path,
+                    metavar=arg_name_unescaped,
                     action=ArrayAction,
                     type=arg_type_handler,
                 )
             elif arg.is_child:
                 parser.add_argument(
-                    "--" + arg.path,
-                    metavar=arg.name,
+                    "--" + arg_path_unescaped,
+                    dest=arg.path,
+                    metavar=arg_name_unescaped,
                     action=ListArgumentAction,
                     type=arg_type_handler,
                 )
@@ -648,7 +655,7 @@ class OpenAPIOperation:
                 if arg.datatype == "string" and arg.format == "password":
                     # special case - password input
                     parser.add_argument(
-                        "--" + arg.path,
+                        "--" + arg_path_unescaped,
                         nargs="?",
                         action=PasswordPromptAction,
                     )
@@ -658,15 +665,17 @@ class OpenAPIOperation:
                     "ssl-key",
                 ):
                     parser.add_argument(
-                        "--" + arg.path,
-                        metavar=arg.name,
+                        "--" + arg_path_unescaped,
+                        dest=arg.path,
+                        metavar=arg_name_unescaped,
                         action=OptionalFromFileAction,
                         type=arg_type_handler,
                     )
                 else:
                     parser.add_argument(
-                        "--" + arg.path,
-                        metavar=arg.name,
+                        "--" + arg_path_unescaped,
+                        dest=arg.path,
+                        metavar=arg_name_unescaped,
                         type=arg_type_handler,
                     )
 

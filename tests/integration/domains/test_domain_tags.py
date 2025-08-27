@@ -1,33 +1,31 @@
 import re
-import time
 
 import pytest
 
 from linodecli.exit_codes import ExitCodes
 from tests.integration.helpers import (
-    delete_tag,
+    BASE_CMDS,
     delete_target_id,
     exec_failing_test_command,
     exec_test_command,
+    get_random_text,
 )
 
-BASE_CMD = ["linode-cli", "domains"]
 
-
-# @pytest.mark.skip(reason="BUG 943")
 def test_fail_to_create_master_domain_with_invalid_tags():
-    timestamp = str(time.time_ns())
-    bad_tag = "*"
+    bad_tag = (
+        "a" * 300
+    )  # Tag validation rules changed — '*' is no longer rejected
 
     exec_failing_test_command(
-        BASE_CMD
+        BASE_CMDS["domains"]
         + [
             "create",
             "--type",
             "master",
             "--domain",
-            timestamp + "example.com",
-            "--soa_email=" + timestamp + "pthiel@linode.com",
+            get_random_text(5) + "example.com",
+            "--soa_email=" + get_random_text(5) + "pthiel@linode.com",
             "--text",
             "--no-header",
             "--format=id",
@@ -38,20 +36,18 @@ def test_fail_to_create_master_domain_with_invalid_tags():
     )
 
 
-# @pytest.mark.skip(reason="BUG 943")
 def test_fail_to_create_slave_domain_with_invalid_tags():
-    timestamp = str(time.time_ns())
     bad_tag = "*"
 
     exec_failing_test_command(
-        BASE_CMD
+        BASE_CMDS["domains"]
         + [
             "create",
             "--type",
             "slave",
             "--domain",
-            timestamp + "example.com",
-            "--soa_email=" + timestamp + "pthiel@linode.com",
+            get_random_text(5) + "example.com",
+            "--soa_email=" + get_random_text(5) + "pthiel@linode.com",
             "--text",
             "--no-header",
             "--format=id",
@@ -64,18 +60,17 @@ def test_fail_to_create_slave_domain_with_invalid_tags():
 
 @pytest.mark.smoke
 def test_create_master_domain_with_tags():
-    timestamp = str(time.time_ns())
     tag = "foo"
 
-    process = exec_test_command(
-        BASE_CMD
+    output = exec_test_command(
+        BASE_CMDS["domains"]
         + [
             "create",
             "--type",
             "master",
             "--domain",
-            timestamp + "-example.com",
-            "--soa_email=" + timestamp + "pthiel@linode.com",
+            get_random_text(5) + "-example.com",
+            "--soa_email=" + get_random_text(5) + "pthiel@linode.com",
             "--text",
             "--no-header",
             "--delimiter=,",
@@ -84,43 +79,39 @@ def test_create_master_domain_with_tags():
             tag,
         ]
     )
-    output = process.stdout.decode().rstrip()
-    assert re.search("[0-9]+,[0-9]+-example.com,master,active," + tag, output)
+
+    assert re.search(
+        r"\d+,[^,]*-example\.com,master,active," + re.escape(tag), output
+    )
 
     res_arr = output.split(",")
     domain_id = res_arr[0]
     delete_target_id(target="domains", id=domain_id)
 
 
-# @pytest.mark.skip(reason="BUG 943")
 def test_delete_domain_and_tag():
-    timestamp = str(int(time.time()))
     tag = "zoo"
 
-    domain_id = (
-        exec_test_command(
-            BASE_CMD
-            + [
-                "create",
-                "--type",
-                "master",
-                "--domain",
-                timestamp + "-example.com",
-                "--soa_email=" + timestamp + "pthiel@linode.com",
-                "--text",
-                "--no-header",
-                "--delimiter=,",
-                "--format=id",
-                "--tag",
-                tag,
-            ]
-        )
-        .stdout.decode()
-        .rstrip()
+    domain_id = exec_test_command(
+        BASE_CMDS["domains"]
+        + [
+            "create",
+            "--type",
+            "master",
+            "--domain",
+            get_random_text(5) + "-example.com",
+            "--soa_email=" + get_random_text(5) + "pthiel@linode.com",
+            "--text",
+            "--no-header",
+            "--delimiter=,",
+            "--format=id",
+            "--tag",
+            tag,
+        ]
     )
     # need to check if tag foo is still present while running this test
-    result = exec_test_command(["linode-cli", "tags", "list"]).stdout.decode()
+    result = exec_test_command(["linode-cli", "tags", "list"])
 
     if "zoo" in result:
-        delete_tag("zoo")
+        delete_target_id(target="tags", id="zoo")
         delete_target_id(target="domains", id=domain_id)
