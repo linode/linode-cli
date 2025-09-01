@@ -15,7 +15,7 @@ jobs:
           private_key: ${{ secrets.CLI_RELEASE_PRIVATE_KEY }}
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           # We want to checkout the main branch
           ref: 'main'
