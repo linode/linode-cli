@@ -7,7 +7,7 @@ jobs:
   docker-build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     - name: Build the Docker image
       run: docker build . --file Dockerfile --tag linode/cli:$(date +%s) --build-arg="github_token=$GITHUB_TOKEN"
       env:
@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: setup python 3
         uses: actions/setup-python@v5
@@ -37,7 +37,7 @@ jobs:
         python-version: [ "3.9","3.10","3.11", "3.12", "3.13" ]
     steps:
       - name: Clone Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -59,7 +59,7 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Clone Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Python
         uses: actions/setup-python@v5
