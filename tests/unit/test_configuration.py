@@ -113,6 +113,7 @@ mysql_engine = mysql/8.0.26"""
         Test CLIConfig.print_users()
         """
         conf = self._build_test_config()
+        conf.config.add_section("custom_aliases")
 
         f = io.StringIO()
 
@@ -122,6 +123,7 @@ mysql_engine = mysql/8.0.26"""
 
         assert err.value.code == 0
         assert "*  cli-dev" in f.getvalue()
+        assert "custom_aliases" not in f.getvalue()
 
     def test_set_default_user(self):
         """
