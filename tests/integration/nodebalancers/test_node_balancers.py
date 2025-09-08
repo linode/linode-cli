@@ -505,6 +505,7 @@ def test_list_nodes_for_node_balancer_udp_configuration(
             "--no-headers",
         ]
     )
+
     assert (
         result
         == node_id
