@@ -77,7 +77,15 @@ def test_lke_cluster_list():
     )
     lines = res.splitlines()
 
-    headers = ["label", "k8s_version", "tier", "apl_enabled"]
+    headers = [
+        "label",
+        "k8s_version",
+        "tier",
+        "apl_enabled",
+        "vpc_id",
+        "subnet_id",
+        "stack_type",
+    ]
     assert_headers_in_lines(headers, lines)
 
 
@@ -89,7 +97,15 @@ def test_view_lke_cluster(lke_cluster):
         + ["cluster-view", cluster_id, "--text", "--delimiter=,"]
     )
     lines = res.splitlines()
-    headers = ["label", "k8s_version", "tier"]
+    headers = [
+        "label",
+        "k8s_version",
+        "tier",
+        "apl_enabled",
+        "vpc_id",
+        "subnet_id",
+        "stack_type",
+    ]
     assert_headers_in_lines(headers, lines)
     data_rows = lines[1:]
     assert data_rows, "No cluster data returned from cluster-view command"
