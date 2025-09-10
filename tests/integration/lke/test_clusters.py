@@ -52,6 +52,8 @@ def test_deploy_an_lke_cluster():
             '[{"type":"ext4","size":1024}]',
             "--k8s_version",
             lke_version,
+            "--tier",
+            "standard",
             "--text",
             "--delimiter",
             ",",
@@ -75,7 +77,15 @@ def test_lke_cluster_list():
     )
     lines = res.splitlines()
 
-    headers = ["label", "k8s_version"]
+    headers = [
+        "label",
+        "k8s_version",
+        "tier",
+        "apl_enabled",
+        "vpc_id",
+        "subnet_id",
+        "stack_type",
+    ]
     assert_headers_in_lines(headers, lines)
 
 
@@ -87,7 +97,15 @@ def test_view_lke_cluster(lke_cluster):
         + ["cluster-view", cluster_id, "--text", "--delimiter=,"]
     )
     lines = res.splitlines()
-    headers = ["label", "k8s_version"]
+    headers = [
+        "label",
+        "k8s_version",
+        "tier",
+        "apl_enabled",
+        "vpc_id",
+        "subnet_id",
+        "stack_type",
+    ]
     assert_headers_in_lines(headers, lines)
 
 
@@ -160,7 +178,7 @@ def test_view_pool(lke_cluster):
     )
 
     lines = res.splitlines()
-    headers = ["type", "labels"]
+    headers = ["type", "labels", "k8s_version", "label"]
     assert_headers_in_lines(headers, lines)
 
 

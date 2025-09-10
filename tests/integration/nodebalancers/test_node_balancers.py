@@ -12,6 +12,8 @@ from tests.integration.nodebalancers.fixtures import (  # noqa: F401
     linode_to_add,
     nodebalancer_w_config_and_node,
     nodebalancer_with_default_conf,
+    nodebalancer_with_udp_config_and_node,
+    simple_nodebalancer_with_config,
 )
 
 
@@ -337,6 +339,208 @@ def test_list_multiple_configuration_profile(nodebalancer_w_config_and_node):
     )
     assert re.search(
         "[0-9]+,83,http,roundrobin,none,True,recommended,,", result
+    )
+
+
+def test_update_node_balancer_udp_configuration(
+    simple_nodebalancer_with_config,
+):
+    nodebalancer_id = simple_nodebalancer_with_config[0]
+    config_id = simple_nodebalancer_with_config[1]
+
+    result = exec_test_command(
+        BASE_CMDS["nodebalancers"]
+        + [
+            "config-update",
+            nodebalancer_id,
+            config_id,
+            "--port",
+            "80",
+            "--protocol",
+            "udp",
+            "--algorithm",
+            "roundrobin",
+            "--check_interval",
+            "80",
+            "--check_timeout",
+            "15",
+            "--check_attempts",
+            "2",
+            "--check_path",
+            "/testUpdate",
+            "--check_body",
+            "OK",
+            "--check_passive",
+            "False",
+            "--delimiter",
+            ",",
+            "--text",
+            "--no-headers",
+        ]
+    )
+    assert result == config_id + ",80,udp,roundrobin,none,False,none,,"
+
+
+def test_rebuild_node_balancer_udp_configuration(
+    nodebalancer_with_udp_config_and_node,
+):
+    nodebalancer_id = nodebalancer_with_udp_config_and_node[0]
+    config_id = nodebalancer_with_udp_config_and_node[1]
+
+    result = exec_test_command(
+        BASE_CMDS["nodebalancers"]
+        + [
+            "config-rebuild",
+            nodebalancer_id,
+            config_id,
+            "--port",
+            "80",
+            "--protocol",
+            "udp",
+            "--algorithm",
+            "ring_hash",
+            "--nodes.label",
+            "defaultnode1",
+            "--nodes.address",
+            nodebalancer_with_udp_config_and_node[3] + ":80",
+            "--nodes.weight",
+            "50",
+            "--delimiter",
+            ",",
+            "--text",
+            "--no-headers",
+        ]
+    )
+    assert result == config_id + ",80,udp,ring_hash,session,False,none,,"
+
+
+def test_list_node_balancer_configurations_with_udp_type(
+    nodebalancer_with_udp_config_and_node,
+):
+    nodebalancer_id = nodebalancer_with_udp_config_and_node[0]
+    config_id = nodebalancer_with_udp_config_and_node[1]
+
+    result = exec_test_command(
+        BASE_CMDS["nodebalancers"]
+        + [
+            "configs-list",
+            nodebalancer_id,
+            "--delimiter",
+            ",",
+            "--text",
+            "--no-headers",
+        ]
+    )
+    assert result == config_id + ",80,udp,roundrobin,session,False,none,,"
+
+
+def test_view_node_balancer_udp_configuration(
+    nodebalancer_with_udp_config_and_node,
+):
+    nodebalancer_id = nodebalancer_with_udp_config_and_node[0]
+    config_id = nodebalancer_with_udp_config_and_node[1]
+
+    result = exec_test_command(
+        BASE_CMDS["nodebalancers"]
+        + [
+            "config-view",
+            nodebalancer_id,
+            config_id,
+            "--delimiter",
+            ",",
+            "--text",
+            "--no-headers",
+        ]
+    )
+    assert result == config_id + ",80,udp,roundrobin,session,False,none,,"
+
+
+def test_update_node_for_node_balancer_udp_configuration(
+    nodebalancer_with_udp_config_and_node,
+):
+    nodebalancer_id = nodebalancer_with_udp_config_and_node[0]
+    config_id = nodebalancer_with_udp_config_and_node[1]
+    node_id = nodebalancer_with_udp_config_and_node[2]
+
+    result = exec_test_command(
+        BASE_CMDS["nodebalancers"]
+        + [
+            "node-update",
+            nodebalancer_id,
+            config_id,
+            node_id,
+            "--weight",
+            "30",
+            "--delimiter",
+            ",",
+            "--text",
+            "--no-headers",
+        ]
+    )
+    assert (
+        result
+        == node_id
+        + ",defaultnode1,"
+        + nodebalancer_with_udp_config_and_node[3]
+        + ":80,Unknown,30,none"
+    )
+
+
+def test_list_nodes_for_node_balancer_udp_configuration(
+    nodebalancer_with_udp_config_and_node,
+):
+    nodebalancer_id = nodebalancer_with_udp_config_and_node[0]
+    config_id = nodebalancer_with_udp_config_and_node[1]
+    node_id = nodebalancer_with_udp_config_and_node[2]
+
+    result = exec_test_command(
+        BASE_CMDS["nodebalancers"]
+        + [
+            "nodes-list",
+            nodebalancer_id,
+            config_id,
+            "--delimiter",
+            ",",
+            "--text",
+            "--no-headers",
+        ]
+    )
+
+    assert (
+        result
+        == node_id
+        + ",defaultnode1,"
+        + nodebalancer_with_udp_config_and_node[3]
+        + ":80,Unknown,100,none"
+    )
+
+
+def test_view_node_for_node_balancer_udp_configuration(
+    nodebalancer_with_udp_config_and_node,
+):
+    nodebalancer_id = nodebalancer_with_udp_config_and_node[0]
+    config_id = nodebalancer_with_udp_config_and_node[1]
+    node_id = nodebalancer_with_udp_config_and_node[2]
+
+    result = exec_test_command(
+        BASE_CMDS["nodebalancers"]
+        + [
+            "node-view",
+            nodebalancer_id,
+            config_id,
+            node_id,
+            "--delimiter",
+            ",",
+            "--text",
+            "--no-headers",
+        ]
+    )
+    assert (
+        result
+        == node_id
+        + ",defaultnode1,"
+        + nodebalancer_with_udp_config_and_node[3]
+        + ":80,Unknown,100,none"
     )
 
 

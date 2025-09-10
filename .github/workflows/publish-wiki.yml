@@ -14,5 +14,5 @@ jobs:
   publish-wiki:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: Andrew-Chen-Wang/github-wiki-action@50650fccf3a10f741995523cf9708c53cec8912a # pin@v4.4.0
+      - uses: actions/checkout@v5
+      - uses: Andrew-Chen-Wang/github-wiki-action@2c80c13ee98aa43683bd77973ef4916e2eedf817 # pin@v5.0.1
