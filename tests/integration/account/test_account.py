@@ -196,6 +196,7 @@ def test_account_setting_view():
         "longview_subscription",
         "network_helper",
         "interfaces_for_new_linodes",
+        "maintenance_policy",
     ]
 
     settings_text = exec_test_command(
@@ -343,7 +344,15 @@ def test_maintenance_list():
     )
     lines = res.splitlines()
 
-    headers = ["entity.type", "entity.label"]
+    headers = [
+        "complete_time",
+        "entity.type",
+        "entity.label",
+        "maintenance_policy_set",
+        "not_before",
+        "source",
+        "start_time",
+    ]
     assert_headers_in_lines(headers, lines)
 
 
