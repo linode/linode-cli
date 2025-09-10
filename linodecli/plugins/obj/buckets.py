@@ -6,6 +6,7 @@ import sys
 from argparse import ArgumentParser
 
 from linodecli.exit_codes import ExitCodes
+from linodecli.help_formatter import SortingHelpFormatter
 from linodecli.plugins import inherit_plugin_args
 from linodecli.plugins.obj.config import PLUGIN_BASE
 from linodecli.plugins.obj.helpers import _delete_all_objects
@@ -17,7 +18,11 @@ def create_bucket(
     """
     Creates a new bucket
     """
-    parser = inherit_plugin_args(ArgumentParser(PLUGIN_BASE + " mb"))
+    parser = inherit_plugin_args(
+        ArgumentParser(
+            PLUGIN_BASE + " mb", formatter_class=SortingHelpFormatter
+        )
+    )
 
     parser.add_argument(
         "name",
@@ -41,7 +46,11 @@ def delete_bucket(
     """
     Deletes a bucket
     """
-    parser = inherit_plugin_args(ArgumentParser(PLUGIN_BASE + " rb"))
+    parser = inherit_plugin_args(
+        ArgumentParser(
+            PLUGIN_BASE + " rb", formatter_class=SortingHelpFormatter
+        )
+    )
 
     parser.add_argument(
         "name",
