@@ -167,7 +167,7 @@ def nodebalancer_with_default_conf(linode_cloud_firewall):
     delete_target_id(target="nodebalancers", id=nodebalancer_id)
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def nodebalancer_with_udp_config_and_node(linode_cloud_firewall):
     nodebalancer_id = exec_test_command(
         BASE_CMDS["nodebalancers"]
