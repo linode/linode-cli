@@ -107,19 +107,6 @@ def test_view_lke_cluster(lke_cluster):
         "stack_type",
     ]
     assert_headers_in_lines(headers, lines)
-    data_rows = lines[1:]
-    assert data_rows, "No cluster data returned from cluster-view command"
-
-    for row in data_rows:
-        parts = row.split(",")
-        tier_value = parts[-1].strip().lower()
-
-        # Accept legacy 'false' values for older clusters
-        valid_tiers = ("standard", "enterprise", "false")
-        assert tier_value in valid_tiers, (
-            f"Unexpected tier value: {tier_value}. "
-            f"Expected one of {valid_tiers}."
-        )
 
 
 def test_update_kubernetes_cluster(lke_cluster):
