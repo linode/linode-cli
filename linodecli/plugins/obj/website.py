@@ -4,6 +4,7 @@ The static website module of CLI Plugin for handling object storage
 
 from argparse import ArgumentParser
 
+from linodecli.help_formatter import SortingHelpFormatter
 from linodecli.plugins import inherit_plugin_args
 from linodecli.plugins.obj.config import BASE_WEBSITE_TEMPLATE, PLUGIN_BASE
 
@@ -14,7 +15,11 @@ def enable_static_site(
     """
     Turns a bucket into a static website
     """
-    parser = inherit_plugin_args(ArgumentParser(PLUGIN_BASE + " ws-create"))
+    parser = inherit_plugin_args(
+        ArgumentParser(
+            PLUGIN_BASE + " ws-create", formatter_class=SortingHelpFormatter
+        )
+    )
 
     parser.add_argument(
         "bucket",
@@ -74,7 +79,11 @@ def static_site_info(
     """
     Returns info about a configured static site
     """
-    parser = inherit_plugin_args(ArgumentParser(PLUGIN_BASE + " ws-info"))
+    parser = inherit_plugin_args(
+        ArgumentParser(
+            PLUGIN_BASE + " ws-info", formatter_class=SortingHelpFormatter
+        )
+    )
 
     parser.add_argument(
         "bucket",
@@ -109,7 +118,11 @@ def disable_static_site(
     """
     Disables static site for a bucket
     """
-    parser = inherit_plugin_args(ArgumentParser(PLUGIN_BASE + " du"))
+    parser = inherit_plugin_args(
+        ArgumentParser(
+            PLUGIN_BASE + " du", formatter_class=SortingHelpFormatter
+        )
+    )
 
     parser.add_argument(
         "bucket",

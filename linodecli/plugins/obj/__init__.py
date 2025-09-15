@@ -20,6 +20,7 @@ from linodecli.cli import CLI
 from linodecli.configuration import _do_get_request
 from linodecli.configuration.helpers import _default_text_input
 from linodecli.exit_codes import ExitCodes
+from linodecli.help_formatter import SortingHelpFormatter
 from linodecli.plugins import PluginContext, inherit_plugin_args
 from linodecli.plugins.obj.buckets import create_bucket, delete_bucket
 from linodecli.plugins.obj.config import (
@@ -68,7 +69,11 @@ def generate_url(get_client, args, **kwargs):  # pylint: disable=unused-argument
     """
     Generates a URL to an object
     """
-    parser = inherit_plugin_args(ArgumentParser(PLUGIN_BASE + " signurl"))
+    parser = inherit_plugin_args(
+        ArgumentParser(
+            PLUGIN_BASE + " signurl", formatter_class=SortingHelpFormatter
+        )
+    )
 
     parser.add_argument(
         "bucket",
@@ -119,7 +124,11 @@ def set_acl(get_client, args, **kwargs):  # pylint: disable=unused-argument
     """
     Modify Access Control List for a Bucket or Objects
     """
-    parser = inherit_plugin_args(ArgumentParser(PLUGIN_BASE + " setacl"))
+    parser = inherit_plugin_args(
+        ArgumentParser(
+            PLUGIN_BASE + " setacl", formatter_class=SortingHelpFormatter
+        )
+    )
 
     parser.add_argument(
         "bucket", metavar="BUCKET", type=str, help="The bucket to modify."
@@ -183,7 +192,11 @@ def show_usage(get_client, args, **kwargs):  # pylint: disable=unused-argument
     """
     Shows space used by all buckets in this cluster, and total space
     """
-    parser = inherit_plugin_args(ArgumentParser(PLUGIN_BASE + " du"))
+    parser = inherit_plugin_args(
+        ArgumentParser(
+            PLUGIN_BASE + " du", formatter_class=SortingHelpFormatter
+        )
+    )
 
     parser.add_argument(
         "bucket",
@@ -290,7 +303,11 @@ def get_obj_args_parser():
     """
     Initialize and return the argument parser for the obj plug-in.
     """
-    parser = inherit_plugin_args(ArgumentParser(PLUGIN_BASE, add_help=False))
+    parser = inherit_plugin_args(
+        ArgumentParser(
+            PLUGIN_BASE, add_help=False, formatter_class=SortingHelpFormatter
+        )
+    )
 
     parser.add_argument(
         "command",
