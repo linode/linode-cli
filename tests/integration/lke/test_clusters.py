@@ -78,13 +78,14 @@ def test_lke_cluster_list():
     lines = res.splitlines()
 
     headers = [
+        "id",
         "label",
+        "region",
+        "control_plane.audit_logs_enabled",
         "k8s_version",
+        "control_plane.high_availability",
         "tier",
         "apl_enabled",
-        "vpc_id",
-        "subnet_id",
-        "stack_type",
     ]
     assert_headers_in_lines(headers, lines)
 
@@ -98,13 +99,14 @@ def test_view_lke_cluster(lke_cluster):
     )
     lines = res.splitlines()
     headers = [
+        "id",
         "label",
+        "region",
+        "control_plane.audit_logs_enabled",
         "k8s_version",
+        "control_plane.high_availability",
         "tier",
         "apl_enabled",
-        "vpc_id",
-        "subnet_id",
-        "stack_type",
     ]
     assert_headers_in_lines(headers, lines)
 
@@ -178,7 +180,16 @@ def test_view_pool(lke_cluster):
     )
 
     lines = res.splitlines()
-    headers = ["type", "labels", "k8s_version", "label"]
+    headers = [
+        "id",
+        "label",
+        "type",
+        "count",
+        "autoscaler.enabled",
+        "autoscaler.max",
+        "autoscaler.min",
+        "tags",
+    ]
     assert_headers_in_lines(headers, lines)
 
 
@@ -330,16 +341,14 @@ def test_update_autoscaler(lke_cluster, node_pool):
     )
 
     headers = [
+        "id",
+        "label",
+        "type",
+        "count",
         "autoscaler.enabled",
         "autoscaler.max",
         "autoscaler.min",
-        "count",
-        "disk_encryption",
-        "id",
-        "labels",
         "tags",
-        "taints",
-        "type",
     ]
 
     assert_headers_in_lines(headers, result.splitlines())
