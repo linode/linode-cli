@@ -15,6 +15,7 @@ from rich import print as rprint
 from rich.table import Table
 
 from linodecli.exit_codes import ExitCodes
+from linodecli.help_formatter import SortingHelpFormatter
 from linodecli.plugins import inherit_plugin_args
 
 BOLD = "\033[1m"
@@ -581,8 +582,13 @@ def call(args, context):
     Invokes the Interactive Firewall Plugin
     """
     parser = inherit_plugin_args(
-        argparse.ArgumentParser("firewall-editor", add_help=True)
+        argparse.ArgumentParser(
+            "firewall-editor",
+            add_help=True,
+            formatter_class=SortingHelpFormatter,
+        )
     )
+
     parser.add_argument("firewall_id", help="The ID of the firewall to edit.")
 
     parsed = parser.parse_args(args)

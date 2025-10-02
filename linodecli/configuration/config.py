@@ -364,7 +364,7 @@ class CLIConfig:
             if _check_browsers() and not self.configure_with_pat:
                 print(
                     "The CLI will use its web-based authentication to log you in.\n"
-                    "If you prefer to supply a Personal Access Token,"
+                    "If you prefer to supply a Personal Access Token, "
                     "use `linode-cli configure --token`."
                 )
                 input(
