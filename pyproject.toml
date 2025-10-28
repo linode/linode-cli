@@ -14,10 +14,11 @@ dependencies = [
     "openapi3",
     "requests",
     "PyYAML",
-    "packaging",
-    "rich",
+    "packaging<25",
+    "rich<14",
     "urllib3<3",
-    "linode-metadata>=0.3.0"
+    "linode-metadata>=0.3.0",
+    "pytimeparse"
 ]
 dynamic = ["version"]
 
