@@ -6,7 +6,7 @@ from linodecli.helpers import register_debug_arg
 import json
 import sys
 
-PLUGIN_BASE = "linode-cli aclp_mr"
+PLUGIN_BASE = "linode-cli monitor-metrics-get"
 MANDATORY_HEADER = ["Authorization"]
 MANDATORY_DATA = ["metrics","time_granularity"]
 
@@ -20,7 +20,7 @@ def get_metadata_parser():
 
     register_debug_arg(parser)
 
-    parser.add_argument("--url", "-u", required=True, help="URL to send GET request to")
+    parser.add_argument("--url", "-u", required=True, help="URL to request")
     parser.add_argument(
         "--header", "-H",
         action="append",
@@ -72,7 +72,7 @@ def call(args, context):
     """
     parser = get_metadata_parser()
     parsed, args = parser.parse_known_args(args)
-
+  
     # parse headers
     headers = header_parser(parsed)
     data = data_parser(parsed)
