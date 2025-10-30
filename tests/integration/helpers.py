@@ -29,6 +29,7 @@ MODULES = [
     "events",
     "image",
     "image-upload",
+    "images",
     "firewalls",
     "kernels",
     "linodes",
