@@ -1,3 +1,4 @@
+import json
 import re
 
 import pytest
@@ -221,3 +222,148 @@ def test_fails_to_update_vpc_subenet_w_invalid_label(test_vpc_w_subnet):
 
     assert "Request failed: 400" in res
     assert "Label must include only ASCII" in res
+
+
+def test_create_vpc_with_ipv6_auto():
+    region = get_random_region_with_caps(required_capabilities=["VPCs"])
+    label = get_random_text(5) + "-vpc"
+
+    res = exec_test_command(
+        BASE_CMD
+        + [
+            "create",
+            "--label",
+            label,
+            "--region",
+            region,
+            "--ipv6.range",
+            "auto",
+            "--json",
+        ]
+    )
+
+    vpc_data = json.loads(res)[0]
+
+    assert "id" in vpc_data
+    assert "ipv6" in vpc_data
+    assert isinstance(vpc_data["ipv6"], list)
+    assert len(vpc_data["ipv6"]) > 0
+
+    ipv6_entry = vpc_data["ipv6"][0]
+    assert "range" in ipv6_entry
+
+
+@pytest.mark.parametrize("prefix_len", ["52"])
+def test_create_vpc_with_custom_ipv6_prefix_length(prefix_len):
+    region = get_random_region_with_caps(required_capabilities=["VPCs"])
+    label = get_random_text(5) + f"-vpc{prefix_len}"
+
+    res = exec_test_command(
+        BASE_CMD
+        + [
+            "create",
+            "--label",
+            label,
+            "--region",
+            region,
+            "--ipv6.range",
+            f"/{prefix_len}",
+            "--json",
+        ]
+    )
+
+    vpc_data = json.loads(res)[0]
+
+    assert "ipv6" in vpc_data
+    ipv6_entry = vpc_data["ipv6"][0]
+    ipv6_range = ipv6_entry.get("range", "")
+    assert isinstance(ipv6_range, str)
+    assert ipv6_range.endswith(f"/{prefix_len}")
+
+
+def test_create_subnet_with_ipv6_auto(test_vpc_wo_subnet):
+    vpc_id = test_vpc_wo_subnet
+    subnet_label = get_random_text(5) + "-ipv6subnet"
+
+    res = exec_test_command(
+        BASE_CMD
+        + [
+            "subnet-create",
+            "--label",
+            subnet_label,
+            "--ipv4",
+            "10.0.10.0/24",
+            "--ipv6.range",
+            "auto",
+            vpc_id,
+            "--json",
+        ]
+    )
+
+    subnet_data = json.loads(res)[0]
+
+    assert "id" in subnet_data
+    assert (
+        "ipv6" in subnet_data
+    ), f"No IPv6 info found in response: {subnet_data}"
+
+    ipv6_entries = subnet_data["ipv6"]
+    assert (
+        isinstance(ipv6_entries, list) and len(ipv6_entries) > 0
+    ), "Expected non-empty IPv6 list"
+
+    ipv6_range = ipv6_entries[0].get("range", "")
+    assert isinstance(ipv6_range, str)
+    assert "/" in ipv6_range, f"Unexpected IPv6 CIDR format: {ipv6_range}"
+    assert (
+        ipv6_range.startswith("2600:") or ipv6_range == "auto"
+    ), f"Unexpected IPv6 range value: {ipv6_range}"
+
+
+def test_fails_to_create_vpc_with_invalid_ipv6_range():
+    region = get_random_region_with_caps(required_capabilities=["VPCs"])
+    label = get_random_text(5) + "-invalidvpc"
+
+    res = exec_failing_test_command(
+        BASE_CMD
+        + [
+            "create",
+            "--label",
+            label,
+            "--region",
+            region,
+            "--ipv6.range",
+            "10.0.0.0/64",
+        ],
+        ExitCodes.REQUEST_FAILED,
+    )
+
+    assert "Request failed: 400" in res
+
+
+def test_list_vpc_ip_address():
+
+    res = exec_test_command(
+        BASE_CMD + ["ips-all-list", "--text", "--delimiter=,"]
+    )
+
+    lines = res.splitlines()
+
+    headers = ["address", "region", "subnet_id"]
+
+    for header in headers:
+        assert header in lines[0]
+
+
+def test_list_vpc_ipv6s_address():
+
+    res = exec_test_command(
+        BASE_CMD + ["ipv6s-all-list", "--text", "--delimiter=,"]
+    )
+
+    lines = res.splitlines()
+
+    headers = ["address", "region", "subnet_id"]
+
+    for header in headers:
+        assert header in lines[0]

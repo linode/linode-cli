@@ -215,6 +215,8 @@ def create_vpc_w_subnet():
                 vpc_label,
                 "--region",
                 region,
+                "--ipv6.range",
+                "auto",
                 "--subnets.ipv4",
                 "10.0.0.0/24",
                 "--subnets.label",
@@ -223,7 +225,7 @@ def create_vpc_w_subnet():
                 "--suppress-warnings",
             ]
         )
-    )[0]
+    )
 
     return vpc_json
 
