@@ -225,9 +225,9 @@ def create_vpc_w_subnet():
                 "--suppress-warnings",
             ]
         )
-    )
+    )[0]
 
-    return vpc_json[0]
+    return vpc_json
 
 
 @pytest.mark.smoke

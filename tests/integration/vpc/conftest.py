@@ -13,8 +13,8 @@ from tests.integration.helpers import (
 @pytest.fixture
 def test_vpc_w_subnet():
     vpc_json = create_vpc_w_subnet()
-    if isinstance(vpc_json, list):
-        vpc_json = vpc_json[0]
+    # if isinstance(vpc_json, list):
+    #     vpc_json = vpc_json[0]
     vpc_id = str(vpc_json["id"])
 
     yield vpc_id
