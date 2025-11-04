@@ -227,7 +227,7 @@ def create_vpc_w_subnet():
         )
     )
 
-    return vpc_json
+    return vpc_json[0]
 
 
 @pytest.mark.smoke
