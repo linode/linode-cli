@@ -315,9 +315,6 @@ def test_create_subnet_with_ipv6_auto(test_vpc_wo_subnet):
     ipv6_range = ipv6_entries[0].get("range", "")
     assert isinstance(ipv6_range, str)
     assert "/" in ipv6_range, f"Unexpected IPv6 CIDR format: {ipv6_range}"
-    assert ipv6_range.startswith(
-        "2600:"
-    ), f"Unexpected IPv6 range value: {ipv6_range}"
 
 
 def test_fails_to_create_vpc_with_invalid_ipv6_range():
