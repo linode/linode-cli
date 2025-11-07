@@ -1,47 +1,54 @@
+import jwt
 import pytest
 
 from tests.integration.helpers import (
     BASE_CMDS,
-    delete_target_id,
-    exec_test_command,
+    exec_test_command, get_random_text,
 )
 
 
+@pytest.fixture
+def get_region():
+    regions = exec_test_command(
+        BASE_CMDS["regions"] + ["list", "--text", "--no-headers", "--delimiter", ",", "--format", "id"]
+    ).splitlines()
+    first_id = regions[0]
+    yield first_id
+
+
 @pytest.fixture(scope="function")
-def create_image():
-    image_id = exec_test_command(
-        BASE_CMDS["images"] + ["create", "--label", "testLabel", "--description", "Test description", "--disk_id"]
+def create_image_id(get_region):
+    linode_id = exec_test_command(
+        BASE_CMDS["linodes"] + ["create", "--image", "linode/alpine3.22", "--region", get_region, "--type",
+                                "g6-nanode-1", "--root_pass", "aComplex@Password", "--text", "--no-headers",
+                                "--delimiter", ",", "--format", "id"]
     )
-
-    yield image_id
-
-    delete_target_id(target="images", id=image_id)
+    disks = exec_test_command(
+        BASE_CMDS["linodes"] + ["disks-list", linode_id, "--text", "--no-headers", "--delimiter", ",", "--format", "id"]
+    ).splitlines()
+    image_id = exec_test_command(
+        BASE_CMDS["images"] + ["create", "--label", "linode-cli-test-image-sharing-image", "--disk_id", disks[0],
+                               "--text", "--no-headers", "--delimiter", ",", "--format", "id"]
+    )
+    # TODO: wait_for_status
+    yield linode_id, image_id
 
 
 @pytest.fixture(scope="function")
 def create_share_group():
-    image_id = exec_test_command(
-        BASE_CMDS["images"] + ["create", "--label", "testLabel", "--description", "Test description", "--disk_id"]
-    )
-
-    share_group_id = exec_test_command(
-        BASE_CMDS["images"]
-        + ["sharegroups", "create", "--label", "my_label", "--description", "my_description", "--images",
-           f'[{{"id": {image_id}, "label": "Linux Debian", "description": "Official Debian Linux image '
-           'for server deployment"}]', "--delimiter", ",", "--text", "--no-headers"]
-    )
-
-    yield share_group_id, "uid"
-
-    delete_target_id(target="images", id=image_id)
+    label = get_random_text(8) + "_sharegroup_cli_test"
+    share_group = exec_test_command(
+        BASE_CMDS["image-sharegroups"] + ["create", "--label", label, "--text", "--no-headers", "--delimiter", ",",
+                                          "--format", "id,uuid"]
+    ).split(",")
+    yield share_group[0], share_group[1]
 
 
 @pytest.fixture(scope="function")
 def create_token():
-    token_id = exec_test_command(
-        BASE_CMDS["images"] + ["create", "--label", "testLabel", "--description", "Test description", "--disk_id"]
+    label = get_random_text(8) + "_sharegroup_cli_test"
+    created_token = exec_test_command(
+        BASE_CMDS["profile"] + ["token-create", "--label", label, "--text", "--no-headers", "--delimiter", ",",
+                                "--format", "token"]
     )
-
-    yield token_id
-
-    delete_target_id(target="images", id=token_id)
+    yield jwt.encode({"some": "payload"}, created_token, algorithm="HS256")
