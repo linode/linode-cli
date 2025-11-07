@@ -99,13 +99,12 @@ def test_alerts_definition_create(get_channel_id, get_service_type):
     )
 
 
-@pytest.mark.skip
 def test_list_alert_definitions_for_service_type(get_service_type):
     service_type = get_service_type
     output = exec_test_command(
         BASE_CMDS["alerts"]
         + [
-            "definition-view",
+            "service-definition-view",
             service_type,
             "--text",
             "--delimiter=,",
