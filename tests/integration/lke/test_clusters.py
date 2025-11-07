@@ -52,6 +52,8 @@ def test_deploy_an_lke_cluster():
             '[{"type":"ext4","size":1024}]',
             "--k8s_version",
             lke_version,
+            "--tier",
+            "standard",
             "--text",
             "--delimiter",
             ",",
@@ -75,7 +77,16 @@ def test_lke_cluster_list():
     )
     lines = res.splitlines()
 
-    headers = ["label", "k8s_version"]
+    headers = [
+        "id",
+        "label",
+        "region",
+        "control_plane.audit_logs_enabled",
+        "k8s_version",
+        "control_plane.high_availability",
+        "tier",
+        "apl_enabled",
+    ]
     assert_headers_in_lines(headers, lines)
 
 
@@ -87,7 +98,16 @@ def test_view_lke_cluster(lke_cluster):
         + ["cluster-view", cluster_id, "--text", "--delimiter=,"]
     )
     lines = res.splitlines()
-    headers = ["label", "k8s_version"]
+    headers = [
+        "id",
+        "label",
+        "region",
+        "control_plane.audit_logs_enabled",
+        "k8s_version",
+        "control_plane.high_availability",
+        "tier",
+        "apl_enabled",
+    ]
     assert_headers_in_lines(headers, lines)
 
 
@@ -140,12 +160,14 @@ def test_cluster_dashboard_url(lke_cluster):
 def test_node_pool_list(lke_cluster):
     cluster_id = lke_cluster
     res = exec_test_command(
-        BASE_CMDS["lke"] + ["pools-list", cluster_id, "--text", "--delimiter=,"]
+        BASE_CMDS["lke"] + ["pools-list", cluster_id, "--json"]
     )
-    lines = res.splitlines()
+    data = json.loads(res)
 
-    headers = ["nodes.id", "nodes.instance_id"]
-    assert_headers_in_lines(headers, lines)
+    for pool in data:
+        for node in pool.get("nodes", []):
+            assert "id" in node
+            assert "instance_id" in node
 
 
 def test_view_pool(lke_cluster):
@@ -158,7 +180,16 @@ def test_view_pool(lke_cluster):
     )
 
     lines = res.splitlines()
-    headers = ["type", "labels"]
+    headers = [
+        "id",
+        "label",
+        "type",
+        "count",
+        "autoscaler.enabled",
+        "autoscaler.max",
+        "autoscaler.min",
+        "tags",
+    ]
     assert_headers_in_lines(headers, lines)
 
 
@@ -310,16 +341,14 @@ def test_update_autoscaler(lke_cluster, node_pool):
     )
 
     headers = [
+        "id",
+        "label",
+        "type",
+        "count",
         "autoscaler.enabled",
         "autoscaler.max",
         "autoscaler.min",
-        "count",
-        "disk_encryption",
-        "id",
-        "labels",
         "tags",
-        "taints",
-        "type",
     ]
 
     assert_headers_in_lines(headers, result.splitlines())

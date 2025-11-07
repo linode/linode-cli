@@ -48,6 +48,8 @@ class OpenAPIRequestArg:
         :type parent: Optional[str]
         :param depth: The depth of this argument, or how many parent arguments this argument has.
         :type depth: int
+        :param option_variants: A mapping of options, defined using oneOf in the to spec,
+                                to a variant of this argument.
         """
         #: The name of this argument, mostly used for display and docs
         self.name = name
@@ -147,6 +149,7 @@ def _parse_request_model(
     :returns: The flattened request model, as a list
     :rtype: list[OpenAPIRequestArg]
     """
+
     args = []
 
     properties, required = _aggregate_schema_properties(schema)

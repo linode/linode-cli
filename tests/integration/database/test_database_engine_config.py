@@ -497,7 +497,7 @@ def test_mysql_engine_config_view():
     binlog_retention = mysql_config[0]["binlog_retention_period"]
     assert binlog_retention["type"] == "integer"
     assert binlog_retention["minimum"] == 600
-    assert binlog_retention["maximum"] == 86400
+    assert binlog_retention["maximum"] == 604800
     assert binlog_retention["requires_restart"] is False
 
     mysql_settings = mysql_config[0]["mysql"]

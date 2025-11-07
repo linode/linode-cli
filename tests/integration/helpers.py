@@ -16,9 +16,9 @@ COMMAND_JSON_OUTPUT = ["--suppress-warnings", "--no-defaults", "--json"]
 # TypeVars for generic type hints below
 T = TypeVar("T")
 
-
 MODULES = [
     "account",
+    "alerts",
     "domains",
     "linodes",
     "nodebalancers",
@@ -33,7 +33,9 @@ MODULES = [
     "linodes",
     "lke",
     "longview",
+    "maintenance",
     "managed",
+    "monitor",
     "networking",
     "obj",
     "object-storage",
@@ -100,8 +102,41 @@ def exec_failing_test_command(
 
 
 # Delete/Remove helper functions (mainly used in clean-ups after tests)
-def delete_target_id(target: str, id: str, delete_command: str = "delete"):
-    command = ["linode-cli", target, delete_command, id]
+def delete_target_id(
+    target: str,
+    id: str,
+    delete_command: str = "delete",
+    service_type: str = None,
+    use_retry: bool = False,
+    retries: int = 3,
+    delay: int = 80,
+):
+    if service_type:
+        command = ["linode-cli", target, delete_command, service_type, id]
+    else:
+        command = ["linode-cli", target, delete_command, id]
+
+    if use_retry:
+        last_exc = None
+        for attempt in range(retries):
+            try:
+                subprocess.run(
+                    command,
+                    check=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                )
+                return  # success
+            except Exception as e:
+                last_exc = e
+                if attempt < retries - 1:
+                    time.sleep(delay)
+        # If all retries fail, raise
+        raise RuntimeError(
+            f"Error executing command '{' '.join(command)}' after {retries} retries: {last_exc}"
+        )
+
     try:
         subprocess.run(
             command,

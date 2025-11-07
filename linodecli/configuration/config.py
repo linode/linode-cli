@@ -126,7 +126,7 @@ class CLIConfig:
         default_user = self.default_username()
 
         for sec in self.config.sections():
-            if sec != "DEFAULT":
+            if sec not in ("DEFAULT", "custom_aliases"):
                 print(f'{"*" if sec == default_user else " "}  {sec}')
 
         sys.exit(ExitCodes.SUCCESS)
@@ -364,7 +364,7 @@ class CLIConfig:
             if _check_browsers() and not self.configure_with_pat:
                 print(
                     "The CLI will use its web-based authentication to log you in.\n"
-                    "If you prefer to supply a Personal Access Token,"
+                    "If you prefer to supply a Personal Access Token, "
                     "use `linode-cli configure --token`."
                 )
                 input(

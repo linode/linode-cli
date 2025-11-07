@@ -86,20 +86,6 @@ def test_event_view(get_event_id):
     assert_headers_in_lines(headers, lines)
 
 
-def test_event_read(get_event_id):
-    event_id = get_event_id
-    process = exec_test_command(
-        [
-            "linode-cli",
-            "events",
-            "mark-read",
-            event_id,
-            "--text",
-            "--delimiter=,",
-        ]
-    )
-
-
 def test_event_seen(get_event_id):
     event_id = get_event_id
     process = exec_test_command(
@@ -210,6 +196,7 @@ def test_account_setting_view():
         "longview_subscription",
         "network_helper",
         "interfaces_for_new_linodes",
+        "maintenance_policy",
     ]
 
     settings_text = exec_test_command(
@@ -357,7 +344,15 @@ def test_maintenance_list():
     )
     lines = res.splitlines()
 
-    headers = ["entity.type", "entity.label"]
+    headers = [
+        "complete_time",
+        "entity.type",
+        "entity.label",
+        "maintenance_policy_set",
+        "not_before",
+        "source",
+        "start_time",
+    ]
     assert_headers_in_lines(headers, lines)
 
 

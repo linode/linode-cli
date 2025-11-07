@@ -8,6 +8,7 @@ from argparse import ArgumentParser
 from rich import print as rprint
 
 from linodecli.exit_codes import ExitCodes
+from linodecli.help_formatter import SortingHelpFormatter
 from linodecli.helpers import register_pagination_args_shared
 from linodecli.plugins import inherit_plugin_args
 from linodecli.plugins.obj.config import PLUGIN_BASE
@@ -31,7 +32,12 @@ def list_objects_or_buckets(
     """
     Lists buckets or objects
     """
-    parser = inherit_plugin_args(ArgumentParser(PLUGIN_BASE + " ls"))
+    parser = inherit_plugin_args(
+        ArgumentParser(
+            PLUGIN_BASE + " ls", formatter_class=SortingHelpFormatter
+        )
+    )
+
     register_pagination_args_shared(parser)
 
     parser.add_argument(
@@ -130,7 +136,12 @@ def list_all_objects(
     Lists all objects in all buckets
     """
     # this is for printing help when --help is in the args
-    parser = inherit_plugin_args(ArgumentParser(PLUGIN_BASE + " la"))
+    parser = inherit_plugin_args(
+        ArgumentParser(
+            PLUGIN_BASE + " la", formatter_class=SortingHelpFormatter
+        )
+    )
+
     register_pagination_args_shared(parser)
 
     parsed = parser.parse_args(args)

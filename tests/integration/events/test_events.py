@@ -14,9 +14,6 @@ def test_print_events_usage_information():
     assert "linode-cli events [ACTION]" in output
 
     assert re.search(
-        "mark-read.*(Event Mark as Read|Mark an event as read)", output
-    )
-    assert re.search(
         "mark-seen.*(Event Mark as Seen|Mark an event as seen)", output
     )
     assert re.search("list.*(Events List|List events)", output)
@@ -68,34 +65,6 @@ def test_mark_event_seen():
     exec_test_command(
         BASE_CMDS["events"]
         + ["mark-seen", event_id, "--text", "--no-headers", "--delimiter", ","]
-    )
-
-    # view event
-    result = exec_test_command(
-        BASE_CMDS["events"]
-        + ["view", event_id, "--text", "--no-headers", "--delimiter", ","]
-    )
-    assert re.search("[0-9]+,.*,.*,[0-9]+-[0-9][0-9]-.*,.*,[a-z]+.*", result)
-
-
-@pytest.mark.smoke
-def test_mark_event_read():
-    event_id = exec_test_command(
-        [
-            "linode-cli",
-            "events",
-            "list",
-            "--format",
-            "id",
-            "--no-headers",
-            "--text",
-        ]
-    ).split()[0]
-
-    # mark event as read
-    exec_test_command(
-        BASE_CMDS["events"]
-        + ["mark-read", event_id, "--text", "--no-headers", "--delimiter", ","]
     )
 
     # view event

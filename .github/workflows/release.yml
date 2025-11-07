@@ -11,7 +11,7 @@ jobs:
     steps:
       - name: Notify Slack - Main Message
         id: main_message
-        uses: slackapi/slack-github-action@v2.1.0
+        uses: slackapi/slack-github-action@v2
         with:
           method: chat.postMessage
           token: ${{ secrets.SLACK_BOT_TOKEN }}
@@ -28,10 +28,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: setup python 3
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.x'
 
@@ -45,7 +45,7 @@ jobs:
         uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # pin@v3.11.1
 
       - name: Login to Docker Hub
-        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # pin@v3.4.0
+        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # pin@v3.6.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -53,7 +53,7 @@ jobs:
       # This is necessary as we want to ensure that version tags
       # are properly formatted before passing them into the
       # DockerFile.
-      - uses: actions/github-script@v7
+      - uses: actions/github-script@v8
         id: cli_version
         with:
           script: |
@@ -86,10 +86,10 @@ jobs:
     environment: pypi-release
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.x'
 
@@ -106,4 +106,4 @@ jobs:
           LINODE_CLI_VERSION: ${{ github.event.release.tag_name }}
 
       - name: Publish the release artifacts to PyPI
-        uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc # pin@release/v1.12.4
+        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # pin@release/v1.13.0

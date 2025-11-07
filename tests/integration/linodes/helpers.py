@@ -62,6 +62,7 @@ def create_linode(
     disk_encryption=False,
     interface_generation: str = None,
     interfaces: str = None,
+    booted: bool = True,
 ):
     # Base command
     command = BASE_CMDS["linodes"] + [
@@ -78,6 +79,8 @@ def create_linode(
         firewall_id,
         "--disk_encryption",
         "enabled" if disk_encryption else "disabled",
+        "--booted",
+        str(booted).lower(),
     ]
 
     if interface_generation:
