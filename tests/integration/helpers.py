@@ -1,5 +1,6 @@
 import json
 import random
+import re
 import subprocess
 import time
 from string import ascii_lowercase
@@ -204,3 +205,9 @@ def get_random_region_with_caps(
     matching_region_ids = [region["id"] for region in matching_regions]
 
     return random.choice(matching_region_ids) if matching_region_ids else None
+
+
+def assert_help_actions_list(expected_actions, help_output):
+    output_actions = re.findall("\│\s(\S+)\s*\│", help_output)
+    for expected_action in expected_actions:
+        assert expected_action in output_actions

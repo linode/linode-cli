@@ -3,11 +3,33 @@ import pytest
 from tests.integration.helpers import (
     BASE_CMDS,
     assert_headers_in_lines,
+    assert_help_actions_list,
     delete_target_id,
     exec_test_command,
     get_random_text,
     retry_exec_test_command_with_delay,
 )
+
+
+def test_help_alerts():
+    output = exec_test_command(
+        BASE_CMDS["alerts"]
+        + [
+            "--help",
+            "--text",
+            "--delimiter=,",
+        ]
+    )
+
+    actions = [
+        "channels-list",
+        "definition-create",
+        "definition-delete",
+        "definition-update",
+        "definition-view",
+        "definitions-list-all",
+    ]
+    assert_help_actions_list(actions, output)
 
 
 def test_channels_list():
@@ -75,6 +97,22 @@ def test_alerts_definition_create(get_channel_id, get_service_type):
             get_service_type,
         ]
     )
+
+
+def test_list_alert_definitions_for_service_type(get_service_type):
+    service_type = get_service_type
+    output = exec_test_command(
+        BASE_CMDS["alerts"]
+        + [
+            "service-definition-view",
+            service_type,
+            "--text",
+            "--delimiter=,",
+        ]
+    )
+
+    headers = ["class", "created", "label", "severity", "service_type"]
+    assert_headers_in_lines(headers, output.splitlines())
 
 
 def test_alerts_list():

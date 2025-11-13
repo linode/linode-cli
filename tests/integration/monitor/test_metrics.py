@@ -1,8 +1,10 @@
 import pytest
 
+from linodecli.exit_codes import ExitCodes
 from tests.integration.helpers import (
     BASE_CMDS,
     assert_headers_in_lines,
+    exec_failing_test_command,
     exec_test_command,
 )
 
@@ -62,12 +64,12 @@ def test_service_list():
 
 
 def test_service_view(get_service_type):
-    dashboard_id = get_service_type
+    service_type = get_service_type
     res = exec_test_command(
         BASE_CMDS["monitor"]
         + [
             "service-view",
-            dashboard_id,
+            service_type,
             "--text",
             "--delimiter=,",
         ]
@@ -79,12 +81,12 @@ def test_service_view(get_service_type):
 
 
 def test_dashboard_service_type_list(get_service_type):
-    dashboard_id = get_service_type
+    service_type = get_service_type
     res = exec_test_command(
         BASE_CMDS["monitor"]
         + [
             "dashboards-list",
-            dashboard_id,
+            service_type,
             "--text",
             "--delimiter=,",
         ]
@@ -96,12 +98,12 @@ def test_dashboard_service_type_list(get_service_type):
 
 
 def test_metrics_list(get_service_type):
-    dashboard_id = get_service_type
+    service_type = get_service_type
     res = exec_test_command(
         BASE_CMDS["monitor"]
         + [
             "metrics-list",
-            dashboard_id,
+            service_type,
             "--text",
             "--delimiter=,",
         ]
@@ -117,3 +119,21 @@ def test_metrics_list(get_service_type):
         "scrape_interval",
     ]
     assert_headers_in_lines(headers, lines)
+
+
+def test_try_create_token_with_not_existing_entity(get_service_type):
+    service_type = get_service_type
+    output = exec_failing_test_command(
+        BASE_CMDS["monitor"]
+        + [
+            "token-get",
+            service_type,
+            "--entity_ids",
+            "99999999999",
+            "--text",
+            "--delimiter=,",
+        ],
+        expected_code=ExitCodes.REQUEST_FAILED,
+    )
+    assert "Request failed: 403" in output
+    assert "The following entity_ids are not valid - [99999999999]" in output
