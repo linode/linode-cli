@@ -1,4 +1,3 @@
-import jwt
 import pytest
 
 from tests.integration.helpers import (

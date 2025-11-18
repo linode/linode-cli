@@ -8,7 +8,7 @@ from tests.integration.helpers import (
     exec_test_command,
     get_random_text,
 )
-from tests.integration.sharegroups.fixtures import (
+from tests.integration.sharegroups.fixtures import (  # noqa: F401
     create_image_id,
     create_share_group,
     get_region,
@@ -88,8 +88,8 @@ def test_add_list_update_remove_image_to_share_group(create_share_group, create_
     result_list = exec_test_command(
         BASE_CMDS["image-sharegroups"] + ["images-list", create_share_group[0], "--delimiter", ",", "--text"]
     )
-    assert not "linode-cli-test-image-sharing-image" in result_list
-    assert not "updated_label" in result_list
+    assert "linode-cli-test-image-sharing-image" not in result_list
+    assert "updated_label" not in result_list
 
     delete_target_id(target="image-sharegroups", id=create_share_group[0])
     delete_target_id(target="images", id=create_image_id[1])
