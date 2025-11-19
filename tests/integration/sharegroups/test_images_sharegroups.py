@@ -1,3 +1,5 @@
+from pytest import MonkeyPatch
+
 from linodecli.exit_codes import ExitCodes
 from tests.integration.helpers import (
     BASE_CMDS,
@@ -15,7 +17,8 @@ from tests.integration.sharegroups.fixtures import (  # noqa: F401
 )
 
 
-def test_help_image_sharegroups():
+def test_help_image_sharegroups(monkeypatch: MonkeyPatch):
+    monkeypatch.setenv("LINODE_CLI_API_VERSION", "v4beta")
     output = exec_test_command(
         BASE_CMDS["image-sharegroups"] + ["--help", "--text", "--delimiter=,"]
     )
@@ -45,7 +48,8 @@ def test_help_image_sharegroups():
     assert_help_actions_list(actions, output)
 
 
-def test_list_all_share_groups():
+def test_list_all_share_groups(monkeypatch: MonkeyPatch):
+    monkeypatch.setenv("LINODE_CLI_API_VERSION", "v4beta")
     result = exec_test_command(
         BASE_CMDS["image-sharegroups"] + ["list", "--delimiter", ",", "--text"]
     )
@@ -63,8 +67,9 @@ def test_list_all_share_groups():
 
 
 def test_add_list_update_remove_image_to_share_group(
-    create_share_group, create_image_id
+    create_share_group, create_image_id, monkeypatch: MonkeyPatch
 ):
+    monkeypatch.setenv("LINODE_CLI_API_VERSION", "v4beta")
     result_add_image = exec_test_command(
         BASE_CMDS["image-sharegroups"]
         + [
@@ -153,7 +158,8 @@ def test_add_list_update_remove_image_to_share_group(
     delete_target_id(target="linodes", id=create_image_id[0])
 
 
-def test_try_add_member_use_invalid_token(create_share_group):
+def test_try_add_member_use_invalid_token(create_share_group, monkeypatch: MonkeyPatch):
+    monkeypatch.setenv("LINODE_CLI_API_VERSION", "v4beta")
     result = exec_failing_test_command(
         BASE_CMDS["image-sharegroups"]
         + [
@@ -175,7 +181,8 @@ def test_try_add_member_use_invalid_token(create_share_group):
     delete_target_id(target="image-sharegroups", id=create_share_group[0])
 
 
-def test_list_members_for_invalid_token(create_share_group):
+def test_list_members_for_invalid_token(create_share_group, monkeypatch: MonkeyPatch):
+    monkeypatch.setenv("LINODE_CLI_API_VERSION", "v4beta")
     result = exec_test_command(
         BASE_CMDS["image-sharegroups"]
         + [
@@ -194,7 +201,8 @@ def test_list_members_for_invalid_token(create_share_group):
     delete_target_id(target="image-sharegroups", id=create_share_group[0])
 
 
-def test_try_revoke_membership_for_invalid_token():
+def test_try_revoke_membership_for_invalid_token(monkeypatch: MonkeyPatch):
+    monkeypatch.setenv("LINODE_CLI_API_VERSION", "v4beta")
     result = exec_failing_test_command(
         BASE_CMDS["image-sharegroups"]
         + [
@@ -212,7 +220,8 @@ def test_try_revoke_membership_for_invalid_token():
     assert "Not found" in result
 
 
-def test_try_update_membership_for_invalid_token():
+def test_try_update_membership_for_invalid_token(monkeypatch: MonkeyPatch):
+    monkeypatch.setenv("LINODE_CLI_API_VERSION", "v4beta")
     result = exec_failing_test_command(
         BASE_CMDS["image-sharegroups"]
         + [
@@ -232,7 +241,8 @@ def test_try_update_membership_for_invalid_token():
     assert "Not found" in result
 
 
-def test_try_view_membership_for_invalid_token():
+def test_try_view_membership_for_invalid_token(monkeypatch: MonkeyPatch):
+    monkeypatch.setenv("LINODE_CLI_API_VERSION", "v4beta")
     result = exec_failing_test_command(
         BASE_CMDS["image-sharegroups"]
         + [
@@ -250,7 +260,8 @@ def test_try_view_membership_for_invalid_token():
     assert "Not found" in result
 
 
-def test_create_read_update_delete_share_group():
+def test_create_read_update_delete_share_group(monkeypatch: MonkeyPatch):
+    monkeypatch.setenv("LINODE_CLI_API_VERSION", "v4beta")
     group_label = get_random_text(8) + "_sharegroup_cli_test"
     create_result = exec_test_command(
         BASE_CMDS["image-sharegroups"]
@@ -316,7 +327,8 @@ def test_create_read_update_delete_share_group():
     assert "Not found" in result_after_delete
 
 
-def test_try_to_create_token(create_share_group):
+def test_try_to_create_token(create_share_group, monkeypatch: MonkeyPatch):
+    monkeypatch.setenv("LINODE_CLI_API_VERSION", "v4beta")
     share_group_uuid = create_share_group[1]
     result = exec_failing_test_command(
         BASE_CMDS["image-sharegroups"]
@@ -338,7 +350,8 @@ def test_try_to_create_token(create_share_group):
     delete_target_id(target="image-sharegroups", id=create_share_group[0])
 
 
-def test_try_read_invalid_token():
+def test_try_read_invalid_token(monkeypatch: MonkeyPatch):
+    monkeypatch.setenv("LINODE_CLI_API_VERSION", "v4beta")
     result = exec_failing_test_command(
         BASE_CMDS["image-sharegroups"]
         + ["token-view", "36b0-4d52_invalid", "--delimiter", ",", "--text"],
@@ -348,7 +361,8 @@ def test_try_read_invalid_token():
     assert "Not found" in result
 
 
-def test_try_to_update_invalid_token():
+def test_try_to_update_invalid_token(monkeypatch: MonkeyPatch):
+    monkeypatch.setenv("LINODE_CLI_API_VERSION", "v4beta")
     result = exec_failing_test_command(
         BASE_CMDS["image-sharegroups"]
         + [
@@ -366,7 +380,8 @@ def test_try_to_update_invalid_token():
     assert "Not found" in result
 
 
-def test_try_to_delete_token():
+def test_try_to_delete_token(monkeypatch: MonkeyPatch):
+    monkeypatch.setenv("LINODE_CLI_API_VERSION", "v4beta")
     result = exec_failing_test_command(
         BASE_CMDS["image-sharegroups"]
         + ["token-delete", "36b0-4d52_invalid", "--delimiter", ",", "--text"],
@@ -376,7 +391,8 @@ def test_try_to_delete_token():
     assert "Not found" in result
 
 
-def test_get_details_about_all_the_users_tokens():
+def test_get_details_about_all_the_users_tokens(monkeypatch: MonkeyPatch):
+    monkeypatch.setenv("LINODE_CLI_API_VERSION", "v4beta")
     result = exec_test_command(
         BASE_CMDS["image-sharegroups"]
         + ["tokens-list", "--delimiter", ",", "--text"]
@@ -393,7 +409,8 @@ def test_get_details_about_all_the_users_tokens():
     assert_headers_in_lines(headers, lines)
 
 
-def test_try_to_list_all_shared_images_for_invalid_token():
+def test_try_to_list_all_shared_images_for_invalid_token(monkeypatch: MonkeyPatch):
+    monkeypatch.setenv("LINODE_CLI_API_VERSION", "v4beta")
     result = exec_failing_test_command(
         BASE_CMDS["image-sharegroups"]
         + [
@@ -409,7 +426,8 @@ def test_try_to_list_all_shared_images_for_invalid_token():
     assert "Not found" in result
 
 
-def test_try_gets_details_about_your_share_group_for_invalid_token():
+def test_try_gets_details_about_your_share_group_for_invalid_token(monkeypatch: MonkeyPatch):
+    monkeypatch.setenv("LINODE_CLI_API_VERSION", "v4beta")
     result = exec_failing_test_command(
         BASE_CMDS["image-sharegroups"]
         + [
