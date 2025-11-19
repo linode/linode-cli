@@ -28,6 +28,8 @@ MODULES = [
     "domains",
     "events",
     "image",
+    "images",
+    "image-sharegroups",
     "image-upload",
     "firewalls",
     "kernels",
@@ -208,6 +210,6 @@ def get_random_region_with_caps(
 
 
 def assert_help_actions_list(expected_actions, help_output):
-    output_actions = re.findall("\│\s(\S+)\s*\│", help_output)
+    output_actions = re.findall(r"│\s(\S+(?:,\s)?\S+)\s*│", help_output)
     for expected_action in expected_actions:
         assert expected_action in output_actions
