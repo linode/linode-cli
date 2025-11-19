@@ -228,7 +228,9 @@ def test_fails_to_update_vpc_subenet_w_invalid_label(test_vpc_w_subnet):
     assert "Label must include only ASCII" in res
 
 
-@pytest.mark.skipif(disable_vpc_dual_stack_tests, reason="Dual-stack tests disabled")
+@pytest.mark.skipif(
+    disable_vpc_dual_stack_tests, reason="Dual-stack tests disabled"
+)
 def test_create_vpc_with_ipv6_auto():
     region = get_random_region_with_caps(required_capabilities=["VPCs"])
     label = get_random_text(5) + "-vpc"
@@ -259,7 +261,9 @@ def test_create_vpc_with_ipv6_auto():
 
 
 @pytest.mark.parametrize("prefix_len", ["52"])
-@pytest.mark.skipif(disable_vpc_dual_stack_tests, reason="Dual-stack tests disabled")
+@pytest.mark.skipif(
+    disable_vpc_dual_stack_tests, reason="Dual-stack tests disabled"
+)
 def test_create_vpc_with_custom_ipv6_prefix_length(prefix_len):
     region = get_random_region_with_caps(required_capabilities=["VPCs"])
     label = get_random_text(5) + f"-vpc{prefix_len}"
@@ -287,7 +291,9 @@ def test_create_vpc_with_custom_ipv6_prefix_length(prefix_len):
     assert ipv6_range.endswith(f"/{prefix_len}")
 
 
-@pytest.mark.skipif(disable_vpc_dual_stack_tests, reason="Dual-stack tests disabled")
+@pytest.mark.skipif(
+    disable_vpc_dual_stack_tests, reason="Dual-stack tests disabled"
+)
 def test_create_subnet_with_ipv6_auto(test_vpc_wo_subnet):
     vpc_id = test_vpc_wo_subnet
     subnet_label = get_random_text(5) + "-ipv6subnet"
@@ -324,7 +330,9 @@ def test_create_subnet_with_ipv6_auto(test_vpc_wo_subnet):
     assert "/" in ipv6_range, f"Unexpected IPv6 CIDR format: {ipv6_range}"
 
 
-@pytest.mark.skipif(disable_vpc_dual_stack_tests, reason="Dual-stack tests disabled")
+@pytest.mark.skipif(
+    disable_vpc_dual_stack_tests, reason="Dual-stack tests disabled"
+)
 def test_fails_to_create_vpc_with_invalid_ipv6_range():
     region = get_random_region_with_caps(required_capabilities=["VPCs"])
     label = get_random_text(5) + "-invalidvpc"
@@ -360,7 +368,9 @@ def test_list_vpc_ip_address():
         assert header in lines[0]
 
 
-@pytest.mark.skipif(disable_vpc_dual_stack_tests, reason="Dual-stack tests disabled")
+@pytest.mark.skipif(
+    disable_vpc_dual_stack_tests, reason="Dual-stack tests disabled"
+)
 def test_list_vpc_ipv6s_address():
 
     res = exec_test_command(
