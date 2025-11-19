@@ -34,6 +34,8 @@ def test_vpc_wo_subnet():
             label,
             "--region",
             region,
+            "--ipv6.range",
+            "auto",
             "--no-headers",
             "--text",
             "--format=id",
