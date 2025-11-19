@@ -15,4 +15,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - uses: Andrew-Chen-Wang/github-wiki-action@2c80c13ee98aa43683bd77973ef4916e2eedf817 # pin@v5.0.1
+      - uses: Andrew-Chen-Wang/github-wiki-action@6448478bd55f1f3f752c93af8ac03207eccc3213 # pin@v5.0.3
