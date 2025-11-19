@@ -104,7 +104,7 @@ def test_list_alert_definitions_for_service_type(get_service_type):
     output = exec_test_command(
         BASE_CMDS["alerts"]
         + [
-            "service-definition-view",
+            "service-definitions-list",
             service_type,
             "--text",
             "--delimiter=,",
