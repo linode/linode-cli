@@ -1,4 +1,5 @@
 import pytest
+from pytest import MonkeyPatch
 
 from tests.integration.helpers import (
     BASE_CMDS,
@@ -120,7 +121,8 @@ def create_image_id(get_region):
 
 
 @pytest.fixture(scope="function")
-def create_share_group():
+def create_share_group(monkeypatch: MonkeyPatch):
+    monkeypatch.setenv("LINODE_CLI_API_VERSION", "v4beta")
     label = get_random_text(8) + "_sharegroup_cli_test"
     share_group = exec_test_command(
         BASE_CMDS["image-sharegroups"]
