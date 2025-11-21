@@ -7,8 +7,6 @@ import json
 import sys
 
 PLUGIN_BASE = "linode-cli monitor-metrics-get"
-MANDATORY_HEADER = ["Authorization"]
-MANDATORY_DATA = ["metrics","time_granularity"]
 
 def get_metadata_parser():
     """
@@ -25,7 +23,7 @@ def get_metadata_parser():
         "--header", "-H",
         action="append",
         required=True,
-        help="Add custom headers (format: Key:Value)",
+        help="Add custom headers (format: Key: Value)",
         default=[]
     )
 
@@ -54,7 +52,8 @@ def get_metadata_parser():
 
 def header_parser(args):
     headers = {}
-    print(args.header)
+    if hasattr(args, "debug") and args.debug:
+        print(f"[DEBUG] Headers argument: {args.header}")
     for h in args.header:
         if ":" in h:
             key, value = h.split(":", 1)
@@ -80,8 +79,6 @@ def call(args, context):
 
     try:
         response = requests.post(parsed.url, headers=headers, json=data, timeout=parsed.timeout, verify=parsed.cacert)
-        #for k, v in response.headers.items():
-        #    print(f"  {k}: {v}")
 
         print(response.text)
 
