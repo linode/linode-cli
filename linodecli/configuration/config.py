@@ -221,7 +221,9 @@ class CLIConfig:
         username = self.username or self.default_username()
         self.config.set(username, self._get_plugin_key(key), value)
 
-    def plugin_get_value(self, key: str) -> Optional[Any]:
+    def plugin_get_value(
+        self, key: str, default: T = None, value_type: Type[T] = str
+    ) -> Optional[T]:
         """
         Retrieves and returns a config value previously set for a plugin.  Your
         plugin should have set this value in the past.  If this value does not
@@ -232,38 +234,36 @@ class CLIConfig:
         :param key: The key of the value to return
         :type key: str
 
+        :param default: The default value to return if the key is not set
+        :type default: T
+
+        :param value_type: The type to which the value should be cast
+        :type value_type: Type[T]
+
         :returns: The value for this plugin for this key, or None if not set
         :rtype: any
         """
         username = self.username or self.default_username() or "DEFAULT"
-        return self.config.get(
+        value = self.config.get(
             username, self._get_plugin_key(key), fallback=None
         )
-
-    def plugin_get_config_value_or_set_default(
-        self, key: str, default: T, value_type: Type[T] = str
-    ) -> T:
-        """
-        Retrieves a plugin option value of the given type from the config. If the
-        value is not set, sets it to the provided default value and returns that.
-        """
-        value = self.plugin_get_value(key)
-
         if value is None:
-            # option not set - set to default and store it in the config file
-            value_as_str = (
-                ("yes" if default else "no")
-                if value_type is bool
-                else str(default)
-            )
-            self.plugin_set_value(key, value_as_str)
-            self.write_config()
             return default
+
+        if value_type is str:
+            return value
 
         if value_type is bool:
             return self.parse_boolean(value)
 
-        return cast(T, value_type(value))
+        try:
+            return cast(T, value_type(value))
+        except (ValueError, TypeError):
+            print(
+                "" f"Could not cast config value {value} to {value_type}.",
+                file=sys.stderr,
+            )
+            return default
 
     def plugin_remove_option(self, key: str):
         """

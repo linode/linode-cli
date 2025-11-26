@@ -67,7 +67,7 @@ except ImportError:
 
 
 CLUSTER_KEY = "cluster"
-PERFORM_KEY_CLEANUP_KEY = "perform-key-cleanup"
+KEY_CLEANUP_ENABLED_KEY = "key-cleanup-enabled"
 KEY_LIFESPAN_KEY = "key-lifespan"
 KEY_ROTATION_PERIOD_KEY = "key-rotation-period"
 KEY_CLEANUP_BATCH_SIZE_KEY = "key-cleanup-batch-size"
@@ -326,23 +326,44 @@ def get_obj_args_parser():
         metavar="COMMAND",
         nargs="?",
         type=str,
-        help="The command to execute in object storage",
+        help="The command to execute in object storage.",
     )
     parser.add_argument(
         "--cluster",
         metavar="CLUSTER",
         type=str,
-        help="The cluster to use for the operation",
-    )
-    parser.add_argument(
-        "--skip-key-cleanup",
-        action="store_true",
-        help="Skip cleanup of old linode-cli generated Object Storage keys",
+        help="The cluster to use for the operation.",
     )
     parser.add_argument(
         "--force-key-cleanup",
         action="store_true",
-        help="Force cleanup of old linode-cli generated Object Storage keys",
+        help="Performs cleanup of old linode-cli generated Object Storage keys"
+        " before executing the Object Storage command. It overrides"
+        " the --perform-key-cleanup option.",
+    )
+    parser.add_argument(
+        "--key-cleanup-enabled",
+        choices=["yes", "no"],
+        help="If set to 'yes', performs cleanup of old linode-cli generated Object Storage"
+        " keys before executing the Object Storage command. Cleanup occurs"
+        " at most once every 24 hours.",
+    )
+    parser.add_argument(
+        "--key-lifespan",
+        type=str,
+        help="Specifies the lifespan of linode-cli generated Object Storage keys"
+        " (e.g. 30d for 30 days). Used only during key cleanup.",
+    )
+    parser.add_argument(
+        "--key-rotation-period",
+        type=str,
+        help="Specifies the period after which the linode-cli generated Object Storage"
+        " key must be rotated (e.g. 10d for 10 days). Used only during key cleanup.",
+    )
+    parser.add_argument(
+        "--key-cleanup-batch-size",
+        type=int,
+        help="Number of old linode-cli generated Object Storage keys to clean up at once.",
     )
 
     return parser
@@ -424,8 +445,7 @@ def call(
 
     # make a client and clean-up keys, but only if we weren't printing help
     if not is_help:
-        if not parsed.skip_key_cleanup:
-            _cleanup_keys(context.client, parsed.force_key_cleanup)
+        _cleanup_keys(context.client, parsed)
         access_key, secret_key = get_credentials(context.client)
 
     cluster = parsed.cluster
@@ -606,7 +626,6 @@ def _configure_plugin(client: CLI):
     """
     Configures Object Storage plugin.
     """
-
     cluster = _default_text_input(  # pylint: disable=protected-access
         "Default cluster for operations (e.g. `us-mia-1`)",
         optional=False,
@@ -615,85 +634,27 @@ def _configure_plugin(client: CLI):
     if cluster:
         client.config.plugin_set_value(CLUSTER_KEY, cluster)
 
-    perform_key_cleanup = _default_text_input(  # pylint: disable=protected-access
-        "Perform automatic cleanup of old linode-cli generated Object Storage keys?"
-        " The cleanup will occur before any Object Storage operation,"
-        " at most once every 24 hours. (Y/n)",
-        default="y",
-        validator=lambda x: (
-            "Please enter 'y' or 'n'"
-            if x.lower() not in ("y", "n", "yes", "no")
-            else None
-        ),
-    )
-    perform_key_cleanup = (
-        "yes" if perform_key_cleanup.lower() in ("y", "yes") else "no"
-    )
-    client.config.plugin_set_value(PERFORM_KEY_CLEANUP_KEY, perform_key_cleanup)
-    if perform_key_cleanup == "yes":
-        key_lifespan = _default_text_input(  # pylint: disable=protected-access
-            "Linode-cli Object Storage key lifespan (e.g. `30d` for 30 days)",
-            default="30d",
-            validator=lambda x: (
-                "Please enter a valid time duration"
-                if parse_time(x) is None
-                else None
-            ),
-        )
-        client.config.plugin_set_value(KEY_LIFESPAN_KEY, key_lifespan)
-
-        key_rotation_period = _default_text_input(  # pylint: disable=protected-access
-            "Linode-cli Object Storage key rotation period (e.g. `10d` for 10 days)",
-            default="10d",
-            validator=lambda x: (
-                "Please enter a valid time duration"
-                if parse_time(x) is None
-                else None
-            ),
-        )
-        client.config.plugin_set_value(
-            KEY_ROTATION_PERIOD_KEY, key_rotation_period
-        )
-
-        cleanup_batch_size = _default_text_input(  # pylint: disable=protected-access
-            "Number of old linode-cli Object Storage keys to clean up at once",
-            default="10",
-            validator=lambda x: (
-                "Please enter a valid integer" if not x.isdigit() else None
-            ),
-        )
-        client.config.plugin_set_value(
-            KEY_CLEANUP_BATCH_SIZE_KEY, str(int(cleanup_batch_size))
-        )
-
     client.config.write_config()
 
 
-def _cleanup_keys(client: CLI, force_key_cleanup: bool) -> None:
+def _cleanup_keys(client: CLI, options) -> None:
     """
     Cleans up stale linode-cli generated object storage keys.
     """
     try:
-        if not _should_perform_key_cleanup(client):
-            return
-
         current_timestamp = int(time.time())
-        last_cleanup = client.config.plugin_get_value(
-            LAST_KEY_CLEANUP_TIMESTAMP_KEY
-        )
-        if (
-            not force_key_cleanup
-            and last_cleanup
-            and int(last_cleanup) > current_timestamp - 24 * 60 * 60
-        ):
-            # if we did a cleanup in the last 24 hours, skip
+        if not _should_perform_key_cleanup(client, options, current_timestamp):
             return
 
-        print(
-            "Cleaning up old linode-cli Object Storage keys."
-            " To disable this, use the --skip-key-cleanup option.",
-            file=sys.stderr,
+        cleanup_message = (
+            "Cleaning up old linode-cli generated Object Storage keys."
         )
+        if not options.force_key_cleanup:
+            cleanup_message += (
+                " To disable this, use the '--key-cleanup-enabled no' option."
+            )
+        print(cleanup_message, file=sys.stderr)
+
         status, keys = client.call_operation("object-storage", "keys-list")
         if status != 200:
             print(
@@ -702,9 +663,9 @@ def _cleanup_keys(client: CLI, force_key_cleanup: bool) -> None:
             )
             return
 
-        key_lifespan = _get_key_lifespan(client)
-        key_rotation_period = _get_key_rotation_period(client)
-        cleanup_batch_size = _get_cleanup_batch_size(client)
+        key_lifespan = _get_key_lifespan(client, options)
+        key_rotation_period = _get_key_rotation_period(client, options)
+        cleanup_batch_size = _get_cleanup_batch_size(client, options)
 
         linode_cli_keys = _get_linode_cli_keys(
             keys["data"], key_lifespan, key_rotation_period, current_timestamp
@@ -725,26 +686,44 @@ def _cleanup_keys(client: CLI, force_key_cleanup: bool) -> None:
         )
 
 
-def _should_perform_key_cleanup(client: CLI) -> bool:
-    return client.config.plugin_get_config_value_or_set_default(
-        PERFORM_KEY_CLEANUP_KEY, True, bool
+def _should_perform_key_cleanup(
+    client: CLI, options, current_timestamp
+) -> bool:
+    if options.force_key_cleanup:
+        return True
+    if not _is_key_cleanup_enabled(client, options):
+        return False
+    last_cleanup = client.config.plugin_get_value(
+        LAST_KEY_CLEANUP_TIMESTAMP_KEY
+    )
+
+    # if we did a cleanup in the last 24 hours, skip it this time
+    return (
+        last_cleanup is None
+        or int(last_cleanup) <= current_timestamp - 24 * 60 * 60
     )
 
 
-def _get_key_lifespan(client) -> str:
-    return client.config.plugin_get_config_value_or_set_default(
+def _is_key_cleanup_enabled(client, options) -> bool:
+    if options.key_cleanup_enabled in ["yes", "no"]:
+        return options.key_cleanup_enabled == "yes"
+    return client.config.plugin_get_value(KEY_CLEANUP_ENABLED_KEY, True, bool)
+
+
+def _get_key_lifespan(client, options) -> str:
+    return options.key_lifespan or client.config.plugin_get_value(
         KEY_LIFESPAN_KEY, "30d"
     )
 
 
-def _get_key_rotation_period(client) -> str:
-    return client.config.plugin_get_config_value_or_set_default(
+def _get_key_rotation_period(client, options) -> str:
+    return options.key_rotation_period or client.config.plugin_get_value(
         KEY_ROTATION_PERIOD_KEY, "10d"
     )
 
 
-def _get_cleanup_batch_size(client) -> int:
-    return client.config.plugin_get_config_value_or_set_default(
+def _get_cleanup_batch_size(client, options) -> int:
+    return options.key_cleanup_batch_size or client.config.plugin_get_value(
         KEY_CLEANUP_BATCH_SIZE_KEY, 10, int
     )
 

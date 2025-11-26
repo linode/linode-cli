@@ -389,14 +389,14 @@ def test_obj_action_triggers_key_cleanup_and_deletes_stale_key(
 
     with patch("linodecli.plugins.obj.__init__.CLI") as MockCLI:
         mock_client = MockCLI.return_value
-        mock_client.config.plugin_get_config_value_or_set_default.side_effect = lambda k, d=None, t=None: {
-            "perform-key-cleanup": True,
-            "key-lifespan": "30d",
-            "key-rotation-period-days": "10d",
-            "key-cleanup-batch-size": 10,
-        }[
-            k
-        ]
+        mock_client.config.plugin_get_value.side_effect = (
+            lambda k, d=None, t=None: {
+                "perform-key-cleanup": True,
+                "key-lifespan": "30d",
+                "key-rotation-period-days": "10d",
+                "key-cleanup-batch-size": 10,
+            }[k]
+        )
         mock_client.config.plugin_get_value.side_effect = lambda k: None
         mock_client.call_operation.side_effect = call_operation_side_effect
         mock_client.config.plugin_set_value.return_value = None
@@ -450,14 +450,14 @@ def test_obj_action_triggers_key_rotation(
 
     with patch("linodecli.plugins.obj.__init__.CLI") as MockCLI:
         mock_client = MockCLI.return_value
-        mock_client.config.plugin_get_config_value_or_set_default.side_effect = lambda k, d=None, t=None: {
-            "perform-key-cleanup": True,
-            "key-lifespan": "90d",
-            "key-rotation-period-days": "30d",
-            "key-cleanup-batch-size": 10,
-        }[
-            k
-        ]
+        mock_client.config.plugin_get_value.side_effect = (
+            lambda k, d=None, t=None: {
+                "perform-key-cleanup": True,
+                "key-lifespan": "90d",
+                "key-rotation-period-days": "30d",
+                "key-cleanup-batch-size": 10,
+            }[k]
+        )
         mock_client.config.plugin_get_value.side_effect = lambda k: None
         mock_client.call_operation.side_effect = call_operation_side_effect
         mock_client.config.plugin_set_value.return_value = None
@@ -516,14 +516,14 @@ def test_obj_action_does_not_trigger_cleanup_if_recent(
 
     with patch("linodecli.plugins.obj.__init__.CLI") as MockCLI:
         mock_client = MockCLI.return_value
-        mock_client.config.plugin_get_config_value_or_set_default.side_effect = lambda k, d=None, t=None: {
-            "perform-key-cleanup": True,
-            "key-lifespan": "30d",
-            "key-rotation-period-days": "10d",
-            "key-cleanup-batch-size": 10,
-        }[
-            k
-        ]
+        mock_client.config.plugin_get_value.side_effect = (
+            lambda k, d=None, t=None: {
+                "perform-key-cleanup": True,
+                "key-lifespan": "30d",
+                "key-rotation-period-days": "10d",
+                "key-cleanup-batch-size": 10,
+            }[k]
+        )
         # Return a recent last-key-cleanup-timestamp
         mock_client.config.plugin_get_value.side_effect = lambda k: (
             str(last_cleanup) if k == "last-key-cleanup-timestamp" else None
@@ -574,14 +574,14 @@ def test_obj_action_does_not_trigger_cleanup_if_disabled(
 
     with patch("linodecli.plugins.obj.__init__.CLI") as MockCLI:
         mock_client = MockCLI.return_value
-        mock_client.config.plugin_get_config_value_or_set_default.side_effect = lambda k, d=None, t=None: {
-            "perform-key-cleanup": False,  # Clean-up disabled
-            "key-lifespan": "30d",
-            "key-rotation-period-days": "10d",
-            "key-cleanup-batch-size": 10,
-        }[
-            k
-        ]
+        mock_client.config.plugin_get_value.side_effect = (
+            lambda k, d=None, t=None: {
+                "perform-key-cleanup": False,  # Clean-up disabled
+                "key-lifespan": "30d",
+                "key-rotation-period-days": "10d",
+                "key-cleanup-batch-size": 10,
+            }[k]
+        )
         mock_client.config.plugin_get_value.side_effect = lambda k: None
         mock_client.config.plugin_set_value.return_value = None
         mock_client.config.write_config.return_value = None
