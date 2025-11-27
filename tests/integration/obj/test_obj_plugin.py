@@ -451,9 +451,9 @@ def test_obj_action_triggers_key_rotation(
         mock_client = MockCLI.return_value
         mock_client.config.plugin_get_value.side_effect = (
             lambda k, d=None, t=None: {
-                "perform-key-cleanup": True,
+                "key-cleanup-enabled": True,
                 "key-lifespan": "90d",
-                "key-rotation-period-days": "30d",
+                "key-rotation-period": "30d",
                 "key-cleanup-batch-size": 10,
             }[k]
         )
