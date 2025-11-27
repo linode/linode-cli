@@ -14,8 +14,8 @@ dependencies = [
     "openapi3",
     "requests",
     "PyYAML",
-    "packaging<25",
-    "rich<14",
+    "packaging",
+    "rich",
     "urllib3<3",
     "linode-metadata>=0.3.0",
     "pytimeparse"
