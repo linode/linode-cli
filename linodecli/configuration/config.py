@@ -250,10 +250,10 @@ class CLIConfig:
         if value is None:
             return default
 
-        if value_type is str:
+        if value_type == str:
             return value
 
-        if value_type is bool:
+        if value_type == bool:
             bool_value = self.parse_boolean(value)
             return bool_value if bool_value is not None else default
 
