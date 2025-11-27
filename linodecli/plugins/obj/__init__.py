@@ -649,7 +649,7 @@ def _cleanup_keys(client: CLI, options) -> None:
         cleanup_message = (
             "Cleaning up old linode-cli generated Object Storage keys."
         )
-        if not options.force_key_cleanup:
+        if not options.force_key_cleanup and not options.key_cleanup_enabled:
             cleanup_message += (
                 " To disable this, use the '--key-cleanup-enabled no' option."
             )
