@@ -680,8 +680,7 @@ def _cleanup_keys(client: CLI, options) -> None:
 
     except Exception as e:
         print(
-            "Unable to clean up stale linode-cli Object Storage keys",
-            e,
+            f"Unable to clean up stale linode-cli Object Storage keys: {e}",
             file=sys.stderr,
         )
 
