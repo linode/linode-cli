@@ -254,7 +254,8 @@ class CLIConfig:
             return value
 
         if value_type is bool:
-            return self.parse_boolean(value)
+            bool_value = self.parse_boolean(value)
+            return bool_value if bool_value is not None else default
 
         try:
             return cast(T, value_type(value))
@@ -691,7 +692,8 @@ class CLIConfig:
 
     def parse_boolean(self, value: str) -> Optional[bool]:
         """
-        Parses a string config value into a boolean.
+        Parses a string config value into a boolean. Returns None if the value
+        cannot be parsed as a boolean.
 
         :param value: The string value to parse.
         :return: The parsed boolean value.
