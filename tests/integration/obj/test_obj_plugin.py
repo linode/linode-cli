@@ -591,4 +591,4 @@ def test_obj_action_does_not_trigger_cleanup_if_disabled(
         ]
         assert (
             not delete_calls
-        ), "Cleanup should not be performed when perform-key-cleanup is False"
+        ), "Cleanup should not be performed when key-cleanup-enabled is False"
