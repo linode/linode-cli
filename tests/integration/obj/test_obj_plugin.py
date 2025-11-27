@@ -571,7 +571,7 @@ def test_obj_action_does_not_trigger_cleanup_if_disabled(
         mock_client = MockCLI.return_value
         mock_client.config.plugin_get_value.side_effect = (
             lambda k, d=None, t=None: {
-                "key-cleanup-enabled": False,  # Clean-up disabled
+                "key-cleanup-enabled": False,  # Cleanup disabled
                 "key-lifespan": "30d",
                 "key-rotation-period": "10d",
                 "key-cleanup-batch-size": 10,
