@@ -393,7 +393,7 @@ def test_obj_action_triggers_key_cleanup_and_deletes_stale_key(
             lambda k, d=None, t=None: {
                 "key-cleanup-enabled": True,
                 "key-lifespan": "30d",
-                "key-rotation-period-days": "10d",
+                "key-rotation-period": "10d",
                 "key-cleanup-batch-size": 10,
             }[k]
         )
