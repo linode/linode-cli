@@ -391,7 +391,7 @@ def test_obj_action_triggers_key_cleanup_and_deletes_stale_key(
         mock_client = MockCLI.return_value
         mock_client.config.plugin_get_value.side_effect = (
             lambda k, d=None, t=None: {
-                "perform-key-cleanup": True,
+                "key-cleanup-enabled": True,
                 "key-lifespan": "30d",
                 "key-rotation-period-days": "10d",
                 "key-cleanup-batch-size": 10,
