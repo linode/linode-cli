@@ -260,7 +260,7 @@ class CLIConfig:
             return cast(T, value_type(value))
         except (ValueError, TypeError):
             print(
-                "" f"Could not cast config value {value} to {value_type}.",
+                f"Could not cast config value {value} to {value_type}.",
                 file=sys.stderr,
             )
             return default

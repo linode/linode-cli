@@ -743,7 +743,7 @@ def _get_linode_cli_keys(
         if not match:
             return None
         created_timestamp = int(match.group(1))
-        is_stale = created_timestamp <= stale_threshold
+        is_stale = created_timestamp < stale_threshold
         needs_rotation = is_stale or created_timestamp <= rotation_threshold
         return {
             "id": key["id"],
