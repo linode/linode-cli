@@ -516,9 +516,9 @@ def test_obj_action_does_not_trigger_cleanup_if_recent(
         mock_client = MockCLI.return_value
         mock_client.config.plugin_get_value.side_effect = (
             lambda k, d=None, t=None: {
-                "perform-key-cleanup": True,
+                "key-cleanup-enabled": True,
                 "key-lifespan": "30d",
-                "key-rotation-period-days": "10d",
+                "key-rotation-period": "10d",
                 "key-cleanup-batch-size": 10,
                 "last-key-cleanup-timestamp": str(last_cleanup),
             }[k]
@@ -571,9 +571,9 @@ def test_obj_action_does_not_trigger_cleanup_if_disabled(
         mock_client = MockCLI.return_value
         mock_client.config.plugin_get_value.side_effect = (
             lambda k, d=None, t=None: {
-                "perform-key-cleanup": False,  # Clean-up disabled
+                "key-cleanup-enabled": False,  # Clean-up disabled
                 "key-lifespan": "30d",
-                "key-rotation-period-days": "10d",
+                "key-rotation-period": "10d",
                 "key-cleanup-batch-size": 10,
             }[k]
         )
