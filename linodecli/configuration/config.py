@@ -222,7 +222,7 @@ class CLIConfig:
         self.config.set(username, self._get_plugin_key(key), value)
 
     def plugin_get_value(
-        self, key: str, default: T = None, value_type: Type[T] = str
+        self, key: str, default: Optional[T] = None, value_type: Type[T] = str
     ) -> Optional[T]:
         """
         Retrieves and returns a config value previously set for a plugin.  Your
