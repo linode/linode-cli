@@ -1,7 +1,7 @@
 import time
 from unittest.mock import patch
 
-from pytest import CaptureFixture, MonkeyPatch
+from pytest import CaptureFixture
 
 from linodecli import CLI, plugins
 from linodecli.plugins import obj
