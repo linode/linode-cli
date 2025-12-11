@@ -40,9 +40,7 @@ def test_helpers_denominate():
     assert helpers._denominate(1e23) == "90949470177.29 TB"
 
 
-def test_obj_action_triggers_key_cleanup_and_deletes_stale_key(
-    monkeypatch: MonkeyPatch,
-):
+def test_obj_action_triggers_key_cleanup_and_deletes_stale_key():
     now = int(time.time())
     stale_timestamp = (
         now - 31 * 24 * 60 * 60
@@ -78,7 +76,7 @@ def test_obj_action_triggers_key_cleanup_and_deletes_stale_key(
 
     # OBJ plugin & CLI config mocks
     with (
-        patch("linodecli.plugins.obj.__init__.CLI") as MockCLI,
+        patch("linodecli.plugins.obj.CLI") as MockCLI,
         patch.dict(
             obj.COMMAND_MAP,
             {
@@ -122,9 +120,7 @@ def test_obj_action_triggers_key_cleanup_and_deletes_stale_key(
         ), "Fresh key should not be deleted"
 
 
-def test_obj_action_triggers_key_rotation(
-    monkeypatch: MonkeyPatch,
-):
+def test_obj_action_triggers_key_rotation():
     now = int(time.time())
     # Key created 31 days ago, rotation period is 30 days
     old_timestamp = now - 60 * 60 * 24 * 31
@@ -153,7 +149,7 @@ def test_obj_action_triggers_key_rotation(
 
     # OBJ plugin & CLI config mocks
     with (
-        patch("linodecli.plugins.obj.__init__.CLI") as MockCLI,
+        patch("linodecli.plugins.obj.CLI") as MockCLI,
         patch.dict(
             obj.COMMAND_MAP,
             {
@@ -209,9 +205,7 @@ def test_obj_action_triggers_key_rotation(
         ), "Old key was not deleted after rotation"
 
 
-def test_obj_action_does_not_trigger_cleanup_if_recent(
-    monkeypatch: MonkeyPatch,
-):
+def test_obj_action_does_not_trigger_cleanup_if_recent():
     now = int(time.time())
     # Set last cleanup to 1 hour ago (less than 24h)
     last_cleanup = now - 60 * 60
@@ -239,7 +233,7 @@ def test_obj_action_does_not_trigger_cleanup_if_recent(
         return 200, {}
 
     with (
-        patch("linodecli.plugins.obj.__init__.CLI") as MockCLI,
+        patch("linodecli.plugins.obj.CLI") as MockCLI,
         patch.dict(
             obj.COMMAND_MAP,
             {
@@ -281,9 +275,7 @@ def test_obj_action_does_not_trigger_cleanup_if_recent(
         ), "Cleanup should not be performed if it was done in the last 24 hours"
 
 
-def test_obj_action_does_not_trigger_cleanup_if_disabled(
-    monkeypatch: MonkeyPatch,
-):
+def test_obj_action_does_not_trigger_cleanup_if_disabled():
     now = int(time.time())
     stale_timestamp = now - 31 * 24 * 60 * 60
     stale_key = {
@@ -308,7 +300,7 @@ def test_obj_action_does_not_trigger_cleanup_if_disabled(
         return 200, {}
 
     with (
-        patch("linodecli.plugins.obj.__init__.CLI") as MockCLI,
+        patch("linodecli.plugins.obj.CLI") as MockCLI,
         patch.dict(
             obj.COMMAND_MAP,
             {
