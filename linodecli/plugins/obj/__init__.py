@@ -641,6 +641,7 @@ def _cleanup_keys(client: CLI, options) -> None:
     """
     Cleans up stale linode-cli generated object storage keys.
     """
+
     try:
         current_timestamp = int(time.time())
         if not _should_perform_key_cleanup(client, options, current_timestamp):
@@ -670,6 +671,7 @@ def _cleanup_keys(client: CLI, options) -> None:
         linode_cli_keys = _get_linode_cli_keys(
             keys["data"], key_lifespan, key_rotation_period, current_timestamp
         )
+
         _rotate_current_key_if_needed(client, linode_cli_keys)
         _delete_stale_keys(client, linode_cli_keys, cleanup_batch_size)
 
@@ -692,6 +694,7 @@ def _should_perform_key_cleanup(
         return True
     if not _is_key_cleanup_enabled(client, options):
         return False
+
     last_cleanup = client.config.plugin_get_value(
         LAST_KEY_CLEANUP_TIMESTAMP_KEY
     )
@@ -733,7 +736,6 @@ def _get_linode_cli_keys(
     key_rotation_period: str,
     current_timestamp: int,
 ) -> list:
-
     stale_threshold = current_timestamp - parse_time(key_lifespan)
     rotation_threshold = current_timestamp - parse_time(key_rotation_period)
 
@@ -741,9 +743,11 @@ def _get_linode_cli_keys(
         match = re.match(r"^linode-cli-.+@.+-(\d{10,})$", key["label"])
         if not match:
             return None
+
         created_timestamp = int(match.group(1))
         is_stale = created_timestamp < stale_threshold
         needs_rotation = is_stale or created_timestamp <= rotation_threshold
+
         return {
             "id": key["id"],
             "label": key["label"],
@@ -761,6 +765,7 @@ def _get_linode_cli_keys(
 
 def _rotate_current_key_if_needed(client: CLI, linode_cli_keys: list) -> None:
     current_access_key = client.config.plugin_get_value(ACCESS_KEY_KEY)
+
     key_to_rotate = next(
         (
             key_info
