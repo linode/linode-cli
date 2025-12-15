@@ -5,7 +5,7 @@ Contains logic for loading, updating, and saving Linode CLI configurations.
 import argparse
 import os
 import sys
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Type, TypeVar, cast
 
 from linodecli.exit_codes import ExitCodes
 
@@ -26,6 +26,8 @@ from .helpers import (
 )
 
 ENV_TOKEN_NAME = "LINODE_CLI_TOKEN"
+
+T = TypeVar("T")
 
 
 class CLIConfig:
@@ -216,15 +218,12 @@ class CLIConfig:
         :param value: The value to set for this key
         :type value: any
         """
-        if self.running_plugin is None:
-            raise RuntimeError(
-                "No running plugin to retrieve configuration for!"
-            )
-
         username = self.username or self.default_username()
-        self.config.set(username, f"plugin-{self.running_plugin}-{key}", value)
+        self.config.set(username, self._get_plugin_key(key), value)
 
-    def plugin_get_value(self, key: str) -> Optional[Any]:
+    def plugin_get_value(
+        self, key: str, default: Optional[T] = None, value_type: Type[T] = str
+    ) -> Optional[T]:
         """
         Retrieves and returns a config value previously set for a plugin.  Your
         plugin should have set this value in the past.  If this value does not
@@ -235,18 +234,54 @@ class CLIConfig:
         :param key: The key of the value to return
         :type key: str
 
+        :param default: The default value to return if the key is not set
+        :type default: T
+
+        :param value_type: The type to which the value should be cast
+        :type value_type: Type[T]
+
         :returns: The value for this plugin for this key, or None if not set
         :rtype: any
         """
+        username = self.username or self.default_username() or "DEFAULT"
+        value = self.config.get(
+            username, self._get_plugin_key(key), fallback=None
+        )
+        if value is None:
+            return default
+
+        if value_type == str:
+            return value
+
+        if value_type == bool:
+            bool_value = self.parse_boolean(value)
+            return bool_value if bool_value is not None else default
+
+        try:
+            return cast(T, value_type(value))
+        except (ValueError, TypeError):
+            print(
+                f"Could not cast config value {value} to {value_type}.",
+                file=sys.stderr,
+            )
+            return default
+
+    def plugin_remove_option(self, key: str):
+        """
+        Removes a plugin configuration option.
+
+        :param key: The key of the option to remove
+        """
+        username = self.username or self.default_username()
+        self.config.remove_option(username, self._get_plugin_key(key))
+
+    def _get_plugin_key(self, key: str) -> str:
         if self.running_plugin is None:
             raise RuntimeError(
                 "No running plugin to retrieve configuration for!"
             )
 
-        username = self.username or self.default_username() or "DEFAULT"
-        full_key = f"plugin-{self.running_plugin}-{key}"
-
-        return self.config.get(username, full_key, fallback=None)
+        return f"plugin-{self.running_plugin}-{key}"
 
     # TODO: this is more of an argparsing function than it is a config function
     # might be better to move this to argparsing during refactor and just have
@@ -654,3 +689,13 @@ class CLIConfig:
             if (self.config.has_section("custom_aliases"))
             else {}
         )
+
+    def parse_boolean(self, value: str) -> Optional[bool]:
+        """
+        Parses a string config value into a boolean. Returns None if the value
+        cannot be parsed as a boolean.
+
+        :param value: The string value to parse.
+        :return: The parsed boolean value.
+        """
+        return self.config.BOOLEAN_STATES.get(value.lower(), None)

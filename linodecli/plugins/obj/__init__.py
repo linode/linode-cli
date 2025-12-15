@@ -4,6 +4,7 @@ CLI Plugin for handling OBJ
 """
 import getpass
 import os
+import re
 import socket
 import sys
 import time
@@ -11,13 +12,13 @@ from argparse import ArgumentParser
 from contextlib import suppress
 from datetime import datetime
 from math import ceil
-from typing import List
+from typing import List, Optional
 
+from pytimeparse import parse as parse_time
 from rich import print as rprint
 from rich.table import Table
 
 from linodecli.cli import CLI
-from linodecli.configuration import _do_get_request
 from linodecli.configuration.helpers import _default_text_input
 from linodecli.exit_codes import ExitCodes
 from linodecli.help_formatter import SortingHelpFormatter
@@ -63,6 +64,17 @@ try:
     HAS_BOTO = True
 except ImportError:
     HAS_BOTO = False
+
+
+CLUSTER_KEY = "cluster"
+KEY_CLEANUP_ENABLED_KEY = "key-cleanup-enabled"
+KEY_LIFESPAN_KEY = "key-lifespan"
+KEY_ROTATION_PERIOD_KEY = "key-rotation-period"
+KEY_CLEANUP_BATCH_SIZE_KEY = "key-cleanup-batch-size"
+LAST_KEY_CLEANUP_TIMESTAMP_KEY = "last-key-cleanup-timestamp"
+ACCESS_KEY_KEY = "access-key"
+SECRET_KEY_KEY = "secret-key"
+TOKEN_KEY = "token"
 
 
 def generate_url(get_client, args, **kwargs):  # pylint: disable=unused-argument
@@ -314,13 +326,44 @@ def get_obj_args_parser():
         metavar="COMMAND",
         nargs="?",
         type=str,
-        help="The command to execute in object storage",
+        help="The command to execute in object storage.",
     )
     parser.add_argument(
         "--cluster",
         metavar="CLUSTER",
         type=str,
-        help="The cluster to use for the operation",
+        help="The cluster to use for the operation.",
+    )
+    parser.add_argument(
+        "--force-key-cleanup",
+        action="store_true",
+        help="Performs cleanup of old linode-cli generated Object Storage keys"
+        " before executing the Object Storage command. It overrides"
+        " the --perform-key-cleanup option.",
+    )
+    parser.add_argument(
+        "--key-cleanup-enabled",
+        choices=["yes", "no"],
+        help="If set to 'yes', performs cleanup of old linode-cli generated Object Storage"
+        " keys before executing the Object Storage command. Cleanup occurs"
+        " at most once every 24 hours.",
+    )
+    parser.add_argument(
+        "--key-lifespan",
+        type=str,
+        help="Specifies the lifespan of linode-cli generated Object Storage keys"
+        " (e.g. 30d for 30 days). Used only during key cleanup.",
+    )
+    parser.add_argument(
+        "--key-rotation-period",
+        type=str,
+        help="Specifies the period after which the linode-cli generated Object Storage"
+        " key must be rotated (e.g. 10d for 10 days). Used only during key cleanup.",
+    )
+    parser.add_argument(
+        "--key-cleanup-batch-size",
+        type=int,
+        help="Number of old linode-cli generated Object Storage keys to clean up at once.",
     )
 
     return parser
@@ -400,8 +443,9 @@ def call(
     access_key = None
     secret_key = None
 
-    # make a client, but only if we weren't printing help
+    # make a client and clean-up keys, but only if we weren't printing help
     if not is_help:
+        _cleanup_keys(context.client, parsed)
         access_key, secret_key = get_credentials(context.client)
 
     cluster = parsed.cluster
@@ -497,8 +541,8 @@ def _get_s3_creds(client: CLI, force: bool = False):
     :returns: The access key and secret key for this user
     :rtype: tuple(str, str)
     """
-    access_key = client.config.plugin_get_value("access-key")
-    secret_key = client.config.plugin_get_value("secret-key")
+    access_key = client.config.plugin_get_value(ACCESS_KEY_KEY)
+    secret_key = client.config.plugin_get_value(SECRET_KEY_KEY)
 
     if force or access_key is None:
         # this means there are no stored s3 creds for this user - set them up
@@ -507,7 +551,7 @@ def _get_s3_creds(client: CLI, force: bool = False):
         # being provided by the environment, but if the CLI is running without a
         # config, we shouldn't generate new keys (or we'd end up doing so with each
         # request) - instead ask for them to be set up.
-        if client.config.get_value("token") is None:
+        if client.config.get_value(TOKEN_KEY) is None:
             print(
                 "You are running the Linode CLI without a configuration file, but "
                 "object storage keys were not configured.  "
@@ -571,8 +615,8 @@ def _get_s3_creds(client: CLI, force: bool = False):
         access_key = resp["access_key"]
         secret_key = resp["secret_key"]
 
-        client.config.plugin_set_value("access-key", access_key)
-        client.config.plugin_set_value("secret-key", secret_key)
+        client.config.plugin_set_value(ACCESS_KEY_KEY, access_key)
+        client.config.plugin_set_value(SECRET_KEY_KEY, secret_key)
         client.config.write_config()
 
     return access_key, secret_key
@@ -580,14 +624,188 @@ def _get_s3_creds(client: CLI, force: bool = False):
 
 def _configure_plugin(client: CLI):
     """
-    Configures a default cluster value.
+    Configures Object Storage plugin.
     """
-
     cluster = _default_text_input(  # pylint: disable=protected-access
         "Default cluster for operations (e.g. `us-mia-1`)",
         optional=False,
     )
 
     if cluster:
-        client.config.plugin_set_value("cluster", cluster)
+        client.config.plugin_set_value(CLUSTER_KEY, cluster)
+
     client.config.write_config()
+
+
+def _cleanup_keys(client: CLI, options) -> None:
+    """
+    Cleans up stale linode-cli generated object storage keys.
+    """
+
+    try:
+        current_timestamp = int(time.time())
+        if not _should_perform_key_cleanup(client, options, current_timestamp):
+            return
+
+        cleanup_message = (
+            "Cleaning up old linode-cli generated Object Storage keys."
+        )
+        if not options.force_key_cleanup and not options.key_cleanup_enabled:
+            cleanup_message += (
+                " To disable this, use the '--key-cleanup-enabled no' option."
+            )
+        print(cleanup_message, file=sys.stderr)
+
+        status, keys = client.call_operation("object-storage", "keys-list")
+        if status != 200:
+            print(
+                "Failed to list object storage keys for cleanup",
+                file=sys.stderr,
+            )
+            return
+
+        key_lifespan = _get_key_lifespan(client, options)
+        key_rotation_period = _get_key_rotation_period(client, options)
+        cleanup_batch_size = _get_cleanup_batch_size(client, options)
+
+        linode_cli_keys = _get_linode_cli_keys(
+            keys["data"], key_lifespan, key_rotation_period, current_timestamp
+        )
+
+        _rotate_current_key_if_needed(client, linode_cli_keys)
+        _delete_stale_keys(client, linode_cli_keys, cleanup_batch_size)
+
+        client.config.plugin_set_value(
+            LAST_KEY_CLEANUP_TIMESTAMP_KEY, str(current_timestamp)
+        )
+        client.config.write_config()
+
+    except Exception as e:
+        print(
+            f"Unable to clean up stale linode-cli Object Storage keys: {e}",
+            file=sys.stderr,
+        )
+
+
+def _should_perform_key_cleanup(
+    client: CLI, options, current_timestamp
+) -> bool:
+    if options.force_key_cleanup:
+        return True
+    if not _is_key_cleanup_enabled(client, options):
+        return False
+
+    last_cleanup = client.config.plugin_get_value(
+        LAST_KEY_CLEANUP_TIMESTAMP_KEY
+    )
+
+    # if we did a cleanup in the last 24 hours, skip it this time
+    return (
+        last_cleanup is None
+        or int(last_cleanup) <= current_timestamp - 24 * 60 * 60
+    )
+
+
+def _is_key_cleanup_enabled(client, options) -> bool:
+    if options.key_cleanup_enabled in ["yes", "no"]:
+        return options.key_cleanup_enabled == "yes"
+    return client.config.plugin_get_value(KEY_CLEANUP_ENABLED_KEY, True, bool)
+
+
+def _get_key_lifespan(client, options) -> str:
+    return options.key_lifespan or client.config.plugin_get_value(
+        KEY_LIFESPAN_KEY, "30d"
+    )
+
+
+def _get_key_rotation_period(client, options) -> str:
+    return options.key_rotation_period or client.config.plugin_get_value(
+        KEY_ROTATION_PERIOD_KEY, "10d"
+    )
+
+
+def _get_cleanup_batch_size(client, options) -> int:
+    return options.key_cleanup_batch_size or client.config.plugin_get_value(
+        KEY_CLEANUP_BATCH_SIZE_KEY, 10, int
+    )
+
+
+def _get_linode_cli_keys(
+    keys_data: list,
+    key_lifespan: str,
+    key_rotation_period: str,
+    current_timestamp: int,
+) -> list:
+    stale_threshold = current_timestamp - parse_time(key_lifespan)
+    rotation_threshold = current_timestamp - parse_time(key_rotation_period)
+
+    def extract_key_info(key: dict) -> Optional[dict]:
+        match = re.match(r"^linode-cli-.+@.+-(\d{10,})$", key["label"])
+        if not match:
+            return None
+
+        created_timestamp = int(match.group(1))
+        is_stale = created_timestamp < stale_threshold
+        needs_rotation = is_stale or created_timestamp <= rotation_threshold
+
+        return {
+            "id": key["id"],
+            "label": key["label"],
+            "access_key": key["access_key"],
+            "created_timestamp": created_timestamp,
+            "is_stale": is_stale,
+            "needs_rotation": needs_rotation,
+        }
+
+    return sorted(
+        [info for key in keys_data if (info := extract_key_info(key))],
+        key=lambda k: k["created_timestamp"],
+    )
+
+
+def _rotate_current_key_if_needed(client: CLI, linode_cli_keys: list) -> None:
+    current_access_key = client.config.plugin_get_value(ACCESS_KEY_KEY)
+
+    key_to_rotate = next(
+        (
+            key_info
+            for key_info in linode_cli_keys
+            if key_info["access_key"] == current_access_key
+            and key_info["needs_rotation"]
+        ),
+        None,
+    )
+    if key_to_rotate:
+        _delete_key(client, key_to_rotate["id"], key_to_rotate["label"])
+        linode_cli_keys.remove(key_to_rotate)
+        client.config.plugin_remove_option(ACCESS_KEY_KEY)
+        client.config.plugin_remove_option(SECRET_KEY_KEY)
+        client.config.write_config()
+
+
+def _delete_stale_keys(
+    client: CLI, linode_cli_keys: list, batch_size: int
+) -> None:
+    stale_keys = [k for k in linode_cli_keys if k["is_stale"]]
+    for key_info in stale_keys[:batch_size]:
+        _delete_key(client, key_info["id"], key_info["label"])
+
+
+def _delete_key(client: CLI, key_id: str, label: str) -> None:
+    try:
+        print(
+            f"Deleting linode-cli Object Storage key: {label}", file=sys.stderr
+        )
+        status, _ = client.call_operation(
+            "object-storage", "keys-delete", [str(key_id)]
+        )
+        if status != 200:
+            print(
+                f"Failed to delete key: {label}; status {status}",
+                file=sys.stderr,
+            )
+    except Exception as e:
+        print(
+            f"Exception occurred while deleting key: {label}; {e}",
+            file=sys.stderr,
+        )
