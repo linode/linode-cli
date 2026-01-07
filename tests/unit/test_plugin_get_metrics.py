@@ -1,7 +1,3 @@
-"""
-Unit tests for the get_metrics plugin
-"""
-
 import json
 import os
 from unittest.mock import MagicMock, Mock, patch
@@ -11,31 +7,11 @@ from pytest import CaptureFixture
 
 from linodecli.plugins.get_metrics import (
     call,
-    get_auth_token,
     get_metrics,
     get_metrics_parser,
     make_api_request,
     print_metrics_response,
 )
-
-
-class TestAuthToken:
-    """Test authentication token handling"""
-
-    def test_get_auth_token_success(self):
-        """Test successful token retrieval from environment"""
-        with patch.dict(os.environ, {"JWE_TOKEN": "test_token"}):
-            token = get_auth_token()
-            assert token == "test_token"
-
-    def test_get_auth_token_missing(self):
-        """Test error when token is missing"""
-        with patch.dict(os.environ, {}, clear=True):
-            with pytest.raises(ValueError) as excinfo:
-                get_auth_token()
-            assert "JWE_TOKEN environment variable is required" in str(
-                excinfo.value
-            )
 
 
 class TestAPIRequest:
@@ -68,7 +44,7 @@ class TestAPIRequest:
         mock_response.json.return_value = {"error": "Unauthorized"}
         mock_post.return_value = mock_response
 
-        status_code, result = make_api_request(
+        status_code, _ = make_api_request(
             "nodebalancer", "metrics", "POST", {}, "test_token"
         )
         assert status_code == 401
@@ -83,7 +59,6 @@ class TestGetMetrics:
         """Test get_metrics with relative time duration"""
         mock_api_request.return_value = (200, {"data": {"test": "data"}})
 
-        # get_metrics doesn't return data, it calls print_metrics_response
         get_metrics(
             service_name="nodebalancer",
             entity_ids=[123, 456],
@@ -97,7 +72,6 @@ class TestGetMetrics:
             token="test_token",
         )
 
-        # Verify that print_metrics_response was called with the response
         mock_print.assert_called_once_with({"data": {"test": "data"}})
         mock_api_request.assert_called_once()
 
@@ -120,7 +94,6 @@ class TestGetMetrics:
             token="test_token",
         )
 
-        # Verify print_metrics_response was called
         mock_print.assert_called_once_with({"data": {"test": "data"}})
 
     @patch("linodecli.plugins.get_metrics.print_metrics_response")
@@ -146,7 +119,6 @@ class TestGetMetrics:
             token="test_token",
         )
 
-        # Verify print_metrics_response was called
         mock_print.assert_called_once_with({"data": {"test": "data"}})
 
     @patch("linodecli.plugins.get_metrics.make_api_request")
@@ -171,7 +143,6 @@ class TestGetMetrics:
             token="test_token",
         )
 
-        # Verify that sys.exit was called due to API error
         mock_exit.assert_called_with(2)  # ExitCodes.REQUEST_FAILED
 
 
@@ -182,7 +153,6 @@ class TestArgumentParsing:
         """Test parser creation"""
         parser = get_metrics_parser()
 
-        # Test that parser has all expected arguments
         args = parser.parse_args(
             [
                 "nodebalancer",
@@ -228,8 +198,7 @@ class TestPrintResponse:
         captured = capsys.readouterr()
 
         # Verify success output
-        assert "✓ Success" in captured.out
-        assert "150ms" in captured.out
+        assert "Series fetched: 1" in captured.out
         assert "Metrics Data:" in captured.out
 
     def test_print_metrics_response_error(self, capsys: CaptureFixture):
