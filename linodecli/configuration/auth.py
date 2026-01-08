@@ -348,7 +348,7 @@ to continue..
     except KeyboardInterrupt:
         print(
             "\nGiving up.  If you couldn't get web authentication to work, please "
-            "try token using a token by invoking with `linode-cli configure --token`, "
+            "try using a token by invoking with `linode-cli configure --token`, "
             "and open an issue at https://github.com/linode/linode-cli",
             file=sys.stderr,
         )
