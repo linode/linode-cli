@@ -11,6 +11,7 @@ from linodecli.plugins.get_metrics import (
     get_metrics_parser,
     make_api_request,
     print_metrics_response,
+    MetricsConfig,
 )
 
 
@@ -59,7 +60,7 @@ class TestGetMetrics:
         """Test get_metrics with relative time duration"""
         mock_api_request.return_value = (200, {"data": {"test": "data"}})
 
-        get_metrics(
+        config = MetricsConfig(
             service_name="nodebalancer",
             entity_ids=[123, 456],
             duration=15,
@@ -71,6 +72,7 @@ class TestGetMetrics:
             granularity_unit=None,
             token="test_token",
         )
+        get_metrics(config)
 
         mock_print.assert_called_once_with({"data": {"test": "data"}})
         mock_api_request.assert_called_once()
@@ -81,7 +83,7 @@ class TestGetMetrics:
         """Test get_metrics with absolute time range"""
         mock_api_request.return_value = (200, {"data": {"test": "data"}})
 
-        get_metrics(
+        config = MetricsConfig(
             service_name="dbaas",
             entity_ids=[789],
             duration=None,
@@ -93,6 +95,7 @@ class TestGetMetrics:
             granularity_unit=None,
             token="test_token",
         )
+        get_metrics(config)
 
         mock_print.assert_called_once_with({"data": {"test": "data"}})
 
@@ -104,7 +107,7 @@ class TestGetMetrics:
         """Test get_metrics with filters and group_by"""
         mock_api_request.return_value = (200, {"data": {"test": "data"}})
 
-        get_metrics(
+        config = MetricsConfig(
             service_name="dbaas",
             entity_ids=[123],
             duration=1,
@@ -118,6 +121,7 @@ class TestGetMetrics:
             group_by=["entity_id", "node_type"],
             token="test_token",
         )
+        get_metrics(config)
 
         mock_print.assert_called_once_with({"data": {"test": "data"}})
 
@@ -130,7 +134,7 @@ class TestGetMetrics:
         """Test get_metrics with API error response"""
         mock_api_request.return_value = (401, {"error": "Unauthorized"})
 
-        get_metrics(
+        config = MetricsConfig(
             service_name="nodebalancer",
             entity_ids=[123],
             duration=15,
@@ -142,6 +146,7 @@ class TestGetMetrics:
             granularity_unit=None,
             token="test_token",
         )
+        get_metrics(config)
 
         mock_exit.assert_called_with(2)  # ExitCodes.REQUEST_FAILED
 
