@@ -79,7 +79,7 @@ class TestCLI:
 
     def test_user_agent(self, mock_cli: CLI):
         assert re.compile(
-            r"linode-cli/[0-9]+\.[0-9]+\.[0-9]+ linode-api-docs/[0-9]+\.[0-9]+\.[0-9]+ python/[0-9]+\.[0-9]+\.[0-9]+"
+            r"linode-cli/[0-9]+\.[0-9]+\.[0-9]+ linode-api-openapi/[0-9]+\.[0-9]+\.[0-9]+ python/[0-9]+\.[0-9]+\.[0-9]+"
         ).match(mock_cli.user_agent)
 
     def test_load_openapi_spec_json(self):

@@ -3,7 +3,7 @@ The following section outlines the core functions of the Linode CLI.
 ## OpenAPI Specification Parsing
 
 Most Linode CLI commands (excluding [plugin commands](https://github.com/linode/linode-cli/tree/dev/linodecli/plugins)) 
-are generated dynamically at build-time from the [Linode OpenAPI Specification](https://github.com/linode/linode-api-docs),
+are generated dynamically at build-time from the [Linode OpenAPI Specification](https://github.com/linode/linode-api-openapi),
 which is also used to generate the [official Linode API documentation](https://www.linode.com/docs/api/). 
 
 Each OpenAPI spec endpoint method is parsed into an `OpenAPIOperation` object. 
