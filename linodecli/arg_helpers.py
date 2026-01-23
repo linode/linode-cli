@@ -4,6 +4,7 @@ Argument parser for the linode CLI.
 This module defines argument parsing, plugin registration, and plugin removal
 functionalities for the Linode CLI.
 """
+
 import sys
 from argparse import ArgumentParser
 from configparser import ConfigParser
