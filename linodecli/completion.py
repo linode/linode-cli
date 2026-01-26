@@ -2,6 +2,7 @@
 """
 Contains any code relevant to generating/updating shell completions for linode-cli
 """
+
 from string import Template
 
 from openapi3 import OpenAPI
@@ -93,12 +94,10 @@ complete -F _linode_cli linode
 complete -F _linode_cli lin"""
     )
 
-    command_template = Template(
-        """$command)
+    command_template = Template("""$command)
         COMPREPLY=( $(compgen -W "$actions --help" -- ${cur}) )
         return 0
-        ;;"""
-    )
+        ;;""")
 
     command_blocks = [
         command_template.safe_substitute(

@@ -214,13 +214,11 @@ def _get_token_terminal(base_url: str) -> Tuple[str, str]:
     :returns: A tuple containing the user's username and token.
     :rtype: Tuple[str, str]
     """
-    print(
-        f"""
+    print(f"""
 First, we need a Personal Access Token.  To get one, please visit
 {TOKEN_GENERATION_URL} and click
 "Create a Personal Access Token".  The CLI needs access to everything
-on your account to work correctly."""
-    )
+on your account to work correctly.""")
 
     while True:
         token = input("Personal Access Token: ")
@@ -329,15 +327,13 @@ def _handle_oauth_callback() -> str:
     # figure out the URL to direct the user to and print out the prompt
     # pylint: disable-next=line-too-long
     url = f"https://login.linode.com/oauth/authorize?client_id={OAUTH_CLIENT_ID}&response_type=token&scopes=*&redirect_uri=http://localhost:{serv.server_address[1]}"
-    print(
-        f"""A browser should open directing you to this URL to authenticate:
+    print(f"""A browser should open directing you to this URL to authenticate:
 
 {url}
 
 If you are not automatically directed there, please copy/paste the link into your browser
 to continue..
-"""
-    )
+""")
 
     webbrowser.open(url)
 
