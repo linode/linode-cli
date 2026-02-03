@@ -126,7 +126,7 @@ jobs:
           LINODE_CLI_TOKEN: ${{ env.LINODE_CLI_TOKEN }}
 
       - name: Upload Test Report as Artifact
-        if: always()
+        if: always() && (github.event_name == 'push' || github.event_name == 'pull_request')
         uses: actions/upload-artifact@v6
         with:
           name: test-report-file
