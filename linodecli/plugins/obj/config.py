@@ -2,9 +2,9 @@
 The config of the object storage plugin.
 """
 
-import shutil
 import os
 import re
+import shutil
 
 ENV_ACCESS_KEY_NAME = "LINODE_CLI_OBJ_ACCESS_KEY"
 ENV_SECRET_KEY_NAME = "LINODE_CLI_OBJ_SECRET_KEY"
