@@ -3,12 +3,24 @@ The config of the object storage plugin.
 """
 
 import shutil
+import os
+import re
 
 ENV_ACCESS_KEY_NAME = "LINODE_CLI_OBJ_ACCESS_KEY"
 ENV_SECRET_KEY_NAME = "LINODE_CLI_OBJ_SECRET_KEY"
-# replace {} with the cluster name
-BASE_URL_TEMPLATE = "https://{}.linodeobjects.com"
-BASE_WEBSITE_TEMPLATE = "{bucket}.website-{cluster}.linodeobjects.com"
+
+API_HOST = os.getenv("LINODE_CLI_API_HOST", "")
+
+match = re.match(r"api\.([^.]+)\.linode\.com", API_HOST)
+
+OBJ_DOMAIN = (
+    "linodeobjects.com"
+    if not match or match.group(1) == "linode"
+    else f"{match.group(1)}.linodeobjects.com"
+)
+
+BASE_URL_TEMPLATE = f"https://{{}}.{OBJ_DOMAIN}"
+BASE_WEBSITE_TEMPLATE = f"{{bucket}}.website-{{cluster}}.{OBJ_DOMAIN}"
 
 # for all date output
 DATE_FORMAT = "%Y-%m-%d %H:%M"
