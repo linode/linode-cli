@@ -11,13 +11,12 @@ ENV_SECRET_KEY_NAME = "LINODE_CLI_OBJ_SECRET_KEY"
 
 API_HOST = os.getenv("LINODE_CLI_API_HOST", "")
 
-match = re.match(r"api\.([^.]+)\.linode\.com", API_HOST)
+OBJ_DOMAIN = "linodeobjects.com"
 
-OBJ_DOMAIN = (
-    "linodeobjects.com"
-    if not match or match.group(1) == "linode"
-    else f"{match.group(1)}.linodeobjects.com"
-)
+if API_HOST:
+    match = re.match(r"api\.([^.]+)\.linode\.com", API_HOST)
+    if match:
+        OBJ_DOMAIN = f"{match.group(1)}.linodeobjects.com"
 
 BASE_URL_TEMPLATE = f"https://{{}}.{OBJ_DOMAIN}"
 BASE_WEBSITE_TEMPLATE = f"{{bucket}}.website-{{cluster}}.{OBJ_DOMAIN}"
