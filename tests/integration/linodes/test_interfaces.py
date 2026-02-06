@@ -40,9 +40,11 @@ def assert_interface_configuration(
 
     interfaces = config_json["interfaces"]
 
-    vpc_interface = next(i for i in interfaces if i["purpose"] == "vpc")
-    public_interface = next(i for i in interfaces if i["purpose"] == "public")
+    vpc_interface = next((i for i in interfaces if i["purpose"] == "vpc"), None)
+    public_interface = next((i for i in interfaces if i["purpose"] == "public"), None)
 
+    assert vpc_interface is not None, "Expected interface with purpose 'vpc' in configuration"
+    assert public_interface is not None, "Expected interface with purpose 'public' in configuration"
     assert vpc_interface["primary"]
     assert vpc_interface["purpose"] == "vpc"
     assert vpc_interface["subnet_id"] == vpc_json["subnets"][0]["id"]
