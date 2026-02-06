@@ -91,9 +91,9 @@ def test_create_backup_with_backup_enabled(linode_backup_enabled):
     os.environ.get("RUN_LONG_TESTS", None) != "True",
     reason="Skipping long-running Test, to run set RUN_LONG_TESTS=True",
 )
-def test_take_snapshot_of_linode():
+def test_take_snapshot_of_linode(firewall_id):
     # get linode id after creation and wait for "running" status
-    linode_id = create_linode_and_wait()
+    linode_id = create_linode_and_wait(firewall_id)
 
     snapshot_label = "test_snapshot1"
 

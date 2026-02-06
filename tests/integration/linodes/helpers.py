@@ -1,7 +1,10 @@
 import json
 import time
 
-from tests.integration.helpers import BASE_CMDS, exec_test_command
+from tests.integration.helpers import (
+    BASE_CMDS,
+    exec_test_command,
+)
 
 DEFAULT_RANDOM_PASS = exec_test_command(["openssl", "rand", "-base64", "32"])
 DEFAULT_REGION = "us-ord"

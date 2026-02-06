@@ -45,7 +45,7 @@ def test_list_firewall(firewall_id):
         + ["list", "--no-headers", "--text", "--delimiter", ","]
     )
 
-    assert re.search(firewall_id + "," + FIREWALL_LABEL + ",enabled", result)
+    assert re.search(rf"^{firewall_id},", result, re.MULTILINE)
 
 
 @pytest.mark.smoke

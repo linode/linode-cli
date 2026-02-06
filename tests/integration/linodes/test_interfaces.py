@@ -4,6 +4,7 @@ from typing import Any, Dict
 from tests.integration.helpers import (
     BASE_CMDS,
     exec_test_command,
+    wait_for_condition,
 )
 from tests.integration.linodes.fixtures import (  # noqa: F401
     linode_with_vpc_interface_as_args,
@@ -14,20 +15,32 @@ from tests.integration.linodes.fixtures import (  # noqa: F401
 def assert_interface_configuration(
     linode_json: Dict[str, Any], vpc_json: Dict[str, Any]
 ):
-    config_json = json.loads(
-        exec_test_command(
-            BASE_CMDS["linodes"]
-            + [
-                "configs-list",
-                str(linode_json["id"]),
-                "--json",
-                "--suppress-warnings",
-            ]
-        )
-    )[0]
+    linode_id = str(linode_json["id"])
+    configs = []
 
-    vpc_interface = config_json["interfaces"][0]
-    public_interface = config_json["interfaces"][1]
+    def fetch_configs():
+        nonlocal configs
+        configs = json.loads(
+            exec_test_command(
+                BASE_CMDS["linodes"]
+                + [
+                    "configs-list",
+                    linode_id,
+                    "--json",
+                    "--suppress-warnings",
+                ]
+            )
+        )
+        return len(configs) > 0
+
+    wait_for_condition(5, 180, fetch_configs)
+
+    config_json = configs[0]
+
+    interfaces = config_json["interfaces"]
+
+    vpc_interface = next(i for i in interfaces if i["purpose"] == "vpc")
+    public_interface = next(i for i in interfaces if i["purpose"] == "public")
 
     assert vpc_interface["primary"]
     assert vpc_interface["purpose"] == "vpc"
@@ -38,7 +51,6 @@ def assert_interface_configuration(
     assert vpc_interface["ip_ranges"][0] == "10.0.0.6/32"
 
     assert not public_interface["primary"]
-    assert public_interface["purpose"] == "public"
 
 
 def test_with_vpc_interface_as_args(linode_with_vpc_interface_as_args):
