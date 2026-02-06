@@ -35,6 +35,7 @@ def assert_interface_configuration(
 
     wait_for_condition(5, 180, fetch_configs)
 
+    assert configs, f"No configs found for Linode {linode_id}"
     config_json = configs[0]
 
     interfaces = config_json["interfaces"]
