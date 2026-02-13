@@ -1,5 +1,6 @@
 import os
 import re
+import subprocess
 import time
 from sys import platform
 
@@ -96,7 +97,7 @@ def test_ssh_to_linode_and_get_kernel_version(
             "--text",
             "--no-headers",
         ]
-    )
+    ).strip()
 
     time.sleep(SSH_SLEEP_PERIOD)
 
@@ -129,16 +130,31 @@ def test_check_vm_for_ipv4_connectivity(
             "--text",
             "--no-headers",
         ]
-    )
+    ).strip()
 
-    time.sleep(SSH_SLEEP_PERIOD)
+    ssh_cmd = [
+        "linode-cli",
+        "ssh",
+        f"root@{linode_label}",
+        "-i",
+        privkey_file,
+        "-o",
+        "StrictHostKeyChecking=no",
+        "-o",
+        "IdentitiesOnly=yes",
+        "ping -4 -W60 -c3 google.com",
+    ]
 
-    output = os.popen(
-        "linode-cli ssh root@"
-        + linode_label
-        + " -i "
-        + privkey_file
-        + ' -o StrictHostKeyChecking=no -o IdentitiesOnly=yes "ping -4 -W60 -c3 google.com"'
-    ).read()
+    output = ""
+    for attempt in range(NUM_OF_RETRIES):
+        result = subprocess.run(
+            ssh_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+        )
+        output = result.stdout
+        if "0% packet loss" in output:
+            break
+        time.sleep(10)
 
-    assert "0% packet loss" in output
+    assert (
+        "0% packet loss" in output
+    ), f"Ping failed after {NUM_OF_RETRIES} retries: {output}"
