@@ -10,6 +10,11 @@ from tests.integration.helpers import (
 )
 
 
+def get_domain_status(command: str, item_id: str, expected_status: str) -> bool:
+    status = view_command_attribute(command, item_id, "status")
+    return expected_status in status
+
+
 @pytest.fixture(scope="function")
 def master_domain():
     domain_id = exec_test_command(
@@ -29,11 +34,8 @@ def master_domain():
         ]
     )
 
-    def get_domain_status():
-        status = view_command_attribute("domains", domain_id, "status")
-        return "active" in status
-
-    wait_for_condition(5, 30, get_domain_status)
+    # Verify domain status becomes active before proceeding with tests
+    wait_for_condition(5, 30, get_domain_status, "domains", domain_id, "active")
 
     yield domain_id
 
@@ -60,6 +62,9 @@ def slave_domain():
         ]
     )
 
+    # Verify domain status becomes active before proceeding with tests
+    wait_for_condition(5, 30, get_domain_status, "domains", domain_id, "active")
+
     yield domain_id
 
     delete_target_id("domains", domain_id)
@@ -82,6 +87,9 @@ def domain_and_record():
             "--format=id",
         ]
     )
+
+    # Verify domain status becomes active before proceeding with tests
+    wait_for_condition(5, 30, get_domain_status, "domains", domain_id, "active")
 
     # Create record
     record_id = exec_test_command(

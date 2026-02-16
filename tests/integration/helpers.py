@@ -61,10 +61,12 @@ def get_random_text(length: int = 10):
     return "".join(random.choice(ascii_lowercase) for i in range(length))
 
 
-def wait_for_condition(interval: int, timeout: int, condition: Callable):
+def wait_for_condition(interval: int, timeout: int, condition: Callable, *args):
     start_time = time.time()
     while True:
-        if condition():
+        result = condition(*args)
+
+        if result:
             break
 
         if time.time() - start_time > timeout:
