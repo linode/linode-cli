@@ -213,3 +213,17 @@ def assert_help_actions_list(expected_actions, help_output):
     output_actions = re.findall(r"│\s(\S+(?:,\s)?\S+)\s*│", help_output)
     for expected_action in expected_actions:
         assert expected_action in output_actions
+
+
+def view_command_attribute(command: str, item_id: str, attribute: str) -> str:
+    return exec_test_command(
+        BASE_CMDS[command]
+        + [
+            "view",
+            item_id,
+            "--text",
+            "--no-header",
+            "--format",
+            attribute,
+        ]
+    )

@@ -5,6 +5,8 @@ from tests.integration.helpers import (
     delete_target_id,
     exec_test_command,
     get_random_text,
+    view_command_attribute,
+    wait_for_condition,
 )
 
 
@@ -26,6 +28,12 @@ def master_domain():
             "id",
         ]
     )
+
+    def get_domain_status():
+        status = view_command_attribute("domains", domain_id, "status")
+        return "active" in status
+
+    wait_for_condition(5, 30, get_domain_status)
 
     yield domain_id
 
