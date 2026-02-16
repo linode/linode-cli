@@ -153,7 +153,8 @@ def test_check_vm_for_ipv4_connectivity(
         output = result.stdout
         if "0% packet loss" in output:
             break
-        time.sleep(10)
+        if attempt < NUM_OF_RETRIES - 1:
+            time.sleep(10)
 
     assert (
         "0% packet loss" in output
