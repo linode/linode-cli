@@ -34,7 +34,7 @@ def test_clusters_list():
 
         assert cluster["id"]
         assert cluster["region"]
-        assert cluster["status"] in {"available", "unavailable"}
+        assert cluster["status"] in {"available", "unavailable", "hidden", "limited"}
         assert cluster["domain"].endswith(".linodeobjects.com")
         assert cluster["static_site_domain"].startswith("website-")
 
