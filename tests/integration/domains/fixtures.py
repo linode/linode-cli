@@ -4,15 +4,10 @@ from tests.integration.helpers import (
     BASE_CMDS,
     delete_target_id,
     exec_test_command,
+    get_domain_status,
     get_random_text,
-    view_command_attribute,
     wait_for_condition,
 )
-
-
-def get_domain_status(command: str, item_id: str, expected_status: str) -> bool:
-    status = view_command_attribute(command, item_id, "status")
-    return expected_status in status
 
 
 @pytest.fixture(scope="function")

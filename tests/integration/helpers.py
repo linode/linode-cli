@@ -58,7 +58,7 @@ BASE_CMDS = {module: ["linode-cli", module] for module in MODULES}
 
 
 def get_random_text(length: int = 10):
-    return "".join(random.choice(ascii_lowercase) for i in range(length))
+    return "".join(random.choice(ascii_lowercase) for _ in range(length))
 
 
 def wait_for_condition(interval: int, timeout: int, condition: Callable, *args):
@@ -229,3 +229,8 @@ def view_command_attribute(command: str, item_id: str, attribute: str) -> str:
             attribute,
         ]
     )
+
+
+def get_domain_status(command: str, item_id: str, expected_status: str) -> bool:
+    status = view_command_attribute(command, item_id, "status")
+    return expected_status in status
