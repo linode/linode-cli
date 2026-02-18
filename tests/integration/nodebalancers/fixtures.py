@@ -4,6 +4,8 @@ from tests.integration.helpers import (
     BASE_CMDS,
     delete_target_id,
     exec_test_command,
+    check_attribute_value,
+    wait_for_condition
 )
 from tests.integration.linodes.helpers import DEFAULT_TEST_IMAGE
 
@@ -216,6 +218,9 @@ def nodebalancer_with_udp_config_and_node(linode_cloud_firewall):
             "id",
         ]
     )
+    # Verify configs-list contains just created confid id
+    wait_for_condition(5, 60, check_attribute_value, "nodebalancers",
+                       "configs-list", nodebalancer_id, "id", config_id)
 
     linode_create = exec_test_command(
         BASE_CMDS["linodes"]
