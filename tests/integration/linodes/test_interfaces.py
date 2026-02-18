@@ -46,10 +46,10 @@ def assert_interface_configuration(
     )
 
     assert (
-        vpc_interface is not None
+        vpc_interface
     ), "Expected interface with purpose 'vpc' in configuration"
     assert (
-        public_interface is not None
+        public_interface
     ), "Expected interface with purpose 'public' in configuration"
     assert vpc_interface["primary"]
     assert vpc_interface["purpose"] == "vpc"
