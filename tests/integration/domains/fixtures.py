@@ -2,9 +2,9 @@ import pytest
 
 from tests.integration.helpers import (
     BASE_CMDS,
+    check_attribute_value,
     delete_target_id,
     exec_test_command,
-    check_attribute_value,
     get_random_text,
     wait_for_condition,
 )

@@ -18,11 +18,11 @@ import requests
 
 from linodecli import ENV_TOKEN_NAME
 from tests.integration.helpers import (
+    check_attribute_value,
     delete_target_id,
     exec_test_command,
     get_random_region_with_caps,
     get_random_text,
-    check_attribute_value,
     wait_for_condition,
 )
 

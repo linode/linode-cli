@@ -2,10 +2,10 @@ import pytest
 
 from tests.integration.helpers import (
     BASE_CMDS,
+    check_attribute_value,
     delete_target_id,
     exec_test_command,
-    check_attribute_value,
-    wait_for_condition
+    wait_for_condition,
 )
 from tests.integration.linodes.helpers import DEFAULT_TEST_IMAGE
 
