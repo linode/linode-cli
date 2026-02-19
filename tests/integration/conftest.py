@@ -99,8 +99,16 @@ def linode_cloud_firewall():
 
     firewall_id = exec_test_command(command)
     # Verify firewall status is reachable before proceeding with tests
-    wait_for_condition(5, 60, check_attribute_value, "firewalls", "view",
-                       firewall_id, "status", "enabled")
+    wait_for_condition(
+        5,
+        60,
+        check_attribute_value,
+        "firewalls",
+        "view",
+        firewall_id,
+        "status",
+        "enabled",
+    )
 
     yield firewall_id
 

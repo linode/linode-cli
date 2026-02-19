@@ -217,7 +217,9 @@ def assert_help_actions_list(expected_actions, help_output):
         assert expected_action in output_actions
 
 
-def view_command_attribute(command: str, action: str, item_id: str, attribute: str) -> str:
+def view_command_attribute(
+    command: str, action: str, item_id: str, attribute: str
+) -> str:
     return exec_test_command(
         BASE_CMDS[command]
         + [
@@ -231,6 +233,8 @@ def view_command_attribute(command: str, action: str, item_id: str, attribute: s
     )
 
 
-def check_attribute_value(command: str, action: str, item_id: str, attribute: str, expected_val: str) -> bool:
+def check_attribute_value(
+    command: str, action: str, item_id: str, attribute: str, expected_val: str
+) -> bool:
     result = view_command_attribute(command, action, item_id, attribute)
     return expected_val in result

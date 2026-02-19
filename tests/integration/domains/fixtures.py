@@ -30,8 +30,16 @@ def master_domain():
     )
 
     # Verify domain status becomes active before proceeding with tests
-    wait_for_condition(5, 60, check_attribute_value, "domains", "view",
-                       domain_id, "status", "active")
+    wait_for_condition(
+        5,
+        60,
+        check_attribute_value,
+        "domains",
+        "view",
+        domain_id,
+        "status",
+        "active",
+    )
 
     yield domain_id
 
@@ -59,8 +67,16 @@ def slave_domain():
     )
 
     # Verify domain status becomes active before proceeding with tests
-    wait_for_condition(5, 60, check_attribute_value, "domains", "view",
-                       domain_id, "status", "active")
+    wait_for_condition(
+        5,
+        60,
+        check_attribute_value,
+        "domains",
+        "view",
+        domain_id,
+        "status",
+        "active",
+    )
 
     yield domain_id
 
@@ -86,8 +102,16 @@ def domain_and_record():
     )
 
     # Verify domain status becomes active before proceeding with tests
-    wait_for_condition(5, 60, check_attribute_value, "domains", "view",
-                       domain_id, "status", "active")
+    wait_for_condition(
+        5,
+        60,
+        check_attribute_value,
+        "domains",
+        "view",
+        domain_id,
+        "status",
+        "active",
+    )
 
     # Create record
     record_id = exec_test_command(

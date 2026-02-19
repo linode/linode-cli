@@ -219,8 +219,16 @@ def nodebalancer_with_udp_config_and_node(linode_cloud_firewall):
         ]
     )
     # Verify configs-list contains just created confid id
-    wait_for_condition(5, 60, check_attribute_value, "nodebalancers",
-                       "configs-list", nodebalancer_id, "id", config_id)
+    wait_for_condition(
+        5,
+        60,
+        check_attribute_value,
+        "nodebalancers",
+        "configs-list",
+        nodebalancer_id,
+        "id",
+        config_id,
+    )
 
     linode_create = exec_test_command(
         BASE_CMDS["linodes"]
