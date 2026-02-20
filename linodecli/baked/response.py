@@ -193,6 +193,10 @@ def _parse_response_model(schema, prefix=None, nested_list_depth=0):
     for k, v in properties.items():
         pref = prefix + "." + k if prefix else k
 
+        # Skip attributes with x-linode-cli-skip extension
+        if v.extensions.get("linode-cli-skip"):
+            continue
+
         if (
             v.type == "object"
             and v.properties is None
