@@ -6,7 +6,7 @@ for LKE cluster operations (create and update).
 """
 
 import argparse
-import json
+
 import pytest
 
 from linodecli.baked.operation import TYPES
@@ -255,10 +255,16 @@ class TestLKEAplEnabledIntegrationWithOtherFields:
             help="Whether APL is enabled on the cluster",
         )
         parser.add_argument(
-            "--node_pools.type", type=str, action="append", dest="node_pools_type"
+            "--node_pools.type",
+            type=str,
+            action="append",
+            dest="node_pools_type",
         )
         parser.add_argument(
-            "--node_pools.count", type=int, action="append", dest="node_pools_count"
+            "--node_pools.count",
+            type=int,
+            action="append",
+            dest="node_pools_count",
         )
 
         result = parser.parse_args(

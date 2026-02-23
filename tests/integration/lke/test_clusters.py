@@ -439,8 +439,7 @@ def test_create_cluster_with_apl_enabled(monkeypatch):
 
     # Verify apl_enabled is set to true
     res = exec_test_command(
-        BASE_CMDS["lke"]
-        + ["cluster-view", cluster_id, "--json"]
+        BASE_CMDS["lke"] + ["cluster-view", cluster_id, "--json"]
     )
     cluster_data = json.loads(res)
     assert cluster_data[0]["apl_enabled"] is True
@@ -505,8 +504,7 @@ def test_create_cluster_with_apl_disabled(monkeypatch):
 
     # Verify apl_enabled is set to false
     res = exec_test_command(
-        BASE_CMDS["lke"]
-        + ["cluster-view", cluster_id, "--json"]
+        BASE_CMDS["lke"] + ["cluster-view", cluster_id, "--json"]
     )
     cluster_data = json.loads(res)
     assert cluster_data[0]["apl_enabled"] is False
@@ -569,8 +567,7 @@ def test_create_cluster_apl_default(monkeypatch):
 
     # Verify apl_enabled defaults to false
     res = exec_test_command(
-        BASE_CMDS["lke"]
-        + ["cluster-view", cluster_id, "--json"]
+        BASE_CMDS["lke"] + ["cluster-view", cluster_id, "--json"]
     )
     cluster_data = json.loads(res)
     assert cluster_data[0]["apl_enabled"] is False
@@ -605,8 +602,7 @@ def test_update_cluster_enable_apl(lke_cluster, monkeypatch):
 
     # Verify the change persists
     res = exec_test_command(
-        BASE_CMDS["lke"]
-        + ["cluster-view", cluster_id, "--json"]
+        BASE_CMDS["lke"] + ["cluster-view", cluster_id, "--json"]
     )
     cluster_data = json.loads(res)
     assert cluster_data[0]["apl_enabled"] is True
@@ -665,8 +661,7 @@ def test_update_cluster_disable_apl(monkeypatch):
 
     # Verify APL is enabled
     res = exec_test_command(
-        BASE_CMDS["lke"]
-        + ["cluster-view", cluster_id, "--json"]
+        BASE_CMDS["lke"] + ["cluster-view", cluster_id, "--json"]
     )
     cluster_data = json.loads(res)
     assert cluster_data[0]["apl_enabled"] is True
@@ -688,8 +683,7 @@ def test_update_cluster_disable_apl(monkeypatch):
 
     # Verify the change persists
     res = exec_test_command(
-        BASE_CMDS["lke"]
-        + ["cluster-view", cluster_id, "--json"]
+        BASE_CMDS["lke"] + ["cluster-view", cluster_id, "--json"]
     )
     cluster_data = json.loads(res)
     assert cluster_data[0]["apl_enabled"] is False
@@ -779,14 +773,16 @@ def test_list_clusters_includes_apl_enabled(monkeypatch):
     cluster_id_apl_off = get_cluster_id(label=label_apl_off)
 
     # List all clusters and verify apl_enabled is present
-    res = exec_test_command(
-        BASE_CMDS["lke"] + ["clusters-list", "--json"]
-    )
+    res = exec_test_command(BASE_CMDS["lke"] + ["clusters-list", "--json"])
     clusters = json.loads(res)
 
     # Find our test clusters
-    apl_on_cluster = next((c for c in clusters if c["id"] == int(cluster_id_apl_on)), None)
-    apl_off_cluster = next((c for c in clusters if c["id"] == int(cluster_id_apl_off)), None)
+    apl_on_cluster = next(
+        (c for c in clusters if c["id"] == int(cluster_id_apl_on)), None
+    )
+    apl_off_cluster = next(
+        (c for c in clusters if c["id"] == int(cluster_id_apl_off)), None
+    )
 
     assert apl_on_cluster is not None
     assert apl_off_cluster is not None
