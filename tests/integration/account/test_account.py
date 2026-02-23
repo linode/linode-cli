@@ -374,3 +374,9 @@ def test_clients_list():
 
     headers = ["label", "status"]
     assert_headers_in_lines(headers, lines)
+
+
+def test_configure_command_smoke():
+    result = exec_test_command(["linode-cli", "configure", "--help"])
+
+    assert "Configured the Linode CLI" in result
