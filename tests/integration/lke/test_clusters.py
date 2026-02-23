@@ -257,7 +257,7 @@ def test_view_node(lke_cluster):
     )
 
     lines = res.splitlines()
-    headers = ["id", "id,instance_id,status"]
+    headers = ["id", "instance_id", "pool_id", "status"]
     assert_headers_in_lines(headers, lines)
 
 
