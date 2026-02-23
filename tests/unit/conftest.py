@@ -25,7 +25,12 @@ type = g6-nanode-1
 LOADED_FILES = {}
 
 
-FIXTURES_PATH = "tests/fixtures"
+# Use an absolute path for fixtures so tests work regardless of the current
+# working directory (VSCode test runner may change cwd when running a single
+# test file).
+FIXTURES_PATH = os.path.normpath(
+    os.path.join(os.path.dirname(__file__), "..", "fixtures")
+)
 
 
 @contextlib.contextmanager
