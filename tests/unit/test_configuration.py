@@ -2,6 +2,7 @@
 """
 Unit tests for linodecli.configuration
 """
+
 import argparse
 import contextlib
 import io

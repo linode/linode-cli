@@ -73,7 +73,7 @@ This can be achieved using the `SPEC` Makefile argument, for example:
 
 ```bash
 # Download the OpenAPI spec
-curl -o openapi.yaml https://raw.githubusercontent.com/linode/linode-api-docs/development/openapi.yaml
+curl -o openapi.json https://raw.githubusercontent.com/linode/linode-api-openapi/main/openapi.json
 
 # Many arbitrary changes to the spec
 

@@ -2,6 +2,7 @@
 """
 CLI Plugin for handling OBJ
 """
+
 import getpass
 import os
 import re

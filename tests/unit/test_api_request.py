@@ -2,6 +2,7 @@
 """
 Unit tests for linodecli.api_request
 """
+
 import contextlib
 import io
 import json

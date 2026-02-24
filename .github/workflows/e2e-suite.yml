@@ -40,6 +40,14 @@ on:
         options:
           - 'true'
           - 'false'
+      test_report_upload:
+        description: 'Indicates whether to upload the test report to object storage. Defaults to "false"'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
 
   push:
     branches:
@@ -127,7 +135,7 @@ jobs:
 
       - name: Upload Test Report as Artifact
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: test-report-file
           if-no-files-found: ignore
@@ -231,7 +239,8 @@ jobs:
   process-upload-report:
     runs-on: ubuntu-latest
     needs: [integration_tests]
-    if: always() && github.repository == 'linode/linode-cli' # Run even if integration tests fail and only on main repository
+    # Run even if integration tests fail on main repository AND (push event OR (manually triggered and test_report_upload is true))
+    if: always() && github.repository == 'linode/linode-cli' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.test_report_upload == 'true'))
     outputs:
       summary: ${{ steps.set-test-summary.outputs.summary }}
 
@@ -243,7 +252,7 @@ jobs:
           submodules: 'recursive'
 
       - name: Download test report
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: test-report-file
 
@@ -257,7 +266,6 @@ jobs:
 
       - name: Set release version env
         run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
-
 
       - name: Add variables and upload test results
         if: always()

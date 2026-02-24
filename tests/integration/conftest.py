@@ -18,10 +18,12 @@ import requests
 
 from linodecli import ENV_TOKEN_NAME
 from tests.integration.helpers import (
+    check_attribute_value,
     delete_target_id,
     exec_test_command,
     get_random_region_with_caps,
     get_random_text,
+    wait_for_condition,
 )
 
 
@@ -96,6 +98,17 @@ def linode_cloud_firewall():
         command.extend(["--rules.inbound", inbound_rule])
 
     firewall_id = exec_test_command(command)
+    # Verify firewall status is reachable before proceeding with tests
+    wait_for_condition(
+        5,
+        60,
+        check_attribute_value,
+        "firewalls",
+        "view",
+        firewall_id,
+        "status",
+        "enabled",
+    )
 
     yield firewall_id
 
