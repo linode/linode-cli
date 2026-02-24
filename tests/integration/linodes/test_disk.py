@@ -17,7 +17,7 @@ from tests.integration.linodes.helpers import (
 def test_disk_resize_clone_and_create(linode_instance_disk_tests):
     linode_id = linode_instance_disk_tests
 
-    disk_id = get_disk_ids(linode_id=linode_id)[1]
+    disk_id = get_disk_ids(linode_id=linode_id)[0]
 
     # resize disk
     retry_exec_test_command_with_delay(
@@ -99,7 +99,7 @@ def test_disk_resize_clone_and_create(linode_instance_disk_tests):
 
 def test_disk_reset_password(linode_instance_disk_tests):
     linode_id = linode_instance_disk_tests
-    disk_id = get_disk_ids(linode_id)[1]
+    disk_id = get_disk_ids(linode_id)[0]
 
     retry_exec_test_command_with_delay(
         BASE_CMDS["linodes"]
@@ -118,7 +118,7 @@ def test_disk_reset_password(linode_instance_disk_tests):
 
 def test_disk_update(linode_instance_disk_tests):
     linode_id = linode_instance_disk_tests
-    disk_id = get_disk_ids(linode_id)[1]
+    disk_id = get_disk_ids(linode_id)[0]
 
     update_label = get_random_text(5) + "newdisk"
 

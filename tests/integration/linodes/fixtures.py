@@ -10,6 +10,7 @@ from tests.integration.helpers import (
     get_random_region_with_caps,
     get_random_text,
     retry_exec_test_command_with_delay,
+    wait_for_condition,
 )
 from tests.integration.linodes.helpers import (
     DEFAULT_LABEL,
@@ -133,8 +134,14 @@ def linode_instance_config_tests(linode_cloud_firewall):
 def linode_disk_config(linode_instance_config_tests):
     linode_id = linode_instance_config_tests
 
+    def disks_ready():
+        disks = get_disk_ids(linode_id=linode_id)
+        return len(disks) > 0
+
+    wait_for_condition(10, 120, disks_ready)
+
+    disk_id = get_disk_ids(linode_id=linode_id)[0]
     label = get_random_text(5) + "_config"
-    disk_id = get_disk_ids(linode_id=linode_id)[1]
 
     config_id = exec_test_command(
         BASE_CMDS["linodes"]
