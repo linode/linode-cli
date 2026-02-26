@@ -18,36 +18,31 @@ from tests.integration.linodes.helpers import (
 )
 
 
-def test_config_create(linode_instance_config_tests):
+def test_config_create(linode_instance_config_tests, linode_disk_config):
     linode_id = linode_instance_config_tests
+    config_id = linode_disk_config
 
-    label = get_random_text(5) + "_config"
-    disk_id = get_disk_ids(linode_id=linode_id)[1]
-
-    result = exec_test_command(
+    res = exec_test_command(
         BASE_CMDS["linodes"]
         + [
-            "config-create",
+            "config-view",
             linode_id,
-            "--label",
-            label,
-            "--devices.sda.disk_id",
-            disk_id,
+            config_id,
             "--text",
         ]
     )
 
     headers = ["id", "label", "kernel"]
-
-    assert_headers_in_lines(headers, result.splitlines())
-    assert label in result
+    assert_headers_in_lines(headers, res.splitlines())
+    assert config_id in res
 
 
 def test_config_delete(linode_instance_config_tests):
     linode_id = linode_instance_config_tests
 
+    disk_id = get_disk_ids(linode_id=linode_id)[0]
+
     label = get_random_text(5) + "_config"
-    disk_id = get_disk_ids(linode_id=linode_id)[1]
 
     config_id = exec_test_command(
         BASE_CMDS["linodes"]
@@ -65,12 +60,7 @@ def test_config_delete(linode_instance_config_tests):
     )
 
     retry_exec_test_command_with_delay(
-        BASE_CMDS["linodes"]
-        + [
-            "config-delete",
-            linode_id,
-            config_id,
-        ]
+        BASE_CMDS["linodes"] + ["config-delete", linode_id, config_id]
     )
 
 
