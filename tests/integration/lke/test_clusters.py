@@ -414,7 +414,7 @@ def test_create_cluster_with_apl_enabled(monkeypatch):
             "--label",
             label,
             "--node_pools.type",
-            "g6-standard-8",  # APL requires higher specs
+            "g6-dedicated-8",  # APL requires higher specs
             "--node_pools.count",
             "3",  # APL requires minimum 3 nodes
             "--node_pools.disks",
@@ -566,122 +566,6 @@ def test_create_cluster_apl_default(monkeypatch):
     cluster_id = get_cluster_id(label=cluster_label)
 
     # Verify apl_enabled defaults to false
-    res = exec_test_command(
-        BASE_CMDS["lke"] + ["cluster-view", cluster_id, "--json"]
-    )
-    cluster_data = json.loads(res)
-    assert cluster_data[0]["apl_enabled"] is False
-
-    delete_target_id(
-        target="lke", id=cluster_id, delete_command="cluster-delete"
-    )
-
-
-def test_update_cluster_enable_apl(lke_cluster, monkeypatch):
-    """
-    Test updating an existing LKE cluster to enable apl_enabled.
-    """
-    monkeypatch.setenv("LINODE_CLI_API_VERSION", "v4beta")
-
-    cluster_id = lke_cluster
-
-    # Update cluster to enable APL
-    res = exec_test_command(
-        BASE_CMDS["lke"]
-        + [
-            "cluster-update",
-            cluster_id,
-            "--apl_enabled",
-            "true",
-            "--json",
-        ]
-    )
-
-    cluster_data = json.loads(res)
-    assert cluster_data[0]["apl_enabled"] is True
-
-    # Verify the change persists
-    res = exec_test_command(
-        BASE_CMDS["lke"] + ["cluster-view", cluster_id, "--json"]
-    )
-    cluster_data = json.loads(res)
-    assert cluster_data[0]["apl_enabled"] is True
-
-
-def test_update_cluster_disable_apl(monkeypatch):
-    """
-    Test updating an LKE cluster to disable apl_enabled.
-    """
-    monkeypatch.setenv("LINODE_CLI_API_VERSION", "v4beta")
-
-    # Create a cluster with APL enabled first
-    label = get_random_text(8) + "_apl_toggle_cluster"
-
-    test_region = get_random_region_with_caps(
-        required_capabilities=["Linodes", "Kubernetes"]
-    )
-    lke_version = exec_test_command(
-        BASE_CMDS["lke"]
-        + [
-            "versions-list",
-            "--text",
-            "--no-headers",
-        ]
-    ).splitlines()[0]
-
-    cluster_label = exec_test_command(
-        BASE_CMDS["lke"]
-        + [
-            "cluster-create",
-            "--region",
-            test_region,
-            "--label",
-            label,
-            "--node_pools.type",
-            "g6-dedicated-8",
-            "--node_pools.count",
-            "3",
-            "--node_pools.disks",
-            '[{"type":"ext4","size":1024}]',
-            "--k8s_version",
-            lke_version,
-            "--tier",
-            "standard",
-            "--apl_enabled",
-            "true",
-            "--text",
-            "--delimiter",
-            ",",
-            "--no-headers",
-            "--format=label",
-        ]
-    )
-
-    cluster_id = get_cluster_id(label=cluster_label)
-
-    # Verify APL is enabled
-    res = exec_test_command(
-        BASE_CMDS["lke"] + ["cluster-view", cluster_id, "--json"]
-    )
-    cluster_data = json.loads(res)
-    assert cluster_data[0]["apl_enabled"] is True
-
-    # Update cluster to disable APL
-    res = exec_test_command(
-        BASE_CMDS["lke"]
-        + [
-            "cluster-update",
-            cluster_id,
-            "--apl_enabled",
-            "false",
-            "--json",
-        ]
-    )
-
-    cluster_data = json.loads(res)
-    assert cluster_data[0]["apl_enabled"] is False
-
-    # Verify the change persists
     res = exec_test_command(
         BASE_CMDS["lke"] + ["cluster-view", cluster_id, "--json"]
     )

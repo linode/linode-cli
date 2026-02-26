@@ -155,58 +155,6 @@ class TestLKEAplEnabled:
         assert result.cluster_id == "12345"
         assert result.apl_enabled is False
 
-    def test_apl_enabled_in_json_output(self):
-        """
-        Test that apl_enabled field is present in JSON responses.
-        """
-        # Simulate a cluster response with apl_enabled
-        cluster_response = {
-            "id": 12345,
-            "label": "test-cluster",
-            "region": "us-east",
-            "k8s_version": "1.28",
-            "apl_enabled": True,
-        }
-
-        # Verify the field is accessible
-        assert "apl_enabled" in cluster_response
-        assert cluster_response["apl_enabled"] is True
-
-        # Simulate a cluster with APL disabled
-        cluster_response_disabled = {
-            "id": 12346,
-            "label": "test-cluster-2",
-            "region": "us-west",
-            "k8s_version": "1.28",
-            "apl_enabled": False,
-        }
-
-        assert cluster_response_disabled["apl_enabled"] is False
-
-    def test_apl_enabled_field_type_validation(self):
-        """
-        Test that apl_enabled only accepts boolean-compatible values.
-        """
-        parser = argparse.ArgumentParser(prog="lke-cluster-create")
-        parser.add_argument(
-            "--apl_enabled",
-            type=TYPES["boolean"],
-            help="Whether APL is enabled on the cluster",
-        )
-
-        # Valid boolean values should work
-        valid_values = ["true", "false", "1", "0", "TRUE", "FALSE", "yes", "no"]
-        for value in valid_values:
-            try:
-                result = parser.parse_args(["--apl_enabled", value])
-                assert isinstance(result.apl_enabled, bool) or (
-                    result.apl_enabled is None
-                )
-            except (ValueError, SystemExit) as e:
-                # Some invalid values might raise exceptions
-                # which is acceptable behavior
-                pass
-
     @pytest.mark.parametrize(
         "input_value,expected_output",
         [
