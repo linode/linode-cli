@@ -11,6 +11,7 @@ from tests.integration.domains.fixtures import (  # noqa: F401
 from tests.integration.helpers import (
     BASE_CMDS,
     contains_at_least_one_of,
+    delete_target_id,
     exec_test_command,
 )
 
@@ -52,6 +53,9 @@ def test_create_a_domain(master_domain):
         domain_list_before.splitlines()
     )
     assert another_domain in domain_list_after
+
+    # clean-up
+    delete_target_id("domains", id=another_domain)
 
 
 @pytest.mark.smoke
