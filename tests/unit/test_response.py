@@ -122,3 +122,46 @@ class TestResponse:
             {"subkey1": "item1", "subkey2": True},
             {"subkey1": "item2", "subkey2": False},
         ]
+
+    def test_skip_response_attributes(self, get_skip_test_operation):
+        """
+        Test that response attributes with x-linode-cli-skip extension are excluded.
+        """
+        model = get_skip_test_operation.response_model
+        attr_map = {attr.name: attr for attr in model.attrs}
+
+        # These fields should be present
+        assert "id" in attr_map
+        assert "visible_field" in attr_map
+        assert "another_visible_field" in attr_map
+        assert "nested_object.nested_visible_field" in attr_map
+
+        # These fields should be skipped
+        assert "skipped_response_field" not in attr_map
+        assert "skipped_both_field" not in attr_map
+        assert "nested_object.nested_skipped_field" not in attr_map
+
+    def test_skip_attributes_in_both_request_and_response(
+        self, post_skip_test_operation, get_skip_test_operation
+    ):
+        """
+        Test that attributes marked with x-linode-cli-skip are excluded from both
+        request and response models.
+        """
+        # Test request model
+        request_args = post_skip_test_operation.args
+        request_arg_map = {arg.path: arg for arg in request_args}
+
+        # Test response model
+        response_model = get_skip_test_operation.response_model
+        response_attr_map = {attr.name: attr for attr in response_model.attrs}
+
+        # The skipped_both_field should not appear in either model
+        assert "skipped_both_field" not in request_arg_map
+        assert "skipped_both_field" not in response_attr_map
+
+        # But visible fields should appear in both
+        assert "visible_field" in request_arg_map
+        assert "visible_field" in response_attr_map
+        assert "another_visible_field" in request_arg_map
+        assert "another_visible_field" in response_attr_map
