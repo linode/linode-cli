@@ -252,7 +252,7 @@ jobs:
           submodules: 'recursive'
 
       - name: Download test report
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: test-report-file
 
