@@ -147,7 +147,7 @@ def test_fails_to_create_vpc_invalid_label():
     )
 
     assert "Request failed: 400" in res
-    assert "Label must include only ASCII" in res
+    assert "Must only use ASCII letters, numbers, and dashes" in res
 
 
 def test_fails_to_create_vpc_duplicate_label(test_vpc_wo_subnet):
@@ -175,7 +175,7 @@ def test_fails_to_update_vpc_invalid_label(test_vpc_wo_subnet):
     )
 
     assert "Request failed: 400" in res
-    assert "Label must include only ASCII" in res
+    assert "Must only use ASCII letters, numbers, and dashes" in res
 
 
 def test_fails_to_create_vpc_subnet_w_invalid_label(test_vpc_wo_subnet):
@@ -196,7 +196,7 @@ def test_fails_to_create_vpc_subnet_w_invalid_label(test_vpc_wo_subnet):
     )
 
     assert "Request failed: 400" in res
-    assert "Label must include only ASCII" in res
+    assert "Must only use ASCII letters, numbers, and dashes" in res
 
 
 def test_fails_to_update_vpc_subenet_w_invalid_label(test_vpc_w_subnet):
@@ -225,7 +225,7 @@ def test_fails_to_update_vpc_subenet_w_invalid_label(test_vpc_w_subnet):
     )
 
     assert "Request failed: 400" in res
-    assert "Label must include only ASCII" in res
+    assert "Must only use ASCII letters, numbers, and dashes" in res
 
 
 @pytest.mark.skipif(
