@@ -199,7 +199,7 @@ def test_fails_to_create_vpc_subnet_w_invalid_label(test_vpc_wo_subnet):
     assert "Must only use ASCII letters, numbers, and dashes" in res
 
 
-def test_fails_to_update_vpc_subenet_w_invalid_label(test_vpc_w_subnet):
+def test_fails_to_update_vpc_subnet_w_invalid_label(test_vpc_w_subnet):
     vpc_id = test_vpc_w_subnet
 
     invalid_label = "invalid_label"
