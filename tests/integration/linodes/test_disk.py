@@ -1,3 +1,5 @@
+import json
+
 from tests.integration.helpers import (
     BASE_CMDS,
     assert_headers_in_lines,
@@ -14,24 +16,33 @@ from tests.integration.linodes.helpers import (
 )
 
 
+def _get_smallest_disk_id(linode_id):
+    """Return the disk ID of the smallest disk (e.g. swap) on the Linode."""
+    disks_json = exec_test_command(
+        BASE_CMDS["linodes"]
+        + [
+            "disks-list",
+            linode_id,
+            "--json",
+        ]
+    )
+    disks = json.loads(disks_json)
+    smallest = min(disks, key=lambda d: d["size"])
+    return str(smallest["id"])
+
+
 def test_disk_resize_clone_and_create(linode_instance_disk_tests):
     linode_id = linode_instance_disk_tests
 
-    disk_id = get_disk_ids(linode_id=linode_id)[0]
+    # Ensure disks are available
+    def disks_ready():
+        return len(get_disk_ids(linode_id=linode_id)) >= 2
 
-    # resize disk
-    retry_exec_test_command_with_delay(
-        BASE_CMDS["linodes"]
-        + [
-            "disk-resize",
-            linode_id,
-            disk_id,
-            "--size",
-            "50",
-        ],
-        retries=3,
-        delay=10,
-    )
+    wait_for_condition(10, 120, disks_ready)
+
+    # Use the smallest disk (swap) for resize/clone — the main OS disk
+    # is too large to shrink to 50 MB because it contains filesystem data.
+    disk_id = _get_smallest_disk_id(linode_id)
 
     def disk_poll_func():
         status = exec_test_command(
@@ -46,10 +57,45 @@ def test_disk_resize_clone_and_create(linode_instance_disk_tests):
             ]
         )
 
-        return status == "ready"
+        return status.strip() == "ready"
 
-    # Wait for the instance to be ready
-    wait_for_condition(15, 150, disk_poll_func)
+    # Make sure the disk is ready before resizing
+    wait_for_condition(15, 300, disk_poll_func)
+
+    # resize disk
+    retry_exec_test_command_with_delay(
+        BASE_CMDS["linodes"]
+        + [
+            "disk-resize",
+            linode_id,
+            disk_id,
+            "--size",
+            "50",
+        ],
+        retries=10,
+        delay=15,
+    )
+
+    # Wait for the disk to be ready after resize
+    wait_for_condition(15, 300, disk_poll_func)
+
+    def disk_size_poll_func():
+        size = exec_test_command(
+            BASE_CMDS["linodes"]
+            + [
+                "disk-view",
+                linode_id,
+                disk_id,
+                "--text",
+                "--no-headers",
+                "--format=size",
+            ]
+        )
+
+        return size.strip() == "50"
+
+    # Verify the resize actually took effect
+    wait_for_condition(15, 300, disk_size_poll_func)
 
     # clone disk
     res = retry_exec_test_command_with_delay(
@@ -60,8 +106,8 @@ def test_disk_resize_clone_and_create(linode_instance_disk_tests):
             disk_id,
             "--text",
         ],
-        retries=3,
-        delay=10,
+        retries=10,
+        delay=15,
     )
 
     headers = ["id", "label", "status", "size", "filesystem", "disk_encryption"]
