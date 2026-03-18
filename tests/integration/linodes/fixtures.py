@@ -259,7 +259,9 @@ def linode_instance_disk_tests(linode_cloud_firewall):
     )
 
     retry_exec_test_command_with_delay(
-        BASE_CMDS["linodes"] + ["shutdown", linode_id]
+        BASE_CMDS["linodes"] + ["shutdown", linode_id],
+        retries=10,
+        delay=15,
     )
 
     wait_until(linode_id=linode_id, timeout=240, status="offline")

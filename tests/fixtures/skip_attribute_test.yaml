@@ -1,0 +1,138 @@
+openapi: 3.0.1
+info:
+  title: API Specification for x-linode-cli-skip Tests
+  version: 1.0.0
+servers:
+  - url: http://localhost/v4
+
+paths:
+  /skip/test:
+    x-linode-cli-command: skip-test
+    get:
+      summary: Test GET with skipped response attributes
+      operationId: getSkipTest
+      x-linode-cli-action: list
+      description: List items with some attributes skipped
+      responses:
+        '200':
+          description: Successful response with skipped attributes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SkipTestResponse'
+                  page:
+                    $ref: '#/components/schemas/PaginationEnvelope/properties/page'
+                  pages:
+                    $ref: '#/components/schemas/PaginationEnvelope/properties/pages'
+                  results:
+                    $ref: '#/components/schemas/PaginationEnvelope/properties/results'
+    post:
+      summary: Create with skipped request attributes
+      operationId: createSkipTest
+      x-linode-cli-action: create
+      description: Create an item with some request attributes skipped
+      requestBody:
+        description: Parameters for creating the item
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+              - visible_field
+              allOf:
+              - $ref: '#/components/schemas/SkipTestRequest'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkipTestResponse'
+
+components:
+  schemas:
+    PaginationEnvelope:
+      type: object
+      properties:
+        pages:
+          type: integer
+          readOnly: true
+          description: The total number of pages.
+          example: 1
+        page:
+          type: integer
+          readOnly: true
+          description: The current page.
+          example: 1
+        results:
+          type: integer
+          readOnly: true
+          description: The total number of results.
+          example: 1
+
+    SkipTestRequest:
+      type: object
+      description: Request object with skipped fields
+      properties:
+        visible_field:
+          type: string
+          description: This field should be visible
+        skipped_request_field:
+          type: string
+          x-linode-cli-skip: true
+          description: This field should be skipped in request
+        another_visible_field:
+          type: integer
+          description: Another visible field
+        skipped_both_field:
+          type: string
+          x-linode-cli-skip: true
+          description: This field should be skipped in both request and response
+        nested_object:
+          type: object
+          properties:
+            nested_visible_field:
+              type: string
+              description: This nested field should be visible
+            nested_skipped_field:
+              type: string
+              x-linode-cli-skip: true
+              description: This nested field should be skipped
+
+    SkipTestResponse:
+      type: object
+      description: Response object with skipped fields
+      properties:
+        id:
+          type: integer
+          readOnly: true
+          description: The unique ID
+        visible_field:
+          type: string
+          description: This field should be visible
+        skipped_response_field:
+          type: string
+          x-linode-cli-skip: true
+          description: This field should be skipped in response
+        another_visible_field:
+          type: integer
+          description: Another visible field
+        skipped_both_field:
+          type: string
+          x-linode-cli-skip: true
+          description: This field should be skipped in both request and response
+        nested_object:
+          type: object
+          properties:
+            nested_visible_field:
+              type: string
+              description: This nested field should be visible
+            nested_skipped_field:
+              type: string
+              x-linode-cli-skip: true
+              description: This nested field should be skipped

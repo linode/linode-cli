@@ -5,6 +5,7 @@ from tests.integration.helpers import (
     delete_target_id,
     exec_test_command,
     get_random_text,
+    wait_for_condition,
 )
 
 
@@ -30,6 +31,23 @@ def volume_instance_id():
         ]
     )
 
+    def poll_volume_status():
+        status = exec_test_command(
+            BASE_CMDS["volumes"]
+            + [
+                "view",
+                volume_id,
+                "--text",
+                "--no-headers",
+                "--format=status",
+            ]
+        )
+        return status.strip() == "active"
+
+    wait_for_condition(10, 240, poll_volume_status)
+
     yield volume_id
 
-    delete_target_id(target="volumes", id=volume_id)
+    delete_target_id(
+        target="volumes", id=volume_id, use_retry=True, retries=5, delay=15
+    )

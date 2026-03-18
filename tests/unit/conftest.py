@@ -25,7 +25,12 @@ type = g6-nanode-1
 LOADED_FILES = {}
 
 
-FIXTURES_PATH = "tests/fixtures"
+# Use an absolute path for fixtures so tests work regardless of the current
+# working directory (VSCode test runner may change cwd when running a single
+# test file).
+FIXTURES_PATH = os.path.normpath(
+    os.path.join(os.path.dirname(__file__), "..", "fixtures")
+)
 
 
 @contextlib.contextmanager
@@ -379,6 +384,42 @@ def get_openapi_for_docs_url_tests() -> OpenAPI:
     """
 
     return _get_parsed_spec("docs_url_test.yaml")
+
+
+@pytest.fixture
+def get_skip_test_operation():
+    """
+    Creates a CLI operation for testing x-linode-cli-skip on response attributes.
+
+    GET http://localhost/v4/skip/test
+    """
+    spec = _get_parsed_spec("skip_attribute_test.yaml")
+    path = list(spec.paths.values())[0]
+
+    return make_test_operation(
+        path.extensions.get("linode-cli-command", "default"),
+        getattr(path, "get"),
+        "get",
+        path.parameters,
+    )
+
+
+@pytest.fixture
+def post_skip_test_operation():
+    """
+    Creates a CLI operation for testing x-linode-cli-skip on request attributes.
+
+    POST http://localhost/v4/skip/test
+    """
+    spec = _get_parsed_spec("skip_attribute_test.yaml")
+    path = list(spec.paths.values())[0]
+
+    return make_test_operation(
+        path.extensions.get("linode-cli-command", "default"),
+        getattr(path, "post"),
+        "post",
+        path.parameters,
+    )
 
 
 @pytest.fixture

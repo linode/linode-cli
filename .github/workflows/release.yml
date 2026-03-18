@@ -45,7 +45,7 @@ jobs:
         uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # pin@v3.12.0
 
       - name: Login to Docker Hub
-        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # pin@v3.6.0
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # pin@v3.7.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -67,7 +67,7 @@ jobs:
           result-encoding: string
 
       - name: Build and push to DockerHub
-        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # pin@v6.18.0
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # pin@v6.19.2
         with:
           context: .
           file: Dockerfile

@@ -160,6 +160,10 @@ def _parse_request_model(
     for k, v in properties.items():
         k = escape_arg_segment(k)
 
+        # Skip attributes with x-linode-cli-skip extension
+        if v.extensions.get("linode-cli-skip"):
+            continue
+
         # Handle nested objects which aren't read-only and have properties
         if (
             v.type == "object"
