@@ -1,5 +1,4 @@
 import os
-import time
 
 from linodecli.exit_codes import ExitCodes
 from tests.integration.helpers import (
@@ -12,7 +11,6 @@ from tests.integration.volumes.fixtures import volume_instance_id  # noqa: F401
 
 def test_resize_fails_to_smaller_volume(volume_instance_id):
     volume_id = volume_instance_id
-    time.sleep(5)
     result = exec_failing_test_command(
         BASE_CMDS["volumes"]
         + ["resize", volume_id, "--size", "5", "--text", "--no-headers"],
