@@ -214,7 +214,7 @@ def create_vpc_w_subnet():
     See: https://github.com/pytest-dev/pytest/issues/1216
     """
 
-    region = get_random_region_with_caps(required_capabilities=["VPCs"])
+    region = get_random_region_with_caps(required_capabilities=["VPCs", "NodeBalancers"])
     vpc_label = get_random_text(5) + "label"
     subnet_label = get_random_text(5) + "label"
 

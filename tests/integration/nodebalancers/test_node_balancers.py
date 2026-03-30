@@ -1,3 +1,5 @@
+import ipaddress
+import json
 import re
 
 import pytest
@@ -5,9 +7,14 @@ import pytest
 from linodecli.exit_codes import ExitCodes
 from tests.integration.helpers import (
     BASE_CMDS,
+    delete_target_id,
     exec_failing_test_command,
     exec_test_command,
 )
+
+
+def nodebalancer_created():
+    return "[0-9]+,balancer[0-9]+,us-ord,[0-9]+-[0-9]+-[0-9]+-[0-9]+.ip.linodeusercontent.com,0"
 
 
 def test_fail_to_create_nodebalancer_without_region():
@@ -537,5 +544,77 @@ def test_view_node_for_node_balancer_udp_configuration(
     )
 
 
-def nodebalancer_created():
-    return "[0-9]+,balancer[0-9]+,us-ord,[0-9]+-[0-9]+-[0-9]+-[0-9]+.ip.linodeusercontent.com,0"
+def test_nb_with_backend_vpc_only(get_vpc_with_subnet):
+    vpc = get_vpc_with_subnet
+
+    nb_attrs = exec_test_command(
+        BASE_CMDS["nodebalancers"]
+        + [
+            "create",
+            "--region",
+            vpc["region"],
+            "--backend_vpcs.subnet_id",
+            str(vpc["subnets"][0]["id"]),
+            "--text",
+            "--delimiter",
+            ",",
+            "--no-headers",
+        ]
+    ).split(",")
+
+    assert isinstance(ipaddress.ip_address(nb_attrs[5]), ipaddress.IPv4Address)
+    assert isinstance(ipaddress.ip_address(nb_attrs[6]), ipaddress.IPv6Address)
+    assert nb_attrs[-2] == "public"
+    assert nb_attrs[-1] == ""
+
+    nb_vpcs = exec_test_command(
+        BASE_CMDS["nodebalancers"]
+        + [
+            "vpcs-list",
+            nb_attrs[0],
+            "--json",
+        ]
+    )
+    nb_vpcs = json.loads(nb_vpcs)
+
+    assert len(nb_vpcs) == 1
+    assert nb_vpcs[0]["purpose"] == "backend"
+
+    nb_vpc = exec_test_command(
+        BASE_CMDS["nodebalancers"]
+        + [
+            "vpc-view",
+            nb_attrs[0],
+            str(nb_vpcs[0]["id"]),
+            "--json",
+        ]
+    )
+    nb_vpc = json.loads(nb_vpc)
+
+    assert nb_vpc[0]["purpose"] == "backend"
+
+    # TODO: Uncomment when API implementation of /backend_vpcs and /frontend_vpcs endpoints is finished
+    # nb_backend_vpcs = exec_test_command(
+    #     BASE_CMDS["nodebalancers"]
+    #     + [
+    #         "backend_vpcs-list",
+    #         nb_attrs[0],
+    #         "--json",
+    #     ]
+    # )
+    # nb_backend_vpcs = json.loads(nb_backend_vpcs)
+    # assert len(nb_backend_vpcs) == 1
+    # assert nb_backend_vpcs[0]["purpose"] == "backend"
+    #
+    # nb_frontend_vpcs = exec_test_command(
+    #     BASE_CMDS["nodebalancers"]
+    #     + [
+    #         "frontend_vpcs-list",
+    #         nb_attrs[0],
+    #         "--json",
+    #     ]
+    # )
+    # nb_frontend_vpcs = json.loads(nb_frontend_vpcs)
+    # assert len(nb_frontend_vpcs) == 0
+
+    delete_target_id(target="nodebalancers", id=nb_attrs[0])
