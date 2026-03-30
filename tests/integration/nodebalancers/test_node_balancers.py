@@ -560,58 +560,34 @@ def test_nb_with_backend_vpc_only(get_vpc_with_subnet):
     )
     nb_attrs = json.loads(nb_attrs)
     nb_id = str(nb_attrs[0]["id"])
-
     assert isinstance(ipaddress.ip_address(nb_attrs[0]["ipv4"]), ipaddress.IPv4Address)
     assert isinstance(ipaddress.ip_address(nb_attrs[0]["ipv6"]), ipaddress.IPv6Address)
     assert nb_attrs[0]["frontend_address_type"] == "public"
     assert nb_attrs[0]["frontend_vpc_subnet_id"] is None
 
     nb_vpcs = exec_test_command(
-        BASE_CMDS["nodebalancers"]
-        + [
-            "vpcs-list",
-            nb_id,
-            "--json",
-        ]
+        BASE_CMDS["nodebalancers"] + ["vpcs-list", nb_id, "--json",]
     )
     nb_vpcs = json.loads(nb_vpcs)
-
     assert len(nb_vpcs) == 1
     assert nb_vpcs[0]["purpose"] == "backend"
 
     nb_vpc = exec_test_command(
-        BASE_CMDS["nodebalancers"]
-        + [
-            "vpc-view",
-            nb_id,
-            str(nb_vpcs[0]["id"]),
-            "--json",
-        ]
+        BASE_CMDS["nodebalancers"] + ["vpc-view", nb_id, str(nb_vpcs[0]["id"]), "--json",]
     )
     nb_vpc = json.loads(nb_vpc)
-
     assert nb_vpc[0]["purpose"] == "backend"
 
     # TODO: Uncomment when API implementation of /backend_vpcs and /frontend_vpcs endpoints is finished
     # nb_backend_vpcs = exec_test_command(
-    #     BASE_CMDS["nodebalancers"]
-    #     + [
-    #         "backend_vpcs-list",
-    #         nb_id,
-    #         "--json",
-    #     ]
+    #     BASE_CMDS["nodebalancers"] + ["backend_vpcs-list", nb_id, "--json",]
     # )
     # nb_backend_vpcs = json.loads(nb_backend_vpcs)
     # assert len(nb_backend_vpcs) == 1
     # assert nb_backend_vpcs[0]["purpose"] == "backend"
     #
     # nb_frontend_vpcs = exec_test_command(
-    #     BASE_CMDS["nodebalancers"]
-    #     + [
-    #         "frontend_vpcs-list",
-    #         nb_id,
-    #         "--json",
-    #     ]
+    #     BASE_CMDS["nodebalancers"] + ["frontend_vpcs-list", nb_id, "--json",]
     # )
     # nb_frontend_vpcs = json.loads(nb_frontend_vpcs)
     # assert len(nb_frontend_vpcs) == 0
@@ -648,24 +624,14 @@ def test_nb_with_frontend_ipv4_only(get_vpc_with_subnet):
 
     # TODO: Uncomment when API implementation of /backend_vpcs and /frontend_vpcs endpoints is finished
     # nb_frontend_vpcs = exec_test_command(
-    #     BASE_CMDS["nodebalancers"]
-    #     + [
-    #         "frontend_vpcs-list",
-    #         nb_id,
-    #         "--json",
-    #     ]
+    #     BASE_CMDS["nodebalancers"] + ["frontend_vpcs-list", nb_id, "--json",]
     # )
     # nb_frontend_vpcs = json.loads(nb_frontend_vpcs)
     # assert len(nb_frontend_vpcs) == 1
     # assert nb_frontend_vpcs[0]["purpose"] == "frontend"
     #
     # nb_backend_vpcs = exec_test_command(
-    #     BASE_CMDS["nodebalancers"]
-    #     + [
-    #         "backend_vpcs-list",
-    #         nb_id,
-    #         "--json",
-    #     ]
+    #     BASE_CMDS["nodebalancers"] + ["backend_vpcs-list", nb_id, "--json",]
     # )
     # nb_backend_vpcs = json.loads(nb_backend_vpcs)
     # assert len(nb_backend_vpcs) == 0
