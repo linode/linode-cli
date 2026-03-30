@@ -96,7 +96,7 @@ def nodebalancer_w_config_and_node(linode_cloud_firewall):
             config_id,
             "--format",
             "id",
-        ]
+            ]
     )
 
     yield nodebalancer_id, config_id, node_id, node_ip
@@ -280,7 +280,7 @@ def nodebalancer_with_udp_config_and_node(linode_cloud_firewall):
             "--no-headers",
             "--format",
             "id",
-        ]
+            ]
     )
 
     yield nodebalancer_id, config_id, node_id, node_ip
