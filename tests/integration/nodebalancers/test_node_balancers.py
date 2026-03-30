@@ -13,6 +13,30 @@ from tests.integration.helpers import (
 )
 
 
+# Lists of valid regions where NodeBalancers of type "premium" or "premium_40gb" can be created
+PREMIUM_REGIONS = [
+    "nl-ams",
+    "jp-tyo-3",
+    "sg-sin-2",
+    "de-fra-2",
+    "in-bom-2",
+    "gb-lon",
+    "us-lax",
+    "id-cgk",
+    "us-mia",
+    "it-mil",
+    "jp-osa",
+    "in-maa",
+    "se-sto",
+    "br-gru",
+    "us-sea",
+    "fr-par",
+    "us-iad",
+    "pl-labkrk-2",  # DevCloud
+]
+PREMIUM_40GB_REGIONS = ["us-iad"]  # No DevCloud region for premium_40gb type
+
+
 def nodebalancer_created():
     return "[0-9]+,balancer[0-9]+,us-ord,[0-9]+-[0-9]+-[0-9]+-[0-9]+.ip.linodeusercontent.com,0"
 
@@ -595,6 +619,7 @@ def test_nb_with_backend_vpc_only(get_vpc_with_subnet):
     delete_target_id(target="nodebalancers", id=nb_id)
 
 
+@pytest.mark.parametrize("get_vpc_with_subnet", [PREMIUM_REGIONS], indirect=True)
 def test_nb_with_frontend_ipv4_only(get_vpc_with_subnet):
     vpc = get_vpc_with_subnet
     ipv4_address = "10.0.0.2"  # first available address
@@ -637,3 +662,68 @@ def test_nb_with_frontend_ipv4_only(get_vpc_with_subnet):
     # assert len(nb_backend_vpcs) == 0
 
     delete_target_id(target="nodebalancers", id=nb_id)
+
+
+@pytest.mark.parametrize("get_vpc_with_subnet", [PREMIUM_REGIONS], indirect=True)
+def test_nb_with_frontend_ipv6_in_single_stack_vpc_fail(get_vpc_with_subnet):
+    vpc = get_vpc_with_subnet
+
+    result = exec_failing_test_command(
+        BASE_CMDS["nodebalancers"]
+        + [
+            "create",
+            "--region",
+            vpc["region"],
+            "--frontend_vpcs.subnet_id",
+            str(vpc["subnets"][0]["id"]),
+            "--frontend_vpcs.ipv6_range",
+            "/62",
+            "--type",
+            "premium",
+        ],
+    )
+    assert "Request failed: 400" in result
+    assert "No IPv6 subnets available in VPC" in result
+
+
+@pytest.mark.parametrize("get_vpc_with_subnet", [PREMIUM_REGIONS], indirect=True)
+def test_nb_with_frontend_and_default_type_fail(get_vpc_with_subnet):
+    vpc = get_vpc_with_subnet
+
+    result = exec_failing_test_command(
+        BASE_CMDS["nodebalancers"]
+        + [
+            "create",
+            "--region",
+            vpc["region"],
+            "--frontend_vpcs.subnet_id",
+            str(vpc["subnets"][0]["id"]),
+        ],
+    )
+    assert "Request failed: 400" in result
+    assert "NodeBalancer with frontend VPC IP must be premium" in result
+
+
+@pytest.mark.parametrize(
+    "get_vpc_with_subnet",
+    [PREMIUM_40GB_REGIONS],
+    indirect=True,
+)
+def test_nb_with_premium40gb_type(get_vpc_with_subnet):
+    vpc = get_vpc_with_subnet
+
+    nb_attrs = exec_test_command(
+        BASE_CMDS["nodebalancers"]
+        + [
+            "create",
+            "--region",
+            vpc["region"],
+            "--type",
+            "premium_40gb",
+            "--json",
+        ],
+    )
+    nb_attrs = json.loads(nb_attrs)
+    assert nb_attrs[0]["type"] == "premium_40gb"
+
+    delete_target_id(target="nodebalancers", id=str(nb_attrs[0]["id"]))

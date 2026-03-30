@@ -11,7 +11,7 @@ from collections import defaultdict
 from itertools import count
 from pathlib import Path
 from random import randint
-from typing import Callable, Optional
+from typing import Callable, List, Optional
 
 import pytest
 import requests
@@ -203,7 +203,7 @@ def generate_test_files(
     return _generate_test_files
 
 
-def create_vpc_w_subnet():
+def create_vpc_w_subnet(valid_regions: List[str] = None):
     """
     Creates and returns a VPC and a corresponding subnet.
 
@@ -214,7 +214,10 @@ def create_vpc_w_subnet():
     See: https://github.com/pytest-dev/pytest/issues/1216
     """
 
-    region = get_random_region_with_caps(required_capabilities=["VPCs", "NodeBalancers"])
+    region = get_random_region_with_caps(
+        required_capabilities=["VPCs", "NodeBalancers"],
+        valid_regions=valid_regions,
+    )
     vpc_label = get_random_text(5) + "label"
     subnet_label = get_random_text(5) + "label"
 
