@@ -567,6 +567,9 @@ def test_view_node_for_node_balancer_udp_configuration(
     )
 
 
+@pytest.mark.parametrize(
+    "get_vpc_with_subnet", [PREMIUM_REGIONS], indirect=True
+)
 def test_nb_with_backend_vpc_only(get_vpc_with_subnet):
     vpc = get_vpc_with_subnet
 
