@@ -1,5 +1,3 @@
-import json
-
 import pytest
 
 from tests.integration.conftest import create_vpc_w_subnet
@@ -8,8 +6,6 @@ from tests.integration.helpers import (
     check_attribute_value,
     delete_target_id,
     exec_test_command,
-    get_random_region_with_caps,
-    get_random_text,
     wait_for_condition,
 )
 from tests.integration.linodes.helpers import DEFAULT_TEST_IMAGE

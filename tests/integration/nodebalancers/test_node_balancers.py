@@ -570,49 +570,54 @@ def test_view_node_for_node_balancer_udp_configuration(
 def test_nb_with_backend_vpc_only(get_vpc_with_subnet):
     vpc = get_vpc_with_subnet
 
-    nb_attrs = exec_test_command(
-        BASE_CMDS["nodebalancers"]
-        + [
-            "create",
-            "--region",
-            vpc["region"],
-            "--backend_vpcs.subnet_id",
-            str(vpc["subnets"][0]["id"]),
-            "--json",
-        ]
+    nb_attrs = json.loads(
+        exec_test_command(
+            BASE_CMDS["nodebalancers"]
+            + [
+                "create",
+                "--region",
+                vpc["region"],
+                "--backend_vpcs.subnet_id",
+                str(vpc["subnets"][0]["id"]),
+                "--json",
+            ]
+        ),
     )
-    nb_attrs = json.loads(nb_attrs)
     nb_id = str(nb_attrs[0]["id"])
     assert isinstance(ipaddress.ip_address(nb_attrs[0]["ipv4"]), ipaddress.IPv4Address)
     assert isinstance(ipaddress.ip_address(nb_attrs[0]["ipv6"]), ipaddress.IPv6Address)
     assert nb_attrs[0]["frontend_address_type"] == "public"
     assert nb_attrs[0]["frontend_vpc_subnet_id"] is None
 
-    nb_vpcs = exec_test_command(
-        BASE_CMDS["nodebalancers"] + ["vpcs-list", nb_id, "--json",]
+    nb_vpcs = json.loads(
+        exec_test_command(
+            BASE_CMDS["nodebalancers"] + ["vpcs-list", nb_id, "--json",]
+        ),
     )
-    nb_vpcs = json.loads(nb_vpcs)
     assert len(nb_vpcs) == 1
     assert nb_vpcs[0]["purpose"] == "backend"
 
-    nb_vpc = exec_test_command(
-        BASE_CMDS["nodebalancers"] + ["vpc-view", nb_id, str(nb_vpcs[0]["id"]), "--json",]
+    nb_vpc = json.loads(
+        exec_test_command(
+            BASE_CMDS["nodebalancers"] + ["vpc-view", nb_id, str(nb_vpcs[0]["id"]), "--json",]
+        ),
     )
-    nb_vpc = json.loads(nb_vpc)
     assert nb_vpc[0]["purpose"] == "backend"
 
     # TODO: Uncomment when API implementation of /backend_vpcs and /frontend_vpcs endpoints is finished
-    # nb_backend_vpcs = exec_test_command(
-    #     BASE_CMDS["nodebalancers"] + ["backend_vpcs-list", nb_id, "--json",]
+    # nb_backend_vpcs = json.loads(
+    #     exec_test_command(
+    #         BASE_CMDS["nodebalancers"] + ["backend_vpcs-list", nb_id, "--json",]
+    #     ),
     # )
-    # nb_backend_vpcs = json.loads(nb_backend_vpcs)
     # assert len(nb_backend_vpcs) == 1
     # assert nb_backend_vpcs[0]["purpose"] == "backend"
     #
-    # nb_frontend_vpcs = exec_test_command(
-    #     BASE_CMDS["nodebalancers"] + ["frontend_vpcs-list", nb_id, "--json",]
+    # nb_frontend_vpcs = json.loads(
+    #     exec_test_command(
+    #         BASE_CMDS["nodebalancers"] + ["frontend_vpcs-list", nb_id, "--json",]
+    #     ),
     # )
-    # nb_frontend_vpcs = json.loads(nb_frontend_vpcs)
     # assert len(nb_frontend_vpcs) == 0
 
     delete_target_id(target="nodebalancers", id=nb_id)
@@ -623,22 +628,23 @@ def test_nb_with_frontend_ipv4_only(get_vpc_with_subnet):
     vpc = get_vpc_with_subnet
     ipv4_address = "10.0.0.2"  # first available address
 
-    nb_attrs = exec_test_command(
-        BASE_CMDS["nodebalancers"]
-        + [
-            "create",
-            "--region",
-            vpc["region"],
-            "--frontend_vpcs.subnet_id",
-            str(vpc["subnets"][0]["id"]),
-            "--frontend_vpcs.ipv4_range",
-            "10.0.0.0/24",
-            "--type",
-            "premium",
-            "--json",
-        ]
+    nb_attrs = json.loads(
+        exec_test_command(
+            BASE_CMDS["nodebalancers"]
+            + [
+                "create",
+                "--region",
+                vpc["region"],
+                "--frontend_vpcs.subnet_id",
+                str(vpc["subnets"][0]["id"]),
+                "--frontend_vpcs.ipv4_range",
+                "10.0.0.0/24",
+                "--type",
+                "premium",
+                "--json",
+            ],
+        ),
     )
-    nb_attrs = json.loads(nb_attrs)
     nb_id = str(nb_attrs[0]["id"])
 
     assert nb_attrs[0]["ipv4"] == ipv4_address
@@ -647,17 +653,19 @@ def test_nb_with_frontend_ipv4_only(get_vpc_with_subnet):
     assert nb_attrs[0]["frontend_vpc_subnet_id"] == vpc["subnets"][0]["id"]
 
     # TODO: Uncomment when API implementation of /backend_vpcs and /frontend_vpcs endpoints is finished
-    # nb_frontend_vpcs = exec_test_command(
-    #     BASE_CMDS["nodebalancers"] + ["frontend_vpcs-list", nb_id, "--json",]
+    # nb_frontend_vpcs = json.loads(
+    #     exec_test_command(
+    #         BASE_CMDS["nodebalancers"] + ["frontend_vpcs-list", nb_id, "--json",]
+    #     ),
     # )
-    # nb_frontend_vpcs = json.loads(nb_frontend_vpcs)
     # assert len(nb_frontend_vpcs) == 1
     # assert nb_frontend_vpcs[0]["purpose"] == "frontend"
     #
-    # nb_backend_vpcs = exec_test_command(
-    #     BASE_CMDS["nodebalancers"] + ["backend_vpcs-list", nb_id, "--json",]
+    # nb_backend_vpcs = json.loads(
+    #     exec_test_command(
+    #         BASE_CMDS["nodebalancers"] + ["backend_vpcs-list", nb_id, "--json",]
+    #     ),
     # )
-    # nb_backend_vpcs = json.loads(nb_backend_vpcs)
     # assert len(nb_backend_vpcs) == 0
 
     delete_target_id(target="nodebalancers", id=nb_id)
@@ -711,18 +719,19 @@ def test_nb_with_frontend_and_default_type_fail(get_vpc_with_subnet):
 def test_nb_with_premium40gb_type(get_vpc_with_subnet):
     vpc = get_vpc_with_subnet
 
-    nb_attrs = exec_test_command(
-        BASE_CMDS["nodebalancers"]
-        + [
-            "create",
-            "--region",
-            vpc["region"],
-            "--type",
-            "premium_40gb",
-            "--json",
-        ],
+    nb_attrs = json.loads(
+        exec_test_command(
+            BASE_CMDS["nodebalancers"]
+            + [
+                "create",
+                "--region",
+                vpc["region"],
+                "--type",
+                "premium_40gb",
+                "--json",
+            ],
+        ),
     )
-    nb_attrs = json.loads(nb_attrs)
     assert nb_attrs[0]["type"] == "premium_40gb"
 
     delete_target_id(target="nodebalancers", id=str(nb_attrs[0]["id"]))
