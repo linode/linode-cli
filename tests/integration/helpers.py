@@ -212,7 +212,9 @@ def get_random_region_with_caps(
 
     # To filter out regions that cannot be used for the Linode resource
     if valid_regions:
-        matching_region_ids = [reg for reg in matching_region_ids if reg in valid_regions]
+        matching_region_ids = [
+            reg for reg in matching_region_ids if reg in valid_regions
+        ]
 
     return random.choice(matching_region_ids) if matching_region_ids else None
 
