@@ -12,7 +12,6 @@ from tests.integration.helpers import (
     exec_test_command,
 )
 
-
 # Lists of valid regions where NodeBalancers of type "premium" or "premium_40gb" can be created
 PREMIUM_REGIONS = [
     "nl-ams",
