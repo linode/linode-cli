@@ -10,6 +10,7 @@ from tests.integration.helpers import (
     delete_target_id,
     exec_failing_test_command,
     exec_test_command,
+    get_random_text,
 )
 
 # Lists of valid regions where NodeBalancers of type "premium" or "premium_40gb" can be created
@@ -735,3 +736,97 @@ def test_nb_with_premium40gb_type(get_vpc_with_subnet):
     assert nb_attrs[0]["type"] == "premium_40gb"
 
     delete_target_id(target="nodebalancers", id=str(nb_attrs[0]["id"]))
+
+
+@pytest.mark.parametrize("get_vpc_with_subnet", [PREMIUM_REGIONS], indirect=True)
+def test_nb_with_frontend_and_backend_in_different_vpcs(get_vpc_with_subnet):
+    vpc_backend = get_vpc_with_subnet
+    ipv4_range = "10.0.0.0/24"
+    ipv4_address = "10.0.0.2"  # first available address
+
+    vpc_frontend = json.loads(
+        exec_test_command(
+            [
+                "linode-cli",
+                "vpcs",
+                "create",
+                "--label",
+                get_random_text(5) + "label",
+                "--region",
+                vpc_backend["region"],
+                # "--ipv6.range",    TODO: Uncomment after VPC Dual Stack is ready to ship
+                # "auto",
+                "--subnets.ipv4",
+                "10.0.0.0/24",
+                "--subnets.label",
+                get_random_text(5) + "label",
+                "--json",
+                "--suppress-warnings",
+            ]
+        )
+    )[0]
+    # ipv6_range = vpc_frontend.subnets[0]["ipv6"],    TODO: Uncomment after VPC Dual Stack is ready to ship
+    # ipv6_address = ipv6_range.split("::")[0] + ":1::1"
+
+    nb_attrs = json.loads(
+        exec_test_command(
+            BASE_CMDS["nodebalancers"]
+            + [
+                "create",
+                "--region",
+                vpc_backend["region"],
+                "--backend_vpcs.subnet_id",
+                str(vpc_backend["subnets"][0]["id"]),
+                "--frontend_vpcs.subnet_id",
+                str(vpc_frontend["subnets"][0]["id"]),
+                "--frontend_vpcs.ipv4_range",
+                "10.0.0.0/24",
+                # "--frontend_vpcs.ipv6_range",    TODO: Uncomment after VPC Dual Stack is ready to ship
+                # "auto",
+                "--type",
+                "premium",
+                "--json",
+            ]
+        ),
+    )
+    nb_id = str(nb_attrs[0]["id"])
+
+    assert nb_attrs[0]["ipv4"] == ipv4_address
+    assert nb_attrs[0]["ipv6"] is None
+    # assert nb_attrs[0]["ipv6"] == ipv6_address    TODO: Uncomment and remove above line after VPC Dual Stack is ready to ship
+    assert nb_attrs[0]["frontend_address_type"] == "vpc"
+    assert nb_attrs[0]["frontend_vpc_subnet_id"] == vpc_frontend["subnets"][0]["id"]
+
+    nb_vpcs = json.loads(
+        exec_test_command(
+            BASE_CMDS["nodebalancers"] + ["vpcs-list", nb_id, "--json",]
+        ),
+    )
+    nb_vpcs.sort(key=lambda x: x["purpose"])
+
+    assert len(nb_vpcs) == 2
+    assert nb_vpcs[0]["purpose"] == "backend"
+    assert nb_vpcs[1]["ipv4_range"] == f"{ipv4_address}/32"
+    assert nb_vpcs[1]["ipv6_range"] is None
+    # assert nb_vpcs[1]["ipv6_range"] == f"{ipv6_address[:-1]}/64"    TODO: Uncomment after VPC Dual Stack is ready to ship
+    assert nb_vpcs[1]["purpose"] == "frontend"
+
+    # TODO: Uncomment when API implementation of /backend_vpcs and /frontend_vpcs endpoints is finished
+    # nb_backend_vpcs = json.loads(
+    #     exec_test_command(
+    #         BASE_CMDS["nodebalancers"] + ["backend_vpcs-list", nb_id, "--json",]
+    #     ),
+    # )
+    # assert len(nb_backend_vpcs) == 1
+    # assert nb_backend_vpcs[0]["purpose"] == "backend"
+    #
+    # nb_frontend_vpcs = json.loads(
+    #     exec_test_command(
+    #         BASE_CMDS["nodebalancers"] + ["frontend_vpcs-list", nb_id, "--json",]
+    #     ),
+    # )
+    # assert len(nb_frontend_vpcs) == 1
+    # assert nb_frontend_vpcs[0]["purpose"] == "frontend"
+
+    delete_target_id(target="nodebalancers", id=str(nb_attrs[0]["id"]))
+    delete_target_id(target="vpcs", id=str(vpc_frontend["id"]))
