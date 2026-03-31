@@ -672,6 +672,32 @@ def test_nb_with_frontend_ipv4_only(get_vpc_with_subnet):
     assert nb_attrs[0]["frontend_address_type"] == "vpc"
     assert nb_attrs[0]["frontend_vpc_subnet_id"] == vpc["subnets"][0]["id"]
 
+    nb_vpcs = json.loads(
+        exec_test_command(
+            BASE_CMDS["nodebalancers"]
+            + [
+                "vpcs-list",
+                nb_id,
+                "--json",
+            ]
+        ),
+    )
+    assert len(nb_vpcs) == 1
+    assert nb_vpcs[0]["purpose"] == "frontend"
+
+    nb_vpc = json.loads(
+        exec_test_command(
+            BASE_CMDS["nodebalancers"]
+            + [
+                "vpc-view",
+                nb_id,
+                str(nb_vpcs[0]["id"]),
+                "--json",
+            ]
+        ),
+    )
+    assert nb_vpc[0]["purpose"] == "frontend"
+
     # TODO: Uncomment when API implementation of /backend_vpcs and /frontend_vpcs endpoints is finished
     # nb_frontend_vpcs = json.loads(
     #     exec_test_command(
