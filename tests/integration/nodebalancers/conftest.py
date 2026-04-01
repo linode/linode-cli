@@ -1,3 +1,5 @@
+import json
+
 import pytest
 
 from tests.integration.conftest import create_vpc_w_subnet
@@ -339,7 +341,7 @@ def simple_nodebalancer_with_config(linode_cloud_firewall):
     delete_target_id(target="nodebalancers", id=nodebalancer_id)
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def get_vpc_with_subnet(request):
     premium_regions = getattr(request, "param", None)
     vpc_json = create_vpc_w_subnet(premium_regions)
