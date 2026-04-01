@@ -1,5 +1,3 @@
-import json
-
 import pytest
 
 from tests.integration.conftest import create_vpc_w_subnet
