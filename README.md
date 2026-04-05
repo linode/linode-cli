@@ -20,6 +20,7 @@ To upgrade:
 ```
 pipx upgrade linode-cli
 ```
+```
 We recommend using `pipx` to install `linode-cli`, as it installs Python CLI tools in isolated environments and avoids conflicts with system-managed Python packages (PEP 668).
 Visit the [Wiki](../../wiki/Installation) for more information.
 
