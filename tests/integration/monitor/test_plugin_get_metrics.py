@@ -1,19 +1,3 @@
-import json
-import os
-
-import pytest
-
-from tests.integration.helpers import (
-    exec_failing_test_command,
-    exec_test_command,
-    get_random_text,
-)
-from linodecli.exit_codes import ExitCodes
-
-# Base command for get_metrics plugin
-BASE_CMD = ["linode-cli", "get_metrics"]
-
-
 """
 Integration tests for the get_metrics plugin
 """
@@ -28,8 +12,8 @@ from tests.integration.helpers import (
 )
 from linodecli.exit_codes import ExitCodes
 
-# Base command for get_metrics plugin
-BASE_CMD = ["linode-cli", "get_metrics"]
+# Base command for monitor-api plugin
+BASE_CMD = ["linode-cli", "monitor-api", "get-metrics"]
 
 
 def test_missing_required_args():

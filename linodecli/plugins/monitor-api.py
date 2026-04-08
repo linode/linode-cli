@@ -1,6 +1,11 @@
 """
-This plugin allows users to query metrics from the monitoring service for various services.
+This plugin provides access to the Linode Monitor API.
 
+Commands:
+    get-metrics: Query metrics from the monitoring service for various services.
+
+Usage:
+    linode-cli monitor-api get-metrics <service> [options]
 """
 
 import json
@@ -16,10 +21,11 @@ from linodecli.exit_codes import ExitCodes
 from linodecli.help_formatter import SortingHelpFormatter
 from linodecli.helpers import register_debug_arg
 
-PLUGIN_BASE = "linode-cli get_metrics"
+PLUGIN_BASE = "linode-cli monitor-api"
 
 # API Configuration
-API_BASE_URL = "https://monitor-api.linode.com/v2/monitor/services"
+API_BASE_URL = "https://monitor-api.linode.com"
+API_VERSION = "v2"
 
 
 def get_auth_token():
@@ -80,7 +86,7 @@ def make_api_request(
     Returns:
         Tuple of (status_code, response_data)
     """
-    url = f"{API_BASE_URL}/{service_name}/{endpoint}"
+    url = f"{API_BASE_URL}/{API_VERSION}/monitor/services/{service_name}/{endpoint}"
 
     headers = {
         "Authorization": f"Bearer {token or get_auth_token()}",
@@ -263,7 +269,7 @@ def print_help(parser: ArgumentParser):
     print("\nExamples:")
     print("  # Get metrics with relative time duration")
     print(
-        "  linode-cli get_metrics dbaas --entity-ids 123 --duration 15 "
+        "  linode-cli monitor-api get-metrics dbaas --entity-ids 123 --duration 15 "
         "--duration-unit min --metrics cpu_usage:avg"
     )
 
@@ -272,42 +278,42 @@ def print_help(parser: ArgumentParser):
         "(only allowed for objectstorage service)"
     )
     print(
-        "  linode-cli get_metrics objectstorage --duration 15 "
+        "  linode-cli monitor-api get-metrics objectstorage --duration 15 "
         "--duration-unit min --metrics obj_requests_num:avg "
         "--entity-region us-east-1"
     )
 
     print("\n  # Get metrics with absolute time duration")
     print(
-        "  linode-cli get_metrics dbaas --entity-ids 123 "
+        "  linode-cli monitor-api get-metrics dbaas --entity-ids 123 "
         "--start-time 2024-10-10T00:00:01Z --end-time 2024-10-10T23:59:59Z "
         "--metrics cpu_usage:avg,memory_usage:sum"
     )
 
     print("\n  # Get metrics with filters")
     print(
-        "  linode-cli get_metrics dbaas --entity-ids 123 --duration 15 "
+        "  linode-cli monitor-api get-metrics dbaas --entity-ids 123 --duration 15 "
         "--duration-unit min --metrics cpu_usage:avg "
         "--filters 'node_type:in:primary,secondary'"
     )
 
     print("\n  # Get metrics with multiple filters")
     print(
-        "  linode-cli get_metrics dbaas --entity-ids 123 --duration 15 "
+        "  linode-cli monitor-api get-metrics dbaas --entity-ids 123 --duration 15 "
         "--duration-unit min --metrics cpu_usage:avg "
         "--filters 'node_type:in:primary,secondary;status:eq:active'"
     )
 
     print("\n  # Get metrics with granularity")
     print(
-        "  linode-cli get_metrics netloadbalancer --entity-ids 123 "
+        "  linode-cli monitor-api get-metrics netloadbalancer --entity-ids 123 "
         "--duration 1 --duration-unit hour --metrics nlb_ingress_traffic:sum "
         "--granularity 10 --granularity-unit min"
     )
 
     print("\n  # Get metrics with entity region (required ObjectStorage)")
     print(
-        "  linode-cli get_metrics objectstorage --entity-region us-east-1 "
+        "  linode-cli monitor-api get-metrics objectstorage --entity-region us-east-1 "
         "--duration 15 --duration-unit min --metrics obj_requests_num:sum"
     )
 
@@ -316,7 +322,7 @@ def print_help(parser: ArgumentParser):
         "(mandatory for cloud firewall service)"
     )
     print(
-        "  linode-cli get_metrics firewall --entity-region us-east-1 "
+        "  linode-cli monitor-api get-metrics firewall --entity-region us-east-1 "
         "--associated-entity-region us-west-1 --duration 15 "
         "--duration-unit min --metrics fw_active_connections:sum"
     )
@@ -332,12 +338,19 @@ def get_metrics_parser():
 
     register_debug_arg(parser)
 
-    # Service name as positional argument
+    # Command as first positional argument
+    parser.add_argument(
+        "command",
+        nargs="?",
+        help="Command to execute (get-metrics)",
+    )
+
+    # Service name as second positional argument
     parser.add_argument(
         "service",
         nargs="?",
         help="Service name (Dbaas, Nodebalancer, NetLoadBalancer, Linode, "
-        "Firewall, ObjectStorage, Blockstorage,LKE)",
+        "Firewall, ObjectStorage, Blockstorage, LKE)",
     )
 
     # Optional arguments for get-metrics functionality
@@ -457,9 +470,22 @@ def call(args, context=None):  # pylint: disable=unused-argument
     parsed, remaining_args = parser.parse_known_args(args)
 
     # Handle help cases
-    if not parsed.service or parsed.service == "help" or "--help" in args:
+    if not parsed.command or parsed.command == "help" or "--help" in args:
         print_help(parser)
         sys.exit(ExitCodes.SUCCESS)
+
+    # Validate command
+    if parsed.command != "get-metrics":
+        print(f"Unknown command: {parsed.command}", file=sys.stderr)
+        print("Available commands: get-metrics", file=sys.stderr)
+        print_help(parser)
+        sys.exit(ExitCodes.REQUEST_FAILED)
+
+    # Validate service is provided
+    if not parsed.service:
+        print("Service name is required", file=sys.stderr)
+        print_help(parser)
+        sys.exit(ExitCodes.REQUEST_FAILED)
 
     if remaining_args:
         print(f"Unknown arguments: {' '.join(remaining_args)}", file=sys.stderr)
