@@ -42,7 +42,6 @@ def get_auth_token():
     return token
 
 
-
 # Aggregate functions
 AGGREGATE_FUNCTIONS = ["sum", "avg", "max", "min", "count"]
 
@@ -50,6 +49,7 @@ AGGREGATE_FUNCTIONS = ["sum", "avg", "max", "min", "count"]
 @dataclass
 class MetricsConfig:
     """Configuration for metrics request"""
+
     service_name: str
     entity_ids: List
     duration: Optional[int]
@@ -79,7 +79,7 @@ def make_api_request(
     Args:
         service_name: The service name (nodebalancer, netloadbalancer, etc.)
         endpoint: The API endpoint to call
-        method: HTTP method 
+        method: HTTP method
         data: Request payload for POST requests
         token: Bearer token for authentication
 
@@ -211,7 +211,9 @@ def get_metrics(config: MetricsConfig):
     payload = build_payload(config)
 
     if config.entity_ids:
-        print(f"Fetching metrics for {config.service_name} entities: {config.entity_ids}")
+        print(
+            f"Fetching metrics for {config.service_name} entities: {config.entity_ids}"
+        )
     else:
         print(f"Fetching metrics for {config.service_name} (all entities)")
     print(f"Request payload: {json.dumps(payload, indent=2)}")
@@ -233,6 +235,7 @@ def get_metrics(config: MetricsConfig):
         sys.exit(ExitCodes.REQUEST_FAILED)
 
     print_metrics_response(response)
+
 
 def print_metrics_response(data: dict):
     """

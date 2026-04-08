@@ -1,15 +1,11 @@
-import json
-import os
 from importlib import import_module
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
-import pytest
 from pytest import CaptureFixture
 
 # Import the monitor-api module using importlib (hyphens not allowed in regular imports)
 monitor_api = import_module("linodecli.plugins.monitor-api")
 
-call = monitor_api.call
 get_metrics = monitor_api.get_metrics
 get_metrics_parser = monitor_api.get_metrics_parser
 make_api_request = monitor_api.make_api_request
@@ -27,10 +23,16 @@ class TestAPIRequest:
         mock_response.status_code = 200
         mock_response.content = b'{"data": {"test": "data"}}'
         mock_response.json.return_value = {"data": {"test": "data"}}
-        
-        with patch.object(monitor_api.requests, 'post', return_value=mock_response) as mock_post:
+
+        with patch.object(
+            monitor_api.requests, "post", return_value=mock_response
+        ) as mock_post:
             status_code, result = make_api_request(
-                "nodebalancer", "metrics", "POST", {"test": "data"}, "test_token"
+                "nodebalancer",
+                "metrics",
+                "POST",
+                {"test": "data"},
+                "test_token",
             )
 
             assert status_code == 200
@@ -43,8 +45,10 @@ class TestAPIRequest:
         mock_response.status_code = 401
         mock_response.content = b"Unauthorized"
         mock_response.json.return_value = {"error": "Unauthorized"}
-        
-        with patch.object(monitor_api.requests, 'post', return_value=mock_response):
+
+        with patch.object(
+            monitor_api.requests, "post", return_value=mock_response
+        ):
             status_code, _ = make_api_request(
                 "nodebalancer", "metrics", "POST", {}, "test_token"
             )
@@ -56,8 +60,14 @@ class TestGetMetrics:
 
     def test_get_metrics_relative_time(self):
         """Test get_metrics with relative time duration"""
-        with patch.object(monitor_api, 'make_api_request', return_value=(200, {"data": {"test": "data"}})):
-            with patch.object(monitor_api, 'print_metrics_response') as mock_print:
+        with patch.object(
+            monitor_api,
+            "make_api_request",
+            return_value=(200, {"data": {"test": "data"}}),
+        ):
+            with patch.object(
+                monitor_api, "print_metrics_response"
+            ) as mock_print:
                 config = MetricsConfig(
                     service_name="nodebalancer",
                     entity_ids=[123, 456],
@@ -76,8 +86,14 @@ class TestGetMetrics:
 
     def test_get_metrics_absolute_time(self):
         """Test get_metrics with absolute time range"""
-        with patch.object(monitor_api, 'make_api_request', return_value=(200, {"data": {"test": "data"}})):
-            with patch.object(monitor_api, 'print_metrics_response') as mock_print:
+        with patch.object(
+            monitor_api,
+            "make_api_request",
+            return_value=(200, {"data": {"test": "data"}}),
+        ):
+            with patch.object(
+                monitor_api, "print_metrics_response"
+            ) as mock_print:
                 config = MetricsConfig(
                     service_name="dbaas",
                     entity_ids=[789],
@@ -96,8 +112,14 @@ class TestGetMetrics:
 
     def test_get_metrics_with_filters_and_groupby(self):
         """Test get_metrics with filters and group_by"""
-        with patch.object(monitor_api, 'make_api_request', return_value=(200, {"data": {"test": "data"}})):
-            with patch.object(monitor_api, 'print_metrics_response') as mock_print:
+        with patch.object(
+            monitor_api,
+            "make_api_request",
+            return_value=(200, {"data": {"test": "data"}}),
+        ):
+            with patch.object(
+                monitor_api, "print_metrics_response"
+            ) as mock_print:
                 config = MetricsConfig(
                     service_name="dbaas",
                     entity_ids=[123],
@@ -108,7 +130,10 @@ class TestGetMetrics:
                     metrics=["cpu_usage:avg"],
                     granularity=None,
                     granularity_unit=None,
-                    filters=["node_type:in:primary,secondary", "status:eq:active"],
+                    filters=[
+                        "node_type:in:primary,secondary",
+                        "status:eq:active",
+                    ],
                     group_by=["entity_id", "node_type"],
                     token="test_token",
                 )
@@ -118,9 +143,13 @@ class TestGetMetrics:
 
     def test_get_metrics_api_error(self):
         """Test get_metrics with API error response"""
-        with patch.object(monitor_api, 'make_api_request', return_value=(401, {"error": "Unauthorized"})):
-            with patch('builtins.print'):
-                with patch.object(monitor_api.sys, 'exit') as mock_exit:
+        with patch.object(
+            monitor_api,
+            "make_api_request",
+            return_value=(401, {"error": "Unauthorized"}),
+        ):
+            with patch("builtins.print"):
+                with patch.object(monitor_api.sys, "exit") as mock_exit:
                     config = MetricsConfig(
                         service_name="nodebalancer",
                         entity_ids=[123],
