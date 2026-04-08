@@ -6,11 +6,11 @@ import os
 
 import pytest
 
+from linodecli.exit_codes import ExitCodes
 from tests.integration.helpers import (
     exec_failing_test_command,
     exec_test_command,
 )
-from linodecli.exit_codes import ExitCodes
 
 # Base command for monitor-api plugin
 BASE_CMD = ["linode-cli", "monitor-api", "get-metrics"]
