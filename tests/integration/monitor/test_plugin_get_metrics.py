@@ -2,6 +2,8 @@
 Integration tests for the get_metrics plugin
 """
 
+import os
+
 import pytest
 
 from linodecli.exit_codes import ExitCodes
@@ -12,6 +14,12 @@ from tests.integration.helpers import (
 
 # Base command for monitor-api plugin
 BASE_CMD = ["linode-cli", "monitor-api", "get-metrics"]
+
+# Skip decorator for tests that require JWE_TOKEN
+requires_jwe_token = pytest.mark.skipif(
+    not os.getenv("JWE_TOKEN"),
+    reason="JWE_TOKEN environment variable not set",
+)
 
 
 def test_missing_required_args():
@@ -135,6 +143,7 @@ def test_conflicting_time_params():
 
 
 @pytest.mark.smoke
+@requires_jwe_token
 def test_objstorage_metrics_basic():
     """Test get_metrics with objectstorage service (with authentication)"""
     # Use objectstorage service which doesn't require entity-ids
@@ -157,6 +166,7 @@ def test_objstorage_metrics_basic():
     assert "Fetching metrics" in output or "data" in output.lower()
 
 
+@requires_jwe_token
 def test_obj_metrics_with_filters():
     """Test get_metrics with objectstorage service and filters"""
     output = exec_test_command(
@@ -179,6 +189,7 @@ def test_obj_metrics_with_filters():
     assert "Fetching metrics" in output or "data" in output.lower()
 
 
+@requires_jwe_token
 def test_absolute_time_metrics():
     """Test get_metrics with objectstorage service and absolute time range"""
     output = exec_test_command(
@@ -217,6 +228,86 @@ def test_malformed_filters():
             "min",
             "--filters",
             "invalid_filter_format",
+        ],
+        expected_code=ExitCodes.REQUEST_FAILED,
+    )
+
+
+def test_invalid_aggregate_function_value():
+    """Test handling of invalid aggregate function values"""
+    exec_failing_test_command(
+        BASE_CMD
+        + [
+            "nodebalancer",
+            "--entity-ids",
+            "123",
+            "--metrics",
+            "cpu_usage:invalid_func",  # Invalid aggregate function
+            "--duration",
+            "15",
+            "--duration-unit",
+            "min",
+        ],
+        expected_code=ExitCodes.REQUEST_FAILED,
+    )
+
+
+def test_entity_ids_required_for_non_objectstorage():
+    """Test that entity-ids is required for non-objectstorage services"""
+    exec_failing_test_command(
+        BASE_CMD
+        + [
+            "dbaas",
+            "--metrics",
+            "cpu_usage:avg",
+            "--duration",
+            "15",
+            "--duration-unit",
+            "min",
+        ],
+        expected_code=ExitCodes.REQUEST_FAILED,
+    )
+
+
+def test_invalid_granularity_unit():
+    """Test handling of invalid granularity unit"""
+    exec_failing_test_command(
+        BASE_CMD
+        + [
+            "nodebalancer",
+            "--entity-ids",
+            "123",
+            "--metrics",
+            "cpu_usage:avg",
+            "--duration",
+            "15",
+            "--duration-unit",
+            "min",
+            "--granularity",
+            "5",
+            "--granularity-unit",
+            "invalid_unit",
+        ],
+        expected_code=ExitCodes.REQUEST_FAILED,
+    )
+
+
+def test_granularity_without_unit():
+    """Test that granularity requires granularity-unit"""
+    exec_failing_test_command(
+        BASE_CMD
+        + [
+            "nodebalancer",
+            "--entity-ids",
+            "123",
+            "--metrics",
+            "cpu_usage:avg",
+            "--duration",
+            "15",
+            "--duration-unit",
+            "min",
+            "--granularity",
+            "5",
         ],
         expected_code=ExitCodes.REQUEST_FAILED,
     )

@@ -45,6 +45,9 @@ def get_auth_token():
 # Aggregate functions
 AGGREGATE_FUNCTIONS = ["sum", "avg", "max", "min", "count"]
 
+# Allowed time units
+ALLOWED_TIME_UNITS = ["min", "hr", "day"]
+
 
 @dataclass
 class MetricsConfig:
@@ -123,8 +126,32 @@ def parse_metrics(metrics: List[str]) -> List[dict]:
     for metric in metrics:
         if ":" in metric:
             metric_name, agg_func = metric.split(":", 1)
+            metric_name = metric_name.strip()
+            agg_func = agg_func.strip().lower()
+            if not metric_name:
+                print(
+                    f"Metric name is required for metric '{metric}'",
+                    file=sys.stderr,
+                )
+                print(
+                    f"Format: 'metric_name:function' where function is one of: "
+                    f"{', '.join(AGGREGATE_FUNCTIONS)}",
+                    file=sys.stderr,
+                )
+                sys.exit(ExitCodes.REQUEST_FAILED)
+            if agg_func not in AGGREGATE_FUNCTIONS:
+                print(
+                    f"Invalid aggregate function '{agg_func}' for metric '{metric}'",
+                    file=sys.stderr,
+                )
+                print(
+                    f"Aggregate function must be one of: "
+                    f"{', '.join(AGGREGATE_FUNCTIONS)}",
+                    file=sys.stderr,
+                )
+                sys.exit(ExitCodes.REQUEST_FAILED)
             parsed_metrics.append(
-                {"aggregate_function": agg_func, "name": metric_name.strip()}
+                {"aggregate_function": agg_func, "name": metric_name}
             )
         else:
             print(
@@ -206,7 +233,7 @@ def build_payload(config: MetricsConfig) -> dict:
     return payload
 
 
-def get_metrics(config: MetricsConfig):
+def get_metrics(config: MetricsConfig, debug: bool = False):
     """Get metrics for specified service entities"""
     payload = build_payload(config)
 
@@ -216,7 +243,12 @@ def get_metrics(config: MetricsConfig):
         )
     else:
         print(f"Fetching metrics for {config.service_name} (all entities)")
-    print(f"Request payload: {json.dumps(payload, indent=2)}")
+
+    if debug:
+        print(
+            f"Request payload: {json.dumps(payload, indent=2)}",
+            file=sys.stderr,
+        )
 
     try:
         status, response = make_api_request(
@@ -432,6 +464,18 @@ def validate_arguments(parsed):
         print("  --metrics: required", file=sys.stderr)
         return False
 
+    # Validate entity_ids requirement (only objectstorage allows querying all entities)
+    if not parsed.entity_ids and parsed.service.lower() != "objectstorage":
+        print(
+            f"--entity-ids is required for service '{parsed.service}'",
+            file=sys.stderr,
+        )
+        print(
+            "Only 'objectstorage' service allows querying all entities without --entity-ids",
+            file=sys.stderr,
+        )
+        return False
+
     # Validate time duration arguments
     has_relative = (
         parsed.duration is not None and parsed.duration_unit is not None
@@ -450,6 +494,42 @@ def validate_arguments(parsed):
             file=sys.stderr,
         )
         return False
+
+    # Validate duration-unit if provided
+    if parsed.duration is not None and parsed.duration_unit is not None:
+        if parsed.duration_unit not in ALLOWED_TIME_UNITS:
+            print(
+                f"Invalid duration unit '{parsed.duration_unit}'",
+                file=sys.stderr,
+            )
+            print(
+                f"Allowed units: {', '.join(ALLOWED_TIME_UNITS)}",
+                file=sys.stderr,
+            )
+            return False
+
+    # Validate granularity arguments
+    if (parsed.granularity is not None) != (
+        parsed.granularity_unit is not None
+    ):
+        print(
+            "Both --granularity and --granularity-unit must be provided together",
+            file=sys.stderr,
+        )
+        return False
+
+    # Validate granularity-unit if provided
+    if parsed.granularity_unit is not None:
+        if parsed.granularity_unit not in ALLOWED_TIME_UNITS:
+            print(
+                f"Invalid granularity unit '{parsed.granularity_unit}'",
+                file=sys.stderr,
+            )
+            print(
+                f"Allowed units: {', '.join(ALLOWED_TIME_UNITS)}",
+                file=sys.stderr,
+            )
+            return False
 
     return True
 
@@ -473,7 +553,12 @@ def call(args, context=None):  # pylint: disable=unused-argument
     parsed, remaining_args = parser.parse_known_args(args)
 
     # Handle help cases
-    if not parsed.command or parsed.command == "help" or "--help" in args:
+    if (
+        not parsed.command
+        or parsed.command == "help"
+        or "--help" in args
+        or "-h" in args
+    ):
         print_help(parser)
         sys.exit(ExitCodes.SUCCESS)
 
@@ -527,4 +612,4 @@ def call(args, context=None):  # pylint: disable=unused-argument
         associated_entity_region=parsed.associated_entity_region,
     )
 
-    get_metrics(config)
+    get_metrics(config, debug=parsed.debug)
