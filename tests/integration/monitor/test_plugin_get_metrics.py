@@ -16,9 +16,17 @@ from tests.integration.helpers import (
 BASE_CMD = ["linode-cli", "monitor-api", "get-metrics"]
 
 # Skip decorator for tests that require JWE_TOKEN
+# To generate a JWE token, use the Linode Monitor API token endpoint:
+#   POST https://api.linode.com/v4beta/monitor/services/{service}/token
+#   Authorization: Bearer <your-PAT-token>
+#   Body: {"entity_ids": [<entity_id>]}
+# Replace {service} with the service name (e.g. dbaas, nodebalancer, netloadbalancer)
+# and <entity_id> with the ID of the entity to monitor.
+# See: https://www.linode.com/docs/api/monitor/
+# Then export the token: export JWE_TOKEN='<token>'
 requires_jwe_token = pytest.mark.skipif(
     not os.getenv("JWE_TOKEN"),
-    reason="JWE_TOKEN environment variable not set",
+    reason="JWE_TOKEN environment variable not set. See test file header for instructions on generating a JWE token.",
 )
 
 

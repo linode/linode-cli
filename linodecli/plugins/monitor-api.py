@@ -46,7 +46,7 @@ def get_auth_token():
 AGGREGATE_FUNCTIONS = ["sum", "avg", "max", "min", "count"]
 
 # Allowed time units
-ALLOWED_TIME_UNITS = ["min", "hr", "day"]
+ALLOWED_TIME_UNITS = ["min", "hr", "days"]
 
 
 @dataclass
@@ -221,11 +221,17 @@ def build_payload(config: MetricsConfig) -> dict:
                 sys.exit(ExitCodes.REQUEST_FAILED)
 
             dimension_label, operator, value = parts
+            operator = operator.strip()
+            parsed_value = (
+                [v.strip() for v in value.split(",")]
+                if operator == "in"
+                else value.strip()
+            )
             parsed_filters.append(
                 {
                     "dimension_label": dimension_label.strip(),
-                    "operator": operator.strip(),
-                    "value": value.strip(),
+                    "operator": operator,
+                    "value": parsed_value,
                 }
             )
         payload["filters"] = parsed_filters
@@ -301,6 +307,23 @@ def print_help(parser: ArgumentParser):
     """
     parser.print_help()
 
+    print("\nAuthentication:")
+    print(
+        "  This plugin requires a JWE token set via the JWE_TOKEN environment variable."
+    )
+    print("  To generate a JWE token:")
+    print(
+        "    POST https://api.linode.com/v4beta/monitor/services/{service}/token"
+    )
+    print("    Authorization: Bearer <your-PAT-token>")
+    print("    Body: {\"entity_ids\": [<entity_id>]}")
+    print(
+        "  Replace {service} with the service name (e.g. dbaas, nodebalancer, netloadbalancer)"
+    )
+    print("  and <entity_id> with the ID of the entity to monitor.")
+    print("  See: https://www.linode.com/docs/api/monitor/")
+    print("  Then: export JWE_TOKEN='<token>'")
+
     print("\nExamples:")
     print("  # Get metrics with relative time duration")
     print(
@@ -342,7 +365,7 @@ def print_help(parser: ArgumentParser):
     print("\n  # Get metrics with granularity")
     print(
         "  linode-cli monitor-api get-metrics netloadbalancer --entity-ids 123 "
-        "--duration 1 --duration-unit hour --metrics nlb_ingress_traffic:sum "
+        "--duration 1 --duration-unit hr --metrics nlb_ingress_traffic:sum "
         "--granularity 10 --granularity-unit min"
     )
 
@@ -415,7 +438,7 @@ def get_metrics_parser():
         help="Relative time duration to look back (e.g., 15 for 15 minutes)",
     )
     parser.add_argument(
-        "--duration-unit", help="Unit for relative duration: min, hr, day"
+        "--duration-unit", help="Unit for relative duration: min, hr, days"
     )
     parser.add_argument(
         "--start-time",
@@ -439,12 +462,14 @@ def get_metrics_parser():
     )
     parser.add_argument(
         "--granularity-unit",
-        help="Unit for granularity: min, hr, day (optional)",
+        help="Unit for granularity: min, hr, days (optional)",
     )
     parser.add_argument(
         "--filters",
         help="Optional filters in format 'dimension:operator:value'. "
         "Multiple filters separated by semicolons. "
+        "Operators: eq, neq, startswith, endswith, in. "
+        "For 'in' operator, separate values with commas. "
         "Example: 'node_type:in:primary,secondary;status:eq:active'",
     )
     parser.add_argument(
@@ -566,23 +591,20 @@ def call(args, context=None):  # pylint: disable=unused-argument
     if parsed.command != "get-metrics":
         print(f"Unknown command: {parsed.command}", file=sys.stderr)
         print("Available commands: get-metrics", file=sys.stderr)
-        print_help(parser)
         sys.exit(ExitCodes.REQUEST_FAILED)
 
     # Validate service is provided
     if not parsed.service:
         print("Service name is required", file=sys.stderr)
-        print_help(parser)
         sys.exit(ExitCodes.REQUEST_FAILED)
 
     if remaining_args:
         print(f"Unknown arguments: {' '.join(remaining_args)}", file=sys.stderr)
-        print_help(parser)
         sys.exit(ExitCodes.REQUEST_FAILED)
 
     # Validate arguments
     if not validate_arguments(parsed):
-        print_help(parser)
+        print("Invalid arguments. Run with --help for usage.", file=sys.stderr)
         sys.exit(ExitCodes.REQUEST_FAILED)
 
     # Parse arguments
