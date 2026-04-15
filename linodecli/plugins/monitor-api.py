@@ -316,7 +316,7 @@ def print_help(parser: ArgumentParser):
         "    POST https://api.linode.com/v4beta/monitor/services/{service}/token"
     )
     print("    Authorization: Bearer <your-PAT-token>")
-    print("    Body: {\"entity_ids\": [<entity_id>]}")
+    print('    Body: {"entity_ids": [<entity_id>]}')
     print(
         "  Replace {service} with the service name (e.g. dbaas, nodebalancer, netloadbalancer)"
     )
