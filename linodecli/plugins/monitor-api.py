@@ -222,18 +222,25 @@ def build_payload(config: MetricsConfig) -> dict:
 
             dimension_label, operator, value = parts
             operator = operator.strip()
-            parsed_value = (
-                [v.strip() for v in value.split(",")]
-                if operator == "in"
-                else value.strip()
-            )
-            parsed_filters.append(
-                {
-                    "dimension_label": dimension_label.strip(),
-                    "operator": operator,
-                    "value": parsed_value,
-                }
-            )
+            dimension_label = dimension_label.strip()
+            if operator == "in":
+                # Expand 'in' into multiple 'eq' filters (one per value)
+                for v in value.split(","):
+                    parsed_filters.append(
+                        {
+                            "dimension_label": dimension_label,
+                            "operator": "eq",
+                            "value": v.strip(),
+                        }
+                    )
+            else:
+                parsed_filters.append(
+                    {
+                        "dimension_label": dimension_label,
+                        "operator": operator,
+                        "value": value.strip(),
+                    }
+                )
         payload["filters"] = parsed_filters
 
     return payload
