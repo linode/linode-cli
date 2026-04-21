@@ -167,9 +167,9 @@ def parse_metrics(metrics: List[str]) -> List[dict]:
     return parsed_metrics
 
 
-def build_payload(
+def build_payload(  # pylint: disable=too-many-branches
     config: MetricsConfig,
-) -> dict:  # pylint: disable=too-many-branches
+) -> dict:
     """Build API request payload from configuration"""
     parsed_metrics = parse_metrics(config.metrics)
     payload = {"metrics": parsed_metrics}
