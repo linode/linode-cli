@@ -368,7 +368,7 @@ def print_help(parser: ArgumentParser):
     print(
         "  linode-cli monitor-api get-metrics dbaas --entity-ids 123 --duration 15 "
         "--duration-unit min --metrics cpu_usage:avg "
-        "--filters 'node_type:in:primary,secondary;status:eq:active'"
+        "--filters 'node_type:in:primary,secondary'"
     )
 
     print("\n  # Get metrics with granularity")
@@ -479,7 +479,7 @@ def get_metrics_parser():
         "Multiple filters separated by semicolons. "
         "Operators: eq, neq, startswith, endswith, in. "
         "For 'in' operator, separate values with commas. "
-        "Example: 'node_type:in:primary,secondary;status:eq:active'",
+        "Example: 'node_type:in:primary,secondary'",
     )
     parser.add_argument(
         "--group_by",
