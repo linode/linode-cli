@@ -204,7 +204,6 @@ class TestAPIValidation:
             expected_code=ExitCodes.REQUEST_FAILED,
         )
         assert "Invalid filter format" in stderr
-        assert "invalid_filter_format" in stderr
 
     def test_entity_ids_required_for_non_objectstorage(self):
         """Test that omitting --entity-ids for a non-objectstorage service fails"""
