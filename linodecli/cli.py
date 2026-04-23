@@ -25,7 +25,13 @@ from linodecli.output.output_handler import OutputHandler, OutputMode
 METHODS = ("get", "post", "put", "delete")
 
 logger = getLogger(__name__)
+args = sys.argv[1:]
 
+if len(args) > 0 and args[-1] == "help":
+    sys.argv = [sys.argv[0]] + args[:-1] + ["--help"]
+
+elif len(args) > 0 and args[0] == "help":
+    sys.argv = [sys.argv[0]] + args[1:] + ["--help"]
 
 class CLI:  # pylint: disable=too-many-instance-attributes
     """
