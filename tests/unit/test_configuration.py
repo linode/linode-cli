@@ -19,6 +19,7 @@ from linodecli.configuration import (
     _default_text_input,
     _default_thing_input,
 )
+from linodecli.configuration.auth import _check_full_access
 
 
 class TestConfiguration:
@@ -676,3 +677,41 @@ mysql_engine = mysql/8.0.26"""
 
             for i, _ in enumerate(expected_configs):
                 assert expected_configs[i] == configs[i]
+
+
+class TestCheckFullAccess:
+    """
+    Unit tests for _check_full_access
+    """
+
+    base_url = "https://linode-test.com"
+    test_token = "cli-dev-token"
+
+    def test_full_access_returns_true(self):
+        """
+        204 No Content means the token has full (unrestricted) access.
+        """
+        with requests_mock.Mocker() as m:
+            m.get(f"{self.base_url}/profile/grants", status_code=204)
+            assert _check_full_access(self.base_url, self.test_token) is True
+
+    def test_restricted_access_returns_false(self):
+        """
+        200 with a grants body means the token has restricted access.
+        """
+        with requests_mock.Mocker() as m:
+            m.get(
+                f"{self.base_url}/profile/grants",
+                status_code=200,
+                json={"linode": []},
+            )
+            assert _check_full_access(self.base_url, self.test_token) is False
+
+    def test_iam_user_403_returns_false(self):
+        """
+        IAM-enrolled users receive a 403 from /profile/grants.
+        This should be treated as "not full access" rather than a fatal error.
+        """
+        with requests_mock.Mocker() as m:
+            m.get(f"{self.base_url}/profile/grants", status_code=403)
+            assert _check_full_access(self.base_url, self.test_token) is False
