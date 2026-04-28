@@ -176,7 +176,14 @@ def _check_full_access(base_url: str, token: str) -> bool:
         verify=API_CA_PATH,
     )
 
-    _handle_response_status(result, exit_on_error=True)
+    # IAM-enrolled users receive a 403 from /profile/grants since that
+    # endpoint is not accessible to them. Treat 403 as a valid response
+    # (i.e. not full access) rather than a fatal error.
+    _handle_response_status(
+        result,
+        exit_on_error=True,
+        status_validator=lambda status: status == 403,
+    )
 
     return result.status_code == 204
 
