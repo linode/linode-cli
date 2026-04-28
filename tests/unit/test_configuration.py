@@ -16,10 +16,10 @@ import requests_mock
 from linodecli import configuration
 from linodecli.configuration import (
     _bool_input,
+    _check_full_access,
     _default_text_input,
     _default_thing_input,
 )
-from linodecli.configuration.auth import _check_full_access
 
 
 class TestConfiguration:
