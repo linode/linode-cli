@@ -1,3 +1,5 @@
+import ipaddress
+import json
 import re
 
 import pytest
@@ -5,16 +7,37 @@ import pytest
 from linodecli.exit_codes import ExitCodes
 from tests.integration.helpers import (
     BASE_CMDS,
+    delete_target_id,
     exec_failing_test_command,
     exec_test_command,
 )
-from tests.integration.nodebalancers.fixtures import (  # noqa: F401
-    linode_to_add,
-    nodebalancer_w_config_and_node,
-    nodebalancer_with_default_conf,
-    nodebalancer_with_udp_config_and_node,
-    simple_nodebalancer_with_config,
-)
+
+# Lists of valid regions where NodeBalancers of type "premium" or "premium_40gb" can be created
+PREMIUM_REGIONS = [
+    "nl-ams",
+    "jp-tyo-3",
+    "sg-sin-2",
+    "de-fra-2",
+    "in-bom-2",
+    "gb-lon",
+    "us-lax",
+    "id-cgk",
+    "us-mia",
+    "it-mil",
+    "jp-osa",
+    "in-maa",
+    "se-sto",
+    "br-gru",
+    "us-sea",
+    "fr-par",
+    "us-iad",
+    "pl-labkrk-2",  # DevCloud
+]
+PREMIUM_40GB_REGIONS = ["us-iad"]  # No DevCloud region for premium_40gb type
+
+
+def nodebalancer_created():
+    return "[0-9]+,balancer[0-9]+,us-ord,[0-9]+-[0-9]+-[0-9]+-[0-9]+.ip.linodeusercontent.com,0"
 
 
 def test_fail_to_create_nodebalancer_without_region():
@@ -482,7 +505,7 @@ def test_update_node_for_node_balancer_udp_configuration(
         == node_id
         + ",defaultnode1,"
         + nodebalancer_with_udp_config_and_node[3]
-        + ":80,Unknown,30,none"
+        + ":80,Unknown,30,none,"
     )
 
 
@@ -511,7 +534,7 @@ def test_list_nodes_for_node_balancer_udp_configuration(
         == node_id
         + ",defaultnode1,"
         + nodebalancer_with_udp_config_and_node[3]
-        + ":80,Unknown,100,none"
+        + ":80,Unknown,100,none,"
     )
 
 
@@ -540,9 +563,225 @@ def test_view_node_for_node_balancer_udp_configuration(
         == node_id
         + ",defaultnode1,"
         + nodebalancer_with_udp_config_and_node[3]
-        + ":80,Unknown,100,none"
+        + ":80,Unknown,100,none,"
     )
 
 
-def nodebalancer_created():
-    return "[0-9]+,balancer[0-9]+,us-ord,[0-9]+-[0-9]+-[0-9]+-[0-9]+.ip.linodeusercontent.com,0"
+@pytest.mark.parametrize(
+    "get_vpc_with_subnet", [PREMIUM_REGIONS], indirect=True
+)
+def test_nb_with_backend_vpc_only(get_vpc_with_subnet):
+    vpc = get_vpc_with_subnet
+
+    nb_attrs = json.loads(
+        exec_test_command(
+            BASE_CMDS["nodebalancers"]
+            + [
+                "create",
+                "--region",
+                vpc["region"],
+                "--backend_vpcs.subnet_id",
+                str(vpc["subnets"][0]["id"]),
+                "--json",
+            ]
+        ),
+    )
+    nb_id = str(nb_attrs[0]["id"])
+    assert isinstance(
+        ipaddress.ip_address(nb_attrs[0]["ipv4"]), ipaddress.IPv4Address
+    )
+    assert isinstance(
+        ipaddress.ip_address(nb_attrs[0]["ipv6"]), ipaddress.IPv6Address
+    )
+    assert nb_attrs[0]["frontend_address_type"] == "public"
+    assert nb_attrs[0]["frontend_vpc_subnet_id"] is None
+
+    nb_vpcs = json.loads(
+        exec_test_command(
+            BASE_CMDS["nodebalancers"]
+            + [
+                "vpcs-list",
+                nb_id,
+                "--json",
+            ]
+        ),
+    )
+    assert len(nb_vpcs) == 1
+    assert nb_vpcs[0]["purpose"] == "backend"
+
+    nb_vpc = json.loads(
+        exec_test_command(
+            BASE_CMDS["nodebalancers"]
+            + [
+                "vpc-view",
+                nb_id,
+                str(nb_vpcs[0]["id"]),
+                "--json",
+            ]
+        ),
+    )
+    assert nb_vpc[0]["purpose"] == "backend"
+
+    # TODO: Uncomment when API implementation of /backend_vpcs and /frontend_vpcs endpoints is finished
+    # nb_backend_vpcs = json.loads(
+    #     exec_test_command(
+    #         BASE_CMDS["nodebalancers"] + ["backend_vpcs-list", nb_id, "--json",]
+    #     ),
+    # )
+    # assert len(nb_backend_vpcs) == 1
+    # assert nb_backend_vpcs[0]["purpose"] == "backend"
+    #
+    # nb_frontend_vpcs = json.loads(
+    #     exec_test_command(
+    #         BASE_CMDS["nodebalancers"] + ["frontend_vpcs-list", nb_id, "--json",]
+    #     ),
+    # )
+    # assert len(nb_frontend_vpcs) == 0
+
+    delete_target_id(target="nodebalancers", id=nb_id)
+
+
+@pytest.mark.parametrize(
+    "get_vpc_with_subnet", [PREMIUM_REGIONS], indirect=True
+)
+def test_nb_with_frontend_ipv4_only(get_vpc_with_subnet):
+    vpc = get_vpc_with_subnet
+    ipv4_address = "10.0.0.2"  # first available address
+
+    nb_attrs = json.loads(
+        exec_test_command(
+            BASE_CMDS["nodebalancers"]
+            + [
+                "create",
+                "--region",
+                vpc["region"],
+                "--frontend_vpcs.subnet_id",
+                str(vpc["subnets"][0]["id"]),
+                "--frontend_vpcs.ipv4_range",
+                "10.0.0.0/24",
+                "--type",
+                "premium",
+                "--json",
+            ],
+        ),
+    )
+    nb_id = str(nb_attrs[0]["id"])
+
+    assert nb_attrs[0]["ipv4"] == ipv4_address
+    assert nb_attrs[0]["ipv6"] is None
+    assert nb_attrs[0]["frontend_address_type"] == "vpc"
+    assert nb_attrs[0]["frontend_vpc_subnet_id"] == vpc["subnets"][0]["id"]
+
+    nb_vpcs = json.loads(
+        exec_test_command(
+            BASE_CMDS["nodebalancers"]
+            + [
+                "vpcs-list",
+                nb_id,
+                "--json",
+            ]
+        ),
+    )
+    assert len(nb_vpcs) == 1
+    assert nb_vpcs[0]["purpose"] == "frontend"
+
+    nb_vpc = json.loads(
+        exec_test_command(
+            BASE_CMDS["nodebalancers"]
+            + [
+                "vpc-view",
+                nb_id,
+                str(nb_vpcs[0]["id"]),
+                "--json",
+            ]
+        ),
+    )
+    assert nb_vpc[0]["purpose"] == "frontend"
+
+    # TODO: Uncomment when API implementation of /backend_vpcs and /frontend_vpcs endpoints is finished
+    # nb_frontend_vpcs = json.loads(
+    #     exec_test_command(
+    #         BASE_CMDS["nodebalancers"] + ["frontend_vpcs-list", nb_id, "--json",]
+    #     ),
+    # )
+    # assert len(nb_frontend_vpcs) == 1
+    # assert nb_frontend_vpcs[0]["purpose"] == "frontend"
+    #
+    # nb_backend_vpcs = json.loads(
+    #     exec_test_command(
+    #         BASE_CMDS["nodebalancers"] + ["backend_vpcs-list", nb_id, "--json",]
+    #     ),
+    # )
+    # assert len(nb_backend_vpcs) == 0
+
+    delete_target_id(target="nodebalancers", id=nb_id)
+
+
+@pytest.mark.parametrize(
+    "get_vpc_with_subnet", [PREMIUM_REGIONS], indirect=True
+)
+def test_nb_with_frontend_ipv6_in_single_stack_vpc_fail(get_vpc_with_subnet):
+    vpc = get_vpc_with_subnet
+
+    result = exec_failing_test_command(
+        BASE_CMDS["nodebalancers"]
+        + [
+            "create",
+            "--region",
+            vpc["region"],
+            "--frontend_vpcs.subnet_id",
+            str(vpc["subnets"][0]["id"]),
+            "--frontend_vpcs.ipv6_range",
+            "/62",
+            "--type",
+            "premium",
+        ],
+    )
+    assert "Request failed: 400" in result
+    assert "No IPv6 subnets available in VPC" in result
+
+
+@pytest.mark.parametrize(
+    "get_vpc_with_subnet", [PREMIUM_REGIONS], indirect=True
+)
+def test_nb_with_frontend_and_default_type_fail(get_vpc_with_subnet):
+    vpc = get_vpc_with_subnet
+
+    result = exec_failing_test_command(
+        BASE_CMDS["nodebalancers"]
+        + [
+            "create",
+            "--region",
+            vpc["region"],
+            "--frontend_vpcs.subnet_id",
+            str(vpc["subnets"][0]["id"]),
+        ],
+    )
+    assert "Request failed: 400" in result
+    assert "NodeBalancer with frontend VPC IP must be premium" in result
+
+
+@pytest.mark.parametrize(
+    "get_vpc_with_subnet",
+    [PREMIUM_40GB_REGIONS],
+    indirect=True,
+)
+def test_nb_with_premium40gb_type(get_vpc_with_subnet):
+    vpc = get_vpc_with_subnet
+
+    nb_attrs = json.loads(
+        exec_test_command(
+            BASE_CMDS["nodebalancers"]
+            + [
+                "create",
+                "--region",
+                vpc["region"],
+                "--type",
+                "premium_40gb",
+                "--json",
+            ],
+        ),
+    )
+    assert nb_attrs[0]["type"] == "premium_40gb"
+
+    delete_target_id(target="nodebalancers", id=str(nb_attrs[0]["id"]))
