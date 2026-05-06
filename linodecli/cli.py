@@ -305,7 +305,49 @@ class CLI:  # pylint: disable=too-many-instance-attributes
         with CLI._get_spec_file_reader(spec_location) as f:
             parsed = CLI._parse_spec_file(f)
 
+        CLI._normalize_content_parameters(parsed)
+
         return OpenAPI(parsed)
+
+    @staticmethod
+    def _normalize_content_parameters(parsed: Dict[str, Any]):
+        """
+        The openapi3 library does not support the OpenAPI 3.0 ``content``
+        form for Parameter objects.  This method converts any such
+        parameters (in components and inline on paths/operations) to use
+        a top-level ``schema`` field so they can be parsed normally.
+
+        :param parsed: The raw spec dict to mutate in-place.
+        """
+
+        def _fix_param(param):
+            if not isinstance(param, dict):
+                return
+            if "content" in param and "schema" not in param:
+                content = param.pop("content")
+                for media_obj in content.values():
+                    if isinstance(media_obj, dict) and "schema" in media_obj:
+                        param["schema"] = media_obj["schema"]
+                        break
+
+        for param in (
+            parsed.get("components", {}).get("parameters", {}).values()
+        ):
+            _fix_param(param)
+
+        for path_item in parsed.get("paths", {}).values():
+            if not isinstance(path_item, dict):
+                continue
+            for p in path_item.get("parameters", []):
+                _fix_param(p)
+            for method in (
+                "get", "put", "post", "delete",
+                "options", "head", "patch", "trace",
+            ):
+                operation = path_item.get(method)
+                if isinstance(operation, dict):
+                    for p in operation.get("parameters", []):
+                        _fix_param(p)
 
     @staticmethod
     @contextlib.contextmanager
