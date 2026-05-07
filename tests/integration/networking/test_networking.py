@@ -1,3 +1,4 @@
+import ipaddress
 import json
 import re
 
@@ -13,6 +14,28 @@ from tests.integration.linodes.helpers import (
     create_linode,
     create_linode_and_wait,
 )
+from tests.integration.sharegroups.fixtures import get_region  # noqa: F401
+
+
+@pytest.fixture
+def create_reserved_ip(request, get_region):
+    tags = getattr(request, "param", None)
+    region = get_region
+    command = BASE_CMDS["networking"] + [
+        "reserved-ip-add",
+        "--region",
+        region,
+        "--json",
+    ]
+
+    if tags:
+        command += ["--tags", tags]
+
+    result = json.loads(exec_test_command(command))[0]
+
+    yield result
+
+    delete_target_id("networking", result["address"], "reserved-ip-delete")
 
 
 @pytest.fixture(scope="package")
@@ -59,6 +82,18 @@ def has_shared_ip(linode_id: int, ip: str) -> bool:
             return True
 
     return False
+
+
+def verify_reserved_ip(reserved_ip):
+    assert isinstance(
+        ipaddress.ip_address(reserved_ip["address"]), ipaddress.IPv4Address
+    )
+    assert reserved_ip["type"] == "ipv4"
+    assert reserved_ip["public"] == True
+    assert reserved_ip["reserved"] == True
+    assert reserved_ip["linode_id"] is None
+    # TODO: To be clarified if it should be returned in CLI
+    # assert reserved_ip["assigned_entity"] is None
 
 
 def test_display_ips_for_available_linodes(test_linode_id):
@@ -143,6 +178,53 @@ def test_allocate_additional_private_ipv4_address(test_linode_id):
     assert re.search(
         "ipv4,False,.*,[0-9][0-9][0-9][0-9][0-9][0-9][0-9]*", result
     )
+
+
+@pytest.mark.parametrize(
+    "create_reserved_ip", ["test", None], indirect=True
+)
+def test_create_reserved_ip(create_reserved_ip):
+    reserved_ip = create_reserved_ip
+    verify_reserved_ip(reserved_ip)
+
+    tags = reserved_ip["tags"]
+    assert tags == ["test"] if tags else tags == []
+
+
+def test_create_reserved_ip_wo_region_fail():
+    with pytest.raises(RuntimeError) as exc_info:
+        exec_test_command(
+            BASE_CMDS["networking"] + [
+                "reserved-ip-add",
+                "--json",
+            ]
+        )
+
+    assert "Request failed: 400" in exc_info.value.args[0]
+    assert "region is required" in exc_info.value.args[0]
+
+
+@pytest.mark.parametrize(
+    "create_reserved_ip", ["test"], indirect=True
+)
+def test_update_reserved_ip_tags(create_reserved_ip):
+    reserved_ip = create_reserved_ip
+    verify_reserved_ip(reserved_ip)
+    assert reserved_ip["tags"] == ["test"]
+
+    result =  json.loads(
+        exec_test_command(
+            BASE_CMDS["networking"] + [
+                "reserved-ip-update",
+                "--tags",
+                "updated",
+                reserved_ip["address"],
+                "--json",
+            ]
+        )
+    )[0]
+    verify_reserved_ip(result)
+    assert result["tags"] == ["updated"]
 
 
 def test_share_ipv4_address(
