@@ -304,3 +304,27 @@ def get_disk_id(test_linode_instance):
     ).splitlines()
     first_id = disk_id[0].split(",")[0]
     return first_id
+
+
+def wait_for_disk_status(
+    linode_id: "str", disk_id: "str", timeout, status: "str", period=10
+):
+    must_end = time.time() + timeout
+    while time.time() < must_end:
+        time.sleep(period)
+        result = exec_test_command(
+            [
+                "linode-cli",
+                "linodes",
+                "disk-view",
+                linode_id,
+                disk_id,
+                "--format",
+                "status",
+                "--text",
+                "--no-headers",
+            ]
+        )
+        if status == result:
+            return True
+    return False
