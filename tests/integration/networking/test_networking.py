@@ -63,7 +63,7 @@ def test_display_ips_for_available_linodes(test_linode_id):
 
     assert re.search(r"^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}", result)
     assert re.search(
-        r"ipv4,True,[0-9]{1,3}\-[0-9]{1,3}\-[0-9]{1,3}\-[0-9]{1,3}\.ip.linodeusercontent.com,.*,[0-9][0-9][0-9][0-9][0-9][0-9][0-9]*",
+        r"ipv4,True,(False|True),[0-9]{1,3}\-[0-9]{1,3}\-[0-9]{1,3}\-[0-9]{1,3}\.ip\.linodeusercontent\.com,[0-9]*",
         result,
     )
     assert re.search("ipv6,True,,.*,[0-9][0-9][0-9][0-9][0-9][0-9]*", result)
@@ -253,6 +253,43 @@ def test_get_reserved_ips_list(create_reserved_ip):
     ).splitlines()
 
     assert all(item == "True" for item in result)
+
+
+def test_update_ephemeral_to_reserved(test_linode_id):
+    linode_id = test_linode_id
+
+    ephemeral_ip = exec_test_command(
+        BASE_CMDS["linodes"] + [
+            "view",
+            linode_id,
+            "--text",
+            "--no-headers",
+            "--format",
+            "ipv4",
+        ]
+    ).split(" ")[0]
+
+    exec_test_command(
+        BASE_CMDS["networking"] + [
+            "ip-update",
+            ephemeral_ip,
+            "--reserved",
+            "true",
+        ]
+    )
+
+    is_reserved = exec_test_command(
+        BASE_CMDS["networking"] + [
+            "reserved-ip-view",
+            ephemeral_ip,
+            "--text",
+            "--no-headers",
+            "--format",
+            "reserved",
+        ]
+    )
+
+    assert is_reserved == "True"
 
 
 def test_share_ipv4_address(
