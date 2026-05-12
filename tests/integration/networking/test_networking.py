@@ -15,9 +15,8 @@ from tests.integration.networking.fixtures import (
     create_reserved_ip,
     get_command_heads_and_vals,
     test_linode_id,
-    test_linode_id_shared_ipv4
+    test_linode_id_shared_ipv4,
 )
-
 
 RESERVED_IP_HEADERS = [
     "address", "type", "public", "rdns", "linode_id", "reserved", "tags"

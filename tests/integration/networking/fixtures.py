@@ -6,9 +6,9 @@ from tests.integration.helpers import (
     exec_test_command,
 )
 from tests.integration.linodes.helpers import (
+    DEFAULT_REGION,
     create_linode,
     create_linode_and_wait,
-    DEFAULT_REGION
 )
 
 
