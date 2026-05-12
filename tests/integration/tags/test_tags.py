@@ -58,18 +58,19 @@ def test_create_tag_for_reserved_ip(create_reserved_ip):
             "--label",
             tag_name,
             "--reserved_ipv4_addresses",
-            reserved_ip[0]
+            reserved_ip[0],
         ]
     )
 
     result = exec_test_command(
-        BASE_CMDS["networking"] + [
+        BASE_CMDS["networking"]
+        + [
             "reserved-ip-view",
             reserved_ip[0],
             "--text",
             "--no-headers",
             "--format",
-            "tags"
+            "tags",
         ]
     )
 

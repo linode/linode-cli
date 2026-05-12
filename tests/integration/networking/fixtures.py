@@ -21,7 +21,7 @@ def create_reserved_ip(request):
         DEFAULT_REGION,
         "--text",
         "--delimiter",
-        ","
+        ",",
     ]
 
     if tags:

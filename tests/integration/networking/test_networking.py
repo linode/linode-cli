@@ -19,7 +19,13 @@ from tests.integration.networking.fixtures import (  # noqa: F401
 )
 
 RESERVED_IP_HEADERS = [
-    "address", "type", "public", "rdns", "linode_id", "reserved", "tags"
+    "address",
+    "type",
+    "public",
+    "rdns",
+    "linode_id",
+    "reserved",
+    "tags",
 ]
 
 
@@ -137,28 +143,26 @@ def test_allocate_additional_private_ipv4_address(test_linode_id):
         "ipv4,False,.*,[0-9][0-9][0-9][0-9][0-9][0-9][0-9]*", result
     )
 
+
 @pytest.mark.smoke
-@pytest.mark.parametrize(
-    "create_reserved_ip", ["test", None], indirect=True
-)
+@pytest.mark.parametrize("create_reserved_ip", ["test", None], indirect=True)
 def test_create_reserved_ip(create_reserved_ip):
     headers, reserved_ip = create_reserved_ip
     assert_headers_in_lines(RESERVED_IP_HEADERS, [headers])
     verify_reserved_ip(reserved_ip)
 
     tags = reserved_ip[-1]
-    assert tags == "test" if tags else tags == ''
+    assert tags == "test" if tags else tags == ""
 
 
-@pytest.mark.parametrize(
-    "create_reserved_ip", ["test"], indirect=True
-)
+@pytest.mark.parametrize("create_reserved_ip", ["test"], indirect=True)
 def test_update_reserved_ip_tags(create_reserved_ip):
     _, reserved_ip = create_reserved_ip
     assert reserved_ip[-1] == "test"
 
-    result =  exec_test_command(
-        BASE_CMDS["networking"] + [
+    result = exec_test_command(
+        BASE_CMDS["networking"]
+        + [
             "reserved-ip-update",
             "--tags",
             "updated",
@@ -168,7 +172,7 @@ def test_update_reserved_ip_tags(create_reserved_ip):
             "--text",
             "--no-headers",
             "--delimiter",
-            ","
+            ",",
         ]
     ).split(",")
     verify_reserved_ip(result)
@@ -180,7 +184,8 @@ def test_create_reserved_ip_assigned(create_reserved_ip, test_linode_id):
     linode_id = test_linode_id
 
     exec_test_command(
-        BASE_CMDS["networking"] + [
+        BASE_CMDS["networking"]
+        + [
             "ip-assign",
             "--assignments.linode_id",
             linode_id,
@@ -197,7 +202,7 @@ def test_create_reserved_ip_assigned(create_reserved_ip, test_linode_id):
         reserved_ip[0],
         "--text",
         "--delimiter",
-        ","
+        ",",
     ]
     headers, values = get_command_heads_and_vals(command)
 
@@ -215,7 +220,7 @@ def test_get_reserved_ip_types():
         "reserved-ip-types-list",
         "--text",
         "--delimiter",
-        ","
+        ",",
     ]
     headers, values = get_command_heads_and_vals(command)
 
@@ -232,7 +237,7 @@ def test_get_reserved_ip_view(create_reserved_ip):
         reserved_ip[0],
         "--text",
         "--delimiter",
-        ","
+        ",",
     ]
     headers, values = get_command_heads_and_vals(command)
 
@@ -242,12 +247,13 @@ def test_get_reserved_ip_view(create_reserved_ip):
 
 def test_get_reserved_ips_list(create_reserved_ip):
     result = exec_test_command(
-        BASE_CMDS["networking"] + [
+        BASE_CMDS["networking"]
+        + [
             "reserved-ips-list",
             "--text",
             "--no-headers",
             "--format",
-            "reserved"
+            "reserved",
         ]
     ).splitlines()
 
@@ -258,7 +264,8 @@ def test_update_ephemeral_to_reserved(test_linode_id):
     linode_id = test_linode_id
 
     ephemeral_ip = exec_test_command(
-        BASE_CMDS["linodes"] + [
+        BASE_CMDS["linodes"]
+        + [
             "view",
             linode_id,
             "--text",
@@ -269,7 +276,8 @@ def test_update_ephemeral_to_reserved(test_linode_id):
     ).split(" ")[0]
 
     exec_test_command(
-        BASE_CMDS["networking"] + [
+        BASE_CMDS["networking"]
+        + [
             "ip-update",
             ephemeral_ip,
             "--reserved",
@@ -278,7 +286,8 @@ def test_update_ephemeral_to_reserved(test_linode_id):
     )
 
     is_reserved = exec_test_command(
-        BASE_CMDS["networking"] + [
+        BASE_CMDS["networking"]
+        + [
             "reserved-ip-view",
             ephemeral_ip,
             "--text",
