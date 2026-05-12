@@ -341,8 +341,14 @@ class CLI:  # pylint: disable=too-many-instance-attributes
             for p in path_item.get("parameters", []):
                 _fix_param(p)
             for method in (
-                "get", "put", "post", "delete",
-                "options", "head", "patch", "trace",
+                "get",
+                "put",
+                "post",
+                "delete",
+                "options",
+                "head",
+                "patch",
+                "trace",
             ):
                 operation = path_item.get(method)
                 if isinstance(operation, dict):
