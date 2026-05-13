@@ -121,7 +121,7 @@ def test_create_linode_with_kernel_and_boot_size_then_add_disk_and_rebuild(
     assert wait_for_disk_status(
         linode_id=result_create[0],
         disk_id=response_create_disk[0],
-        timeout=180,
+        timeout=90,
         status="ready",
     ), "linode failed to change disk status to ready after disk creation.."
 
