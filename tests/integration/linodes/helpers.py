@@ -312,19 +312,25 @@ def wait_for_disk_status(
     must_end = time.time() + timeout
     while time.time() < must_end:
         time.sleep(period)
-        result = exec_test_command(
-            [
-                "linode-cli",
-                "linodes",
-                "disk-view",
-                linode_id,
-                disk_id,
-                "--format",
-                "status",
-                "--text",
-                "--no-headers",
-            ]
-        )
+        try:
+            result = exec_test_command(
+                [
+                    "linode-cli",
+                    "linodes",
+                    "disk-view",
+                    linode_id,
+                    disk_id,
+                    "--format",
+                    "status",
+                    "--text",
+                    "--no-headers",
+                ]
+            )
+        except RuntimeError as response_error:
+            if "Not found" in str(response_error):
+                continue
+            else:
+                raise RuntimeError(response_error)
         if status == result:
             return True
     return False
