@@ -10,7 +10,6 @@ from typing import Any, Dict, List, Optional, Type, TypeVar, cast
 from linodecli.exit_codes import ExitCodes
 
 from .auth import (
-    _check_full_access,
     _do_get_request,
     _get_token_terminal,
     _get_token_web,
@@ -430,18 +429,33 @@ class CLIConfig:
             [i["id"] for i in _do_get_request(self.base_url, "/images")["data"]]
         )
 
-        is_full_access = _check_full_access(self.base_url, token)
-
         auth_users = []
 
-        if is_full_access:
+        # Use /profile/sshkeys as a lightweight capability check. If the token
+        # lacks profile access (401) or the user is IAM-enrolled (403), skip
+        # the authorized_users prompt entirely. Capture the status code via a
+        # closure passed as status_validator so no new API surface is needed.
+        sshkeys_status_code = None
+
+        def _capture_sshkeys_status(status: int) -> bool:
+            nonlocal sshkeys_status_code
+            sshkeys_status_code = status
+            return True  # suppress _handle_response_status error output
+
+        _do_get_request(
+            self.base_url,
+            "/profile/sshkeys",
+            token=token,
+            exit_on_error=False,
+            status_validator=_capture_sshkeys_status,
+        )
+
+        if sshkeys_status_code == 200:
             users = _do_get_request(
                 self.base_url,
                 "/account/users",
                 token=token,
-                # Allow 401 responses so tokens without
-                # account perms can be configured
-                status_validator=lambda status: status == 401,
+                status_validator=lambda status: status in (401, 403),
             )
 
             if "data" in users:

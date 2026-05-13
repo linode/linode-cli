@@ -16,7 +16,6 @@ import requests_mock
 from linodecli import configuration
 from linodecli.configuration import (
     _bool_input,
-    _check_full_access,
     _default_text_input,
     _default_thing_input,
 )
@@ -299,7 +298,7 @@ mysql_engine = mysql/8.0.26"""
             requests_mock.Mocker() as m,
         ):
             m.get(f"{self.base_url}/profile", json={"username": "cli-dev"})
-            m.get(f"{self.base_url}/profile/grants", status_code=204)
+            m.get(f"{self.base_url}/profile/sshkeys", json={"data": []})
             m.get(
                 f"{self.base_url}/regions",
                 json={"data": [{"id": "test-region"}]},
@@ -350,7 +349,7 @@ mysql_engine = mysql/8.0.26"""
             requests_mock.Mocker() as m,
         ):
             m.get(f"{self.base_url}/profile", json={"username": "cli-dev"})
-            m.get(f"{self.base_url}/profile/grants", status_code=204)
+            m.get(f"{self.base_url}/profile/sshkeys", json={"data": []})
             m.get(
                 f"{self.base_url}/regions",
                 json={"data": [{"id": "test-region"}]},
@@ -679,39 +678,103 @@ mysql_engine = mysql/8.0.26"""
                 assert expected_configs[i] == configs[i]
 
 
-class TestCheckFullAccess:
+class TestConfigureAuthorizedUsers:
     """
-    Unit tests for _check_full_access
+    Unit tests for the authorized_users gate in CLIConfig.configure(),
+    which uses GET /profile/sshkeys as a capability check instead of
+    GET /profile/grants (which is inaccessible to IAM-enrolled users).
     """
 
     base_url = "https://linode-test.com"
     test_token = "cli-dev-token"
 
-    def test_full_access_returns_true(self):
-        """
-        204 No Content means the token has full (unrestricted) access.
-        """
-        with requests_mock.Mocker() as m:
-            m.get(f"{self.base_url}/profile/grants", status_code=204)
-            assert _check_full_access(self.base_url, self.test_token) is True
+    def _base_mocks(self, m, *, sshkeys_status=200, users_json=None):
+        """Register the common mocks needed for a configure() call."""
+        m.get(f"{self.base_url}/profile", json={"username": "cli-dev"})
+        m.get(
+            f"{self.base_url}/profile/sshkeys",
+            status_code=sshkeys_status,
+            json={"data": []},
+        )
+        m.get(f"{self.base_url}/regions", json={"data": [{"id": "us-east"}]})
+        m.get(
+            f"{self.base_url}/linode/types",
+            json={"data": [{"id": "g6-nanode-1"}]},
+        )
+        m.get(
+            f"{self.base_url}/images",
+            json={"data": [{"id": "linode/debian12"}]},
+        )
+        if users_json is not None:
+            m.get(f"{self.base_url}/account/users", json=users_json)
 
-    def test_restricted_access_returns_false(self):
+    def test_sshkeys_success_populates_authorized_users(self):
         """
-        200 with a grants body means the token has restricted access.
+        When /profile/sshkeys succeeds, /account/users is fetched and
+        authorized_users is offered.
         """
-        with requests_mock.Mocker() as m:
-            m.get(
-                f"{self.base_url}/profile/grants",
-                status_code=200,
-                json={"linode": []},
+        conf = configuration.CLIConfig(self.base_url, skip_config=True)
+        answers = iter(["1", "1", "1", "1", "n", "n"])
+
+        with (
+            patch("linodecli.configuration.open", mock_open()),
+            patch("os.chmod", lambda a, b: None),
+            patch("builtins.input", lambda _: next(answers)),
+            contextlib.redirect_stdout(io.StringIO()),
+            patch("linodecli.configuration._check_browsers", lambda: False),
+            patch.dict(os.environ, {"LINODE_CLI_TOKEN": self.test_token}),
+            requests_mock.Mocker() as m,
+        ):
+            self._base_mocks(
+                m,
+                users_json={
+                    "data": [{"username": "cli-dev", "ssh_keys": ["key1"]}]
+                },
             )
-            assert _check_full_access(self.base_url, self.test_token) is False
+            conf.configure()
 
-    def test_iam_user_403_returns_false(self):
+        assert conf.get_value("authorized_users") == "cli-dev"
+
+    def test_sshkeys_401_skips_authorized_users(self):
         """
-        IAM-enrolled users receive a 403 from /profile/grants.
-        This should be treated as "not full access" rather than a fatal error.
+        When /profile/sshkeys returns 401 (restricted token), the
+        authorized_users prompt is skipped.
         """
-        with requests_mock.Mocker() as m:
-            m.get(f"{self.base_url}/profile/grants", status_code=403)
-            assert _check_full_access(self.base_url, self.test_token) is False
+        conf = configuration.CLIConfig(self.base_url, skip_config=True)
+        answers = iter(["1", "1", "1", "n", "n"])
+
+        with (
+            patch("linodecli.configuration.open", mock_open()),
+            patch("os.chmod", lambda a, b: None),
+            patch("builtins.input", lambda _: next(answers)),
+            contextlib.redirect_stdout(io.StringIO()),
+            patch("linodecli.configuration._check_browsers", lambda: False),
+            patch.dict(os.environ, {"LINODE_CLI_TOKEN": self.test_token}),
+            requests_mock.Mocker() as m,
+        ):
+            self._base_mocks(m, sshkeys_status=401)
+            conf.configure()
+
+        assert conf.get_value("authorized_users") is None
+
+    def test_sshkeys_403_iam_skips_authorized_users(self):
+        """
+        When /profile/sshkeys returns 403 (IAM-enrolled user), the
+        authorized_users prompt is skipped.
+        """
+        conf = configuration.CLIConfig(self.base_url, skip_config=True)
+        answers = iter(["1", "1", "1", "n", "n"])
+
+        with (
+            patch("linodecli.configuration.open", mock_open()),
+            patch("os.chmod", lambda a, b: None),
+            patch("builtins.input", lambda _: next(answers)),
+            contextlib.redirect_stdout(io.StringIO()),
+            patch("linodecli.configuration._check_browsers", lambda: False),
+            patch.dict(os.environ, {"LINODE_CLI_TOKEN": self.test_token}),
+            requests_mock.Mocker() as m,
+        ):
+            self._base_mocks(m, sshkeys_status=403)
+            conf.configure()
+
+        assert conf.get_value("authorized_users") is None

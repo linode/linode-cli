@@ -152,42 +152,6 @@ def _do_request(
     return result.json()
 
 
-def _check_full_access(base_url: str, token: str) -> bool:
-    """
-    Checks whether the given token has full-access permissions.
-
-    :param base_url: The base URL for the API.
-    :type base_url: str
-    :param token: The access token to use.
-    :type token :str
-
-    :returns: Whether the user has full access.
-    :rtype: bool
-    """
-    headers = {
-        "Authorization": f"Bearer {token}",
-        "Content-Type": "application/json",
-    }
-
-    result = requests.get(
-        base_url + "/profile/grants",
-        headers=headers,
-        timeout=120,
-        verify=API_CA_PATH,
-    )
-
-    # IAM-enrolled users receive a 403 from /profile/grants since that
-    # endpoint is not accessible to them. Treat 403 as a valid response
-    # (i.e. not full access) rather than a fatal error.
-    _handle_response_status(
-        result,
-        exit_on_error=True,
-        status_validator=lambda status: status == 403,
-    )
-
-    return result.status_code == 204
-
-
 def _username_for_token(base_url: str, token: str) -> str:
     """
     A helper function that returns the username associated with a token by
