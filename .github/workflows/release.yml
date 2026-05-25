@@ -11,7 +11,7 @@ jobs:
     steps:
       - name: Notify Slack - Main Message
         id: main_message
-        uses: slackapi/slack-github-action@v2
+        uses: slackapi/slack-github-action@v3
         with:
           method: chat.postMessage
           token: ${{ secrets.SLACK_BOT_TOKEN }}
@@ -67,7 +67,7 @@ jobs:
           result-encoding: string
 
       - name: Build and push to DockerHub
-        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # pin@v7.0.0
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: Dockerfile
