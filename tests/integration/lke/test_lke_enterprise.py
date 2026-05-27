@@ -11,7 +11,11 @@ from tests.integration.helpers import (
     get_random_region_with_caps,
     get_random_text,
 )
-from tests.integration.lke.helpers import get_cluster_id, get_lke_enterprise_id
+from tests.integration.lke.helpers import (
+    get_cluster_id,
+    get_lke_enterprise_id,
+    get_lke_standard_id,
+)
 
 
 def test_enterprise_tier_available_in_types(monkeypatch: MonkeyPatch):
@@ -116,6 +120,7 @@ def test_lke_tiered_versions_list():
 
 def test_lke_tiered_versions_view():
     enterprise_id = get_lke_enterprise_id()
+    standard_id = get_lke_standard_id()
     enterprise_tier_info = exec_test_command(
         BASE_CMDS["lke"]
         + [
@@ -138,7 +143,7 @@ def test_lke_tiered_versions_view():
         + [
             "tiered-version-view",
             "standard",
-            "1.33",
+            standard_id,
             "--json",
         ]
     )
