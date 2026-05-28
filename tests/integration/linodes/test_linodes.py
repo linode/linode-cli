@@ -11,9 +11,12 @@ from tests.integration.helpers import (
     exec_failing_test_command,
     exec_test_command,
     get_random_region_with_caps,
+    get_random_text,
+    retry_exec_test_command_with_delay,
 )
 from tests.integration.linodes.fixtures import (  # noqa: F401
     linode_min_req,
+    linode_with_authorization_key,
     linode_with_label,
     linode_wo_image,
     test_linode_instance,
@@ -23,6 +26,7 @@ from tests.integration.linodes.helpers import (
     DEFAULT_TEST_IMAGE,
     create_linode,
     get_disk_id,
+    wait_for_disk_status,
     wait_until,
 )
 
@@ -40,6 +44,110 @@ def test_create_linodes_with_a_label(linode_with_label):
     assert re.search(
         "^cli(.*),us-ord,g6-nanode-1," + DEFAULT_TEST_IMAGE, result
     )
+
+
+def test_expected_error_if_fields_authorized_users_authorized_keys_root_pass_are_not_set():
+    test_region = get_random_region_with_caps(
+        required_capabilities=["Linodes", "Disk Encryption"]
+    )
+    result = exec_failing_test_command(
+        BASE_CMDS["linodes"]
+        + [
+            "create",
+            "--type",
+            "g6-nanode-1",
+            "--region",
+            test_region,
+            "--image",
+            DEFAULT_TEST_IMAGE,
+            "--label",
+            "cli-negative-test-case",
+            "--kernel",
+            "linode/latest-64bit",
+            "--boot_size",
+            "9000",
+            "--text",
+            "--delimiter",
+            ",",
+            "--no-headers",
+            "--format",
+            "label,region,type,image,id",
+            "--no-defaults",
+        ],
+        expected_code=ExitCodes.REQUEST_FAILED,
+    )
+    assert "Request failed: 400" in result
+    assert (
+        "Must provide valid root_pass, authorized_keys, or authorized_users"
+        in result
+    )
+
+
+def test_create_linode_with_kernel_and_boot_size_then_add_disk_and_rebuild(
+    linode_with_authorization_key,
+):
+    result_create = linode_with_authorization_key
+    assert result_create[1] == "g6-nanode-1"
+    assert wait_until(
+        linode_id=result_create[0], timeout=180, status="running"
+    ), "linode failed to change status to running from creating.."
+
+    response_create_disk = (
+        retry_exec_test_command_with_delay(
+            BASE_CMDS["linodes"]
+            + [
+                "disk-create",
+                result_create[0],
+                "--size",
+                "2000",
+                "--label",
+                "cli" + get_random_text(5),
+                "--image",
+                "linode/debian12",
+                "--root_pass",
+                "aComplex@Password123",
+                "--text",
+                "--no-headers",
+                "--delimiter",
+                ",",
+            ],
+            retries=3,
+            delay=10,
+        )
+        .splitlines()[0]
+        .split(",")
+    )
+    assert "not ready" in response_create_disk
+    assert wait_for_disk_status(
+        linode_id=result_create[0],
+        disk_id=response_create_disk[0],
+        timeout=90,
+        status="ready",
+    ), "linode failed to change disk status to ready after disk creation.."
+
+    result_rebuild = (
+        exec_test_command(
+            BASE_CMDS["linodes"]
+            + [
+                "rebuild",
+                "--image",
+                DEFAULT_TEST_IMAGE,
+                "--authorized_keys",
+                "ssh-rsa-sha2-512",
+                "--text",
+                "--no-headers",
+                "--delimiter",
+                ",",
+                result_create[0],
+            ]
+        )
+        .splitlines()[0]
+        .split(",")
+    )
+    assert DEFAULT_TEST_IMAGE in result_rebuild
+    assert wait_until(
+        linode_id=result_create[0], timeout=180, status="running"
+    ), "linode failed to change status to running from rebuilding.."
 
 
 @pytest.mark.smoke
@@ -73,26 +181,6 @@ def test_view_linode_configuration(test_linode_instance):
 def test_create_linode_with_min_required_props(linode_min_req):
     result = linode_min_req
     assert re.search("[0-9]+,us-ord,g6-nanode-1", result)
-
-
-def test_create_linodes_fails_without_a_root_pass():
-    result = exec_failing_test_command(
-        BASE_CMDS["linodes"]
-        + [
-            "create",
-            "--type",
-            "g6-nanode-1",
-            "--region",
-            "us-ord",
-            "--image",
-            DEFAULT_TEST_IMAGE,
-            "--text",
-            "--no-headers",
-        ],
-        ExitCodes.REQUEST_FAILED,
-    )
-    assert "Request failed: 400" in result
-    assert "root_pass	root_pass is required" in result
 
 
 def test_create_linode_without_image_and_not_boot(linode_wo_image):
