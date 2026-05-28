@@ -3,6 +3,7 @@ Integration tests for the get_metrics plugin
 """
 
 import os
+from unittest import mock
 
 import pytest
 
@@ -85,6 +86,7 @@ class TestAPIValidation:
         )
         assert "Time duration required" in stderr
 
+    @mock.patch.dict(os.environ, {"JWE_TOKEN": "fake-token"})
     def test_invalid_service(self):
         """Test that an unknown service name hits the API and fails"""
         stderr = exec_failing_test_command(
