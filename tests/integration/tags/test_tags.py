@@ -8,6 +8,9 @@ from tests.integration.helpers import (
     exec_test_command,
     get_random_text,
 )
+from tests.integration.networking.fixtures import (  # noqa: F401
+    create_reserved_ip,
+)
 
 
 @pytest.fixture(scope="session")
@@ -42,3 +45,36 @@ def test_fail_to_create_tag_shorter_than_three_char():
     )
     assert "Request failed: 400" in result
     assert "Length must be 3-50 characters" in result
+
+
+def test_create_tag_for_reserved_ip(create_reserved_ip):
+    _, reserved_ip = create_reserved_ip
+    tag_name = get_random_text(5) + "-tag"
+
+    exec_test_command(
+        BASE_CMDS["tags"]
+        + [
+            "create",
+            "--label",
+            tag_name,
+            "--reserved_ipv4_addresses",
+            reserved_ip[0],
+        ]
+    )
+
+    result = exec_test_command(
+        BASE_CMDS["networking"]
+        + [
+            "reserved-ip-view",
+            reserved_ip[0],
+            "--text",
+            "--no-headers",
+            "--format",
+            "tags",
+        ]
+    )
+
+    assert result == tag_name
+
+    # TODO: GET tags/{label} and DELETE tags/{label} missed or not implemented at all
+    # delete_target_id("tags", tag_name)
