@@ -16,7 +16,7 @@ from tests.integration.helpers import (
 )
 
 TEST_REGION = get_random_region_with_caps(required_capabilities=["Linodes"])
-TEST_IMAGE = "linode/ubuntu24.10"
+TEST_IMAGE = "linode/arch"
 TEST_TYPE = "g6-nanode-1"
 TEST_ROOT_PASS = "r00tp@ss!long-long-and-longer"
 

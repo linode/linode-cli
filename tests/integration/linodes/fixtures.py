@@ -662,3 +662,41 @@ def linode_with_label(linode_cloud_firewall):
     res_arr = result.split(",")
     linode_id = res_arr[4]
     delete_target_id(target="linodes", id=linode_id)
+
+
+@pytest.fixture(scope="module")
+def linode_with_authorization_key(linode_cloud_firewall):
+    label = "cli" + get_random_text(5)
+    test_region = get_random_region_with_caps(
+        required_capabilities=["Linodes", "Disk Encryption"]
+    )
+    result = exec_test_command(
+        BASE_CMDS["linodes"]
+        + [
+            "create",
+            "--type",
+            "g6-nanode-1",
+            "--region",
+            test_region,
+            "--image",
+            DEFAULT_TEST_IMAGE,
+            "--label",
+            label,
+            "--authorized_keys",
+            "ssh-rsa",
+            "--kernel",
+            "linode/latest-64bit",
+            "--boot_size",
+            "9000",
+            "--text",
+            "--delimiter",
+            ",",
+            "--no-headers",
+            "--no-defaults",
+            "--format",
+            "id,type",
+        ]
+    ).split(",")
+
+    yield result
+    delete_target_id(target="linodes", id=result[0])
