@@ -54,6 +54,7 @@ MODULES = [
     "regions",
     "ssh",
     "stackscripts",
+    "streams",
     "tickets",
     "tags",
     "users",
