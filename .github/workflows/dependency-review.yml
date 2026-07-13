@@ -14,6 +14,6 @@ jobs:
       - name: 'Checkout repository'
         uses: actions/checkout@v7
       - name: 'Dependency Review'
-        uses: actions/dependency-review-action@v4
+        uses: actions/dependency-review-action@v5
         with:
           comment-summary-in-pr: on-failure
