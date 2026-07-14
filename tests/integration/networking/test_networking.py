@@ -1,3 +1,4 @@
+import ipaddress
 import json
 import re
 
@@ -6,41 +7,31 @@ from _pytest.monkeypatch import MonkeyPatch
 
 from tests.integration.helpers import (
     BASE_CMDS,
-    delete_target_id,
+    assert_headers_in_lines,
     exec_test_command,
 )
-from tests.integration.linodes.helpers import (
-    create_linode,
-    create_linode_and_wait,
+from tests.integration.linodes.helpers import DEFAULT_REGION
+from tests.integration.networking.fixtures import (  # noqa: F401
+    create_reserved_ip,
+    get_command_heads_and_vals,
+    get_linode_id,
+    get_linode_ids_shared_ipv4,
 )
 
-
-@pytest.fixture(scope="package")
-def test_linode_id(linode_cloud_firewall):
-    linode_id = create_linode_and_wait(firewall_id=linode_cloud_firewall)
-
-    yield linode_id
-
-    delete_target_id(target="linodes", id=linode_id)
-
-
-@pytest.fixture(scope="package")
-def test_linode_id_shared_ipv4(linode_cloud_firewall):
-    target_region = "us-mia"
-
-    linode_ids = (
-        create_linode(
-            test_region=target_region, firewall_id=linode_cloud_firewall
-        ),
-        create_linode(
-            test_region=target_region, firewall_id=linode_cloud_firewall
-        ),
-    )
-
-    yield linode_ids
-
-    for id in linode_ids:
-        delete_target_id(target="linodes", id=id)
+RESERVED_IP_HEADERS = [
+    "address",
+    "type",
+    "public",
+    "rdns",
+    "region",
+    "linode_id",
+    "interface_id",
+    "reserved",
+    "gateway",
+    "prefix",
+    "subnet_mask",
+    "tags",
+]
 
 
 def has_shared_ip(linode_id: int, ip: str) -> bool:
@@ -61,7 +52,18 @@ def has_shared_ip(linode_id: int, ip: str) -> bool:
     return False
 
 
-def test_display_ips_for_available_linodes(test_linode_id):
+def verify_reserved_ip(result):
+    assert isinstance(
+        ipaddress.ip_address(result["address"]), ipaddress.IPv4Address
+    )
+    assert result["type"] == "ipv4"
+    assert result["public"] == True
+    assert result["region"] == DEFAULT_REGION
+    assert not result["linode_id"]
+    assert result["reserved"] == True
+
+
+def test_display_ips_for_available_linodes(get_linode_id):
     result = exec_test_command(
         BASE_CMDS["networking"]
         + ["ips-list", "--text", "--no-headers", "--delimiter", ","]
@@ -69,7 +71,7 @@ def test_display_ips_for_available_linodes(test_linode_id):
 
     assert re.search(r"^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}", result)
     assert re.search(
-        r"ipv4,True,[0-9]{1,3}\-[0-9]{1,3}\-[0-9]{1,3}\-[0-9]{1,3}\.ip.linodeusercontent.com,.*,[0-9][0-9][0-9][0-9][0-9][0-9][0-9]*",
+        r"ipv4,True,(False|True),[0-9]{1,3}\-[0-9]{1,3}\-[0-9]{1,3}\-[0-9]{1,3}\.ip\.linodeusercontent\.com,[0-9]*",
         result,
     )
     assert re.search("ipv6,True,,.*,[0-9][0-9][0-9][0-9][0-9][0-9]*", result)
@@ -80,8 +82,8 @@ def test_display_ips_for_available_linodes(test_linode_id):
 
 
 @pytest.mark.smoke
-def test_view_an_ip_address(test_linode_id):
-    linode_id = test_linode_id
+def test_view_an_ip_address(get_linode_id):
+    linode_id = get_linode_id
     linode_ipv4 = exec_test_command(
         [
             "linode-cli",
@@ -119,8 +121,8 @@ def test_view_an_ip_address(test_linode_id):
     ), f"`interface_id` is not None or int: {data['interface_id']}"
 
 
-def test_allocate_additional_private_ipv4_address(test_linode_id):
-    linode_id = test_linode_id
+def test_allocate_additional_private_ipv4_address(get_linode_id):
+    linode_id = get_linode_id
 
     result = exec_test_command(
         BASE_CMDS["networking"]
@@ -145,10 +147,185 @@ def test_allocate_additional_private_ipv4_address(test_linode_id):
     )
 
 
+@pytest.mark.smoke
+@pytest.mark.parametrize(
+    "create_reserved_ip, expected",
+    [("test", ["test"]), (None, [])],
+    indirect=["create_reserved_ip"],
+)
+def test_create_reserved_ip(create_reserved_ip, expected):
+    res_ip_data = create_reserved_ip
+    headers = list(res_ip_data.keys())
+
+    assert_headers_in_lines(RESERVED_IP_HEADERS, [headers])
+    verify_reserved_ip(res_ip_data)
+    assert res_ip_data["tags"] == expected
+
+
+@pytest.mark.parametrize("create_reserved_ip", ["test"], indirect=True)
+def test_update_reserved_ip_tags(create_reserved_ip):
+    res_ip_data = create_reserved_ip
+    assert res_ip_data["tags"] == ["test"]
+
+    result = json.loads(
+        exec_test_command(
+            BASE_CMDS["networking"]
+            + [
+                "reserved-ip-update",
+                "--tags",
+                "updated",
+                "--tags",
+                "updated2",
+                res_ip_data["address"],
+                "--json",
+            ]
+        )
+    )[0]
+
+    verify_reserved_ip(result)
+    assert result["tags"] == ["updated", "updated2"]
+
+
+def test_create_reserved_ip_assigned(create_reserved_ip, get_linode_id):
+    res_ip_data = create_reserved_ip
+    linode_id = get_linode_id
+
+    exec_test_command(
+        BASE_CMDS["networking"]
+        + [
+            "ip-assign",
+            "--assignments.linode_id",
+            linode_id,
+            "--assignments.address",
+            res_ip_data["address"],
+            "--region",
+            DEFAULT_REGION,
+        ]
+    )
+
+    result = json.loads(
+        exec_test_command(
+            BASE_CMDS["linodes"]
+            + [
+                "ip-view",
+                linode_id,
+                res_ip_data["address"],
+                "--json",
+            ]
+        )
+    )[0]
+    headers = list(result.keys())
+
+    assert_headers_in_lines(RESERVED_IP_HEADERS[:-1], [headers])
+    assert result["address"] == res_ip_data["address"]
+    assert result["linode_id"] == int(linode_id)
+    assert result["reserved"] == True
+    assert "tags" not in headers
+    assert "assigned_entity" in headers
+
+
+def test_get_reserved_ip_types():
+    headers_exp = [
+        "id",
+        "label",
+        "price",
+        "region_prices",
+    ]
+    result = json.loads(
+        exec_test_command(
+            BASE_CMDS["networking"]
+            + [
+                "reserved-ip-types-list",
+                "--json",
+            ]
+        )
+    )[0]
+    headers = list(result.keys())
+    prices = [result["price"]["hourly"], result["price"]["monthly"]]
+
+    assert_headers_in_lines(headers_exp, [headers])
+    assert result["id"] == "reserved-ipv4"
+    assert result["label"] == "Reserved IPv4"
+    assert any(price != 0 for price in prices)
+
+
+def test_get_reserved_ip_view(create_reserved_ip):
+    res_ip_data = create_reserved_ip
+    result = json.loads(
+        exec_test_command(
+            BASE_CMDS["networking"]
+            + [
+                "reserved-ip-view",
+                res_ip_data["address"],
+                "--json",
+            ]
+        )
+    )[0]
+    headers = list(result.keys())
+
+    assert_headers_in_lines(RESERVED_IP_HEADERS, [headers])
+    verify_reserved_ip(result)
+
+
+def test_get_reserved_ips_list(create_reserved_ip):
+    result = exec_test_command(
+        BASE_CMDS["networking"]
+        + [
+            "reserved-ips-list",
+            "--text",
+            "--no-headers",
+            "--format",
+            "reserved",
+        ]
+    ).splitlines()
+
+    assert all(item == "True" for item in result)
+
+
+def test_update_ephemeral_to_reserved(get_linode_id):
+    linode_id = get_linode_id
+
+    ephemeral_ip = exec_test_command(
+        BASE_CMDS["linodes"]
+        + [
+            "view",
+            linode_id,
+            "--text",
+            "--no-headers",
+            "--format",
+            "ipv4",
+        ]
+    ).split(" ")[0]
+
+    exec_test_command(
+        BASE_CMDS["networking"]
+        + [
+            "ip-update",
+            ephemeral_ip,
+            "--reserved",
+            "true",
+        ]
+    )
+
+    is_reserved = exec_test_command(
+        BASE_CMDS["networking"]
+        + [
+            "reserved-ip-view",
+            ephemeral_ip,
+            "--text",
+            "--no-headers",
+            "--format",
+            "reserved",
+        ]
+    )
+
+    assert is_reserved == "True"
+
+
 def test_share_ipv4_address(
-    test_linode_id_shared_ipv4, monkeypatch: MonkeyPatch
+    get_linode_ids_shared_ipv4, monkeypatch: MonkeyPatch
 ):
-    target_linode, parent_linode = test_linode_id_shared_ipv4
+    target_linode, parent_linode = get_linode_ids_shared_ipv4
     monkeypatch.setenv("LINODE_CLI_API_VERSION", "v4beta")
 
     # Allocate an IPv4 address on the parent Linode
