@@ -55,9 +55,11 @@ jobs:
       # DockerFile.
       - uses: actions/github-script@v9
         id: cli_version
+        env:
+          RELEASE_TAG_NAME: ${{ github.event.release.tag_name }}
         with:
           script: |
-            let tag_name = '${{ github.event.release.tag_name }}';
+            let tag_name = process.env.RELEASE_TAG_NAME;
             
             if (tag_name.startsWith("v")) {
               tag_name = tag_name.slice(1);

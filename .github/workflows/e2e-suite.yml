@@ -117,9 +117,10 @@ jobs:
           pip install .[obj,dev]
 
       - name: Install Package
-        run: make install SPEC="${{ inputs.OPENAPI_SPEC_URL }}"
+        run: make install SPEC="$OPENAPI_SPEC_URL"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OPENAPI_SPEC_URL: ${{ inputs.OPENAPI_SPEC_URL }}
 
       - name: Set LINODE_CLI_TOKEN
         run: |
@@ -129,9 +130,11 @@ jobs:
         run: |
           timestamp=$(date +'%Y%m%d%H%M')
           report_filename="${timestamp}_cli_test_report.xml"
-          make test-int TEST_ARGS="--junitxml=${report_filename}" TEST_SUITE="${{ inputs.test_suite }}" RUN_LONG_TESTS="${{ inputs.run_long_tests }}"
+          make test-int TEST_ARGS="--junitxml=${report_filename}" TEST_SUITE="$TEST_SUITE" RUN_LONG_TESTS="$RUN_LONG_TESTS"
         env:
           LINODE_CLI_TOKEN: ${{ env.LINODE_CLI_TOKEN }}
+          TEST_SUITE: ${{ inputs.test_suite }}
+          RUN_LONG_TESTS: ${{ inputs.run_long_tests }}
 
       - name: Upload Test Report as Artifact
         if: always()
