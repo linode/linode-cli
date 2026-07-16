@@ -383,3 +383,103 @@ def test_list_vpc_ipv6s_address():
 
     for header in headers:
         assert header in lines[0]
+
+
+def test_get_vpc_default_ranges():
+    headers = ["default_ipv4_ranges", "forbidden_ipv4_ranges"]
+
+    result = json.loads(
+        exec_test_command(BASE_CMD + ["default-ranges-all-list", "--json"])
+    )[0]
+
+    assert all(header in result.keys() for header in headers)
+    assert isinstance(result[headers[0]], list)
+    assert isinstance(result[headers[1]], list)
+
+
+@pytest.mark.parametrize(
+    "create_vpc_with_ipv4, expected",
+    [
+        ("--ipv4.range 10.0.0.0/8", 1),
+        ("--ipv4.range 10.0.0.0/8 --ipv4.range 192.168.0.0/17", 2),
+    ],
+    indirect=["create_vpc_with_ipv4"],
+)
+def test_vpc_with_ipv4(create_vpc_with_ipv4, expected):
+    vpc_id = create_vpc_with_ipv4
+
+    result = exec_test_command(
+        BASE_CMDS["vpcs"] + ["list", "--text", "--format=id", "--no-headers"]
+    )
+    assert vpc_id in result.splitlines()
+
+    result = json.loads(
+        exec_test_command(BASE_CMDS["vpcs"] + ["view", vpc_id, "--json"])
+    )[0]
+    assert len(result["ipv4"]) == expected
+
+
+@pytest.mark.parametrize(
+    "create_vpc_with_ipv4, updated",
+    [
+        ("--ipv4.range 10.0.0.0/8", "192.168.0.0/17"),
+    ],
+    indirect=["create_vpc_with_ipv4"],
+)
+def test_vpc_update_with_ipv4(create_vpc_with_ipv4, updated):
+    vpc_id = create_vpc_with_ipv4
+
+    exec_test_command(
+        BASE_CMDS["vpcs"]
+        + [
+            "update",
+            vpc_id,
+            "--ipv4.range",
+            updated,
+        ]
+    )
+
+    result = json.loads(
+        exec_test_command(BASE_CMDS["vpcs"] + ["view", vpc_id, "--json"])
+    )[0]
+    assert len(result["ipv4"]) == 1
+    assert result["ipv4"][0]["range"] == updated
+
+
+def test_vpc_with_forbidden_ipv4_fail():
+    forbidden_ipv4 = exec_test_command(
+        BASE_CMD
+        + [
+            "default-ranges-all-list",
+            "--text",
+            "--no-headers",
+            "--format=forbidden_ipv4_ranges",
+        ]
+    ).split()[0]
+
+    region = get_random_region_with_caps(
+        required_capabilities=["VPCs", "Custom VPC IPv4 Ranges"]
+    )
+    label = get_random_text(5) + "-label"
+
+    result = exec_failing_test_command(
+        BASE_CMDS["vpcs"]
+        + [
+            "create",
+            "--label",
+            label,
+            "--region",
+            region,
+            "--ipv4.range",
+            forbidden_ipv4,
+            "--text",
+            "--no-headers",
+        ],
+        ExitCodes.REQUEST_FAILED,
+    )
+
+    assert "Request failed: 400" in result
+    assert (
+        f"The IPv4 range {forbidden_ipv4} overlaps with the forbidden IPv4 range {forbidden_ipv4}"
+        in result
+    )
