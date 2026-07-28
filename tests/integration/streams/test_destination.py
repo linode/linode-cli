@@ -119,7 +119,7 @@ def test_remove_destination_error():
     assert "Destination not found" in result
 
 
-def test_view_delete_destination(create_destination_akamai_object_storage_type):
+def test_create_view_delete_destination(create_destination_akamai_object_storage_type):
     result_view = exec_test_command(
         BASE_CMDS["streams"]
         + [
