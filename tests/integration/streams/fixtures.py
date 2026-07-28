@@ -83,11 +83,11 @@ def create_object_storage_keys():
             "--delimiter",
             ",",
             "--format",
-            "access_key,id",
+            "access_key,secret_key,id",
         ]
     ).split(",")
-    yield result_keys[0], test_bucket["label"], test_bucket["s3_endpoint"]
-    delete_target_id("object-storage", str(result_keys[1]), "keys-delete")
+    yield result_keys[0], result_keys[1], test_bucket["label"], test_bucket["s3_endpoint"]
+    delete_target_id("object-storage", str(result_keys[2]), "keys-delete")
 
 
 @pytest.fixture(scope="function")
@@ -104,11 +104,13 @@ def create_destination_akamai_object_storage_type(create_object_storage_keys):
             "--type",
             "akamai_object_storage",
             "--details.host",
-            create_object_storage_keys[2],
+            create_object_storage_keys[3],
             "--details.bucket_name",
-            create_object_storage_keys[1],
+            create_object_storage_keys[2],
             "--details.path",
             "audit-logs",
+            "--details.access_key_secret",
+            create_object_storage_keys[1],
             "--details.access_key_id",
             create_object_storage_keys[0],
             "--delimiter",
