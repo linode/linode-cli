@@ -32,3 +32,29 @@ def firewall_id():
     yield firewall_id
 
     delete_target_id(target="firewalls", id=firewall_id)
+
+
+@pytest.fixture(scope="session")
+def firewall_protocol_all():
+    firewall_id = exec_test_command(
+        BASE_CMDS["firewalls"]
+        + [
+            "create",
+            "--label",
+            "fw-test-" + get_random_text(5),
+            "--rules.outbound_policy",
+            "ACCEPT",
+            "--rules.outbound",
+            '[{"protocol": "ALL", "addresses": {"ipv4": ["198.51.100.0/24"]}, "action": "ACCEPT", "label": "protocol_ALL_test"}]',
+            "--rules.inbound_policy",
+            "DROP",
+            "--text",
+            "--no-headers",
+            "--format",
+            "id",
+        ]
+    )
+
+    yield firewall_id
+
+    delete_target_id(target="firewalls", id=firewall_id)

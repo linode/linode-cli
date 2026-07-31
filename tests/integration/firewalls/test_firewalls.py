@@ -8,6 +8,7 @@ from linodecli.exit_codes import ExitCodes
 from tests.integration.firewalls.fixtures import (  # noqa: F401
     FIREWALL_LABEL,
     firewall_id,
+    firewall_protocol_all,
 )
 from tests.integration.helpers import (
     BASE_CMDS,
@@ -275,3 +276,18 @@ def test_firewall_template_view(monkeypatch: MonkeyPatch):
         assert template["rules"]["outbound_policy"] == "ACCEPT"
         assert isinstance(template["rules"]["inbound"], list)
         assert isinstance(template["rules"]["outbound"], list)
+
+
+def test_create_and_read_firewall_protocol_all(firewall_protocol_all):
+    output = json.loads(
+        exec_test_command(
+            BASE_CMDS["firewalls"]
+            + [
+                "rules-list",
+                firewall_protocol_all,
+                "--json",
+            ]
+        )
+    )
+    assert output[0]["outbound"][0]["protocol"] == "ALL"
+    assert output[0]["outbound"][0]["addresses"]["ipv4"] == ["198.51.100.0/24"]
