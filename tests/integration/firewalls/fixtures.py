@@ -1,3 +1,5 @@
+import json
+
 import pytest
 
 from tests.integration.helpers import (
@@ -58,3 +60,31 @@ def firewall_protocol_all():
     yield firewall_id
 
     delete_target_id(target="firewalls", id=firewall_id)
+
+
+@pytest.fixture(scope="session")
+def firewall_protocol_numeric_and_all():
+    response = json.loads(
+        exec_test_command(
+            BASE_CMDS["firewalls"]
+            + [
+                "create",
+                "--label",
+                "fw-test-" + get_random_text(5),
+                "--rules.inbound_policy",
+                "DROP",
+                "--rules.inbound",
+                '[{"protocol": "ALL", "addresses": {"ipv4": ["0.0.0.0/0"]}, "action": "ACCEPT", "label": "protocol_ALL_test"}]',
+                "--rules.outbound_policy",
+                "ACCEPT",
+                "--rules.outbound",
+                '[{"protocol": "40", "addresses": {"ipv4": ["198.51.100.0/24"]}, "action": "ACCEPT", "label": "protocol_numeric_test"}, '
+                '{"protocol": "ALL", "addresses": {"ipv4": ["0.0.0.0/0"]}, "action": "ACCEPT", "label": "protocol_ALL_test"}]',
+                "--json",
+            ]
+        )
+    )
+
+    yield response
+
+    delete_target_id(target="firewalls", id=str(response[0]["id"]))

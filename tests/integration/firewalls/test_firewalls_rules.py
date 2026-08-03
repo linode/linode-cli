@@ -3,6 +3,8 @@ import re
 
 from tests.integration.firewalls.fixtures import (  # noqa: F401
     firewall_id,
+    firewall_protocol_all,
+    firewall_protocol_numeric_and_all,
 )
 from tests.integration.helpers import (
     BASE_CMDS,
@@ -280,3 +282,65 @@ def test_list_rules_json_format(firewall_id):
         )
     )
     assert result[0]["inbound"][0]["label"] == "rules-list-test"
+
+
+def test_create_firewall_protocol_numeric_and_all(
+    firewall_protocol_numeric_and_all,
+):
+    output = firewall_protocol_numeric_and_all[0]
+    assert output["status"] == "enabled"
+    assert output["rules"]["inbound_policy"] == "DROP"
+    assert output["rules"]["inbound"][0]["action"] == "ACCEPT"
+    assert output["rules"]["inbound"][0]["protocol"] == "ALL"
+    assert output["rules"]["inbound"][0]["addresses"]["ipv4"] == ["0.0.0.0/0"]
+    assert output["rules"]["outbound_policy"] == "ACCEPT"
+    assert output["rules"]["outbound"][0]["action"] == "ACCEPT"
+    assert output["rules"]["outbound"][0]["protocol"] == "40"
+    assert output["rules"]["outbound"][0]["addresses"]["ipv4"] == [
+        "198.51.100.0/24"
+    ]
+    assert output["rules"]["outbound"][1]["action"] == "ACCEPT"
+    assert output["rules"]["outbound"][1]["protocol"] == "ALL"
+    assert output["rules"]["outbound"][1]["addresses"]["ipv4"] == ["0.0.0.0/0"]
+    assert output["rules"]["version"] == 1
+
+
+def test_firewall_protocol_all_get_rules_list(firewall_protocol_all):
+    output = json.loads(
+        exec_test_command(
+            BASE_CMDS["firewalls"]
+            + [
+                "rules-list",
+                firewall_protocol_all,
+                "--json",
+            ]
+        )
+    )
+    assert len(output[0]["inbound"]) == 0
+    assert output[0]["inbound_policy"] == "DROP"
+    assert output[0]["outbound_policy"] == "ACCEPT"
+    assert output[0]["outbound"][0]["action"] == "ACCEPT"
+    assert output[0]["outbound"][0]["protocol"] == "ALL"
+    assert output[0]["outbound"][0]["addresses"]["ipv4"] == ["198.51.100.0/24"]
+    assert output[0]["version"] == 1
+
+
+def test_firewall_protocol_all_get_version_view(firewall_protocol_all):
+    output = json.loads(
+        exec_test_command(
+            BASE_CMDS["firewalls"]
+            + [
+                "version-view",
+                firewall_protocol_all,
+                "1",
+                "--json",
+            ]
+        )
+    )
+    assert len(output[0]["inbound"]) == 0
+    assert output[0]["inbound_policy"] == "DROP"
+    assert output[0]["outbound_policy"] == "ACCEPT"
+    assert output[0]["outbound"][0]["action"] == "ACCEPT"
+    assert output[0]["outbound"][0]["protocol"] == "ALL"
+    assert output[0]["outbound"][0]["addresses"]["ipv4"] == ["198.51.100.0/24"]
+    assert output[0]["version"] == 1
