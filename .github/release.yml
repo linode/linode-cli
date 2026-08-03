@@ -9,6 +9,9 @@ changelog:
     - title: ⚠️ Breaking Change
       labels:
         - breaking-change
+    - title: 🔒 Security Fixes
+      labels:
+        - security
     - title: 🐛 Bug Fixes
       labels:
         - bugfix
