@@ -3,6 +3,7 @@ on:
   workflow_dispatch: null
   push:
   pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
 jobs:
   docker-build:
     runs-on: ubuntu-latest
@@ -58,6 +59,11 @@ jobs:
       - name: run linter
         run: make lint
 
+      - name: Check Merge Readiness
+        if: github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'do-not-merge')
+        run: |
+          echo "::error::This PR is labeled 'do-not-merge'."
+          exit 1
   unit-tests-on-ubuntu:
     runs-on: ubuntu-latest
     strategy:
