@@ -8,6 +8,7 @@ Usage:
 
 import argparse
 import base64
+import os
 import sys
 from pathlib import Path
 
@@ -18,6 +19,11 @@ from linodecli.help_formatter import SortingHelpFormatter
 from linodecli.plugins import inherit_plugin_args
 
 PLUGIN_BASE = "linode-cli get-kubeconfig"
+
+# Kubeconfigs contain credentials, so they should only be
+# accessible by the user that created them.
+KUBECONFIG_FILE_MODE = 0o600
+KUBECONFIG_DIR_MODE = 0o700
 
 
 def call(args, context):
@@ -147,9 +153,24 @@ def _load_config(filepath):
 
 # Dumps data to a yaml file
 def _dump_config(filepath, data):
-    Path.mkdir(filepath.parent, exist_ok=True)
-    with open(filepath, "w", encoding="utf-8") as file_descriptor:
-        yaml.dump(data, file_descriptor)
+    Path.mkdir(filepath.parent, mode=KUBECONFIG_DIR_MODE, exist_ok=True)
+
+    # Create the file with restrictive permissions rather than chmod-ing it
+    # afterwards, so its contents are never briefly readable by other users.
+    # NOTE: The mode is only applied when the file is created.
+    file_descriptor = os.open(
+        filepath,
+        os.O_WRONLY | os.O_CREAT | os.O_TRUNC,
+        KUBECONFIG_FILE_MODE,
+    )
+
+    # Tighten the permissions of pre-existing files that are readable or
+    # writable by users other than the owner.
+    if os.fstat(file_descriptor).st_mode & 0o077:
+        os.fchmod(file_descriptor, KUBECONFIG_FILE_MODE)
+
+    with os.fdopen(file_descriptor, "w", encoding="utf-8") as file:
+        yaml.dump(data, file)
 
 
 def _merge_dict(dict_1, dict_2):
