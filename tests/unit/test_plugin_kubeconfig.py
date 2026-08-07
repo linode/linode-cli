@@ -205,6 +205,9 @@ def test_merge(mock_cli, fake_kubeconfig_file):
 
 
 # Ensure newly created kubeconfig files are not world/group-readable
+@pytest.mark.skipif(
+    os.name == "nt", reason="POSIX file modes are not supported on Windows"
+)
 def test_written_config_permissions(mock_cli):
     mock_cli.call_operation = mock_call_operation
 
@@ -230,6 +233,9 @@ def test_written_config_permissions(mock_cli):
 
 
 # Ensure pre-existing world-readable kubeconfig files get tightened
+@pytest.mark.skipif(
+    os.name == "nt", reason="POSIX file modes are not supported on Windows"
+)
 def test_existing_config_permissions_tightened(mock_cli):
     mock_cli.call_operation = mock_call_operation
 

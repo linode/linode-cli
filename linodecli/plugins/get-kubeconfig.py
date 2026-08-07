@@ -166,7 +166,9 @@ def _dump_config(filepath, data):
 
     # Tighten the permissions of pre-existing files that are readable or
     # writable by users other than the owner.
-    if os.fstat(file_descriptor).st_mode & 0o077:
+    # NOTE: os.fchmod is not available on Windows, where POSIX file modes
+    # are not meaningful anyway.
+    if hasattr(os, "fchmod") and os.fstat(file_descriptor).st_mode & 0o077:
         os.fchmod(file_descriptor, KUBECONFIG_FILE_MODE)
 
     with os.fdopen(file_descriptor, "w", encoding="utf-8") as file:
