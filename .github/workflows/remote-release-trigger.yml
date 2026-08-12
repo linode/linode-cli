@@ -15,7 +15,7 @@ jobs:
           private_key: ${{ secrets.CLI_RELEASE_PRIVATE_KEY }}
 
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           # We want to checkout the main branch
           ref: 'main'
@@ -29,7 +29,7 @@ jobs:
 
       - name: Calculate the desired release version
         id: calculate_version
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         env:
           SPEC_VERSION: ${{ github.event.client_payload.spec_version }}
           PREVIOUS_CLI_VERSION: ${{ steps.previoustag.outputs.tag }}
@@ -66,7 +66,7 @@ jobs:
           commit_sha: ${{ steps.calculate_head_sha.outputs.commit_sha }}
 
       - name: Release
-        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # pin@v2.5.0
+        uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b # pin@v3.0.1
         with:
           target_commitish: 'main'
           token: ${{ steps.generate_token.outputs.token }}

@@ -482,7 +482,7 @@ def test_update_node_for_node_balancer_udp_configuration(
         == node_id
         + ",defaultnode1,"
         + nodebalancer_with_udp_config_and_node[3]
-        + ":80,Unknown,30,none"
+        + ":80,Unknown,30,none,"
     )
 
 
@@ -511,7 +511,7 @@ def test_list_nodes_for_node_balancer_udp_configuration(
         == node_id
         + ",defaultnode1,"
         + nodebalancer_with_udp_config_and_node[3]
-        + ":80,Unknown,100,none"
+        + ":80,Unknown,100,none,"
     )
 
 
@@ -540,7 +540,7 @@ def test_view_node_for_node_balancer_udp_configuration(
         == node_id
         + ",defaultnode1,"
         + nodebalancer_with_udp_config_and_node[3]
-        + ":80,Unknown,100,none"
+        + ":80,Unknown,100,none,"
     )
 
 

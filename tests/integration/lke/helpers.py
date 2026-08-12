@@ -76,6 +76,22 @@ def get_lke_enterprise_id():
     return enterprise_ti.get("id")
 
 
+def get_lke_standard_id():
+    standard_versions_list = exec_test_command(
+        BASE_CMDS["lke"]
+        + [
+            "versions-list",
+            "--json",
+        ]
+    )
+
+    parsed = json.loads(standard_versions_list)
+
+    standard_ti = parsed[0]
+
+    return standard_ti.get("id")
+
+
 def get_cluster_id(label: str):
     cluster_id = exec_test_command(
         [
