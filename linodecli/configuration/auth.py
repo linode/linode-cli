@@ -328,15 +328,13 @@ def _handle_oauth_callback() -> str:
     # figure out the URL to direct the user to and print out the prompt
     # pylint: disable-next=line-too-long
     url = f"https://login.linode.com/oauth/authorize?client_id={OAUTH_CLIENT_ID}&response_type=token&scopes=*&redirect_uri=http://localhost:{serv.server_address[1]}"
-    print(
-        f"""A browser should open directing you to this URL to authenticate:
+    print(f"""A browser should open directing you to this URL to authenticate:
 
 {url}
 
 If you are not automatically directed there, please copy/paste the link into your browser
 to continue..
-"""
-    )
+""")
 
     webbrowser.open(url)
 
