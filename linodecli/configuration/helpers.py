@@ -97,9 +97,10 @@ def _check_browsers() -> bool:
 
     # pylint: disable-next=protected-access
     if not KNOWN_GOOD_BROWSERS.intersection(webbrowser._tryorder):
-        print("""
-This tool defaults to web-based authentication,
-however no known-working browsers were found.""")
+        print(
+            "This tool defaults to web-based authentication,\n"
+            "however no known-working browsers were found."
+        )
         while True:
             r = input("Try it anyway? [y/N]: ")
             if r.lower() in "yn ":
