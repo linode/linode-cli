@@ -212,7 +212,7 @@ def test_written_config_permissions(mock_cli):
     mock_cli.call_operation = mock_call_operation
 
     with tempfile.TemporaryDirectory() as temp_dir:
-        file_path = os.path.join(temp_dir, "new_dir", "config")
+        file_path = os.path.join(temp_dir, "new_dir", "nested", "config")
 
         try:
             plugin.call(

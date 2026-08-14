@@ -153,26 +153,28 @@ def _load_config(filepath):
 
 # Dumps data to a yaml file
 def _dump_config(filepath, data):
-    Path.mkdir(filepath.parent, mode=KUBECONFIG_DIR_MODE, exist_ok=True)
+    filepath.parent.mkdir(mode=KUBECONFIG_DIR_MODE, parents=True, exist_ok=True)
 
     # Create the file with restrictive permissions rather than chmod-ing it
     # afterwards, so its contents are never briefly readable by other users.
     # NOTE: The mode is only applied when the file is created.
-    file_descriptor = os.open(
-        filepath,
-        os.O_WRONLY | os.O_CREAT | os.O_TRUNC,
-        KUBECONFIG_FILE_MODE,
-    )
+    def opener(path, flags):
+        return os.open(path, flags, mode=KUBECONFIG_FILE_MODE)
 
-    # Tighten the permissions of pre-existing files that are readable or
-    # writable by users other than the owner.
-    # NOTE: os.fchmod is not available on Windows, where POSIX file modes
-    # are not meaningful anyway.
-    if hasattr(os, "fchmod") and os.fstat(file_descriptor).st_mode & 0o077:
-        os.fchmod(file_descriptor, KUBECONFIG_FILE_MODE)
+    with open(
+        filepath, "w", encoding="utf-8", opener=opener
+    ) as file_descriptor:
+        # Tighten the permissions of pre-existing files that are readable or
+        # writable by users other than the owner.
+        # NOTE: os.fchmod is not available on Windows, where POSIX file modes
+        # are not meaningful anyway.
+        if (
+            hasattr(os, "fchmod")
+            and os.fstat(file_descriptor.fileno()).st_mode & 0o077
+        ):
+            os.fchmod(file_descriptor.fileno(), KUBECONFIG_FILE_MODE)
 
-    with os.fdopen(file_descriptor, "w", encoding="utf-8") as file:
-        yaml.dump(data, file)
+        yaml.dump(data, file_descriptor)
 
 
 def _merge_dict(dict_1, dict_2):
