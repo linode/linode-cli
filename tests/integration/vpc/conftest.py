@@ -67,3 +67,24 @@ def test_subnet(test_vpc_wo_subnet):
     )
 
     yield res, subnet_label
+
+
+@pytest.fixture
+def create_vpc_with_ipv4(request):
+    params = getattr(request, "param", None)
+    params = params.split() if params else []
+    region = get_random_region_with_caps(
+        required_capabilities=["VPCs", "Custom VPC IPv4 Ranges"]
+    )
+    label = get_random_text(5) + "-label"
+
+    vpc_id = exec_test_command(
+        BASE_CMDS["vpcs"]
+        + ["create", "--label", label, "--region", region]
+        + params
+        + ["--no-headers", "--text", "--format=id"]
+    )
+
+    yield vpc_id
+
+    delete_target_id(target="vpcs", id=vpc_id)
