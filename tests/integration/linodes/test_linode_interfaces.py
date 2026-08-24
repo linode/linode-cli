@@ -146,10 +146,6 @@ def test_interface_settings_update(
                 interface_id,
                 "--default_route.ipv6_interface_id",
                 interface_id,
-                "--default_route.ipv4_eligible_interface_ids",
-                interface_id,
-                "--default_route.ipv6_eligible_interface_ids",
-                interface_id,
                 "--json",
             ]
         )

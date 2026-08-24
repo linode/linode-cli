@@ -214,11 +214,12 @@ def _get_token_terminal(base_url: str) -> Tuple[str, str]:
     :returns: A tuple containing the user's username and token.
     :rtype: Tuple[str, str]
     """
-    print(f"""
-First, we need a Personal Access Token.  To get one, please visit
-{TOKEN_GENERATION_URL} and click
-"Create a Personal Access Token".  The CLI needs access to everything
-on your account to work correctly.""")
+    print(
+        "First, we need a Personal Access Token.  To get one, please visit\n"
+        f"{TOKEN_GENERATION_URL} and click\n"
+        '"Create a Personal Access Token".  The CLI needs access to everything\n'
+        "on your account to work correctly."
+    )
 
     while True:
         token = input("Personal Access Token: ")

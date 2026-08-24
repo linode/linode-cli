@@ -61,7 +61,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: '3.x'
 
@@ -70,9 +70,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - run: make MODULE="${{ inputs.module }}" RUN_LONG_TESTS="${{ inputs.run_long_tests }}" test-int
+      - run: make MODULE="$env:MODULE" RUN_LONG_TESTS="$env:RUN_LONG_TESTS" test-int
         env:
           LINODE_CLI_TOKEN: ${{ secrets.LINODE_TOKEN_2 }}
+          MODULE: ${{ inputs.module }}
+          RUN_LONG_TESTS: ${{ inputs.run_long_tests }}
 
       - uses: actions/github-script@v9
         id: update-check-run
@@ -135,7 +137,7 @@ jobs:
 
     steps:
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: '3.x'
 

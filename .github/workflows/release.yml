@@ -31,7 +31,7 @@ jobs:
         uses: actions/checkout@v7
 
       - name: setup python 3
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: '3.x'
 
@@ -55,9 +55,11 @@ jobs:
       # DockerFile.
       - uses: actions/github-script@v9
         id: cli_version
+        env:
+          RELEASE_TAG_NAME: ${{ github.event.release.tag_name }}
         with:
           script: |
-            let tag_name = '${{ github.event.release.tag_name }}';
+            let tag_name = process.env.RELEASE_TAG_NAME;
             
             if (tag_name.startsWith("v")) {
               tag_name = tag_name.slice(1);
@@ -89,7 +91,7 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Setup Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: '3.x'
 
@@ -106,4 +108,4 @@ jobs:
           LINODE_CLI_VERSION: ${{ github.event.release.tag_name }}
 
       - name: Publish the release artifacts to PyPI
-        uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b # pin@release/v1.14.0
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # pin@release/v1.14.2
