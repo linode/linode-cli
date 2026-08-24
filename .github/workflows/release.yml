@@ -26,6 +26,9 @@ jobs:
   oci_publish:
     name: Build and publish the OCI image
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - name: Clone Repository
         uses: actions/checkout@v7
@@ -39,16 +42,23 @@ jobs:
         run: make requirements
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@06116385d9baf250c9f4dcb4858b16962ea869c3 # pin@v4.1.0
+        uses: docker/setup-qemu-action@v4
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # pin@v4.0.0
+        uses: docker/setup-buildx-action@v4
+
+      - name: OIDC connections
+        id: docker_oidc
+        uses: docker/oidc-action@v1
+        with:
+          connection-id: ${{ vars.DOCKER_OIDC_CONNECTION_ID }}
+          expires-in: 1800
 
       - name: Login to Docker Hub
         uses: docker/login-action@v4
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          username: ${{ vars.DOCKER_ORGANIZATION_NAME }}
+          password: ${{ steps.docker_oidc.outputs.token }}
 
       # This is necessary as we want to ensure that version tags
       # are properly formatted before passing them into the
