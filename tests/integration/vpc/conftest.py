@@ -11,7 +11,7 @@ from tests.integration.helpers import (
 
 
 @pytest.fixture
-def test_vpc_w_subnet():
+def get_test_vpc_w_subnet():
     vpc_json = create_vpc_w_subnet()
     vpc_id = str(vpc_json["id"])
 
@@ -21,9 +21,8 @@ def test_vpc_w_subnet():
 
 
 @pytest.fixture
-def test_vpc_wo_subnet():
+def get_test_vpc_wo_subnet():
     region = get_random_region_with_caps(required_capabilities=["VPCs"])
-
     label = get_random_text(5) + "-label"
 
     vpc_id = exec_test_command(
@@ -48,15 +47,43 @@ def test_vpc_wo_subnet():
 
 
 @pytest.fixture
-def test_subnet(test_vpc_wo_subnet):
-    vpc_id = test_vpc_wo_subnet
-    subnet_label = get_random_text(5) + "-label"
-    res = exec_test_command(
+def get_test_vpc_w_rdma_type():
+    # GPUDirect RDMA capability not available for now
+    # region = get_random_region_with_caps(required_capabilities=["VPCs", "GPUDirect RDMA"])
+    region = get_random_region_with_caps(required_capabilities=["VPCs"])
+    label = get_random_text(5) + "-test-rdma-vpc"
+
+    vpc_id = exec_test_command(
+        BASE_CMDS["vpcs"]
+        + [
+            "create",
+            "--label",
+            label,
+            "--region",
+            region,
+            "--vpc_type",
+            "rdma",
+            "--no-headers",
+            "--text",
+            "--format=id",
+        ]
+    )
+
+    yield vpc_id
+
+    delete_target_id(target="vpcs", id=vpc_id)
+
+
+@pytest.fixture
+def get_test_subnet(get_test_vpc_wo_subnet):
+    vpc_id = get_test_vpc_wo_subnet
+    label = get_random_text(5) + "-label"
+    subnet_id = exec_test_command(
         BASE_CMDS["vpcs"]
         + [
             "subnet-create",
             "--label",
-            subnet_label,
+            label,
             "--ipv4",
             "10.0.0.0/24",
             vpc_id,
@@ -64,9 +91,31 @@ def test_subnet(test_vpc_wo_subnet):
             "--no-headers",
             "--delimiter=,",
         ]
-    )
+    ).split(",")[0]
 
-    yield res, subnet_label
+    yield vpc_id, subnet_id
+
+
+@pytest.fixture
+def get_test_subnet_w_rdma_type(get_test_vpc_w_rdma_type):
+    vpc_id = get_test_vpc_w_rdma_type
+    label = get_random_text(5) + "-test-rdma-subnet"
+    subnet_id = exec_test_command(
+        BASE_CMDS["vpcs"]
+        + [
+            "subnet-create",
+            "--label",
+            label,
+            "--ipv4",
+            "10.0.0.0/24",
+            vpc_id,
+            "--text",
+            "--no-headers",
+            "--delimiter=,",
+        ]
+    ).split(",")[0]
+
+    yield vpc_id, subnet_id
 
 
 @pytest.fixture
