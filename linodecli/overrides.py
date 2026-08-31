@@ -71,6 +71,18 @@ def handle_databases_postgres_config_view(
     return databases_postgres_config_view_output(json_data)
 
 
+@output_override("databases", "valkey-config-view", OutputMode.table)
+def handle_databases_valkey_config_view(
+    operation, output_handler, json_data
+) -> bool:
+    # pylint: disable=unused-argument
+    """
+    Override the output of 'linode-cli databases valkey-config-view'
+    to properly display the valkey engine config.
+    """
+    return databases_valkey_config_view_output(json_data)
+
+
 @output_override("domains", "zone-file", OutputMode.delimited)
 def handle_domains_zone_file(operation, output_handler, json_data) -> bool:
     # pylint: disable=unused-argument
@@ -345,9 +357,35 @@ def add_param_row(output, param_name, param_data):
     )
 
 
-def databases_mysql_config_view_output(json_data) -> bool:
+def _is_database_config_parameter(param_data):
     """
-    Parse and format the MySQL configuration output table.
+    Determine whether a database config object describes a parameter.
+    """
+    return isinstance(param_data, dict) and (
+        "type" in param_data
+        or "requires_restart" in param_data
+        or "description" in param_data
+    )
+
+
+def _add_database_config_rows(output, config_data, prefix=""):
+    """
+    Recursively add database configuration parameters to the output table.
+    """
+    for field, params in config_data.items():
+        param_name = f"{prefix}.{field}" if prefix else field
+
+        if _is_database_config_parameter(params):
+            add_param_row(output, param_name, params)
+            continue
+
+        if isinstance(params, dict):
+            _add_database_config_rows(output, params, param_name)
+
+
+def _database_config_view_output(json_data) -> bool:
+    """
+    Parse and format a database configuration output table.
     """
     output = Table(header_style="bold", show_lines=True)
 
@@ -362,50 +400,30 @@ def databases_mysql_config_view_output(json_data) -> bool:
     output.add_column("Requires Restart", justify="center")
     output.add_column("Description", style="dim")
 
-    for field, params in json_data.items():
-        if field in ["binlog_retention_period"]:
-            add_param_row(output, field, params)
-        else:
-            for key, val in params.items():
-                param_name = f"{field}.{key}"
-                add_param_row(output, param_name, val)
+    _add_database_config_rows(output, json_data)
 
     console = Console()
     console.print(output)
 
     return False
+
+
+def databases_mysql_config_view_output(json_data) -> bool:
+    """
+    Parse and format the MySQL configuration output table.
+    """
+    return _database_config_view_output(json_data)
 
 
 def databases_postgres_config_view_output(json_data) -> bool:
     """
     Parse and format the PostgreSQL configuration output table.
     """
-    output = Table(header_style="bold", show_lines=True)
+    return _database_config_view_output(json_data)
 
-    output.add_column("Parameter", style="bold")
-    output.add_column("Type", justify="center")
-    output.add_column("Example", justify="center")
-    output.add_column("Min", justify="center")
-    output.add_column("Max", justify="center")
-    output.add_column("Min Length", justify="center")
-    output.add_column("Max Length", justify="center")
-    output.add_column("Pattern", justify="center")
-    output.add_column("Requires Restart", justify="center")
-    output.add_column("Description", style="dim")
 
-    for field, params in json_data.items():
-        if field in [
-            "pg_stat_monitor_enable",
-            "shared_buffers_percentage",
-            "work_mem",
-        ]:
-            add_param_row(output, field, params)
-        else:
-            for key, val in params.items():
-                param_name = f"{field}.{key}"
-                add_param_row(output, param_name, val)
-
-    console = Console()
-    console.print(output)
-
-    return False
+def databases_valkey_config_view_output(json_data) -> bool:
+    """
+    Parse and format the Valkey configuration output table.
+    """
+    return _database_config_view_output(json_data)
