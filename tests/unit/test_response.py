@@ -21,6 +21,60 @@ class TestResponse:
             {"_split": "cool", "foo": 321},
         ]
 
+    def test_model_fix_json_nested_skips_unexpected_path(
+        self, list_operation_for_response_test
+    ):
+        model = list_operation_for_response_test.response_model
+        model.nested_list = "engines.foo, engines.bar"
+
+        result = model.fix_json(
+            [
+                {
+                    "id": "id-number-1",
+                    "engines": {
+                        "foo": [{"quantity": 1}, {"quantity": 2}],
+                        "bar": [{"quantity": 3}],
+                    },
+                },
+                {
+                    "id": "id-number-2",
+                    "engines": {
+                        "foo": [{"quantity": 4}],
+                    },
+                },
+                {
+                    "id": "id-number-3",
+                    "engines": {
+                        "xyz": [{"quantity": 5}],
+                    },
+                },
+            ]
+        )
+        result = sorted(result, key=lambda x: x["id"])
+
+        assert result == [
+            {
+                "id": "id-number-1",
+                "_split": "foo",
+                "engines": {"quantity": 1},
+            },
+            {
+                "id": "id-number-1",
+                "_split": "foo",
+                "engines": {"quantity": 2},
+            },
+            {
+                "id": "id-number-1",
+                "_split": "bar",
+                "engines": {"quantity": 3},
+            },
+            {
+                "id": "id-number-2",
+                "_split": "foo",
+                "engines": {"quantity": 4},
+            },
+        ]
+
     def test_attr_get_value(self, list_operation_for_response_test):
         model = {"data": {"foo": {"bar": "cool"}}}
         attr = list_operation_for_response_test.response_model.attrs[0]

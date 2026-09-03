@@ -316,8 +316,15 @@ class OpenAPIResponse:
             for cur in json:
                 # Get the nested list using the path
                 nlist_path = cur
+
                 for p in path_parts:
                     nlist_path = nlist_path.get(p)
+
+                # To avoid errors when nested list is not documented in
+                # the OpenAPI spec, but it is present in the API response
+                if nlist_path is None:
+                    continue
+
                 nlist = nlist_path
 
                 # For each item in the nested list,
