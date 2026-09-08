@@ -1,7 +1,6 @@
 import json
 from typing import Callable, Optional
 
-import pytest
 from pytest import MonkeyPatch
 
 from tests.integration.helpers import (
@@ -263,14 +262,11 @@ def test_endpoints():
     assert us_east["s3_endpoint"] == "us-east-1.linodeobjects.com"
 
 
-@pytest.mark.skipif(
-    reason="Skipping until the command is fixed and aligned with techdocs example. Applicable for spec version after 4.197.1"
-)
 def test_transfers():
     data = exec_test_command(
         BASE_CMDS["object-storage"]
         + [
-            "transfers",
+            "transfer-view",
             "--json",
         ]
     )

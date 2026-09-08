@@ -1,4 +1,5 @@
 import json
+import os
 import re
 
 import pytest
@@ -10,13 +11,10 @@ from tests.integration.helpers import (
     exec_test_command,
     get_random_region_with_caps,
     get_random_text,
+    wait_for_condition,
 )
 
 BASE_CMD = ["linode-cli", "vpcs"]
-
-
-# TODO: Remove this variable and @pytest.mark.skipif once VPC Dual Stack is ready to ship
-disable_vpc_dual_stack_tests = True
 
 
 def test_list_vpcs(test_vpc_wo_subnet):
@@ -78,14 +76,15 @@ def test_list_subnets(test_vpc_w_subnet):
 
     lines = res.splitlines()
 
-    headers = ["id", "label", "ipv4"]
+    headers = ["id", "label", "ipv4", "vpc_type"]
 
     for header in headers:
         assert header in lines[0]
 
     for line in lines[1:]:
         assert re.match(
-            r"^(\d+),(\w+),(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\d+)$", line
+            r"^(\d+),(\w+),(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\d+),(\w+)$",
+            line,
         ), "String format does not match"
 
 
@@ -137,6 +136,7 @@ def test_update_subnet(test_vpc_w_subnet):
     assert new_label == updated_label
 
 
+@pytest.mark.skip(reason="Defect: ARB-8019")
 def test_fails_to_create_vpc_invalid_label():
     invalid_label = "invalid_label"
     region = get_random_region_with_caps(required_capabilities=["VPCs"])
@@ -165,6 +165,7 @@ def test_fails_to_create_vpc_duplicate_label(test_vpc_wo_subnet):
     assert "Label must be unique among your VPCs" in res
 
 
+@pytest.mark.skip(reason="Defect: ARB-8019")
 def test_fails_to_update_vpc_invalid_label(test_vpc_wo_subnet):
     vpc_id = test_vpc_wo_subnet
     invalid_label = "invalid_label"
@@ -178,6 +179,7 @@ def test_fails_to_update_vpc_invalid_label(test_vpc_wo_subnet):
     assert "Must only use ASCII letters, numbers, and dashes" in res
 
 
+@pytest.mark.skip(reason="Defect: ARB-8019")
 def test_fails_to_create_vpc_subnet_w_invalid_label(test_vpc_wo_subnet):
     vpc_id = test_vpc_wo_subnet
     invalid_label = "invalid_label"
@@ -199,6 +201,7 @@ def test_fails_to_create_vpc_subnet_w_invalid_label(test_vpc_wo_subnet):
     assert "Must only use ASCII letters, numbers, and dashes" in res
 
 
+@pytest.mark.skip(reason="Defect: ARB-8019")
 def test_fails_to_update_vpc_subnet_w_invalid_label(test_vpc_w_subnet):
     vpc_id = test_vpc_w_subnet
 
@@ -228,9 +231,6 @@ def test_fails_to_update_vpc_subnet_w_invalid_label(test_vpc_w_subnet):
     assert "Must only use ASCII letters, numbers, and dashes" in res
 
 
-@pytest.mark.skipif(
-    disable_vpc_dual_stack_tests, reason="Dual-stack tests disabled"
-)
 def test_create_vpc_with_ipv6_auto():
     region = get_random_region_with_caps(required_capabilities=["VPCs"])
     label = get_random_text(5) + "-vpc"
@@ -261,9 +261,6 @@ def test_create_vpc_with_ipv6_auto():
 
 
 @pytest.mark.parametrize("prefix_len", ["52"])
-@pytest.mark.skipif(
-    disable_vpc_dual_stack_tests, reason="Dual-stack tests disabled"
-)
 def test_create_vpc_with_custom_ipv6_prefix_length(prefix_len):
     region = get_random_region_with_caps(required_capabilities=["VPCs"])
     label = get_random_text(5) + f"-vpc{prefix_len}"
@@ -291,9 +288,6 @@ def test_create_vpc_with_custom_ipv6_prefix_length(prefix_len):
     assert ipv6_range.endswith(f"/{prefix_len}")
 
 
-@pytest.mark.skipif(
-    disable_vpc_dual_stack_tests, reason="Dual-stack tests disabled"
-)
 def test_create_subnet_with_ipv6_auto(test_vpc_wo_subnet):
     vpc_id = test_vpc_wo_subnet
     subnet_label = get_random_text(5) + "-ipv6subnet"
@@ -330,9 +324,6 @@ def test_create_subnet_with_ipv6_auto(test_vpc_wo_subnet):
     assert "/" in ipv6_range, f"Unexpected IPv6 CIDR format: {ipv6_range}"
 
 
-@pytest.mark.skipif(
-    disable_vpc_dual_stack_tests, reason="Dual-stack tests disabled"
-)
 def test_fails_to_create_vpc_with_invalid_ipv6_range():
     region = get_random_region_with_caps(required_capabilities=["VPCs"])
     label = get_random_text(5) + "-invalidvpc"
@@ -368,9 +359,6 @@ def test_list_vpc_ip_address():
         assert header in lines[0]
 
 
-@pytest.mark.skipif(
-    disable_vpc_dual_stack_tests, reason="Dual-stack tests disabled"
-)
 def test_list_vpc_ipv6s_address():
 
     res = exec_test_command(
@@ -385,6 +373,10 @@ def test_list_vpc_ipv6s_address():
         assert header in lines[0]
 
 
+@pytest.mark.skipif(
+    os.environ.get("LINODE_CLI_API_VERSION", None) != "v4beta",
+    reason="At the moment default-ranges-all-list command is available on beta env only",
+)
 def test_get_vpc_default_ranges():
     headers = ["default_ipv4_ranges", "forbidden_ipv4_ranges"]
 
@@ -408,10 +400,15 @@ def test_get_vpc_default_ranges():
 def test_vpc_with_ipv4(create_vpc_with_ipv4, expected):
     vpc_id = create_vpc_with_ipv4
 
-    result = exec_test_command(
-        BASE_CMDS["vpcs"] + ["list", "--text", "--format=id", "--no-headers"]
-    )
-    assert vpc_id in result.splitlines()
+    def vpc_ready():
+        vpc_ids = exec_test_command(
+            BASE_CMDS["vpcs"]
+            + ["list", "--text", "--format=id", "--no-headers"]
+        ).splitlines()
+
+        return vpc_id in vpc_ids
+
+    wait_for_condition(3, 30, vpc_ready)
 
     result = json.loads(
         exec_test_command(BASE_CMDS["vpcs"] + ["view", vpc_id, "--json"])
@@ -446,6 +443,10 @@ def test_vpc_update_with_ipv4(create_vpc_with_ipv4, updated):
     assert result["ipv4"][0]["range"] == updated
 
 
+@pytest.mark.skipif(
+    os.environ.get("LINODE_CLI_API_VERSION", None) != "v4beta",
+    reason="At the moment default-ranges-all-list command is available on beta env only",
+)
 def test_vpc_with_forbidden_ipv4_fail():
     forbidden_ipv4 = exec_test_command(
         BASE_CMD

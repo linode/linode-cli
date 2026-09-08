@@ -18,6 +18,7 @@ from tests.integration.linodes.fixtures import (  # noqa: F401
     linode_min_req,
     linode_with_authorization_key,
     linode_with_label,
+    linode_with_reserved_ip,
     linode_wo_image,
     test_linode_instance,
 )
@@ -319,3 +320,40 @@ def test_create_linode_disk_encryption_disabled(linode_cloud_firewall):
     assert linode_id in res and "disabled" in res
 
     delete_target_id(target="linodes", id=linode_id)
+
+
+def test_display_linode_with_res_ipv4(linode_with_reserved_ip):
+    res_ip, linode_id = linode_with_reserved_ip
+    result = exec_test_command(
+        BASE_CMDS["linodes"]
+        + ["view", linode_id, "--text", "--no-headers", "--no-defaults"]
+    )
+
+    assert linode_id in result
+    assert res_ip in result
+
+
+def test_linode_allocate_res_ipv4(test_linode_instance, create_reserved_ip):
+    linode_id = test_linode_instance
+    res_ip = create_reserved_ip["address"]
+    new_headers = ["reserved", "tags"]
+
+    result = exec_test_command(
+        BASE_CMDS["linodes"]
+        + [
+            "ip-add",
+            linode_id,
+            "--address",
+            res_ip,
+            "--type",
+            "ipv4",
+            "--public",
+            "true",
+            "--text",
+            "--delimiter",
+            ",",
+        ]
+    ).splitlines()
+
+    assert_headers_in_lines(new_headers, [result[0].split(",")])
+    assert res_ip in result[1]

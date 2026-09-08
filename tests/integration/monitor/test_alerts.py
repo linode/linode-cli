@@ -38,12 +38,18 @@ def test_channels_list():
     )
     lines = res.splitlines()
     headers = [
+        "alerts.alert_count",
+        "alerts.type",
+        "alerts.url",
         "channel_type",
-        "content.email.email_addresses",
+        "created",
+        "created_by",
+        "details",
         "id",
         "label",
         "type",
         "updated",
+        "updated_by",
     ]
     assert_headers_in_lines(headers, lines)
 

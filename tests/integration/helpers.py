@@ -1,4 +1,5 @@
 import json
+import os
 import random
 import re
 import subprocess
@@ -13,6 +14,12 @@ INVALID_HOST = "https://wrongapi.linode.com"
 SUCCESS_STATUS_CODE = 0
 FAILED_STATUS_CODE = 256
 COMMAND_JSON_OUTPUT = ["--suppress-warnings", "--no-defaults", "--json"]
+
+DEFAULT_REGION = (
+    "pl-labkrk-2"
+    if "devcloud" in os.getenv("LINODE_CLI_API_HOST", "")
+    else "us-ord"
+)
 
 # TypeVars for generic type hints below
 T = TypeVar("T")

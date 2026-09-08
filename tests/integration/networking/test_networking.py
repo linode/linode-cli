@@ -7,13 +7,11 @@ from _pytest.monkeypatch import MonkeyPatch
 
 from tests.integration.helpers import (
     BASE_CMDS,
+    DEFAULT_REGION,
     assert_headers_in_lines,
     exec_test_command,
 )
-from tests.integration.linodes.helpers import DEFAULT_REGION
 from tests.integration.networking.fixtures import (  # noqa: F401
-    create_reserved_ip,
-    get_command_heads_and_vals,
     get_linode_id,
     get_linode_ids_shared_ipv4,
 )
@@ -69,12 +67,12 @@ def test_display_ips_for_available_linodes(get_linode_id):
         + ["ips-list", "--text", "--no-headers", "--delimiter", ","]
     )
 
-    assert re.search(r"^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}", result)
+    assert re.search(r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}", result)
     assert re.search(
-        r"ipv4,True,(False|True),[0-9]{1,3}\-[0-9]{1,3}\-[0-9]{1,3}\-[0-9]{1,3}\.ip\.linodeusercontent\.com,[0-9]*",
+        r"ipv4,(False|True),\d{1,3}\-\d{1,3}\-\d{1,3}\-\d{1,3}\.ip\.linodeusercontent\.com,[a-zA-Z]{2}\-[a-zA-Z]{3}.*,\d*,\d*,(False|True)",
         result,
     )
-    assert re.search("ipv6,True,,.*,[0-9][0-9][0-9][0-9][0-9][0-9]*", result)
+    assert re.search("ipv6,True,,[a-zA-Z]{2}\-[a-zA-Z]{3}.*,\d*", result)
     assert re.search(
         r"(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))",
         result,
@@ -109,6 +107,7 @@ def test_view_an_ip_address(get_linode_id):
     data = json.loads(result)
     if isinstance(data, list):
         data = data[0]
+
     # Validate that the address is a proper IPv4 address
     assert re.match(r"^[0-9]{1,3}(\.[0-9]{1,3}){3}$", data["address"])
 
@@ -320,6 +319,31 @@ def test_update_ephemeral_to_reserved(get_linode_id):
     )
 
     assert is_reserved == "True"
+
+
+def test_allocate_reserved_ipv4_address(get_linode_id):
+    linode_id = get_linode_id
+
+    result = exec_test_command(
+        BASE_CMDS["networking"]
+        + [
+            "ip-add",
+            "--type",
+            "ipv4",
+            "--public",
+            "true",
+            "--linode_id",
+            linode_id,
+            "--reserved",
+            "true",
+            "--text",
+            "--no-headers",
+            "--format",
+            "reserved",
+        ]
+    )
+
+    assert result == "True"
 
 
 def test_share_ipv4_address(

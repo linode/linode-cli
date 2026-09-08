@@ -404,7 +404,7 @@ def mysql_db_engine_config(linode_cloud_firewall):
             + [
                 "mysql-create",
                 "--engine",
-                "mysql/8",
+                "mysql/8.4",
                 "--label",
                 label,
                 "--region",
