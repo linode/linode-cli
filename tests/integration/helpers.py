@@ -189,7 +189,9 @@ def retry_exec_test_command_with_delay(
 
 
 def get_random_region_with_caps(
-    required_capabilities: List[str], site_type="core"
+    required_capabilities: List[str],
+    site_type: str = "core",
+    valid_regions: List[str] = None,
 ):
     json_regions_data = exec_test_command(
         ["linode-cli", "regions", "ls", "--json"]
@@ -207,6 +209,12 @@ def get_random_region_with_caps(
 
     # Extract the region ids
     matching_region_ids = [region["id"] for region in matching_regions]
+
+    # To filter out regions that cannot be used for the Linode resource
+    if valid_regions:
+        matching_region_ids = [
+            reg for reg in matching_region_ids if reg in valid_regions
+        ]
 
     return random.choice(matching_region_ids) if matching_region_ids else None
 
