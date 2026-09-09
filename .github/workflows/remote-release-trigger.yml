@@ -66,7 +66,7 @@ jobs:
           commit_sha: ${{ steps.calculate_head_sha.outputs.commit_sha }}
 
       - name: Release
-        uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b # pin@v3.0.1
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # pin@v3.0.3
         with:
           target_commitish: 'main'
           token: ${{ steps.generate_token.outputs.token }}
