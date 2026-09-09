@@ -11,7 +11,7 @@ from openapi3.schemas import Schema
 
 def _schema_richness(schema: Any) -> int:
     """
-    Estimates how "complete" a schema definition is, used to decide which
+    Estimates how complete a schema definition is, used to decide which
     definition to keep when the same property appears in multiple composition
     (oneOf/allOf/anyOf) branches.
 
@@ -38,8 +38,10 @@ def _schema_richness(schema: Any) -> int:
 
     items = get("items")
     if items is not None:
-        item_get = items.get if isinstance(items, dict) else (
-            lambda attr: getattr(items, attr, None)
+        item_get = (
+            items.get
+            if isinstance(items, dict)
+            else (lambda attr: getattr(items, attr, None))
         )
         if (
             item_get("properties")
