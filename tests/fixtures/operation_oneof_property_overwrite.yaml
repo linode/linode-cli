@@ -1,0 +1,68 @@
+openapi: 3.0.1
+info:
+  title: API Specification
+  version: 1.0.0
+servers:
+  - url: http://localhost/v4
+
+paths:
+  /foo/bar:
+    x-linode-cli-command: foo
+    put:
+      summary: Update something.
+      operationId: fooBarPut
+      description: This is description
+      requestBody:
+        description: Some description.
+        required: True
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Interface'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Interface'
+
+components:
+  schemas:
+    # This schema reproduces the real-world case where a response is a oneOf
+    # of variants, and every variant defines the SAME set of top-level keys,
+    # but only fully populates the one relevant to that variant while nulling
+    # out the others. A naive dict.update() merge lets the last branch
+    # overwrite the fully-populated definitions from earlier branches.
+    Interface:
+      oneOf:
+        - title: Variant A
+          type: object
+          properties:
+            variant_a:
+              type: object
+              properties:
+                ranges:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      range:
+                        type: string
+                        description: The variant A range.
+            variant_b:
+              type: object
+              nullable: true
+        - title: Variant B
+          type: object
+          properties:
+            variant_a:
+              type: object
+              nullable: true
+            variant_b:
+              type: object
+              properties:
+                label:
+                  type: string
+                  description: The variant B label.
+

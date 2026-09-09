@@ -9,6 +9,49 @@ from typing import Any, Dict, List, Set, Tuple
 from openapi3.schemas import Schema
 
 
+def _schema_richness(schema: Any) -> int:
+    """
+    Estimates how "complete" a schema definition is, used to decide which
+    definition to keep when the same property appears in multiple composition
+    (oneOf/allOf/anyOf) branches.
+
+    A branch that nulls a property out (e.g. ``{"type": "object", "nullable":
+    true}`` with no properties) should never overwrite a branch that fully
+    defines that property's nested structure.
+
+    :param schema: The schema (or raw schema dict) to score.
+    :return: A non-negative integer; higher means more complete.
+    """
+
+    def get(attr: str) -> Any:
+        if isinstance(schema, dict):
+            return schema.get(attr)
+        return getattr(schema, attr, None)
+
+    score = 0
+
+    if get("properties"):
+        score += 1
+
+    if get("oneOf") or get("allOf") or get("anyOf"):
+        score += 1
+
+    items = get("items")
+    if items is not None:
+        item_get = items.get if isinstance(items, dict) else (
+            lambda attr: getattr(items, attr, None)
+        )
+        if (
+            item_get("properties")
+            or item_get("oneOf")
+            or item_get("allOf")
+            or item_get("anyOf")
+        ):
+            score += 1
+
+    return score
+
+
 def _aggregate_schema_properties(
     schema: Schema,
 ) -> Tuple[Dict[str, Any], Set[str]]:
@@ -48,7 +91,20 @@ def _aggregate_schema_properties(
             return
 
         # This is a valid option
-        properties.update(entry.properties)
+        for key, value in entry.properties.items():
+            # When the same property is defined in multiple composition
+            # branches (e.g. a oneOf of interface variants that each define
+            # `public`, `vpc`, `vlan`, etc.), keep the most complete
+            # definition instead of letting a later, emptier branch overwrite
+            # it. Otherwise nested fields like `public.ipv6.ranges.range`
+            # would be silently dropped when a subsequent branch nulls the
+            # property out.
+            if key in properties and _schema_richness(
+                value
+            ) <= _schema_richness(properties[key]):
+                continue
+
+            properties[key] = value
 
         nonlocal schema_count
         schema_count += 1
