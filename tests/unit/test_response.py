@@ -64,6 +64,25 @@ class TestResponse:
             assert attr_map[k].datatype == v[0]
             assert attr_map[k].description == v[1]
 
+    def test_oneof_property_not_overwritten(
+        self, put_operation_with_oneof_property_overwrite
+    ):
+        """
+        Regression test: when a response is a oneOf of variants that each define
+        the same top-level keys (fully populating only one per branch and nulling
+        the rest), aggregating the branches must not let a later, emptier branch
+        overwrite a fully-defined property from an earlier branch.
+        """
+        model = put_operation_with_oneof_property_overwrite.response_model
+
+        attr_paths = {attr.path for attr in model.attrs}
+
+        # variant_a is fully defined only in the first branch and nulled in the
+        # second; its nested field must survive aggregation.
+        assert "variant_a.ranges.range" in attr_paths
+        # variant_b is fully defined only in the second branch.
+        assert "variant_b.label" in attr_paths
+
     def test_fix_json_string_type(self, list_operation_for_response_test):
         model = list_operation_for_response_test.response_model
         model.rows = ["foo.bar", "type"]

@@ -210,7 +210,7 @@ def _parse_response_model(schema, prefix=None, nested_list_depth=0):
             )
         elif v.type == "object":
             attrs += _parse_response_model(v, prefix=pref)
-        elif v.type == "array" and v.items.type == "object":
+        elif v.type == "array" and (v.items.type == "object" or v.items.oneOf):
             # Parse arrays for objects recursively and increase the nesting depth
             attrs += _parse_response_model(
                 v.items,
