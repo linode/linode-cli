@@ -119,6 +119,19 @@ components:
                 description: An arbitrary deeply nested array.
                 items:
                   type: string
+              field_object_array:
+                type: array
+                description: An arbitrary array of objects nested within a list.
+                items:
+                  type: object
+                  description: An arbitrary deeply nested object.
+                  properties:
+                    nested_object_string:
+                      type: string
+                      description: A string on a deeply nested list object.
+                    nested_object_int:
+                      type: number
+                      description: An int on a deeply nested list object.
               field_string:
                 type: string
                 description: An arbitrary field.
