@@ -196,6 +196,7 @@ class TestOperation:
                 "field_int": 123,
                 "field_dict": {"nested_string": "test2", "nested_int": 789},
                 "field_array": ExplicitJsonValue(json_value=["foo", "bar"]),
+                "field_object_array": None,  # We expect this to be filtered out later
                 "nullable_string": None,  # We expect this to be filtered out later
             },
             {"field_int": 456, "field_dict": {"nested_string": "test3"}},
@@ -217,6 +218,54 @@ class TestOperation:
         )
 
         assert result.object_list.json_value == expected
+
+    def test_nested_object_list_treated_as_json(self, create_operation):
+        """
+        An array of objects nested within another array of objects (e.g.
+        --object_list.field_object_array) can only be specified as JSON.
+        It should not be expanded into unusable child arguments (e.g.
+        --object_list.field_object_array.nested_object_string).
+        """
+        args_by_path = {arg.path: arg for arg in create_operation.args}
+
+        nested = args_by_path.get("object_list.field_object_array")
+        assert nested is not None
+        assert nested.format == "json"
+        assert nested.datatype == "object"
+        assert nested.is_child
+        assert nested.parent == "object_list"
+        assert not nested.is_parent
+
+        # No child arguments should have been generated for its properties.
+        assert "object_list.field_object_array.nested_object_string" not in (
+            args_by_path
+        )
+        assert "object_list.field_object_array.nested_object_int" not in (
+            args_by_path
+        )
+
+    def test_parse_args_nested_object_list_json(self, create_operation):
+        """
+        A nested array of objects should be accepted as a JSON string value
+        associated with each entry of its parent list.
+        """
+        result = create_operation.parse_args(
+            [
+                "--object_list.field_string",
+                "test1",
+                "--object_list.field_object_array",
+                json.dumps([{"nested_object_string": "foo"}]),
+            ]
+        )
+
+        assert result.object_list == [
+            {
+                "field_string": "test1",
+                "field_object_array": ExplicitJsonValue(
+                    json_value=[{"nested_object_string": "foo"}]
+                ),
+            },
+        ]
 
     def test_parse_args_conflicting_parent_child(self, create_operation):
         stderr_buf = io.StringIO()
