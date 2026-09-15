@@ -83,6 +83,41 @@ class TestResponse:
         # variant_b is fully defined only in the second branch.
         assert "variant_b.label" in attr_paths
 
+    def test_scalar_oneof_array_not_dropped(
+        self, put_operation_with_oneof_property_overwrite
+    ):
+        """
+        Regression test: an array whose items are a oneOf of scalar types
+        (e.g. ``items: {oneOf: [{type: string}, {type: integer}]}``) aggregates
+        no object properties. It must remain a normal array attribute instead of
+        being recursed into and silently dropped from the response model.
+        """
+        model = put_operation_with_oneof_property_overwrite.response_model
+
+        attr_paths = {attr.path for attr in model.attrs}
+
+        assert "scalar_choices" in attr_paths
+
+    def test_richer_oneof_branch_wins_regardless_of_order(
+        self, put_operation_with_oneof_property_overwrite
+    ):
+        """
+        Regression test: when the same object property is defined in multiple
+        branches, the branch with the most nested structure must win even if it
+        appears later. A presence-only richness score would tie and keep the
+        earlier, sparser definition, dropping the extra fields.
+        """
+        model = put_operation_with_oneof_property_overwrite.response_model
+
+        attr_paths = {attr.path for attr in model.attrs}
+
+        # Defined in both branches.
+        assert "shared_obj.only_a" in attr_paths
+        # Only defined in the richer (later) Variant B branch; these would be
+        # missing if the earlier, sparser definition were kept.
+        assert "shared_obj.extra_b1" in attr_paths
+        assert "shared_obj.extra_b2" in attr_paths
+
     def test_fix_json_string_type(self, list_operation_for_response_test):
         model = list_operation_for_response_test.response_model
         model.rows = ["foo.bar", "type"]

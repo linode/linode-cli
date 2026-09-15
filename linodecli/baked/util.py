@@ -8,8 +8,15 @@ from typing import Any, Dict, List, Set, Tuple
 
 from openapi3.schemas import Schema
 
+# The maximum schema nesting depth `_schema_richness` will traverse before
+# bailing out. This is purely a safety valve to guarantee termination on
+# self-referential or pathologically deep schemas (which the recursion would
+# otherwise follow forever); it is far deeper than any real Linode API response
+# model, so it never affects scoring in practice.
+_MAX_RICHNESS_DEPTH = 32
 
-def _schema_richness(schema: Any) -> int:
+
+def _schema_richness(schema: Any, _depth: int = 0) -> int:
     """
     Estimates how complete a schema definition is, used to decide which
     definition to keep when the same property appears in multiple composition
@@ -17,39 +24,44 @@ def _schema_richness(schema: Any) -> int:
 
     A branch that nulls a property out (e.g. ``{"type": "object", "nullable":
     true}`` with no properties) should never overwrite a branch that fully
-    defines that property's nested structure.
+    defines that property's nested structure. The score is a recursive measure
+    of how much structure a schema actually contains, so a fuller definition always outscores a
+    sparser one regardless of the
+    order the branches appear in.
 
     :param schema: The schema (or raw schema dict) to score.
     :return: A non-negative integer; higher means more complete.
     """
 
-    def get(attr: str) -> Any:
-        if isinstance(schema, dict):
-            return schema.get(attr)
-        return getattr(schema, attr, None)
+    # Guard against pathologically deep or self-referential schemas.
+    if _depth > _MAX_RICHNESS_DEPTH:
+        return 0
+
+    def get(source: Any, attr: str) -> Any:
+        if isinstance(source, dict):
+            return source.get(attr)
+        return getattr(source, attr, None)
 
     score = 0
 
-    if get("properties"):
-        score += 1
+    # Count each defined property, plus the richness of its own definition so
+    # that deeply-nested structure contributes to the total.
+    properties = get(schema, "properties")
+    if properties:
+        for _, prop in properties.items():
+            score += 1 + _schema_richness(prop, _depth + 1)
 
-    if get("oneOf") or get("allOf") or get("anyOf"):
-        score += 1
+    # Account for composite (oneOf/allOf/anyOf) definitions by summing the
+    # richness of each branch.
+    for composition_field in ("oneOf", "allOf", "anyOf"):
+        for branch in get(schema, composition_field) or []:
+            score += 1 + _schema_richness(branch, _depth + 1)
 
-    items = get("items")
-    if items is not None:
-        item_get = (
-            items.get
-            if isinstance(items, dict)
-            else (lambda attr: getattr(items, attr, None))
-        )
-        if (
-            item_get("properties")
-            or item_get("oneOf")
-            or item_get("allOf")
-            or item_get("anyOf")
-        ):
-            score += 1
+    # Account for array item schemas so arrays of objects are scored by their
+    # element structure.
+    array_items = get(schema, "items")
+    if array_items is not None:
+        score += _schema_richness(array_items, _depth + 1)
 
     return score
 

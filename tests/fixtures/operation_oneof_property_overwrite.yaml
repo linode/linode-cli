@@ -53,6 +53,23 @@ components:
             variant_b:
               type: object
               nullable: true
+            # An array whose items are a oneOf of SCALAR types. This must be
+            # treated as a normal array attribute, not recursed into.
+            scalar_choices:
+              type: array
+              items:
+                oneOf:
+                  - type: string
+                  - type: integer
+            # This shared object is defined more richly in the LATER branch
+            # The fuller definition must win regardless of branch
+            # order, so all of its nested fields must survive aggregation.
+            shared_obj:
+              type: object
+              properties:
+                only_a:
+                  type: string
+                  description: Present in both branches.
         - title: Variant B
           type: object
           properties:
@@ -65,4 +82,16 @@ components:
                 label:
                   type: string
                   description: The variant B label.
+            shared_obj:
+              type: object
+              properties:
+                only_a:
+                  type: string
+                  description: Present in both branches.
+                extra_b1:
+                  type: string
+                  description: Only defined in the richer Variant B branch.
+                extra_b2:
+                  type: string
+                  description: Only defined in the richer Variant B branch.
 
