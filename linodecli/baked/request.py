@@ -182,12 +182,20 @@ def _parse_request_model(
                 depth=depth,
             )
 
-        # Handle arrays of objects that not marked as JSON
+        # Handle arrays of objects that not marked as JSON.
+        # NOTE: We only expand an array of objects into individual child
+        # arguments when it is not already nested under another list
+        # (i.e. parent is None). The CLI can only associate one level of
+        # nested list objects, so a list of objects nested within another
+        # list must be treated as JSON instead.
+        # Otherwise, we would generate child arguments that can never
+        # be used because they always conflict with their implicit JSON parent.
         elif (
             v.type == "array"
             and v.items
             and v.items.type == "object"
             and v.extensions.get("linode-cli-format") != "json"
+            and parent is None
         ):
             # handle lists of objects as a special case, where each property
             # of the object in the list is its own argument
