@@ -9,6 +9,7 @@ from tests.integration.helpers import (
     BASE_CMDS,
     DEFAULT_REGION,
     assert_headers_in_lines,
+    delete_target_id,
     exec_test_command,
 )
 from tests.integration.networking.fixtures import (  # noqa: F401
@@ -324,26 +325,27 @@ def test_update_ephemeral_to_reserved(get_linode_id):
 def test_allocate_reserved_ipv4_address(get_linode_id):
     linode_id = get_linode_id
 
-    result = exec_test_command(
-        BASE_CMDS["networking"]
-        + [
-            "ip-add",
-            "--type",
-            "ipv4",
-            "--public",
-            "true",
-            "--linode_id",
-            linode_id,
-            "--reserved",
-            "true",
-            "--text",
-            "--no-headers",
-            "--format",
-            "reserved",
-        ]
-    )
+    result = json.loads(
+        exec_test_command(
+            BASE_CMDS["networking"]
+            + [
+                "ip-add",
+                "--type",
+                "ipv4",
+                "--public",
+                "true",
+                "--linode_id",
+                linode_id,
+                "--reserved",
+                "true",
+                "--json"
+            ]
+        )
+    )[0]
 
-    assert result == "True"
+    assert result["reserved"] == True
+
+    delete_target_id("networking", result["address"], "reserved-ip-delete")
 
 
 def test_share_ipv4_address(
