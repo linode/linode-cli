@@ -63,6 +63,10 @@ def _schema_richness(schema: Any, _depth: int = 0) -> int:
     if array_items is not None:
         score += _schema_richness(array_items, _depth + 1)
 
+    additional_properties = get(schema, "additionalProperties")
+    if additional_properties is not None:
+        score += 1 + _schema_richness(additional_properties, _depth + 1)
+
     return score
 
 
