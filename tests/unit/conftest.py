@@ -367,6 +367,28 @@ def post_operation_with_one_ofs() -> OpenAPIOperation:
 
 
 @pytest.fixture
+def put_operation_with_oneof_property_overwrite() -> OpenAPIOperation:
+    """
+    Creates an OpenAPI operation whose request/response is a oneOf of variants
+    that each define the same top-level keys, but only fully populate the key
+    relevant to that variant (nulling the others). Used to verify that
+    aggregating oneOf branches does not let a later, emptier branch overwrite a
+    fully-defined property from an earlier branch.
+    """
+
+    spec = _get_parsed_spec("operation_oneof_property_overwrite.yaml")
+
+    path = list(spec.paths.values())[0]
+
+    return make_test_operation(
+        path.extensions.get("linode-cli-command", "default"),
+        getattr(path, "put"),
+        "put",
+        path.parameters,
+    )
+
+
+@pytest.fixture
 def get_openapi_for_api_components_tests() -> OpenAPI:
     """
     Creates a set of OpenAPI operations with various apiVersion and
