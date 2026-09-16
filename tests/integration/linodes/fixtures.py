@@ -474,7 +474,7 @@ def test_linode_instance(linode_cloud_firewall):
             "--type",
             "g6-nanode-1",
             "--region",
-            "us-ord",
+            DEFAULT_REGION,
             "--image",
             DEFAULT_TEST_IMAGE,
             "--label",
