@@ -1,3 +1,5 @@
+import json
+
 import pytest
 
 from linodecli.exit_codes import ExitCodes
@@ -128,8 +130,12 @@ def test_try_create_token_with_not_existing_entity(get_service_type):
         + [
             "token-get",
             service_type,
-            "--entity_ids",
-            "99999999999",
+            "--raw-body",
+            json.dumps(
+                {
+                    "entity_ids": [99999999999]
+                }
+            ),
             "--text",
             "--delimiter=,",
         ],
