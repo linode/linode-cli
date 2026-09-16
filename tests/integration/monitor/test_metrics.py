@@ -131,11 +131,7 @@ def test_try_create_token_with_not_existing_entity(get_service_type):
             "token-get",
             service_type,
             "--raw-body",
-            json.dumps(
-                {
-                    "entity_ids": [99999999999]
-                }
-            ),
+            json.dumps({"entity_ids": [99999999999]}),
             "--text",
             "--delimiter=,",
         ],

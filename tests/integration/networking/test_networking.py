@@ -338,7 +338,7 @@ def test_allocate_reserved_ipv4_address(get_linode_id):
                 linode_id,
                 "--reserved",
                 "true",
-                "--json"
+                "--json",
             ]
         )
     )[0]
