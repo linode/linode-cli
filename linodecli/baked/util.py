@@ -8,6 +8,67 @@ from typing import Any, Dict, List, Set, Tuple
 
 from openapi3.schemas import Schema
 
+# The maximum schema nesting depth `_schema_richness` will traverse before
+# bailing out. This is purely a safety valve to guarantee termination on
+# self-referential or pathologically deep schemas (which the recursion would
+# otherwise follow forever); it is far deeper than any real Linode API response
+# model, so it never affects scoring in practice.
+_MAX_RICHNESS_DEPTH = 32
+
+
+def _schema_richness(schema: Any, _depth: int = 0) -> int:
+    """
+    Estimates how complete a schema definition is, used to decide which
+    definition to keep when the same property appears in multiple composition
+    (oneOf/allOf/anyOf) branches.
+
+    A branch that nulls a property out (e.g. ``{"type": "object", "nullable":
+    true}`` with no properties) should never overwrite a branch that fully
+    defines that property's nested structure. The score is a recursive measure
+    of how much structure a schema actually contains, so a fuller definition always outscores a
+    sparser one regardless of the
+    order the branches appear in.
+
+    :param schema: The schema (or raw schema dict) to score.
+    :return: A non-negative integer; higher means more complete.
+    """
+
+    # Guard against pathologically deep or self-referential schemas.
+    if _depth > _MAX_RICHNESS_DEPTH:
+        return 0
+
+    def get(source: Any, attr: str) -> Any:
+        if isinstance(source, dict):
+            return source.get(attr)
+        return getattr(source, attr, None)
+
+    score = 0
+
+    # Count each defined property, plus the richness of its own definition so
+    # that deeply-nested structure contributes to the total.
+    properties = get(schema, "properties")
+    if properties:
+        for _, prop in properties.items():
+            score += 1 + _schema_richness(prop, _depth + 1)
+
+    # Account for composite (oneOf/allOf/anyOf) definitions by summing the
+    # richness of each branch.
+    for composition_field in ("oneOf", "allOf", "anyOf"):
+        for branch in get(schema, composition_field) or []:
+            score += 1 + _schema_richness(branch, _depth + 1)
+
+    # Account for array item schemas so arrays of objects are scored by their
+    # element structure.
+    array_items = get(schema, "items")
+    if array_items is not None:
+        score += _schema_richness(array_items, _depth + 1)
+
+    additional_properties = get(schema, "additionalProperties")
+    if additional_properties is not None:
+        score += 1 + _schema_richness(additional_properties, _depth + 1)
+
+    return score
+
 
 def _aggregate_schema_properties(
     schema: Schema,
@@ -48,7 +109,20 @@ def _aggregate_schema_properties(
             return
 
         # This is a valid option
-        properties.update(entry.properties)
+        for key, value in entry.properties.items():
+            # When the same property is defined in multiple composition
+            # branches (e.g. a oneOf of interface variants that each define
+            # `public`, `vpc`, `vlan`, etc.), keep the most complete
+            # definition instead of letting a later, emptier branch overwrite
+            # it. Otherwise nested fields like `public.ipv6.ranges.range`
+            # would be silently dropped when a subsequent branch nulls the
+            # property out.
+            if key in properties and _schema_richness(
+                value
+            ) <= _schema_richness(properties[key]):
+                continue
+
+            properties[key] = value
 
         nonlocal schema_count
         schema_count += 1
