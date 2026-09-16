@@ -231,61 +231,27 @@ def test_fails_to_update_vpc_subnet_w_invalid_label(test_vpc_w_subnet):
     assert "Must only use ASCII letters, numbers, and dashes" in res
 
 
-def test_create_vpc_with_ipv6_auto():
-    region = get_random_region_with_caps(required_capabilities=["VPCs"])
-    label = get_random_text(5) + "-vpc"
+def test_create_vpc_with_ipv6_auto(create_vpc_with_ipv6):
+    vpc_data = create_vpc_with_ipv6
+    vpc_ipv6 = vpc_data["ipv6"]
 
-    res = exec_test_command(
-        BASE_CMD
-        + [
-            "create",
-            "--label",
-            label,
-            "--region",
-            region,
-            "--ipv6.range",
-            "auto",
-            "--json",
-        ]
-    )
-
-    vpc_data = json.loads(res)[0]
-
-    assert "id" in vpc_data
-    assert "ipv6" in vpc_data
-    assert isinstance(vpc_data["ipv6"], list)
-    assert len(vpc_data["ipv6"]) > 0
-
-    ipv6_entry = vpc_data["ipv6"][0]
-    assert "range" in ipv6_entry
-
-
-@pytest.mark.parametrize("prefix_len", ["52"])
-def test_create_vpc_with_custom_ipv6_prefix_length(prefix_len):
-    region = get_random_region_with_caps(required_capabilities=["VPCs"])
-    label = get_random_text(5) + f"-vpc{prefix_len}"
-
-    res = exec_test_command(
-        BASE_CMD
-        + [
-            "create",
-            "--label",
-            label,
-            "--region",
-            region,
-            "--ipv6.range",
-            f"/{prefix_len}",
-            "--json",
-        ]
-    )
-
-    vpc_data = json.loads(res)[0]
-
-    assert "ipv6" in vpc_data
-    ipv6_entry = vpc_data["ipv6"][0]
-    ipv6_range = ipv6_entry.get("range", "")
+    assert isinstance(vpc_ipv6, list)
+    assert len(vpc_ipv6) > 0
+    ipv6_range = vpc_ipv6[0]["range"]
     assert isinstance(ipv6_range, str)
-    assert ipv6_range.endswith(f"/{prefix_len}")
+    assert ipv6_range.endswith("/52")
+
+
+@pytest.mark.parametrize("create_vpc_with_ipv6", ["/48"], indirect=True)
+def test_create_vpc_with_custom_ipv6_prefix_length(create_vpc_with_ipv6):
+    vpc_data = create_vpc_with_ipv6
+    vpc_ipv6 = vpc_data["ipv6"]
+
+    assert isinstance(vpc_ipv6, list)
+    assert len(vpc_ipv6) > 0
+    ipv6_range = vpc_ipv6[0]["range"]
+    assert isinstance(ipv6_range, str)
+    assert ipv6_range.endswith("/48")
 
 
 def test_create_subnet_with_ipv6_auto(test_vpc_wo_subnet):
