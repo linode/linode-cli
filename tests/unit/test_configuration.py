@@ -778,3 +778,26 @@ class TestConfigureAuthorizedUsers:
             conf.configure()
 
         assert conf.get_value("authorized_users") is None
+
+    def test_sshkeys_unexpected_status_exits(self):
+        """
+        When /profile/sshkeys returns an unexpected error (e.g. 500),
+        configure() should exit rather than skipping authorized_users.
+        """
+        conf = configuration.CLIConfig(self.base_url, skip_config=True)
+
+        with (
+            patch("linodecli.configuration.open", mock_open()),
+            patch("os.chmod", lambda a, b: None),
+            patch("builtins.input", lambda _: None),
+            contextlib.redirect_stdout(io.StringIO()),
+            contextlib.redirect_stderr(io.StringIO()),
+            patch("linodecli.configuration._check_browsers", lambda: False),
+            patch.dict(os.environ, {"LINODE_CLI_TOKEN": self.test_token}),
+            requests_mock.Mocker() as m,
+            pytest.raises(SystemExit) as err,
+        ):
+            self._base_mocks(m, sshkeys_status=500)
+            conf.configure()
+
+        assert err.value.code == 2
