@@ -440,13 +440,12 @@ class CLIConfig:
         def _capture_sshkeys_status(status: int) -> bool:
             nonlocal sshkeys_status_code
             sshkeys_status_code = status
-            return True  # suppress _handle_response_status error output
+            return status in (401, 403)
 
         _do_get_request(
             self.base_url,
             "/profile/sshkeys",
             token=token,
-            exit_on_error=False,
             status_validator=_capture_sshkeys_status,
         )
 
