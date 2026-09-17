@@ -321,6 +321,8 @@ def test_update_ephemeral_to_reserved(get_linode_id):
 
     assert is_reserved == "True"
 
+    delete_target_id("networking", ephemeral_ip, "reserved-ip-delete")
+
 
 def test_allocate_reserved_ipv4_address(get_linode_id):
     linode_id = get_linode_id
