@@ -182,7 +182,7 @@ def _parse_request_model(
                 depth=depth,
             )
 
-        # Handle arrays of objects that not marked as JSON.
+        # Handle arrays of objects that are not marked as JSON.
         # NOTE: We only expand an array of objects into individual child
         # arguments when it is not already nested under another list
         # (i.e. parent is None). The CLI can only associate one level of
