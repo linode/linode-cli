@@ -210,8 +210,10 @@ def _parse_response_model(schema, prefix=None, nested_list_depth=0):
             )
         elif v.type == "object":
             attrs += _parse_response_model(v, prefix=pref)
-        elif v.type == "array" and v.items.type == "object":
-            # Parse arrays for objects recursively and increase the nesting depth
+        elif v.type == "array" and (
+            v.items.type == "object"
+            or bool(_aggregate_schema_properties(v.items)[0])
+        ):
             attrs += _parse_response_model(
                 v.items,
                 prefix=pref,
@@ -316,8 +318,15 @@ class OpenAPIResponse:
             for cur in json:
                 # Get the nested list using the path
                 nlist_path = cur
+
                 for p in path_parts:
                     nlist_path = nlist_path.get(p)
+
+                # To avoid errors when nested list is not documented in
+                # the OpenAPI spec, but it is present in the API response
+                if nlist_path is None:
+                    continue
+
                 nlist = nlist_path
 
                 # For each item in the nested list,

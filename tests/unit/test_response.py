@@ -21,6 +21,60 @@ class TestResponse:
             {"_split": "cool", "foo": 321},
         ]
 
+    def test_model_fix_json_nested_skips_unexpected_path(
+        self, list_operation_for_response_test
+    ):
+        model = list_operation_for_response_test.response_model
+        model.nested_list = "engines.foo, engines.bar"
+
+        result = model.fix_json(
+            [
+                {
+                    "id": "id-number-1",
+                    "engines": {
+                        "foo": [{"quantity": 1}, {"quantity": 2}],
+                        "bar": [{"quantity": 3}],
+                    },
+                },
+                {
+                    "id": "id-number-2",
+                    "engines": {
+                        "foo": [{"quantity": 4}],
+                    },
+                },
+                {
+                    "id": "id-number-3",
+                    "engines": {
+                        "xyz": [{"quantity": 5}],
+                    },
+                },
+            ]
+        )
+        result = sorted(result, key=lambda x: x["id"])
+
+        assert result == [
+            {
+                "id": "id-number-1",
+                "_split": "foo",
+                "engines": {"quantity": 1},
+            },
+            {
+                "id": "id-number-1",
+                "_split": "foo",
+                "engines": {"quantity": 2},
+            },
+            {
+                "id": "id-number-1",
+                "_split": "bar",
+                "engines": {"quantity": 3},
+            },
+            {
+                "id": "id-number-2",
+                "_split": "foo",
+                "engines": {"quantity": 4},
+            },
+        ]
+
     def test_attr_get_value(self, list_operation_for_response_test):
         model = {"data": {"foo": {"bar": "cool"}}}
         attr = list_operation_for_response_test.response_model.attrs[0]
@@ -63,6 +117,60 @@ class TestResponse:
         for k, v in expected.items():
             assert attr_map[k].datatype == v[0]
             assert attr_map[k].description == v[1]
+
+    def test_oneof_property_not_overwritten(
+        self, put_operation_with_oneof_property_overwrite
+    ):
+        """
+        Regression test: when a response is a oneOf of variants that each define
+        the same top-level keys (fully populating only one per branch and nulling
+        the rest), aggregating the branches must not let a later, emptier branch
+        overwrite a fully-defined property from an earlier branch.
+        """
+        model = put_operation_with_oneof_property_overwrite.response_model
+
+        attr_paths = {attr.path for attr in model.attrs}
+
+        # variant_a is fully defined only in the first branch and nulled in the
+        # second; its nested field must survive aggregation.
+        assert "variant_a.ranges.range" in attr_paths
+        # variant_b is fully defined only in the second branch.
+        assert "variant_b.label" in attr_paths
+
+    def test_scalar_oneof_array_not_dropped(
+        self, put_operation_with_oneof_property_overwrite
+    ):
+        """
+        Regression test: an array whose items are a oneOf of scalar types
+        (e.g. ``items: {oneOf: [{type: string}, {type: integer}]}``) aggregates
+        no object properties. It must remain a normal array attribute instead of
+        being recursed into and silently dropped from the response model.
+        """
+        model = put_operation_with_oneof_property_overwrite.response_model
+
+        attr_paths = {attr.path for attr in model.attrs}
+
+        assert "scalar_choices" in attr_paths
+
+    def test_richer_oneof_branch_wins_regardless_of_order(
+        self, put_operation_with_oneof_property_overwrite
+    ):
+        """
+        Regression test: when the same object property is defined in multiple
+        branches, the branch with the most nested structure must win even if it
+        appears later. A presence-only richness score would tie and keep the
+        earlier, sparser definition, dropping the extra fields.
+        """
+        model = put_operation_with_oneof_property_overwrite.response_model
+
+        attr_paths = {attr.path for attr in model.attrs}
+
+        # Defined in both branches.
+        assert "shared_obj.only_a" in attr_paths
+        # Only defined in the richer (later) Variant B branch; these would be
+        # missing if the earlier, sparser definition were kept.
+        assert "shared_obj.extra_b1" in attr_paths
+        assert "shared_obj.extra_b2" in attr_paths
 
     def test_fix_json_string_type(self, list_operation_for_response_test):
         model = list_operation_for_response_test.response_model
