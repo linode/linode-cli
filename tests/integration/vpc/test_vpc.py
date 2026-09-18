@@ -278,6 +278,7 @@ def test_create_vpc_with_ipv6_auto(create_vpc_with_ipv6):
     assert isinstance(ipv6_range, str)
     assert ipv6_range.endswith("/52")
 
+
 @pytest.mark.parametrize("create_vpc_with_ipv6", ["/48"], indirect=True)
 def test_create_vpc_with_custom_ipv6_prefix_length(create_vpc_with_ipv6):
     vpc_data = create_vpc_with_ipv6
