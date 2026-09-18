@@ -1,4 +1,5 @@
 import json
+import logging
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, List, Optional
@@ -58,14 +59,17 @@ def create_bucket(
 
         exec_test_command(BASE_CMD + ["mb", bucket_name])
         created_buckets.add(bucket_name)
+
         return bucket_name
 
     yield _create_bucket
-    for bk in created_buckets:
+
+    for bucket in created_buckets:
         try:
-            delete_bucket(bk)
+            delete_bucket(bucket)
+
         except Exception as e:
-            logging.exception(f"Failed to cleanup bucket: {bk}, {e}")
+            logging.exception(f"Failed to cleanup bucket {bucket}: {e}")
 
 
 @pytest.fixture

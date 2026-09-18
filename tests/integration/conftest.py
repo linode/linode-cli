@@ -18,6 +18,7 @@ import requests
 
 from linodecli import ENV_TOKEN_NAME
 from tests.integration.helpers import (
+    DEFAULT_REGION,
     check_attribute_value,
     delete_target_id,
     exec_test_command,
@@ -228,8 +229,8 @@ def create_vpc_w_subnet():
                 vpc_label,
                 "--region",
                 region,
-                # "--ipv6.range",    TODO: Uncomment after VPC Dual Stack is ready to ship
-                # "auto",
+                "--ipv6.range",
+                "auto",
                 "--subnets.ipv4",
                 "10.0.0.0/24",
                 "--subnets.label",
@@ -248,3 +249,25 @@ def pytest_configure(config):
     config.addinivalue_line(
         "markers", "smoke: mark test as part of smoke test suite"
     )
+
+
+@pytest.fixture
+def create_reserved_ip(request):
+    tags = getattr(request, "param", None)
+    command = [
+        "linode-cli",
+        "networking",
+        "reserved-ip-add",
+        "--region",
+        DEFAULT_REGION,
+        "--json",
+    ]
+
+    if tags:
+        command += ["--tags", tags]
+
+    result = json.loads(exec_test_command(command))[0]
+
+    yield result
+
+    delete_target_id("networking", result["address"], "reserved-ip-delete")

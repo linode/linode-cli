@@ -11,9 +11,6 @@ from tests.integration.helpers import (
     exec_test_command,
     get_random_text,
 )
-from tests.integration.networking.fixtures import (  # noqa: F401
-    create_reserved_ip,
-)
 
 
 @pytest.fixture(scope="session")
@@ -64,7 +61,7 @@ def test_view_unique_tag(create_tag_instance):
     assert create_tag_instance in result
 
 
-@pytest.mark.skip(reason="BUG = TPT-3650")
+@pytest.mark.skip(reason="Defect: ARB-8130")
 def test_fail_to_create_tag_shorter_than_three_char():
     bad_tag = "aa"
     result = exec_failing_test_command(

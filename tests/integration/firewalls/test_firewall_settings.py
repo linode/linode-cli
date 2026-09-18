@@ -8,7 +8,7 @@ from tests.integration.helpers import (
 )
 
 
-def test_firewall_settings_defaults(test_firewall_id, test_firewall_label):
+def test_firewall_settings_defaults(get_firewall_id, get_firewall_label):
     # list all firewalls and extract the IDs
     list_result = exec_test_command(
         BASE_CMDS["firewalls"]
@@ -21,8 +21,8 @@ def test_firewall_settings_defaults(test_firewall_id, test_firewall_label):
     ]
 
     assert (
-        test_firewall_id in firewall_ids
-    ), f"{test_firewall_id} not found in firewall list"
+        get_firewall_id in firewall_ids
+    ), f"{get_firewall_id} not found in firewall list"
 
     # get the default firewall settings
     settings_result = exec_test_command(
@@ -57,7 +57,7 @@ def test_firewall_settings_defaults(test_firewall_id, test_firewall_label):
             ), f"{key} ID ({val}) not found in firewall list"
 
 
-def test_update_firewall_defaults(test_firewall_id, restore_firewall_defaults):
+def test_update_firewall_defaults(get_firewall_id, restore_firewall_defaults):
     # Fetch current default firewall settings
     settings = json.loads(
         exec_test_command(
@@ -89,8 +89,8 @@ def test_update_firewall_defaults(test_firewall_id, restore_firewall_defaults):
     ]
 
     assert (
-        test_firewall_id in firewall_ids
-    ), f"{test_firewall_id} not found in firewall list"
+        get_firewall_id in firewall_ids
+    ), f"{get_firewall_id} not found in firewall list"
 
     new_id = next(
         fid
