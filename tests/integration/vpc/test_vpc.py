@@ -14,32 +14,56 @@ from tests.integration.helpers import (
     wait_for_condition,
 )
 
-BASE_CMD = ["linode-cli", "vpcs"]
+HEADERS_VPC = ["id", "label", "description", "region", "vpc_type"]
+HEADERS_SUBNET = ["id", "label", "ipv4", "vpc_type"]
 
 
-def test_list_vpcs(test_vpc_wo_subnet):
-    vpc_id = test_vpc_wo_subnet
-    res = exec_test_command(BASE_CMDS["vpcs"] + ["ls", "--text"])
-    headers = ["id", "label", "description", "region"]
-
-    for header in headers:
-        assert header in res
-    assert vpc_id in res
+def get_vpcs_list(params: str = None):
+    params = params.split() if params else []
+    command = BASE_CMDS["vpcs"] + ["ls", "--text"] + params
+    return exec_test_command(command)
 
 
-def test_view_vpc(test_vpc_wo_subnet):
-    vpc_id = test_vpc_wo_subnet
+def get_vpc_view(vpc_id: int = None):
+    return json.loads(
+        exec_test_command(BASE_CMDS["vpcs"] + ["view", vpc_id, "--json"])
+    )[0]
 
-    res = exec_test_command(
-        BASE_CMDS["vpcs"] + ["view", vpc_id, "--text", "--no-headers"]
-    )
 
-    assert vpc_id in res
+def get_subnets_list(vpc_id: int, params: str = None):
+    params = params.split() if params else []
+    command = BASE_CMDS["vpcs"] + ["subnets-list", vpc_id] + params
+    return exec_test_command(command)
+
+
+def get_subnet_view(vpc_id: int, subnet_id: int):
+    return json.loads(
+        exec_test_command(
+            BASE_CMDS["vpcs"] + ["subnet-view", vpc_id, subnet_id, "--json"]
+        )
+    )[0]
+
+
+def test_list_vpcs(get_test_vpc_wo_subnet):
+    vpc_id = get_test_vpc_wo_subnet
+    output = get_vpcs_list("--page-size 100")
+
+    assert all(header in output for header in HEADERS_VPC)
+    assert vpc_id in output
+
+
+def test_view_vpc(get_test_vpc_wo_subnet):
+    vpc_id = get_test_vpc_wo_subnet
+    output = get_vpc_view(vpc_id)
+
+    assert all([header in output.keys() for header in HEADERS_VPC])
+    assert str(output["id"]) == vpc_id
+    assert output["vpc_type"] == "regular"
 
 
 @pytest.mark.smoke
-def test_update_vpc(test_vpc_wo_subnet):
-    vpc_id = test_vpc_wo_subnet
+def test_update_vpc(get_test_vpc_wo_subnet):
+    vpc_id = get_test_vpc_wo_subnet
 
     new_label = get_random_text(5) + "label"
 
@@ -59,7 +83,7 @@ def test_update_vpc(test_vpc_wo_subnet):
     )
 
     description = exec_test_command(
-        BASE_CMD
+        BASE_CMDS["vpcs"]
         + ["view", vpc_id, "--text", "--no-headers", "--format=description"]
     )
 
@@ -67,50 +91,46 @@ def test_update_vpc(test_vpc_wo_subnet):
     assert "new description" in description
 
 
-def test_list_subnets(test_vpc_w_subnet):
-    vpc_id = test_vpc_w_subnet
+def test_vpc_with_rdma_type(get_test_vpc_w_rdma_type):
+    vpc_id = get_test_vpc_w_rdma_type
 
-    res = exec_test_command(
-        BASE_CMD + ["subnets-list", vpc_id, "--text", "--delimiter=,"]
-    )
+    output = get_vpcs_list("--page-size 100")
+    assert all(header in output for header in HEADERS_VPC)
+    assert vpc_id in output
 
-    lines = res.splitlines()
+    output = get_vpcs_list("--page-size 100 --format=vpc_type --no-headers")
+    assert any(["rdma" in output.split()])
 
-    headers = ["id", "label", "ipv4", "vpc_type"]
+    output = get_vpc_view(vpc_id)
+    assert str(output["id"]) == vpc_id
+    assert output["vpc_type"] == "rdma"
 
-    for header in headers:
-        assert header in lines[0]
 
-    for line in lines[1:]:
+def test_list_subnets(get_test_vpc_w_subnet):
+    vpc_id = get_test_vpc_w_subnet
+
+    output = get_subnets_list(vpc_id, "--text --delimiter=,").splitlines()
+    assert all(header in output[0] for header in HEADERS_SUBNET)
+
+    for line in output[1:]:
         assert re.match(
             r"^(\d+),(\w+),(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/\d+),(\w+)$",
             line,
         ), "String format does not match"
 
 
-def test_view_subnet(test_vpc_wo_subnet, test_subnet):
-    # note calling test_subnet fixture will add subnet to test_vpc_wo_subnet
-    res, label = test_subnet
+def test_view_subnet(get_test_subnet):
+    vpc_id, subnet_id = get_test_subnet
+    output = get_subnet_view(vpc_id, subnet_id)
 
-    res = res.split(",")
-
-    vpc_subnet_id = res[0]
-
-    vpc_id = test_vpc_wo_subnet
-
-    output = exec_test_command(
-        BASE_CMDS["vpcs"] + ["subnet-view", vpc_id, vpc_subnet_id, "--text"]
-    )
-
-    headers = ["id", "label", "ipv4"]
-    for header in headers:
-        assert header in output
-    assert vpc_subnet_id in output
+    assert all(header in output.keys() for header in HEADERS_SUBNET)
+    assert str(output["id"]) == subnet_id
+    assert output["vpc_type"] == "regular"
 
 
 @pytest.mark.smoke
-def test_update_subnet(test_vpc_w_subnet):
-    vpc_id = test_vpc_w_subnet
+def test_update_subnet(get_test_vpc_w_subnet):
+    vpc_id = get_test_vpc_w_subnet
 
     new_label = get_random_text(5) + "label"
 
@@ -120,7 +140,7 @@ def test_update_subnet(test_vpc_w_subnet):
     )
 
     updated_label = exec_test_command(
-        BASE_CMD
+        BASE_CMDS["vpcs"]
         + [
             "subnet-update",
             vpc_id,
@@ -136,13 +156,29 @@ def test_update_subnet(test_vpc_w_subnet):
     assert new_label == updated_label
 
 
+def test_subnet_with_rdma_type_vpc(get_test_subnet_w_rdma_type):
+    vpc_id, subnet_id = get_test_subnet_w_rdma_type
+
+    output = get_subnets_list(vpc_id)
+    assert all(header in output for header in HEADERS_SUBNET)
+    assert subnet_id in output
+
+    output = get_subnets_list(vpc_id, "--format=vpc_type --no-headers")
+    assert any(["rdma" in output.split()])
+
+    output = get_subnet_view(vpc_id, subnet_id)
+    assert str(output["id"]) == subnet_id
+    assert output["vpc_type"] == "rdma"
+
+
 @pytest.mark.skip(reason="Defect: ARB-8019")
 def test_fails_to_create_vpc_invalid_label():
     invalid_label = "invalid_label"
     region = get_random_region_with_caps(required_capabilities=["VPCs"])
 
     res = exec_failing_test_command(
-        BASE_CMD + ["create", "--label", invalid_label, "--region", region],
+        BASE_CMDS["vpcs"]
+        + ["create", "--label", invalid_label, "--region", region],
         ExitCodes.REQUEST_FAILED,
     )
 
@@ -150,15 +186,16 @@ def test_fails_to_create_vpc_invalid_label():
     assert "Must only use ASCII letters, numbers, and dashes" in res
 
 
-def test_fails_to_create_vpc_duplicate_label(test_vpc_wo_subnet):
-    vpc_id = test_vpc_wo_subnet
+def test_fails_to_create_vpc_duplicate_label(get_test_vpc_wo_subnet):
+    vpc_id = get_test_vpc_wo_subnet
     label = exec_test_command(
-        BASE_CMD + ["view", vpc_id, "--text", "--no-headers", "--format=label"]
+        BASE_CMDS["vpcs"]
+        + ["view", vpc_id, "--text", "--no-headers", "--format=label"]
     )
     region = get_random_region_with_caps(required_capabilities=["VPCs"])
 
     res = exec_failing_test_command(
-        BASE_CMD + ["create", "--label", label, "--region", region],
+        BASE_CMDS["vpcs"] + ["create", "--label", label, "--region", region],
         ExitCodes.REQUEST_FAILED,
     )
 
@@ -166,12 +203,12 @@ def test_fails_to_create_vpc_duplicate_label(test_vpc_wo_subnet):
 
 
 @pytest.mark.skip(reason="Defect: ARB-8019")
-def test_fails_to_update_vpc_invalid_label(test_vpc_wo_subnet):
-    vpc_id = test_vpc_wo_subnet
+def test_fails_to_update_vpc_invalid_label(get_test_vpc_wo_subnet):
+    vpc_id = get_test_vpc_wo_subnet
     invalid_label = "invalid_label"
 
     res = exec_failing_test_command(
-        BASE_CMD + ["update", vpc_id, "--label", invalid_label],
+        BASE_CMDS["vpcs"] + ["update", vpc_id, "--label", invalid_label],
         ExitCodes.REQUEST_FAILED,
     )
 
@@ -180,12 +217,12 @@ def test_fails_to_update_vpc_invalid_label(test_vpc_wo_subnet):
 
 
 @pytest.mark.skip(reason="Defect: ARB-8019")
-def test_fails_to_create_vpc_subnet_w_invalid_label(test_vpc_wo_subnet):
-    vpc_id = test_vpc_wo_subnet
+def test_fails_to_create_vpc_subnet_w_invalid_label(get_test_vpc_wo_subnet):
+    vpc_id = get_test_vpc_wo_subnet
     invalid_label = "invalid_label"
 
     res = exec_failing_test_command(
-        BASE_CMD
+        BASE_CMDS["vpcs"]
         + [
             "subnet-create",
             "--label",
@@ -202,18 +239,18 @@ def test_fails_to_create_vpc_subnet_w_invalid_label(test_vpc_wo_subnet):
 
 
 @pytest.mark.skip(reason="Defect: ARB-8019")
-def test_fails_to_update_vpc_subnet_w_invalid_label(test_vpc_w_subnet):
-    vpc_id = test_vpc_w_subnet
+def test_fails_to_update_vpc_subnet_w_invalid_label(get_test_vpc_w_subnet):
+    vpc_id = get_test_vpc_w_subnet
 
     invalid_label = "invalid_label"
 
     subnet_id = exec_test_command(
-        BASE_CMD
+        BASE_CMDS["vpcs"]
         + ["subnets-list", vpc_id, "--text", "--format=id", "--no-headers"]
     )
 
     res = exec_failing_test_command(
-        BASE_CMD
+        BASE_CMDS["vpcs"]
         + [
             "subnet-update",
             vpc_id,
@@ -241,7 +278,6 @@ def test_create_vpc_with_ipv6_auto(create_vpc_with_ipv6):
     assert isinstance(ipv6_range, str)
     assert ipv6_range.endswith("/52")
 
-
 @pytest.mark.parametrize("create_vpc_with_ipv6", ["/48"], indirect=True)
 def test_create_vpc_with_custom_ipv6_prefix_length(create_vpc_with_ipv6):
     vpc_data = create_vpc_with_ipv6
@@ -254,12 +290,12 @@ def test_create_vpc_with_custom_ipv6_prefix_length(create_vpc_with_ipv6):
     assert ipv6_range.endswith("/48")
 
 
-def test_create_subnet_with_ipv6_auto(test_vpc_wo_subnet):
-    vpc_id = test_vpc_wo_subnet
+def test_create_subnet_with_ipv6_auto(get_test_vpc_wo_subnet):
+    vpc_id = get_test_vpc_wo_subnet
     subnet_label = get_random_text(5) + "-ipv6subnet"
 
     res = exec_test_command(
-        BASE_CMD
+        BASE_CMDS["vpcs"]
         + [
             "subnet-create",
             "--label",
@@ -295,7 +331,7 @@ def test_fails_to_create_vpc_with_invalid_ipv6_range():
     label = get_random_text(5) + "-invalidvpc"
 
     res = exec_failing_test_command(
-        BASE_CMD
+        BASE_CMDS["vpcs"]
         + [
             "create",
             "--label",
@@ -314,7 +350,7 @@ def test_fails_to_create_vpc_with_invalid_ipv6_range():
 def test_list_vpc_ip_address():
 
     res = exec_test_command(
-        BASE_CMD + ["ips-all-list", "--text", "--delimiter=,"]
+        BASE_CMDS["vpcs"] + ["ips-all-list", "--text", "--delimiter=,"]
     )
 
     lines = res.splitlines()
@@ -328,7 +364,7 @@ def test_list_vpc_ip_address():
 def test_list_vpc_ipv6s_address():
 
     res = exec_test_command(
-        BASE_CMD + ["ipv6s-all-list", "--text", "--delimiter=,"]
+        BASE_CMDS["vpcs"] + ["ipv6s-all-list", "--text", "--delimiter=,"]
     )
 
     lines = res.splitlines()
@@ -347,7 +383,9 @@ def test_get_vpc_default_ranges():
     headers = ["default_ipv4_ranges", "forbidden_ipv4_ranges"]
 
     result = json.loads(
-        exec_test_command(BASE_CMD + ["default-ranges-all-list", "--json"])
+        exec_test_command(
+            BASE_CMDS["vpcs"] + ["default-ranges-all-list", "--json"]
+        )
     )[0]
 
     assert all(header in result.keys() for header in headers)
@@ -415,7 +453,7 @@ def test_vpc_update_with_ipv4(create_vpc_with_ipv4, updated):
 )
 def test_vpc_with_forbidden_ipv4_fail():
     forbidden_ipv4 = exec_test_command(
-        BASE_CMD
+        BASE_CMDS["vpcs"]
         + [
             "default-ranges-all-list",
             "--text",
