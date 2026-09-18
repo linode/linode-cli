@@ -18,10 +18,6 @@ HEADERS_VPC = ["id", "label", "description", "region", "vpc_type"]
 HEADERS_SUBNET = ["id", "label", "ipv4", "vpc_type"]
 
 
-# TODO: Remove this variable and @pytest.mark.skipif once VPC Dual Stack is ready to ship
-disable_vpc_dual_stack_tests = True
-
-
 def get_vpcs_list(params: str = None):
     params = params.split() if params else []
     command = BASE_CMDS["vpcs"] + ["ls", "--text"] + params
@@ -272,72 +268,29 @@ def test_fails_to_update_vpc_subnet_w_invalid_label(get_test_vpc_w_subnet):
     assert "Must only use ASCII letters, numbers, and dashes" in res
 
 
-@pytest.mark.skipif(
-    disable_vpc_dual_stack_tests, reason="Dual-stack tests disabled"
-)
-def test_create_vpc_with_ipv6_auto():
-    region = get_random_region_with_caps(required_capabilities=["VPCs"])
-    label = get_random_text(5) + "-vpc"
+def test_create_vpc_with_ipv6_auto(create_vpc_with_ipv6):
+    vpc_data = create_vpc_with_ipv6
+    vpc_ipv6 = vpc_data["ipv6"]
 
-    res = exec_test_command(
-        BASE_CMDS["vpcs"]
-        + [
-            "create",
-            "--label",
-            label,
-            "--region",
-            region,
-            "--ipv6.range",
-            "auto",
-            "--json",
-        ]
-    )
-
-    vpc_data = json.loads(res)[0]
-
-    assert "id" in vpc_data
-    assert "ipv6" in vpc_data
-    assert isinstance(vpc_data["ipv6"], list)
-    assert len(vpc_data["ipv6"]) > 0
-
-    ipv6_entry = vpc_data["ipv6"][0]
-    assert "range" in ipv6_entry
-
-
-@pytest.mark.parametrize("prefix_len", ["52"])
-@pytest.mark.skipif(
-    disable_vpc_dual_stack_tests, reason="Dual-stack tests disabled"
-)
-def test_create_vpc_with_custom_ipv6_prefix_length(prefix_len):
-    region = get_random_region_with_caps(required_capabilities=["VPCs"])
-    label = get_random_text(5) + f"-vpc{prefix_len}"
-
-    res = exec_test_command(
-        BASE_CMDS["vpcs"]
-        + [
-            "create",
-            "--label",
-            label,
-            "--region",
-            region,
-            "--ipv6.range",
-            f"/{prefix_len}",
-            "--json",
-        ]
-    )
-
-    vpc_data = json.loads(res)[0]
-
-    assert "ipv6" in vpc_data
-    ipv6_entry = vpc_data["ipv6"][0]
-    ipv6_range = ipv6_entry.get("range", "")
+    assert isinstance(vpc_ipv6, list)
+    assert len(vpc_ipv6) > 0
+    ipv6_range = vpc_ipv6[0]["range"]
     assert isinstance(ipv6_range, str)
-    assert ipv6_range.endswith(f"/{prefix_len}")
+    assert ipv6_range.endswith("/52")
 
 
-@pytest.mark.skipif(
-    disable_vpc_dual_stack_tests, reason="Dual-stack tests disabled"
-)
+@pytest.mark.parametrize("create_vpc_with_ipv6", ["/48"], indirect=True)
+def test_create_vpc_with_custom_ipv6_prefix_length(create_vpc_with_ipv6):
+    vpc_data = create_vpc_with_ipv6
+    vpc_ipv6 = vpc_data["ipv6"]
+
+    assert isinstance(vpc_ipv6, list)
+    assert len(vpc_ipv6) > 0
+    ipv6_range = vpc_ipv6[0]["range"]
+    assert isinstance(ipv6_range, str)
+    assert ipv6_range.endswith("/48")
+
+
 def test_create_subnet_with_ipv6_auto(get_test_vpc_wo_subnet):
     vpc_id = get_test_vpc_wo_subnet
     subnet_label = get_random_text(5) + "-ipv6subnet"
@@ -374,9 +327,6 @@ def test_create_subnet_with_ipv6_auto(get_test_vpc_wo_subnet):
     assert "/" in ipv6_range, f"Unexpected IPv6 CIDR format: {ipv6_range}"
 
 
-@pytest.mark.skipif(
-    disable_vpc_dual_stack_tests, reason="Dual-stack tests disabled"
-)
 def test_fails_to_create_vpc_with_invalid_ipv6_range():
     region = get_random_region_with_caps(required_capabilities=["VPCs"])
     label = get_random_text(5) + "-invalidvpc"
@@ -412,9 +362,6 @@ def test_list_vpc_ip_address():
         assert header in lines[0]
 
 
-@pytest.mark.skipif(
-    disable_vpc_dual_stack_tests, reason="Dual-stack tests disabled"
-)
 def test_list_vpc_ipv6s_address():
 
     res = exec_test_command(
