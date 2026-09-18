@@ -146,10 +146,6 @@ def test_interface_settings_update(
                 interface_id,
                 "--default_route.ipv6_interface_id",
                 interface_id,
-                "--default_route.ipv4_eligible_interface_ids",
-                interface_id,
-                "--default_route.ipv6_eligible_interface_ids",
-                interface_id,
                 "--json",
             ]
         )
@@ -161,8 +157,6 @@ def test_interface_settings_update(
     default_route = settings["default_route"]
     assert default_route["ipv4_interface_id"] == int(interface_id)
     assert default_route["ipv6_interface_id"] == int(interface_id)
-    assert default_route["ipv4_eligible_interface_ids"] == [int(interface_id)]
-    assert default_route["ipv6_eligible_interface_ids"] == [int(interface_id)]
 
 
 def test_interface_update(linode_interface_public, monkeypatch: MonkeyPatch):

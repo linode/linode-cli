@@ -58,7 +58,7 @@ def mysql_cluster():
             "--label",
             mysql_database_label,
             "--engine",
-            "mysql/8",
+            "mysql/8.4",
             "--text",
             "--delimiter",
             ",",

@@ -204,6 +204,64 @@ def test_merge(mock_cli, fake_kubeconfig_file):
     assert result["dictionary"] == yaml_a["dictionary"]
 
 
+# Ensure newly created kubeconfig files are not world/group-readable
+@pytest.mark.skipif(
+    os.name == "nt", reason="POSIX file modes are not supported on Windows"
+)
+def test_written_config_permissions(mock_cli):
+    mock_cli.call_operation = mock_call_operation
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        file_path = os.path.join(temp_dir, "new_dir", "nested", "config")
+
+        try:
+            plugin.call(
+                [
+                    "--label",
+                    "nonempty_data",
+                    "--kubeconfig",
+                    file_path,
+                ],
+                PluginContext("REALTOKEN", mock_cli),
+            )
+        except SystemExit as err:
+            assert err.code == 0
+
+        assert os.path.exists(file_path)
+        assert os.stat(file_path).st_mode & 0o777 == 0o600
+        assert os.stat(os.path.dirname(file_path)).st_mode & 0o777 == 0o700
+
+
+# Ensure pre-existing world-readable kubeconfig files get tightened
+@pytest.mark.skipif(
+    os.name == "nt", reason="POSIX file modes are not supported on Windows"
+)
+def test_existing_config_permissions_tightened(mock_cli):
+    mock_cli.call_operation = mock_call_operation
+
+    with tempfile.TemporaryDirectory() as temp_dir:
+        file_path = os.path.join(temp_dir, "config")
+
+        with open(file_path, "w", encoding="utf-8") as file:
+            file.write(TEST_YAML_CONTENT_A)
+        os.chmod(file_path, 0o644)
+
+        try:
+            plugin.call(
+                [
+                    "--label",
+                    "nonempty_data",
+                    "--kubeconfig",
+                    file_path,
+                ],
+                PluginContext("REALTOKEN", mock_cli),
+            )
+        except SystemExit as err:
+            assert err.code == 0
+
+        assert os.stat(file_path).st_mode & 0o777 == 0o600
+
+
 def test_merge_to_empty_config(mock_cli, fake_kubeconfig_file_without_entries):
     stdout_buf = io.StringIO()
     mock_cli.call_operation = mock_call_operation

@@ -3,11 +3,11 @@ import time
 
 from tests.integration.helpers import (
     BASE_CMDS,
+    DEFAULT_REGION,
     exec_test_command,
 )
 
 DEFAULT_RANDOM_PASS = exec_test_command(["openssl", "rand", "-base64", "32"])
-DEFAULT_REGION = "us-ord"
 
 DEFAULT_TEST_IMAGE = exec_test_command(
     [
