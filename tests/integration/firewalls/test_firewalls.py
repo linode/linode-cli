@@ -195,20 +195,22 @@ def test_update_firewall(firewall_id):
     assert re.search(firewall_id + "," + updated_label + ",enabled", result)
 
 
-@pytest.mark.skip("skip until there is a way to delete default firewall")
-def test_firewall_settings_update_and_list(test_firewall_id):
+@pytest.mark.skip(
+    reason="Test skipped until there is a way to delete default firewall"
+)
+def test_firewall_settings_update_and_list(get_firewall_id):
     for cmd in [
         BASE_CMDS["firewalls"]
         + [
             "firewall-settings-update",
-            "--default_firewall_ids.vpc_interfac",
-            test_firewall_id,
+            "--default_firewall_ids.vpc_interface",
+            get_firewall_id,
             "--default_firewall_ids.public_interface",
-            test_firewall_id,
+            get_firewall_id,
             "--default_firewall_ids.nodebalancer",
-            test_firewall_id,
+            get_firewall_id,
             "--default_firewall_ids.linode",
-            test_firewall_id,
+            get_firewall_id,
             "--json",
         ],
         BASE_CMDS["firewalls"]
@@ -217,15 +219,11 @@ def test_firewall_settings_update_and_list(test_firewall_id):
             "--json",
         ],
     ]:
-        data = json.loads(exec_test_command(cmd).stdout.decode().rstrip())
-        firewall_ids = data[0]["default_firewall_ids"]
-        for key in [
-            "linode",
-            "nodebalancer",
-            "public_interface",
-            "vpc_interface",
-        ]:
-            assert firewall_ids[key] == int(test_firewall_id)
+        data = json.loads(exec_test_command(cmd))
+        def_firewall_ids = data[0]["default_firewall_ids"]
+
+        for key in def_firewall_ids:
+            assert def_firewall_ids[key] == int(get_firewall_id)
 
 
 def test_firewall_templates_list(monkeypatch: MonkeyPatch):

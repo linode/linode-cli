@@ -336,3 +336,29 @@ def simple_nodebalancer_with_config(linode_cloud_firewall):
     yield nodebalancer_id, config_id
 
     delete_target_id(target="nodebalancers", id=nodebalancer_id)
+
+
+@pytest.fixture
+def nodebalancer_with_reserved_ipv4(create_reserved_ip):
+    res_ip = create_reserved_ip["address"]
+    region = create_reserved_ip["region"]
+    nodebalancer_id = exec_test_command(
+        BASE_CMDS["nodebalancers"]
+        + [
+            "create",
+            "--region",
+            region,
+            "--ipv4",
+            res_ip,
+            "--text",
+            "--delimiter",
+            ",",
+            "--no-headers",
+            "--format",
+            "id",
+        ]
+    )
+
+    yield res_ip, nodebalancer_id
+
+    delete_target_id(target="nodebalancers", id=nodebalancer_id)

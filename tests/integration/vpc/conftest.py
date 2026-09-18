@@ -1,3 +1,5 @@
+import json
+
 import pytest
 
 from tests.integration.conftest import create_vpc_w_subnet
@@ -33,8 +35,8 @@ def get_test_vpc_wo_subnet():
             label,
             "--region",
             region,
-            # "--ipv6.range",    TODO: Uncomment after VPC Dual Stack is ready to ship
-            # "auto",
+            "--ipv6.range",
+            "auto",
             "--no-headers",
             "--text",
             "--format=id",
@@ -137,3 +139,31 @@ def create_vpc_with_ipv4(request):
     yield vpc_id
 
     delete_target_id(target="vpcs", id=vpc_id)
+
+
+@pytest.fixture
+def create_vpc_with_ipv6(request):
+    ipv6_range = getattr(request, "param", None)
+    ipv6_range = ipv6_range if ipv6_range else "auto"
+    label = get_random_text(5) + "-vpc-label"
+    region = get_random_region_with_caps(required_capabilities=["VPCs"])
+
+    vpc_data = json.loads(
+        exec_test_command(
+            BASE_CMDS["vpcs"]
+            + [
+                "create",
+                "--label",
+                label,
+                "--region",
+                region,
+                "--ipv6.range",
+                ipv6_range,
+                "--json",
+            ]
+        )
+    )[0]
+
+    yield vpc_data
+
+    delete_target_id(target="vpcs", id=str(vpc_data["id"]))
