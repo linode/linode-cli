@@ -26,6 +26,10 @@ def _get_printed_parameter_names():
     return list(MockConsole.table.columns[0]._cells)
 
 
+def _get_printed_parameter_types():
+    return list(MockConsole.table.columns[1]._cells)
+
+
 class TestOverrides:
     """
     Unit tests for linodecli.overrides
@@ -222,6 +226,7 @@ class TestOverrides:
             "backup_minute",
             "valkey_persistence",
         ]
+        assert _get_printed_parameter_types() == ["integer | null", "string"]
         assert (
             "databases",
             "valkey-config-view",

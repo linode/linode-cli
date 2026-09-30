@@ -329,11 +329,22 @@ def pg_view_output(json_data) -> bool:
     return False
 
 
+def _format_param_type(param_type) -> str:
+    """
+    Format a DB Config parameter type, which may be a list for nullable
+    parameters (e.g. ["integer", "null"] -> "integer | null").
+    """
+    if isinstance(param_type, list):
+        return " | ".join(str(t) for t in param_type)
+
+    return str(param_type)
+
+
 def add_param_row(output, param_name, param_data):
     """
     Construct and add a row to the output table for DB Config view overrides.
     """
-    param_type = str(param_data.get("type", ""))
+    param_type = _format_param_type(param_data.get("type", ""))
     example = str(param_data.get("example", ""))
     minimum = str(param_data.get("minimum", ""))
     maximum = str(param_data.get("maximum", ""))
