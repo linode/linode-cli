@@ -51,6 +51,28 @@ class TestRequest:
         assert arg_map["barbar"].format == "json"
         assert arg_map["barbar"].datatype == "object"
 
+    @pytest.mark.parametrize("schema_type", ["string", "integer", "array"])
+    def test_explicit_non_object_composed_schema(self, schema_type):
+        with open_fixture("operation_with_one_ofs.yaml") as fixture:
+            document = safe_load(fixture)
+
+        variant = document["components"]["schemas"]["Foo"]["oneOf"][1]
+        nested_schema = variant["properties"]["barbar"]
+        nested_schema["type"] = schema_type
+        for branch in nested_schema["anyOf"]:
+            branch.pop("type")
+        if schema_type == "array":
+            nested_schema["items"] = {"type": "string"}
+
+        schema = OpenAPI(document).components.schemas["Foo"]
+        arg_map = {arg.path: arg for arg in _parse_request_model(schema)}
+
+        assert set(arg_map) == {"foobar", "barfoo", "foofoo", "barbar"}
+        assert arg_map["barbar"].datatype == schema_type
+        assert arg_map["barbar"].format is None
+        if schema_type == "array":
+            assert arg_map["barbar"].item_type == "string"
+
     def test_skip_request_attributes(self, post_skip_test_operation):
         """
         Test that request attributes with x-linode-cli-skip extension are excluded.

@@ -169,7 +169,12 @@ def _parse_request_model(
         effective_format = v.extensions.get("linode-cli-format") or v.format
 
         # Handle nested objects which aren't read-only and have properties
-        if not v.readOnly and nested_props and effective_format != "json":
+        if (
+            v.type in (None, "object")
+            and not v.readOnly
+            and nested_props
+            and effective_format != "json"
+        ):
             # nested objects receive a prefix and are otherwise parsed normally
             pref = prefix + "." + k if prefix else k
 
