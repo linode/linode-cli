@@ -17,6 +17,8 @@ class TestRequest:
             "barbar.baz": ("boolean", "Some baz.", False),
         }
 
+        assert len(arg_map) == len(expected)
+
         for k, v in expected.items():
             assert arg_map[k].datatype == v[0]
             assert arg_map[k].description == v[1]

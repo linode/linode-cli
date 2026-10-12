@@ -164,12 +164,11 @@ def _parse_request_model(
         if v.extensions.get("linode-cli-skip"):
             continue
 
+        # Nested oneOf/anyOf/allOf schemas may omit type: object.
+        nested_props, _ = _aggregate_schema_properties(v)
+
         # Handle nested objects which aren't read-only and have properties
-        if (
-            v.type == "object"
-            and not v.readOnly
-            and len(_aggregate_schema_properties(v)[0]) > 0
-        ):
+        if not v.readOnly and nested_props:
             # nested objects receive a prefix and are otherwise parsed normally
             pref = prefix + "." + k if prefix else k
 
