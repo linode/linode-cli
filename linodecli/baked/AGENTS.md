@@ -49,6 +49,7 @@
 - `--order-by` is restricted to filterable attrs and becomes `+order_by` in `X-Filter`; list filters serialize as `+and` entries.
 
 ## Response And Output Gotchas
+- Nested response schemas with aggregated properties are expanded even without `type: object`; arbitrary-key dictionaries retain their existing leaf handling, and scalar compositions without properties are not expanded.
 - Bake-time pagination detection is structural: top-level response schema must have exactly `pages`, `page`, `results`, and `data`; only `data.items` becomes display attrs (`is_paginated`).
 - `OpenAPIResponse.fix_json()` handles `linode-cli-rows`, then `linode-cli-nested-list`, then unwraps via `"pages" in json` (not `self.is_paginated`), then wraps non-lists. Runtime unwrap is looser than bake-time pagination; do not tighten it to `is_paginated` without checking odd payloads that only include `pages`.
 - `linode-cli-rows` paths are extracted from the raw API JSON and concatenated; list values extend the result, scalar/object values are appended.
