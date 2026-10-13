@@ -2,6 +2,7 @@ import json
 
 import pytest
 
+from tests.integration.database.fixtures import valkey_cluster  # noqa: F401
 from tests.integration.database.helpers import (
     database_command,
     database_json,

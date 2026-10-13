@@ -5,6 +5,7 @@ import pytest
 from tests.integration.database.fixtures import (  # noqa: F401
     mysql_cluster,
     postgresql_cluster,
+    valkey_cluster,
 )
 from tests.integration.database.helpers import (
     database_command,

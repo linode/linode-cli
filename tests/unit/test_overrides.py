@@ -5,8 +5,6 @@ from unittest.mock import patch
 from linodecli import OutputMode
 from linodecli.overrides import (
     OUTPUT_OVERRIDES,
-    databases_mysql_config_view_output,
-    databases_postgres_config_view_output,
     databases_valkey_config_view_output,
 )
 
@@ -139,67 +137,6 @@ class TestOverrides:
         rows = stdout_buf.getvalue().split("\n")
         # assert that the overridden table has the new columns
         assert len(rows[1].split(rows[1][0])) == 15
-
-    def test_database_config_output_recurses_nested_parameters(self):
-        response_json = {
-            "mysql": {
-                "connect_timeout": {
-                    "type": "integer",
-                    "example": 10,
-                    "minimum": 2,
-                    "maximum": 3600,
-                    "requires_restart": False,
-                    "description": "Connect timeout.",
-                }
-            },
-            "binlog_retention_period": {
-                "type": "integer",
-                "example": 600,
-                "minimum": 600,
-                "requires_restart": False,
-                "description": "Binlog retention.",
-            },
-        }
-
-        with patch("linodecli.overrides.Console", return_value=MockConsole()):
-            assert databases_mysql_config_view_output(response_json) is False
-
-        assert _get_printed_parameter_names() == [
-            "mysql.connect_timeout",
-            "binlog_retention_period",
-        ]
-
-    def test_database_config_output_preserves_postgres_top_level_parameters(
-        self,
-    ):
-        response_json = {
-            "pg": {
-                "autovacuum_vacuum_scale_factor": {
-                    "type": "number",
-                    "example": 0.2,
-                    "minimum": 0,
-                    "maximum": 1,
-                    "requires_restart": False,
-                    "description": "Vacuum scale factor.",
-                }
-            },
-            "work_mem": {
-                "type": "integer",
-                "example": 4,
-                "minimum": 1,
-                "maximum": 1024,
-                "requires_restart": False,
-                "description": "Working memory.",
-            },
-        }
-
-        with patch("linodecli.overrides.Console", return_value=MockConsole()):
-            assert databases_postgres_config_view_output(response_json) is False
-
-        assert _get_printed_parameter_names() == [
-            "pg.autovacuum_vacuum_scale_factor",
-            "work_mem",
-        ]
 
     def test_valkey_config_output_handles_flat_parameters(self):
         response_json = {

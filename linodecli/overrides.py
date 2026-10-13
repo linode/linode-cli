@@ -340,11 +340,15 @@ def _format_param_type(param_type) -> str:
     return str(param_type)
 
 
-def add_param_row(output, param_name, param_data):
+def add_param_row(output, param_name, param_data, format_nullable_type=False):
     """
     Construct and add a row to the output table for DB Config view overrides.
     """
-    param_type = _format_param_type(param_data.get("type", ""))
+    param_type = param_data.get("type", "")
+    if format_nullable_type:
+        param_type = _format_param_type(param_type)
+    else:
+        param_type = str(param_type)
     example = str(param_data.get("example", ""))
     minimum = str(param_data.get("minimum", ""))
     maximum = str(param_data.get("maximum", ""))
@@ -368,35 +372,9 @@ def add_param_row(output, param_name, param_data):
     )
 
 
-def _is_database_config_parameter(param_data):
+def databases_mysql_config_view_output(json_data) -> bool:
     """
-    Determine whether a database config object describes a parameter.
-    """
-    return isinstance(param_data, dict) and (
-        "type" in param_data
-        or "requires_restart" in param_data
-        or "description" in param_data
-    )
-
-
-def _add_database_config_rows(output, config_data, prefix=""):
-    """
-    Recursively add database configuration parameters to the output table.
-    """
-    for field, params in config_data.items():
-        param_name = f"{prefix}.{field}" if prefix else field
-
-        if _is_database_config_parameter(params):
-            add_param_row(output, param_name, params)
-            continue
-
-        if isinstance(params, dict):
-            _add_database_config_rows(output, params, param_name)
-
-
-def _database_config_view_output(json_data) -> bool:
-    """
-    Parse and format a database configuration output table.
+    Parse and format the MySQL configuration output table.
     """
     output = Table(header_style="bold", show_lines=True)
 
@@ -411,7 +389,13 @@ def _database_config_view_output(json_data) -> bool:
     output.add_column("Requires Restart", justify="center")
     output.add_column("Description", style="dim")
 
-    _add_database_config_rows(output, json_data)
+    for field, params in json_data.items():
+        if field in ["binlog_retention_period"]:
+            add_param_row(output, field, params)
+        else:
+            for key, val in params.items():
+                param_name = f"{field}.{key}"
+                add_param_row(output, param_name, val)
 
     console = Console()
     console.print(output)
@@ -419,22 +403,62 @@ def _database_config_view_output(json_data) -> bool:
     return False
 
 
-def databases_mysql_config_view_output(json_data) -> bool:
-    """
-    Parse and format the MySQL configuration output table.
-    """
-    return _database_config_view_output(json_data)
-
-
 def databases_postgres_config_view_output(json_data) -> bool:
     """
     Parse and format the PostgreSQL configuration output table.
     """
-    return _database_config_view_output(json_data)
+    output = Table(header_style="bold", show_lines=True)
+
+    output.add_column("Parameter", style="bold")
+    output.add_column("Type", justify="center")
+    output.add_column("Example", justify="center")
+    output.add_column("Min", justify="center")
+    output.add_column("Max", justify="center")
+    output.add_column("Min Length", justify="center")
+    output.add_column("Max Length", justify="center")
+    output.add_column("Pattern", justify="center")
+    output.add_column("Requires Restart", justify="center")
+    output.add_column("Description", style="dim")
+
+    for field, params in json_data.items():
+        if field in [
+            "pg_stat_monitor_enable",
+            "shared_buffers_percentage",
+            "work_mem",
+        ]:
+            add_param_row(output, field, params)
+        else:
+            for key, val in params.items():
+                param_name = f"{field}.{key}"
+                add_param_row(output, param_name, val)
+
+    console = Console()
+    console.print(output)
+
+    return False
 
 
 def databases_valkey_config_view_output(json_data) -> bool:
     """
     Parse and format the Valkey configuration output table.
     """
-    return _database_config_view_output(json_data)
+    output = Table(header_style="bold", show_lines=True)
+
+    output.add_column("Parameter", style="bold")
+    output.add_column("Type", justify="center")
+    output.add_column("Example", justify="center")
+    output.add_column("Min", justify="center")
+    output.add_column("Max", justify="center")
+    output.add_column("Min Length", justify="center")
+    output.add_column("Max Length", justify="center")
+    output.add_column("Pattern", justify="center")
+    output.add_column("Requires Restart", justify="center")
+    output.add_column("Description", style="dim")
+
+    for field, params in json_data.items():
+        add_param_row(output, field, params, format_nullable_type=True)
+
+    console = Console()
+    console.print(output)
+
+    return False
