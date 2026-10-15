@@ -5,6 +5,8 @@ from tests.integration.helpers import (
     check_attribute_value,
     delete_target_id,
     exec_test_command,
+    get_random_region_with_caps,
+    get_random_text,
     wait_for_condition,
 )
 from tests.integration.linodes.helpers import DEFAULT_TEST_IMAGE
@@ -362,3 +364,72 @@ def nodebalancer_with_reserved_ipv4(create_reserved_ip):
     yield res_ip, nodebalancer_id
 
     delete_target_id(target="nodebalancers", id=nodebalancer_id)
+
+
+@pytest.fixture
+def nodebalancer_type_premium_backend_connectivity_vpc(linode_cloud_firewall):
+    vpc_label = get_random_text(5) + "label"
+    subnet_label = get_random_text(5) + "label"
+    test_region = get_random_region_with_caps(
+        ["NodeBalancers", "Premium NodeBalancers"]
+    )
+
+    test_vpc_id = exec_test_command(
+        [
+            "linode-cli",
+            "vpcs",
+            "create",
+            "--label",
+            vpc_label,
+            "--region",
+            test_region,
+            "--subnets.ipv4",
+            "192.168.0.0/25",
+            "--subnets.label",
+            subnet_label,
+            "--text",
+            "--suppress-warnings",
+            "--format",
+            "id",
+            "--no-headers",
+        ]
+    )
+    test_subnet_id = exec_test_command(
+        BASE_CMDS["vpcs"]
+        + [
+            "subnets-list",
+            test_vpc_id,
+            "--text",
+            "--no-headers",
+            "--delimiter=,",
+        ]
+    ).split(",")[0]
+
+    result = exec_test_command(
+        BASE_CMDS["nodebalancers"]
+        + [
+            "create",
+            "--region",
+            test_region,
+            "--firewall_id",
+            linode_cloud_firewall,
+            "--type",
+            "premium",
+            "--backend_connectivity",
+            "vpc",
+            "--vpcs.ipv4_range",
+            "192.168.0.64/30",
+            "--vpcs.subnet_id",
+            test_subnet_id,
+            "--text",
+            "--delimiter",
+            ",",
+            "--suppress-warnings",
+            "--no-headers",
+        ]
+    )
+    nodebalancer_id = result.split(",")[0]
+
+    yield nodebalancer_id, result
+    delete_target_id(target="nodebalancers", id=nodebalancer_id)
+    delete_target_id(target="vpcs", id=test_vpc_id)
