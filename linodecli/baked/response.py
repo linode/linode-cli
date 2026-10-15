@@ -208,7 +208,9 @@ def _parse_response_model(schema, prefix=None, nested_list_depth=0):
                     k, v, prefix=prefix, nested_list_depth=nested_list_depth
                 )
             )
-        elif v.type == "object":
+        elif v.type == "object" or (
+            v.type is None and bool(_aggregate_schema_properties(v)[0])
+        ):
             attrs += _parse_response_model(v, prefix=pref)
         elif v.type == "array" and (
             v.items.type == "object"
