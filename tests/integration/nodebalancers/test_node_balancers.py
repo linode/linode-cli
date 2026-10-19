@@ -19,6 +19,7 @@ from tests.integration.nodebalancers.fixtures import (  # noqa: F401
     nodebalancer_with_reserved_ipv4,
     nodebalancer_with_udp_config_and_node,
     simple_nodebalancer_with_config,
+    vpc_for_nodebalancer_type_premium_backend_connectivity_vpc,
 )
 
 

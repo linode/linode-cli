@@ -367,38 +367,18 @@ def nodebalancer_with_reserved_ipv4(create_reserved_ip):
 
 
 @pytest.fixture
-def nodebalancer_type_premium_backend_connectivity_vpc(linode_cloud_firewall):
-    vpc_label = get_random_text(5) + "label"
-    subnet_label = get_random_text(5) + "label"
+def nodebalancer_type_premium_backend_connectivity_vpc(
+    linode_cloud_firewall,
+    vpc_for_nodebalancer_type_premium_backend_connectivity_vpc,
+):
     test_region = get_random_region_with_caps(
         ["NodeBalancers", "Premium NodeBalancers"]
-    )
-
-    test_vpc_id = exec_test_command(
-        [
-            "linode-cli",
-            "vpcs",
-            "create",
-            "--label",
-            vpc_label,
-            "--region",
-            test_region,
-            "--subnets.ipv4",
-            "192.168.0.0/25",
-            "--subnets.label",
-            subnet_label,
-            "--text",
-            "--suppress-warnings",
-            "--format",
-            "id",
-            "--no-headers",
-        ]
     )
     test_subnet_id = exec_test_command(
         BASE_CMDS["vpcs"]
         + [
             "subnets-list",
-            test_vpc_id,
+            vpc_for_nodebalancer_type_premium_backend_connectivity_vpc,
             "--text",
             "--no-headers",
             "--delimiter=,",
@@ -432,4 +412,36 @@ def nodebalancer_type_premium_backend_connectivity_vpc(linode_cloud_firewall):
 
     yield nodebalancer_id, result
     delete_target_id(target="nodebalancers", id=nodebalancer_id)
+
+
+@pytest.fixture
+def vpc_for_nodebalancer_type_premium_backend_connectivity_vpc():
+    vpc_label = get_random_text(5) + "label"
+    subnet_label = get_random_text(5) + "label"
+    test_region = get_random_region_with_caps(
+        ["NodeBalancers", "Premium NodeBalancers"]
+    )
+
+    test_vpc_id = exec_test_command(
+        [
+            "linode-cli",
+            "vpcs",
+            "create",
+            "--label",
+            vpc_label,
+            "--region",
+            test_region,
+            "--subnets.ipv4",
+            "192.168.0.0/25",
+            "--subnets.label",
+            subnet_label,
+            "--text",
+            "--suppress-warnings",
+            "--format",
+            "id",
+            "--no-headers",
+        ]
+    )
+
+    yield test_vpc_id
     delete_target_id(target="vpcs", id=test_vpc_id)
