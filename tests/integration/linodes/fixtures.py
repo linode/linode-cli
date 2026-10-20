@@ -86,9 +86,9 @@ def linode_backup_disabled(linode_cloud_firewall):
 
 
 @pytest.fixture(scope="module")
-def snapshot_of_linode():
+def snapshot_of_linode(linode_cloud_firewall):
     # get linode id after creation and wait for "running" status
-    linode_id = create_linode_and_wait()
+    linode_id = create_linode_and_wait(firewall_id=linode_cloud_firewall)
     new_snapshot_label = "test_snapshot_" + get_random_text(5)
 
     result = exec_test_command(
