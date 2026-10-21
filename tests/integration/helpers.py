@@ -224,6 +224,15 @@ def assert_help_actions_list(expected_actions, help_output):
         assert expected_action in output_actions
 
 
+def assert_help_parameters_list_for_command(expected_parameters, help_output):
+    for expected_parameter in expected_parameters:
+        re.search(
+            rf"^\s*--{re.escape(expected_parameter)}(?=\s|:)",
+            help_output,
+            re.MULTILINE,
+        ), f"Missing help parameter: --{expected_parameter}"
+
+
 def view_command_attribute(
     command: str, action: str, item_id: str, attribute: str
 ) -> str:
