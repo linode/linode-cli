@@ -5,16 +5,21 @@ import pytest
 from linodecli.exit_codes import ExitCodes
 from tests.integration.helpers import (
     BASE_CMDS,
+    assert_headers_in_lines,
+    assert_help_parameters_list_for_command,
     exec_failing_test_command,
     exec_test_command,
+    get_random_text,
 )
 from tests.integration.nodebalancers.fixtures import (  # noqa: F401
     linode_to_add,
+    nodebalancer_premium_with_backend_vpc,
     nodebalancer_w_config_and_node,
     nodebalancer_with_default_conf,
     nodebalancer_with_reserved_ipv4,
     nodebalancer_with_udp_config_and_node,
     simple_nodebalancer_with_config,
+    vpc_for_nb_premium_backend_connectivity,
 )
 
 
@@ -50,6 +55,28 @@ def test_list_nodebalancers_and_status(nodebalancer_w_config_and_node):
         ]
     )
     assert re.search(nodebalancer_created(), result)
+
+
+def test_verify_columns_for_list_nodebalancers():
+    result = exec_test_command(
+        BASE_CMDS["nodebalancers"]
+        + [
+            "list",
+            "--text",
+            "--delimiter",
+            ",",
+        ]
+    )
+    lines = result.splitlines()
+    headers = [
+        "id",
+        "label",
+        "region",
+        "type",
+        "backend_connectivity",
+        "backend_ipv6_prefix",
+    ]
+    assert_headers_in_lines(headers, lines)
 
 
 def test_display_public_ipv4_for_nodebalancer(nodebalancer_w_config_and_node):
@@ -564,3 +591,67 @@ def test_view_node_for_node_balancer_udp_configuration(
 
 def nodebalancer_created():
     return "[0-9]+,balancer[0-9]+,us-ord,[0-9]+-[0-9]+-[0-9]+-[0-9]+.ip.linodeusercontent.com,0"
+
+
+def test_premium_nodebalancer_with_vpc_backend_connectivity(
+    nodebalancer_premium_with_backend_vpc,
+):
+    result_create = nodebalancer_premium_with_backend_vpc[1]
+    assert "premium" in result_create
+    assert "vpc" in result_create
+    assert "/96" in result_create
+
+    result_view = exec_test_command(
+        BASE_CMDS["nodebalancers"]
+        + [
+            "view",
+            nodebalancer_premium_with_backend_vpc[0],
+            "--text",
+            "--no-headers",
+            "--format",
+            "type,backend_connectivity,backend_ipv6_prefix",
+            "--delimiter",
+            ",",
+        ]
+    ).split(",")
+    assert result_view[0] == "premium"
+    assert result_view[1] == "vpc"
+    assert result_view[2].endswith("/96")
+
+    result_update = exec_test_command(
+        BASE_CMDS["nodebalancers"]
+        + [
+            "update",
+            nodebalancer_premium_with_backend_vpc[0],
+            "--label",
+            "update_label_" + get_random_text(5),
+            "--client_conn_throttle",
+            "0",
+            "--text",
+            "--no-headers",
+            "--delimiter",
+            ",",
+        ]
+    )
+    assert "premium" in result_update
+    assert "vpc" in result_update
+    assert "/96" in result_update
+
+
+def test_create_nodebalancer_help_command():
+    output = exec_test_command(
+        BASE_CMDS["nodebalancers"] + ["create", "--help", "--text"]
+    )
+    available_arguments = [
+        "backend_connectivity",
+        "client_conn_throttle",
+        "configs",
+        "firewall_id",
+        "ipv4",
+        "region",
+        "type",
+        "vpcs.ipv4_range",
+        "vpcs.ipv4_range_auto_assign",
+        "vpcs.subnet_id",
+    ]
+    assert_help_parameters_list_for_command(available_arguments, output)
