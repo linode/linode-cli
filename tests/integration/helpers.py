@@ -226,7 +226,7 @@ def assert_help_actions_list(expected_actions, help_output):
 
 def assert_help_parameters_list_for_command(expected_parameters, help_output):
     for expected_parameter in expected_parameters:
-        re.search(
+        assert re.search(
             rf"^\s*--{re.escape(expected_parameter)}(?=\s|:)",
             help_output,
             re.MULTILINE,

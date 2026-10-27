@@ -13,13 +13,13 @@ from tests.integration.helpers import (
 )
 from tests.integration.nodebalancers.fixtures import (  # noqa: F401
     linode_to_add,
-    nodebalancer_type_premium_backend_connectivity_vpc,
+    nodebalancer_premium_with_backend_vpc,
     nodebalancer_w_config_and_node,
     nodebalancer_with_default_conf,
     nodebalancer_with_reserved_ipv4,
     nodebalancer_with_udp_config_and_node,
     simple_nodebalancer_with_config,
-    vpc_for_nodebalancer_type_premium_backend_connectivity_vpc,
+    vpc_for_nb_premium_backend_connectivity,
 )
 
 
@@ -594,9 +594,9 @@ def nodebalancer_created():
 
 
 def test_premium_nodebalancer_with_vpc_backend_connectivity(
-    nodebalancer_type_premium_backend_connectivity_vpc,
+    nodebalancer_premium_with_backend_vpc,
 ):
-    result_create = nodebalancer_type_premium_backend_connectivity_vpc[1]
+    result_create = nodebalancer_premium_with_backend_vpc[1]
     assert "premium" in result_create
     assert "vpc" in result_create
     assert "/96" in result_create
@@ -605,7 +605,7 @@ def test_premium_nodebalancer_with_vpc_backend_connectivity(
         BASE_CMDS["nodebalancers"]
         + [
             "view",
-            nodebalancer_type_premium_backend_connectivity_vpc[0],
+            nodebalancer_premium_with_backend_vpc[0],
             "--text",
             "--no-headers",
             "--format",
@@ -622,7 +622,7 @@ def test_premium_nodebalancer_with_vpc_backend_connectivity(
         BASE_CMDS["nodebalancers"]
         + [
             "update",
-            nodebalancer_type_premium_backend_connectivity_vpc[0],
+            nodebalancer_premium_with_backend_vpc[0],
             "--label",
             "update_label_" + get_random_text(5),
             "--client_conn_throttle",

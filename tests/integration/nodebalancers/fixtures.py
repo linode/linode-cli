@@ -367,18 +367,15 @@ def nodebalancer_with_reserved_ipv4(create_reserved_ip):
 
 
 @pytest.fixture
-def nodebalancer_type_premium_backend_connectivity_vpc(
+def nodebalancer_premium_with_backend_vpc(
     linode_cloud_firewall,
-    vpc_for_nodebalancer_type_premium_backend_connectivity_vpc,
+    vpc_for_nb_premium_backend_connectivity,
 ):
-    test_region = get_random_region_with_caps(
-        ["NodeBalancers", "Premium NodeBalancers"]
-    )
     test_subnet_id = exec_test_command(
         BASE_CMDS["vpcs"]
         + [
             "subnets-list",
-            vpc_for_nodebalancer_type_premium_backend_connectivity_vpc,
+            vpc_for_nb_premium_backend_connectivity[0],
             "--text",
             "--no-headers",
             "--delimiter=,",
@@ -390,7 +387,7 @@ def nodebalancer_type_premium_backend_connectivity_vpc(
         + [
             "create",
             "--region",
-            test_region,
+            vpc_for_nb_premium_backend_connectivity[1],
             "--firewall_id",
             linode_cloud_firewall,
             "--type",
@@ -415,17 +412,16 @@ def nodebalancer_type_premium_backend_connectivity_vpc(
 
 
 @pytest.fixture
-def vpc_for_nodebalancer_type_premium_backend_connectivity_vpc():
-    vpc_label = get_random_text(5) + "label"
-    subnet_label = get_random_text(5) + "label"
+def vpc_for_nb_premium_backend_connectivity():
+    vpc_label = "test_vpc_" + get_random_text(5)
+    subnet_label = "test_vpc_" + get_random_text(5)
     test_region = get_random_region_with_caps(
         ["NodeBalancers", "Premium NodeBalancers"]
     )
 
     test_vpc_id = exec_test_command(
-        [
-            "linode-cli",
-            "vpcs",
+        BASE_CMDS["vpcs"]
+        + [
             "create",
             "--label",
             vpc_label,
@@ -443,5 +439,5 @@ def vpc_for_nodebalancer_type_premium_backend_connectivity_vpc():
         ]
     )
 
-    yield test_vpc_id
+    yield test_vpc_id, test_region
     delete_target_id(target="vpcs", id=test_vpc_id)
