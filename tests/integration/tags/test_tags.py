@@ -72,7 +72,9 @@ def test_fail_to_create_tag_shorter_than_three_char():
     assert "Length must be 3-50 characters" in result
 
 
-@pytest.mark.skip(reason="There is a minor display issue with 'tags view' command")
+@pytest.mark.skip(
+    reason="There is a minor display issue with 'tags view' command"
+)
 def test_create_delete_tag_for_reserved_ip(create_tag_instance_for_reserved_ip):
     res_ip_data, tag_label = create_tag_instance_for_reserved_ip
 
