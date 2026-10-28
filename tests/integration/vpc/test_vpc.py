@@ -171,19 +171,21 @@ def test_subnet_with_rdma_type_vpc(get_test_subnet_w_rdma_type):
     assert output["vpc_type"] == "rdma"
 
 
-@pytest.mark.skip(reason="Defect: ARB-8019")
 def test_fails_to_create_vpc_invalid_label():
-    invalid_label = "invalid_label"
+    invalid_label = "invalid_label!?#"
     region = get_random_region_with_caps(required_capabilities=["VPCs"])
 
     res = exec_failing_test_command(
         BASE_CMDS["vpcs"]
-        + ["create", "--label", invalid_label, "--region", region],
+        + ["create", "--label", invalid_label, "--region", region, "--text"],
         ExitCodes.REQUEST_FAILED,
     )
 
     assert "Request failed: 400" in res
-    assert "Must only use ASCII letters, numbers, and dashes" in res
+    assert (
+        "Must only use ASCII letters, numbers, underscores, dashes and periods"
+        in res
+    )
 
 
 def test_fails_to_create_vpc_duplicate_label(get_test_vpc_wo_subnet):
@@ -202,24 +204,26 @@ def test_fails_to_create_vpc_duplicate_label(get_test_vpc_wo_subnet):
     assert "Label must be unique among your VPCs" in res
 
 
-@pytest.mark.skip(reason="Defect: ARB-8019")
 def test_fails_to_update_vpc_invalid_label(get_test_vpc_wo_subnet):
     vpc_id = get_test_vpc_wo_subnet
-    invalid_label = "invalid_label"
+    invalid_label = "invalid_label!?#"
 
     res = exec_failing_test_command(
-        BASE_CMDS["vpcs"] + ["update", vpc_id, "--label", invalid_label],
+        BASE_CMDS["vpcs"]
+        + ["update", vpc_id, "--label", invalid_label, "--text"],
         ExitCodes.REQUEST_FAILED,
     )
 
     assert "Request failed: 400" in res
-    assert "Must only use ASCII letters, numbers, and dashes" in res
+    assert (
+        "Must only use ASCII letters, numbers, underscores, dashes and periods"
+        in res
+    )
 
 
-@pytest.mark.skip(reason="Defect: ARB-8019")
 def test_fails_to_create_vpc_subnet_w_invalid_label(get_test_vpc_wo_subnet):
     vpc_id = get_test_vpc_wo_subnet
-    invalid_label = "invalid_label"
+    invalid_label = "invalid_label!?#"
 
     res = exec_failing_test_command(
         BASE_CMDS["vpcs"]
@@ -230,19 +234,21 @@ def test_fails_to_create_vpc_subnet_w_invalid_label(get_test_vpc_wo_subnet):
             "--ipv4",
             "10.1.0.0/24",
             vpc_id,
+            "--text",
         ],
         ExitCodes.REQUEST_FAILED,
     )
 
     assert "Request failed: 400" in res
-    assert "Must only use ASCII letters, numbers, and dashes" in res
+    assert (
+        "Must only use ASCII letters, numbers, underscores, dashes and periods"
+        in res
+    )
 
 
-@pytest.mark.skip(reason="Defect: ARB-8019")
 def test_fails_to_update_vpc_subnet_w_invalid_label(get_test_vpc_w_subnet):
     vpc_id = get_test_vpc_w_subnet
-
-    invalid_label = "invalid_label"
+    invalid_label = "invalid_label!?#"
 
     subnet_id = exec_test_command(
         BASE_CMDS["vpcs"]
@@ -265,7 +271,10 @@ def test_fails_to_update_vpc_subnet_w_invalid_label(get_test_vpc_w_subnet):
     )
 
     assert "Request failed: 400" in res
-    assert "Must only use ASCII letters, numbers, and dashes" in res
+    assert (
+        "Must only use ASCII letters, numbers, underscores, dashes and periods"
+        in res
+    )
 
 
 def test_create_vpc_with_ipv6_auto(create_vpc_with_ipv6):
