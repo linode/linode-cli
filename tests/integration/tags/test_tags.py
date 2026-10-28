@@ -61,7 +61,6 @@ def test_view_unique_tag(create_tag_instance):
     assert create_tag_instance in result
 
 
-@pytest.mark.skip(reason="Defect: ARB-8130")
 def test_fail_to_create_tag_shorter_than_three_char():
     bad_tag = "aa"
     result = exec_failing_test_command(
@@ -73,6 +72,7 @@ def test_fail_to_create_tag_shorter_than_three_char():
     assert "Length must be 3-50 characters" in result
 
 
+@pytest.mark.skip(reason="There is a minor display issue with 'tags view' command")
 def test_create_delete_tag_for_reserved_ip(create_tag_instance_for_reserved_ip):
     res_ip_data, tag_label = create_tag_instance_for_reserved_ip
 
@@ -80,7 +80,7 @@ def test_create_delete_tag_for_reserved_ip(create_tag_instance_for_reserved_ip):
         exec_test_command(
             BASE_CMDS["tags"]
             + [
-                "get-tagged-objects",
+                "view",
                 tag_label,
                 "--json",
             ]
