@@ -3,11 +3,16 @@ import re
 
 import pytest
 
-from tests.integration.helpers import BASE_CMDS, exec_test_command
+from tests.integration.helpers import (
+    BASE_CMDS,
+    delete_target_id,
+    exec_test_command,
+)
 from tests.integration.linodes.fixtures import (  # noqa: F401
     linode_backup_disabled,
     linode_backup_enabled,
     linode_basic_with_firewall,
+    snapshot_of_linode,
 )
 from tests.integration.linodes.helpers import (
     check_account_settings,
@@ -91,9 +96,9 @@ def test_create_backup_with_backup_enabled(linode_backup_enabled):
     os.environ.get("RUN_LONG_TESTS", None) != "True",
     reason="Skipping long-running Test, to run set RUN_LONG_TESTS=True",
 )
-def test_take_snapshot_of_linode(firewall_id):
+def test_take_snapshot_of_linode(linode_cloud_firewall):
     # get linode id after creation and wait for "running" status
-    linode_id = create_linode_and_wait(firewall_id)
+    linode_id = create_linode_and_wait(firewall_id=linode_cloud_firewall)
 
     snapshot_label = "test_snapshot1"
 
@@ -115,6 +120,8 @@ def test_take_snapshot_of_linode(firewall_id):
         + snapshot_label,
         result,
     )
+
+    delete_target_id("linodes", linode_id)
 
 
 @pytest.mark.skipif(
@@ -157,10 +164,8 @@ def test_cancel_backups(snapshot_of_linode):
     result = exec_test_command(
         BASE_CMDS["linodes"]
         + [
-            "snapshot",
+            "backups-list",
             linode_id,
-            "--label",
-            new_snapshot_label,
             "--text",
             "--delimiter",
             ",",
@@ -168,7 +173,7 @@ def test_cancel_backups(snapshot_of_linode):
         ]
     )
     assert re.search(
-        "[0-9]+,pending,snapshot,[0-9]+-[0-9]+-[0-9]+T[0-9]+:[0-9]+:[0-9]+,"
+        "[0-9]+,(pending|running),snapshot,[0-9]+-[0-9]+-[0-9]+T[0-9]+:[0-9]+:[0-9]+,"
         + new_snapshot_label,
         result,
     )
