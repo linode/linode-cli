@@ -68,7 +68,7 @@ def test_list_stackscripts():
 
     output = result.splitlines()
 
-    assert re.search("[0-9]+,([A-z]|[0-9])+,True", output[0])
+    assert re.search("[0-9]+,[A-Za-z0-9_-]+,True", output[0])
 
 
 def test_test_stackscript_id_fails_without_image():
