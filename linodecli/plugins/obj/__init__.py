@@ -15,6 +15,7 @@ from datetime import datetime
 from math import ceil
 from typing import List, Optional
 
+from packaging import version
 from pytimeparse import parse as parse_time
 from rich import print as rprint
 from rich.table import Table
@@ -32,6 +33,7 @@ from linodecli.plugins.obj.config import (
     ENV_ACCESS_KEY_NAME,
     ENV_SECRET_KEY_NAME,
     INCOMING_DATE_FORMAT,
+    MIN_BOTOCORE_VERSION,
     MULTIPART_UPLOAD_CHUNK_SIZE_DEFAULT,
     NO_ACCESS_ERROR,
     NO_SCOPES_ERROR,
@@ -59,6 +61,7 @@ from linodecli.plugins.obj.website import (
 
 try:
     import boto3
+    import botocore
     from botocore.config import Config
     from botocore.exceptions import ClientError
 
@@ -68,6 +71,29 @@ except ImportError:
 
 
 CLUSTER_KEY = "cluster"
+
+
+def _check_botocore_version():
+    """
+    Exits with an upgrade hint if the installed botocore is too old for the
+    options the S3 client is configured with.
+    """
+    if version.parse(botocore.__version__) >= version.parse(
+        MIN_BOTOCORE_VERSION
+    ):
+        return
+
+    print(
+        f"This plugin requires boto3 {MIN_BOTOCORE_VERSION} or later, but "
+        f"botocore {botocore.__version__} is installed. Please upgrade it by "
+        "running 'pip3 install --upgrade boto3', or reinstall the CLI with "
+        "its Object Storage dependencies: "
+        "'pip3 install --upgrade \"linode-cli[obj]\"'",
+        file=sys.stderr,
+    )
+    sys.exit(ExitCodes.REQUEST_FAILED)
+
+
 KEY_CLEANUP_ENABLED_KEY = "key-cleanup-enabled"
 KEY_LIFESPAN_KEY = "key-lifespan"
 KEY_ROTATION_PERIOD_KEY = "key-rotation-period"
@@ -429,6 +455,8 @@ def call(
         sys.exit(
             ExitCodes.REQUEST_FAILED
         )  # requirements not met - we can't go on
+
+    _check_botocore_version()
 
     parser = get_obj_args_parser()
     parsed, args = parser.parse_known_args(args)

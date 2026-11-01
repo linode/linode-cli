@@ -28,6 +28,10 @@ INCOMING_DATE_FORMAT = "%Y-%m-%dT%H:%M:%S.%fZ"
 # for help commands
 PLUGIN_BASE = "linode-cli obj"
 
+# the oldest botocore that accepts the checksum options the S3 client is
+# configured with; boto3 releases use the matching botocore version
+MIN_BOTOCORE_VERSION = "1.36.0"
+
 columns = shutil.get_terminal_size(fallback=(80, 24)).columns
 PROGRESS_BAR_WIDTH = columns - 20 if columns > 30 else columns
 
