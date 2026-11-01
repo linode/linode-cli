@@ -1,11 +1,14 @@
 import time
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
+import pytest
 from pytest import CaptureFixture
 
 from linodecli import CLI, plugins
+from linodecli.exit_codes import ExitCodes
 from linodecli.plugins import obj
 from linodecli.plugins.obj import get_obj_args_parser, helpers, print_help
+from linodecli.plugins.obj.config import MAX_SIGNED_URL_EXPIRY
 
 
 def test_print_help(mock_cli: CLI, capsys: CaptureFixture):
@@ -336,3 +339,69 @@ def test_obj_action_does_not_trigger_cleanup_if_disabled():
         assert (
             not delete_calls
         ), "Cleanup should not be performed when key-cleanup-enabled is False"
+
+
+def test_generate_url_offset_within_limit(capsys: CaptureFixture):
+    client = Mock()
+    client.generate_presigned_url.return_value = "https://signed.example"
+
+    obj.generate_url(lambda: client, ["bucket", "key", "+3600"])
+
+    client.generate_presigned_url.assert_called_once_with(
+        ClientMethod="get_object",
+        ExpiresIn=3600,
+        Params={"Bucket": "bucket", "Key": "key"},
+    )
+    assert capsys.readouterr().out.strip() == "https://signed.example"
+
+
+def test_generate_url_offset_at_limit():
+    client = Mock()
+
+    obj.generate_url(
+        lambda: client, ["bucket", "key", f"+{MAX_SIGNED_URL_EXPIRY}"]
+    )
+
+    assert (
+        client.generate_presigned_url.call_args.kwargs["ExpiresIn"]
+        == MAX_SIGNED_URL_EXPIRY
+    )
+
+
+def test_generate_url_epoch_within_limit():
+    client = Mock()
+
+    obj.generate_url(
+        lambda: client, ["bucket", "key", str(int(time.time()) + 3600)]
+    )
+
+    assert (
+        3500
+        < client.generate_presigned_url.call_args.kwargs["ExpiresIn"]
+        <= 3600
+    )
+
+
+@pytest.mark.parametrize(
+    "expiry, message",
+    [
+        (f"+{MAX_SIGNED_URL_EXPIRY + 1}", "at most 604800 seconds"),
+        ("+31536000", "at most 604800 seconds"),
+        (str(int(time.time()) + 365 * 24 * 3600), "at most 604800 seconds"),
+        ("+0", "must be in the future"),
+        (str(int(time.time()) - 60), "must be in the future"),
+        ("+an-hour", "Invalid expiry"),
+        ("tomorrow", "Invalid expiry"),
+    ],
+)
+def test_generate_url_rejects_invalid_expiry(
+    capsys: CaptureFixture, expiry: str, message: str
+):
+    get_client = Mock()
+
+    with pytest.raises(SystemExit) as exc:
+        obj.generate_url(get_client, ["bucket", "key", expiry])
+
+    assert exc.value.code == ExitCodes.ARGUMENT_ERROR
+    assert message in capsys.readouterr().err
+    get_client.assert_not_called()
