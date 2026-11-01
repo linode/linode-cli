@@ -6,10 +6,10 @@ functionalities for the Linode CLI.
 """
 
 import sys
-from argparse import ArgumentParser
+from argparse import ArgumentParser, Namespace
 from configparser import ConfigParser
 from importlib import import_module
-from typing import Dict, Tuple
+from typing import Dict, List, Tuple
 
 from linodecli import plugins
 from linodecli.helpers import (
@@ -100,6 +100,32 @@ def register_args(parser: ArgumentParser) -> ArgumentParser:
 
 
 # TODO: maybe move to plugins/__init__.py
+def help_subcommand_to_flag(args: List[str], parsed: Namespace) -> bool:
+    """
+    Replaces `help` given as the command or the action with the --help flag,
+    modifying args in place, so `linode-cli help linodes` and
+    `linode-cli linodes help` work like `linode-cli linodes --help`.
+
+    `help` in any other position is left alone, since it can be a value,
+    such as a bucket name.
+
+    :param args: The full argument list, including the program name.
+    :param parsed: The arguments parsed from args.
+
+    :returns: Whether args was changed.
+    """
+    if parsed.command == "help":
+        position = args.index("help")
+    elif parsed.command is not None and parsed.action == "help":
+        position = args.index("help", args.index(parsed.command) + 1)
+    else:
+        return False
+
+    del args[position]
+    args.append("--help")
+    return True
+
+
 def register_plugin(
     module: str, config: ConfigParser, ops: Dict[str, str]
 ) -> Tuple[str, int]:

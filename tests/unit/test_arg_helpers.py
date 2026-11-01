@@ -1,5 +1,9 @@
 #!/usr/local/bin/python3
 
+import argparse
+
+import pytest
+
 from linodecli import arg_helpers
 
 
@@ -149,3 +153,62 @@ class TestArgParsing:
         msg, code = arg_helpers.remove_plugin("testing.plugin", mocked_config)
         assert "not a registered plugin" in msg
         assert code == 14
+
+
+def _rewrite_help(args):
+    parser = arg_helpers.register_args(
+        argparse.ArgumentParser("linode-cli", add_help=False)
+    )
+    parsed, _ = parser.parse_known_args(args[1:])
+    changed = arg_helpers.help_subcommand_to_flag(args, parsed)
+    return args, changed
+
+
+@pytest.mark.parametrize(
+    "args, expected",
+    [
+        (["linode-cli", "help"], ["linode-cli", "--help"]),
+        (
+            ["linode-cli", "help", "linodes"],
+            ["linode-cli", "linodes", "--help"],
+        ),
+        (
+            ["linode-cli", "help", "linodes", "create"],
+            ["linode-cli", "linodes", "create", "--help"],
+        ),
+        (
+            ["linode-cli", "linodes", "help"],
+            ["linode-cli", "linodes", "--help"],
+        ),
+        (
+            ["linode-cli", "--json", "linodes", "help"],
+            ["linode-cli", "--json", "linodes", "--help"],
+        ),
+        (["linode-cli", "obj", "help"], ["linode-cli", "obj", "--help"]),
+    ],
+)
+def test_help_subcommand_to_flag(args, expected):
+    original = args
+    args, changed = _rewrite_help(args)
+
+    assert changed
+    assert args == expected
+    # argv must be changed in place, as linodecli holds a reference to it
+    assert args is original
+
+
+@pytest.mark.parametrize(
+    "args",
+    [
+        ["linode-cli", "linodes", "list"],
+        ["linode-cli", "linodes", "view", "help"],
+        ["linode-cli", "obj", "mb", "help"],
+        ["linode-cli", "--help"],
+    ],
+)
+def test_help_subcommand_to_flag_leaves_values_alone(args):
+    expected = list(args)
+    args, changed = _rewrite_help(args)
+
+    assert not changed
+    assert args == expected
