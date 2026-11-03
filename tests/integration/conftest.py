@@ -18,8 +18,8 @@ import requests
 
 from linodecli import ENV_TOKEN_NAME
 from tests.integration.helpers import (
-    Capability,
     DEFAULT_REGION,
+    Capability,
     check_attribute_value,
     delete_target_id,
     exec_test_command,

@@ -284,8 +284,7 @@ def retry_exec_test_command_with_delay(
 
 
 def get_random_region_with_caps(
-        required_capabilities: List[Capability],
-        site_type: str = "core"
+    required_capabilities: List[Capability], site_type: str = "core"
 ):
     json_regions_data = exec_test_command(
         ["linode-cli", "regions", "ls", "--json"]

@@ -6,8 +6,8 @@ import pytest
 
 from tests.integration.helpers import (
     BASE_CMDS,
-    Capability,
     COMMAND_JSON_OUTPUT,
+    Capability,
     delete_target_id,
     exec_failing_test_command,
     exec_test_command,

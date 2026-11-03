@@ -5,8 +5,8 @@ import pytest
 
 from tests.integration.helpers import (
     BASE_CMDS,
-    Capability,
     DEFAULT_REGION,
+    Capability,
     delete_target_id,
     exec_test_command,
     get_random_region_with_caps,
