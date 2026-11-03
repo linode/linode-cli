@@ -30,6 +30,7 @@
 
 ## Request Parsing Gotchas
 - `_aggregate_schema_properties()` merges `oneOf`, `anyOf`, and `allOf`; a field is marked required only if every leaf schema that defines properties requires it. Schemas that only nest composition without their own `properties` do not increment the required-count denominator.
+- Nested request objects are expanded when `_aggregate_schema_properties()` finds properties and the schema has `type: object` or no explicit type, unless the effective format is `json`. Explicit scalar and array types retain their dedicated parsing paths. A nested `oneOf`/`anyOf`/`allOf` without `type` normally becomes dotted CLI args (for example `--details.host`); `x-linode-cli-format: json` or `format: json` instead preserves a raw-JSON parent argument, with the CLI extension taking precedence.
 - `OpenAPIRequest.attr_routes` stores per-`oneOf` option args keyed by schema `title`; oneOf entries without titles raise `ValueError`.
 - `OpenAPIOperation.arg_routes` returns `self.request.attr_routes` (a dict) when a request exists, but `[]` when there is no request. Treat the empty case as a type inconsistency (list vs dict); callers that always call `.items()` will break on the no-request path.
 - Request and response attributes marked `linode-cli-skip` are omitted from generated args/output.
@@ -48,6 +49,7 @@
 - `--order-by` is restricted to filterable attrs and becomes `+order_by` in `X-Filter`; list filters serialize as `+and` entries.
 
 ## Response And Output Gotchas
+- Nested response schemas with aggregated properties are expanded even without `type: object`; arbitrary-key dictionaries retain their existing leaf handling, and scalar compositions without properties are not expanded.
 - Bake-time pagination detection is structural: top-level response schema must have exactly `pages`, `page`, `results`, and `data`; only `data.items` becomes display attrs (`is_paginated`).
 - `OpenAPIResponse.fix_json()` handles `linode-cli-rows`, then `linode-cli-nested-list`, then unwraps via `"pages" in json` (not `self.is_paginated`), then wraps non-lists. Runtime unwrap is looser than bake-time pagination; do not tighten it to `is_paginated` without checking odd payloads that only include `pages`.
 - `linode-cli-rows` paths are extracted from the raw API JSON and concatenated; list values extend the result, scalar/object values are appended.

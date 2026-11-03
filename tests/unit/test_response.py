@@ -114,6 +114,8 @@ class TestResponse:
             "barbar.baz": ("boolean", "Some baz"),
         }
 
+        assert len(attr_map) == len(expected)
+
         for k, v in expected.items():
             assert attr_map[k].datatype == v[0]
             assert attr_map[k].description == v[1]
