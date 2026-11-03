@@ -19,6 +19,7 @@ import requests
 from linodecli import ENV_TOKEN_NAME
 from tests.integration.helpers import (
     DEFAULT_REGION,
+    Capability,
     check_attribute_value,
     delete_target_id,
     exec_test_command,
@@ -215,7 +216,9 @@ def create_vpc_w_subnet():
     See: https://github.com/pytest-dev/pytest/issues/1216
     """
 
-    region = get_random_region_with_caps(required_capabilities=["VPCs"])
+    region = get_random_region_with_caps(
+        required_capabilities=[Capability.VPCs]
+    )
     vpc_label = get_random_text(5) + "label"
     subnet_label = get_random_text(5) + "label"
 

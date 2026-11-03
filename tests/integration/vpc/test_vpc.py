@@ -7,6 +7,7 @@ import pytest
 from linodecli.exit_codes import ExitCodes
 from tests.integration.helpers import (
     BASE_CMDS,
+    Capability,
     exec_failing_test_command,
     exec_test_command,
     get_random_region_with_caps,
@@ -173,7 +174,9 @@ def test_subnet_with_rdma_type_vpc(get_test_subnet_w_rdma_type):
 
 def test_fails_to_create_vpc_invalid_label():
     invalid_label = "invalid_label!?#"
-    region = get_random_region_with_caps(required_capabilities=["VPCs"])
+    region = get_random_region_with_caps(
+        required_capabilities=[Capability.VPCs]
+    )
 
     res = exec_failing_test_command(
         BASE_CMDS["vpcs"]
@@ -194,7 +197,9 @@ def test_fails_to_create_vpc_duplicate_label(get_test_vpc_wo_subnet):
         BASE_CMDS["vpcs"]
         + ["view", vpc_id, "--text", "--no-headers", "--format=label"]
     )
-    region = get_random_region_with_caps(required_capabilities=["VPCs"])
+    region = get_random_region_with_caps(
+        required_capabilities=[Capability.VPCs]
+    )
 
     res = exec_failing_test_command(
         BASE_CMDS["vpcs"] + ["create", "--label", label, "--region", region],
@@ -337,7 +342,9 @@ def test_create_subnet_with_ipv6_auto(get_test_vpc_wo_subnet):
 
 
 def test_fails_to_create_vpc_with_invalid_ipv6_range():
-    region = get_random_region_with_caps(required_capabilities=["VPCs"])
+    region = get_random_region_with_caps(
+        required_capabilities=[Capability.VPCs]
+    )
     label = get_random_text(5) + "-invalidvpc"
 
     res = exec_failing_test_command(
@@ -473,7 +480,10 @@ def test_vpc_with_forbidden_ipv4_fail():
     ).split()[0]
 
     region = get_random_region_with_caps(
-        required_capabilities=["VPCs", "Custom VPC IPv4 Ranges"]
+        required_capabilities=[
+            Capability.VPCs,
+            Capability.CustomVPCIPv4Ranges,
+        ]
     )
     label = get_random_text(5) + "-label"
 

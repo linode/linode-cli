@@ -4,6 +4,7 @@ import pytest
 
 from tests.integration.helpers import (
     BASE_CMDS,
+    Capability,
     assert_headers_in_lines,
     delete_target_id,
     exec_test_command,
@@ -25,7 +26,7 @@ def test_deploy_an_lke_cluster():
     label = get_random_text(8) + "_cluster"
 
     test_region = get_random_region_with_caps(
-        required_capabilities=["Linodes", "Kubernetes"]
+        required_capabilities=[Capability.Linodes, Capability.Kubernetes]
     )
     lke_version = exec_test_command(
         BASE_CMDS["lke"]
@@ -393,7 +394,7 @@ def test_create_cluster_with_apl_enabled(monkeypatch):
     label = get_random_text(8) + "_apl_enabled_cluster"
 
     test_region = get_random_region_with_caps(
-        required_capabilities=["Linodes", "Kubernetes"]
+        required_capabilities=[Capability.Linodes, Capability.Kubernetes]
     )
     lke_version = exec_test_command(
         BASE_CMDS["lke"]
@@ -458,7 +459,7 @@ def test_create_cluster_with_apl_disabled(monkeypatch):
     label = get_random_text(8) + "_apl_disabled_cluster"
 
     test_region = get_random_region_with_caps(
-        required_capabilities=["Linodes", "Kubernetes"]
+        required_capabilities=[Capability.Linodes, Capability.Kubernetes]
     )
     lke_version = exec_test_command(
         BASE_CMDS["lke"]
@@ -523,7 +524,7 @@ def test_create_cluster_apl_default(monkeypatch):
     label = get_random_text(8) + "_apl_default_cluster"
 
     test_region = get_random_region_with_caps(
-        required_capabilities=["Linodes", "Kubernetes"]
+        required_capabilities=[Capability.Linodes, Capability.Kubernetes]
     )
     lke_version = exec_test_command(
         BASE_CMDS["lke"]
@@ -588,7 +589,7 @@ def test_list_clusters_includes_apl_enabled(monkeypatch):
     label_apl_off = get_random_text(8) + "_apl_off"
 
     test_region = get_random_region_with_caps(
-        required_capabilities=["Linodes", "Kubernetes"]
+        required_capabilities=[Capability.Linodes, Capability.Kubernetes]
     )
     lke_version = exec_test_command(
         BASE_CMDS["lke"]

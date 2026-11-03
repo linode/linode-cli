@@ -4,6 +4,7 @@ import random
 import re
 import subprocess
 import time
+from enum import Enum
 from string import ascii_lowercase
 from typing import Callable, Container, Iterable, List, TypeVar
 
@@ -62,6 +63,93 @@ MODULES = [
     "vpcs",
 ]
 BASE_CMDS = {module: ["linode-cli", module] for module in MODULES}
+
+
+class StrEnum(str, Enum):
+    """
+    Used for enums that are of type string.
+
+    This class is a compatibility workaround for older Python versions
+    where built-in enum.StrEnum is not available yet
+
+    NOTE: Replace this with StrEnum once Python 3.10 has been EOL'd.
+    See: https://docs.python.org/3/library/enum.html#enum.StrEnum
+    """
+
+    def __new__(cls, *values):
+        value = str(*values)
+        member = str.__new__(cls, value)
+        member._value_ = value
+        return member
+
+    def __str__(self):
+        return self._value_
+
+
+class Capability(StrEnum):
+    """
+    An enum class that represents the capabilities that Linode offers
+    across different regions and services.
+
+    These capabilities indicate what services are available in each data center.
+    """
+
+    Linodes = "Linodes"
+    NodeBalancers = "NodeBalancers"
+    BlockStorage = "Block Storage"
+    ObjectStorage = "Object Storage"
+    ObjectStorageRegions = "Object Storage Access Key Regions"
+    ObjectStorageEndpointTypes = "Object Storage Endpoint Types"
+    Kubernetes = "Kubernetes"
+    LKEHAControlPlanes = "LKE HA Control Planes"
+    KubernetesEnterprise = "Kubernetes Enterprise"
+    CloudFirewall = "Cloud Firewall"
+    GPULinodes = "GPU Linodes"
+    VLANs = "Vlans"
+    VPCs = "VPCs"
+    VPCsExtra = "VPCs Extra"
+    MachineImages = "Machine Images"
+    ManagedDatabases = "Managed Databases"
+    ManagedDatabasesBeta = "Managed Databases Beta"
+    BlockStorageMigrations = "Block Storage Migrations"
+    Metadata = "Metadata"
+    PremiumPlans = "Premium Plans"
+    EdgePlans = "Edge Plans"
+    DistributedPlans = "Distributed Plans"
+    LKEControlPlaneACL = "LKE Network Access Control List (IP ACL)"
+    AkamaiCloudLoadBalancer = "Akamai Cloud Load Balancer"
+    SupportTicketSeverity = "Support Ticket Severity"
+    SupportLiveChat = "Support Live Chat"
+    Backups = "Backups"
+    PlacementGroup = "Placement Group"
+    DiskEncryption = "Disk Encryption"
+    LADiskEncryption = "LA Disk Encryption"
+    AkamaiRAMProtection = "Akamai RAM Protection"
+    BlockStorageEncryption = "Block Storage Encryption"
+    BlockStoragePerformanceB1 = "Block Storage Performance B1"
+    BlockStoragePerformanceB1Default = "Block Storage Performance B1 Default"
+    AkamaiCloudPulse = "Akamai Cloud Pulse"
+    AkamaiCloudPulseLogs = "Akamai Cloud Pulse Logs"
+    AkamaiCloudPulseLogsLKEEAudit = "Akamai Cloud Pulse Logs LKE-E Audit"
+    ACLPLogsDatacenterLKEE = "ACLP Logs Datacenter LKE-E"
+    SMTPEnabled = "SMTP Enabled"
+    StackScripts = "StackScripts"
+    NETINTQuadraT1U = "NETINT Quadra T1U"
+    LinodeInterfaces = "Linode Interfaces"
+    MaintenancePolicy = "Maintenance Policy"
+    VPCDualStack = "VPC Dual Stack"
+    VPCIPv6Stack = "VPC IPv6 Stack"
+    CustomVPCIPv4Ranges = "Custom VPC IPv4 Ranges"
+    NetworkLoadBalancer = "Network LoadBalancer"
+    NATGateway = "NAT Gateway"
+    KubernetesEnterpriseBYOVPC = "Kubernetes Enterprise BYO VPC"
+    KubernetesEnterpriseDualStack = "Kubernetes Enterprise Dual Stack"
+    CloudFirewallRuleSet = "Cloud Firewall Rule Set"
+    CloudFirewallPrefixLists = "Cloud Firewall Prefix Lists"
+    CloudFirewallPrefixListCurrentReferences = (
+        "Cloud Firewall Prefix List Current References"
+    )
+    GPUDirectRDMA = "GPUDirect RDMA"
 
 
 def get_random_text(length: int = 10):
@@ -196,7 +284,7 @@ def retry_exec_test_command_with_delay(
 
 
 def get_random_region_with_caps(
-    required_capabilities: List[str], site_type="core"
+    required_capabilities: List[Capability], site_type: str = "core"
 ):
     json_regions_data = exec_test_command(
         ["linode-cli", "regions", "ls", "--json"]

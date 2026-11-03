@@ -6,6 +6,7 @@ import pytest
 from linodecli.exit_codes import ExitCodes
 from tests.integration.helpers import (
     BASE_CMDS,
+    Capability,
     assert_headers_in_lines,
     delete_target_id,
     exec_failing_test_command,
@@ -49,7 +50,10 @@ def test_create_linodes_with_a_label(linode_with_label):
 
 def test_expected_error_if_fields_authorized_users_authorized_keys_root_pass_are_not_set():
     test_region = get_random_region_with_caps(
-        required_capabilities=["Linodes", "Disk Encryption"]
+        required_capabilities=[
+            Capability.Linodes,
+            Capability.DiskEncryption,
+        ]
     )
     result = exec_failing_test_command(
         BASE_CMDS["linodes"]
@@ -265,7 +269,10 @@ def test_disk_view(test_linode_instance):
 
 def test_create_linode_disk_encryption_enabled(linode_cloud_firewall):
     test_region = get_random_region_with_caps(
-        required_capabilities=["Linodes", "Disk Encryption"]
+        required_capabilities=[
+            Capability.Linodes,
+            Capability.DiskEncryption,
+        ]
     )
     linode_id = create_linode(
         firewall_id=linode_cloud_firewall,
@@ -294,7 +301,10 @@ def test_create_linode_disk_encryption_enabled(linode_cloud_firewall):
 
 def test_create_linode_disk_encryption_disabled(linode_cloud_firewall):
     test_region = get_random_region_with_caps(
-        required_capabilities=["Linodes", "Disk Encryption"]
+        required_capabilities=[
+            Capability.Linodes,
+            Capability.DiskEncryption,
+        ]
     )
 
     linode_id = create_linode(

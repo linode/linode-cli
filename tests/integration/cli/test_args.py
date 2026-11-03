@@ -2,6 +2,7 @@ import json
 
 from linodecli.exit_codes import ExitCodes
 from tests.integration.helpers import (
+    Capability,
     exec_failing_test_command,
     exec_test_command,
     get_random_region_with_caps,
@@ -11,7 +12,7 @@ from tests.integration.helpers import (
 
 def test_arg_raw_body():
     label = get_random_text(12)
-    region = get_random_region_with_caps(["VPCs"])
+    region = get_random_region_with_caps([Capability.VPCs])
 
     res = json.loads(
         exec_test_command(
@@ -40,7 +41,7 @@ def test_arg_raw_body():
 
 def test_arg_raw_body_conflict():
     label = get_random_text(12)
-    region = get_random_region_with_caps(["VPCs"])
+    region = get_random_region_with_caps([Capability.VPCs])
 
     res = exec_failing_test_command(
         [
