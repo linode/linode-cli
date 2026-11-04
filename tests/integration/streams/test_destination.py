@@ -1,3 +1,7 @@
+import json
+
+import pytest
+
 from linodecli.exit_codes import ExitCodes
 from tests.integration.helpers import (
     BASE_CMDS,
@@ -5,12 +9,13 @@ from tests.integration.helpers import (
     exec_failing_test_command,
     exec_test_command,
 )
-from tests.integration.streams.fixtures import (
+from tests.integration.streams.fixtures import (  # noqa: F401
     create_destination_akamai_object_storage_type,
     create_object_storage_keys,
 )
 
 
+@pytest.mark.smoke
 def test_list_destinations():
     result = exec_test_command(
         BASE_CMDS["streams"]
@@ -49,8 +54,7 @@ def test_create_destination_error():
         ],
         expected_code=ExitCodes.REQUEST_FAILED,
     )
-    assert "Request failed: 400" in result
-    assert "details,Must be of type Object" in result
+    assert "ambiguous option: --details could match" in result
 
 
 def test_view_destination_error():
@@ -108,7 +112,7 @@ def test_remove_destination_error():
         BASE_CMDS["streams"]
         + [
             "destination-delete",
-            "1",
+            "-1",
             "--delimiter",
             ",",
             "--text",
@@ -119,24 +123,40 @@ def test_remove_destination_error():
     assert "Destination not found" in result
 
 
-def test_create_view_delete_destination(create_destination_akamai_object_storage_type):
+def test_create_view_delete_destination(
+    create_destination_akamai_object_storage_type,
+):
     result_view = exec_test_command(
         BASE_CMDS["streams"]
         + [
             "destination-view",
-            create_destination_akamai_object_storage_type,
-            "--delimiter",
-            ",",
-            "--text",
+            str(create_destination_akamai_object_storage_type["id"]),
+            "--json",
         ],
     )
-    assert result_view == "test"
+    result_view_json = json.loads(result_view)[0]
+    assert result_view_json["status"] == "active"
+    assert result_view_json["type"] == "akamai_object_storage"
+    assert result_view_json["version"] == 1
+
+    result_history_view = exec_test_command(
+        BASE_CMDS["streams"]
+        + [
+            "destination-history-view",
+            str(create_destination_akamai_object_storage_type["id"]),
+            "--json",
+        ],
+    )
+    result_history_view_json = json.loads(result_history_view)[0]
+    assert result_history_view_json["status"] == "active"
+    assert result_history_view_json["type"] == "akamai_object_storage"
+    assert result_history_view_json["version"] == 1
 
     exec_test_command(
         BASE_CMDS["streams"]
         + [
-            "delete",
-            create_destination_akamai_object_storage_type,
+            "destination-delete",
+            str(create_destination_akamai_object_storage_type["id"]),
             "--delimiter",
             ",",
             "--text",
@@ -147,7 +167,7 @@ def test_create_view_delete_destination(create_destination_akamai_object_storage
         BASE_CMDS["streams"]
         + [
             "destination-view",
-            create_destination_akamai_object_storage_type,
+            str(create_destination_akamai_object_storage_type["id"]),
             "--delimiter",
             ",",
             "--text",
@@ -155,4 +175,4 @@ def test_create_view_delete_destination(create_destination_akamai_object_storage
         expected_code=ExitCodes.REQUEST_FAILED,
     )
     assert "Request failed: 404" in result
-    assert "Not found" in result
+    assert "Destination not found" in result

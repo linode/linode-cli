@@ -64,6 +64,18 @@ MODULES = [
 ]
 BASE_CMDS = {module: ["linode-cli", module] for module in MODULES}
 
+SENSITIVE_ARG_NAMES = {
+    "--access_key_secret",
+    "--access_key",
+    "--details.access_key_secret",
+    "--details.access_key_id",
+    "--token",
+    "--password",
+    "--secret",
+    "--secret_key",
+    "--bucket_access",
+}
+
 
 def get_random_text(length: int = 10):
     return "".join(random.choice(ascii_lowercase) for _ in range(length))
@@ -91,7 +103,7 @@ def exec_test_command(args: List[str]):
     if process.returncode != 0:
         raise RuntimeError(
             f"Command failed with exit code {process.returncode}\n"
-            f"Command: {' '.join(args)}\n"
+            f"Command: {' '.join(_redact_args(args))}\n"
             f"Stdout:\n{process.stdout}\n"
             f"Stderr:\n{process.stderr}"
         )
@@ -106,7 +118,7 @@ def exec_failing_test_command(
     if process.returncode != expected_code:
         raise AssertionError(
             f"Expected exit code {expected_code}, got {process.returncode}\n"
-            f"Command: {' '.join(args)}\n"
+            f"Command: {' '.join(_redact_args(args))}\n"
             f"Stdout:\n{process.stdout}\n"
             f"Stderr: {process.stderr}"
         )
@@ -255,3 +267,28 @@ def check_attribute_value(
 ) -> bool:
     result = view_command_attribute(command, action, item_id, attribute)
     return expected_val in result
+
+
+def _redact_args(args: List[str]) -> List[str]:
+    redacted = []
+    hide_next = False
+    for arg in args:
+        if hide_next:
+            redacted.append("***REDACTED***")
+            hide_next = False
+            continue
+
+        # handle `--flag value` form
+        if arg in SENSITIVE_ARG_NAMES:
+            redacted.append(arg)
+            hide_next = True
+            continue
+
+        # handle `--flag=value` form
+        if "=" in arg and arg.split("=", 1)[0] in SENSITIVE_ARG_NAMES:
+            flag, _ = arg.split("=", 1)
+            redacted.append(f"{flag}=***REDACTED***")
+            continue
+
+        redacted.append(arg)
+    return redacted

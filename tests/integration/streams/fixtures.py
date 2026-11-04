@@ -1,9 +1,12 @@
+import json
 import os
 from typing import Any, Dict
 
 import pytest
 import requests
 
+from linodecli import ExitCodes
+from linodecli.cli import logger
 from tests.integration.helpers import (
     BASE_CMDS,
     delete_target_id,
@@ -40,10 +43,10 @@ def get_object_storage_buckets() -> Dict[str, Any]:
     return response.json()
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def create_stream(create_destination_akamai_object_storage_type):
     label = get_random_text(8) + "_stream_cli_test"
-    result_create_stream = exec_test_command(
+    result_create = exec_test_command(
         BASE_CMDS["streams"]
         + [
             "create",
@@ -52,19 +55,26 @@ def create_stream(create_destination_akamai_object_storage_type):
             "--type",
             "audit_logs",
             "--destinations",
-            create_destination_akamai_object_storage_type[0],
-            "--delimiter",
-            ",",
-            "--text",
-        ]
-    ).splitlines()
-    yield result_create_stream
-    delete_target_id("streams", str(result_create_stream[1]), "delete")
+            str(create_destination_akamai_object_storage_type["id"]),
+            "--json",
+        ],
+    )
+    result_create_json = json.loads(result_create)[0]
+    yield result_create_json
+    wait_for_stream_status(str(result_create_json["id"]), "active")
+    delete_target_id(
+        "streams",
+        str(result_create_json["id"]),
+    )
 
 
 @pytest.fixture
 def create_object_storage_keys():
     label = get_random_text(8) + "_destination_cli_test"
+    if get_object_storage_buckets()["data"][0] is None:
+        raise ValueError(
+            "There is no object storage bucket available in your account. Cannot run test."
+        )
     test_bucket = get_object_storage_buckets()["data"][0]
     result_keys = exec_test_command(
         BASE_CMDS["object-storage"]
@@ -86,7 +96,9 @@ def create_object_storage_keys():
             "access_key,secret_key,id",
         ]
     ).split(",")
-    yield result_keys[0], result_keys[1], test_bucket["label"], test_bucket["s3_endpoint"]
+    yield result_keys[0], result_keys[1], test_bucket["label"], test_bucket[
+        "s3_endpoint"
+    ]
     delete_target_id("object-storage", str(result_keys[2]), "keys-delete")
 
 
@@ -115,10 +127,59 @@ def create_destination_akamai_object_storage_type(create_object_storage_keys):
             create_object_storage_keys[0],
             "--delimiter",
             ",",
-            "--text",
+            "--json",
         ]
-    ).splitlines()
-    yield result_create_destination
-    delete_target_id(
-        "streams", str(result_create_destination[0]), "destination-delete"
     )
+    create_destination_json = json.loads(result_create_destination)
+    yield create_destination_json[0]
+    try:
+        exec_test_command(
+            BASE_CMDS["streams"]
+            + [
+                "destination-view",
+                str(create_destination_json[0]["id"]),
+                "--delimiter",
+                ",",
+                "--text",
+            ],
+        )
+    except RuntimeError as error:
+        if "Request failed: 404" not in str(error):
+            raise
+        logger.debug("Destination already deleted, skipping deletion.")
+    else:
+        delete_target_id(
+            "streams",
+            str(create_destination_json[0]["id"]),
+            "destination-delete",
+        )
+
+
+def wait_for_stream_status(
+    stream_id: "str", status: "str", timeout=1800, interval=10
+):
+    import time
+
+    must_end = time.time() + timeout
+    while time.time() < must_end:
+        time.sleep(interval)
+        try:
+            result = exec_test_command(
+                BASE_CMDS["streams"]
+                + [
+                    "view",
+                    stream_id,
+                    "--format",
+                    "status",
+                    "--text",
+                    "--no-headers",
+                ]
+            )
+        except RuntimeError as response_error:
+            if "Request failed: 404" in str(response_error):
+                continue
+            else:
+                raise RuntimeError(response_error)
+        if status == result:
+            return True
+    return False
