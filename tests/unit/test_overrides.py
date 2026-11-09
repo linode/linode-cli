@@ -2,6 +2,9 @@ import contextlib
 import io
 from unittest.mock import patch
 
+import pytest
+from rich.console import Console
+
 from linodecli import OutputMode
 from linodecli.overrides import OUTPUT_OVERRIDES
 
@@ -10,6 +13,37 @@ class TestOverrides:
     """
     Unit tests for linodecli.overrides
     """
+
+    @pytest.mark.parametrize("action", ["keys-create", "keys-list"])
+    def test_object_storage_key_truncation(
+        self, mock_cli, list_operation_for_output_tests, action
+    ):
+        operation = list_operation_for_output_tests
+        operation.command = "object-storage"
+        operation.action = action
+        mock_cli.output_handler.columns = "cool"
+        secret = "UNIQUESECRETKEY0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        output = io.StringIO()
+        console = Console(file=output, width=28, color_system=None)
+
+        with patch(
+            "linodecli.output.output_handler.rprint",
+            lambda *args, **kwargs: console.print(*args),
+        ):
+            operation.process_response_json(
+                {"cool": secret}, mock_cli.output_handler
+            )
+
+        # Rich folds long values across rows; reconstruct the cell content.
+        rendered = "".join(
+            line.strip("│ ") for line in output.getvalue().splitlines()
+        )
+        if action == "keys-create":
+            assert secret in rendered
+            assert "…" not in rendered
+        else:
+            assert secret not in rendered
+            assert "…" in rendered
 
     def test_domains_zone_file(
         self, mock_cli, list_operation_for_overrides_test

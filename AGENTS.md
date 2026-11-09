@@ -26,6 +26,8 @@
 - `linodecli/plugins/` contains hand-written commands outside the generated OpenAPI surface. If you add or change a plugin, read `linodecli/plugins/README.md` for the `call(args, context)` interface and third-party `PLUGIN_NAME` requirement.
 - If you touch `linodecli/baked/*.py`, read `linodecli/baked/AGENTS.md` first. Key constraint: baked model state must stay pickle-safe.
 
+- The table output override for `object-storage keys-create` disables truncation so the one-time secret key is displayed in full.
+
 ## Tests
 - `make test` only runs unit tests; it is an alias for `make test-unit`.
 - Use `make test-unit` for normal unit verification. It sets `LINODE_CLI_TEST_MODE=1` and `XDG_CONFIG_HOME=/tmp/linode/.config` so imports do not trigger interactive config.
