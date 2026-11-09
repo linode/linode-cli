@@ -14,13 +14,15 @@ class TestOverrides:
     Unit tests for linodecli.overrides
     """
 
+    @pytest.mark.parametrize("mode", [OutputMode.table, OutputMode.ascii_table])
     @pytest.mark.parametrize("action", ["keys-create", "keys-list"])
     def test_object_storage_key_truncation(
-        self, mock_cli, list_operation_for_output_tests, action
+        self, mock_cli, list_operation_for_output_tests, action, mode
     ):
         operation = list_operation_for_output_tests
         operation.command = "object-storage"
         operation.action = action
+        mock_cli.output_handler.mode = mode
         mock_cli.output_handler.columns = "cool"
         secret = "UNIQUESECRETKEY0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         output = io.StringIO()
@@ -36,7 +38,7 @@ class TestOverrides:
 
         # Rich folds long values across rows; reconstruct the cell content.
         rendered = "".join(
-            line.strip("│ ") for line in output.getvalue().splitlines()
+            line.strip("│| ") for line in output.getvalue().splitlines()
         )
         if action == "keys-create":
             assert secret in rendered

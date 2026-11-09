@@ -59,6 +59,18 @@ def handle_object_storage_keys_create(
     return True
 
 
+@output_override("object-storage", "keys-create", OutputMode.ascii_table)
+def handle_object_storage_keys_create_ascii(
+    operation, output_handler, json_data
+) -> bool:
+    # pylint: disable=unused-argument
+    """
+    Preserve the complete secret key in ASCII table output as well.
+    """
+    output_handler.disable_truncation = True
+    return True
+
+
 @output_override("databases", "mysql-config-view", OutputMode.table)
 def handle_databases_mysql_config_view(
     operation, output_handler, json_data
