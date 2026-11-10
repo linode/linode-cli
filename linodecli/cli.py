@@ -204,6 +204,8 @@ class CLI:  # pylint: disable=too-many-instance-attributes
             operation = self.find_operation(command, action)
         except ValueError as e:
             print(e, file=sys.stderr)
+            if str(e).startswith("Action not found"):
+                sys.exit(ExitCodes.UNRECOGNIZED_ACTION)
             sys.exit(ExitCodes.REQUEST_FAILED)
 
         if not self.pagination:
