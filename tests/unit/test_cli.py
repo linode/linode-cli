@@ -4,6 +4,7 @@ import copy
 import math
 import os
 import re
+from types import SimpleNamespace
 
 import pytest
 import requests
@@ -16,6 +17,7 @@ if True:
     from linodecli import CLI
     from linodecli.api_request import get_all_pages
     from linodecli.baked.operation import OpenAPIOperation
+    from linodecli.exit_codes import ExitCodes
 
 
 class MockResponse:
@@ -76,6 +78,26 @@ class TestCLI:
         with pytest.raises(ValueError, match=r"Action not found for command *"):
             mock_cli.find_operation("foo", "cool")
             mock_cli.find_operation("cool", "cool")
+
+    def test_handle_command_unrecognized_action(self, mock_cli: CLI):
+        mock_cli.ops = {
+            "foo": {"list": SimpleNamespace(action_aliases=["ls"])},
+        }
+
+        with pytest.raises(SystemExit) as exc_info:
+            mock_cli.handle_command("foo", "bogus", [])
+
+        assert exc_info.value.code == ExitCodes.UNRECOGNIZED_ACTION
+
+    def test_handle_command_unrecognized_command(self, mock_cli: CLI):
+        mock_cli.ops = {
+            "foo": {"list": SimpleNamespace(action_aliases=["ls"])},
+        }
+
+        with pytest.raises(SystemExit) as exc_info:
+            mock_cli.handle_command("bogus", "list", [])
+
+        assert exc_info.value.code == ExitCodes.REQUEST_FAILED
 
     def test_user_agent(self, mock_cli: CLI):
         assert re.compile(
