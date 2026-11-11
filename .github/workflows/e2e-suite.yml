@@ -32,14 +32,6 @@ on:
       python-version:
         description: 'Specify the Python version to use for running tests. Leave empty to use the default Python version configured in the environment'
         required: false
-      run-eol-python-version:
-        description: 'Indicates whether to run tests using an End-of-Life (EOL) Python version. Defaults to "false". Choose "true" to include tests for deprecated Python versions'
-        required: false
-        default: 'false'
-        type: choice
-        options:
-          - 'true'
-          - 'false'
       test_report_upload:
         description: 'Indicates whether to upload the test report to object storage. Defaults to "false"'
         required: false
@@ -55,8 +47,7 @@ on:
       - dev
 
 env:
-  DEFAULT_PYTHON_VERSION: "3.10"
-  EOL_PYTHON_VERSION: "3.8"
+  DEFAULT_PYTHON_VERSION: "3.11"
   EXIT_STATUS: 0
 
 jobs:
@@ -108,7 +99,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v7
         with:
-          python-version: ${{ inputs.run-eol-python-version == 'true' && env.EOL_PYTHON_VERSION || inputs.python-version || env.DEFAULT_PYTHON_VERSION }}
+          python-version: ${{ inputs.python-version || env.DEFAULT_PYTHON_VERSION }}
 
       - name: Install Python dependencies and update cert
         run: |
