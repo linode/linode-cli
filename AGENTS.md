@@ -2,7 +2,7 @@
 
 ## Setup
 - Use `make requirements` for local setup. It installs `.[dev,obj]`; plain `.[dev]` misses `boto3`, which the object-storage plugin and tests use.
-- Use a virtualenv if possible; package metadata requires Python `>=3.9`, CI tests Python 3.9 through 3.13, and the Dockerfile builds on Python 3.13.
+- Use a virtualenv if possible; package metadata requires Python `>=3.11`, CI tests Python 3.11 through 3.15, and the Dockerfile builds on Python 3.13.
 - On a clean machine, export `LINODE_CLI_TOKEN` before running CLI commands that should not enter interactive `configure()`. Unit tests avoid config prompts with `LINODE_CLI_TEST_MODE=1`.
 - `make install` is the closest local equivalent to CI setup, but it is heavyweight: `check-prerequisites -> requirements -> build -> pip3 install --force dist/*.whl`.
 - The wiki setup page is mostly useful, but the wiki testing page has stale target names. Trust the `Makefile`: use `make test-unit` and `make test-int`, not `make testunit` or `make testint`.
@@ -42,7 +42,7 @@
 - Because lint rebakes, default `SPEC_VERSION=latest` needs GitHub API access (and often `GITHUB_TOKEN`). Without `SPEC=...` or a token, `make lint` can fail on rate limits during bake, not only on style.
 - For quick checks without generation side effects, run style tools directly, for example `black --check linodecli tests`, `isort --check-only linodecli tests`, or `autoflake --check linodecli tests`.
 - Formatting uses Black/isort with an 80-character line length. `make format` runs `black`, then `isort`, then `autoflake` and rewrites files in place.
-- Keep syntax compatible with Python 3.9 even if developing on a newer interpreter.
+- Keep syntax compatible with Python 3.11 even if developing on a newer interpreter.
 
 ## Workflow
 - CI enforces PR titles matching `TPT-<number>: <description>` unless the PR is labeled `dependencies`, `hotfix`, `community-contribution`, or `ignore-for-release`.
