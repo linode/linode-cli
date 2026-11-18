@@ -71,6 +71,18 @@ def handle_databases_postgres_config_view(
     return databases_postgres_config_view_output(json_data)
 
 
+@output_override("databases", "valkey-config-view", OutputMode.table)
+def handle_databases_valkey_config_view(
+    operation, output_handler, json_data
+) -> bool:
+    # pylint: disable=unused-argument
+    """
+    Override the output of 'linode-cli databases valkey-config-view'
+    to properly display the valkey engine config.
+    """
+    return databases_valkey_config_view_output(json_data)
+
+
 @output_override("domains", "zone-file", OutputMode.delimited)
 def handle_domains_zone_file(operation, output_handler, json_data) -> bool:
     # pylint: disable=unused-argument
@@ -317,11 +329,26 @@ def pg_view_output(json_data) -> bool:
     return False
 
 
-def add_param_row(output, param_name, param_data):
+def _format_param_type(param_type) -> str:
+    """
+    Format a DB Config parameter type, which may be a list for nullable
+    parameters (e.g. ["integer", "null"] -> "integer | null").
+    """
+    if isinstance(param_type, list):
+        return " | ".join(str(t) for t in param_type)
+
+    return str(param_type)
+
+
+def add_param_row(output, param_name, param_data, format_nullable_type=False):
     """
     Construct and add a row to the output table for DB Config view overrides.
     """
-    param_type = str(param_data.get("type", ""))
+    param_type = param_data.get("type", "")
+    if format_nullable_type:
+        param_type = _format_param_type(param_type)
+    else:
+        param_type = str(param_type)
     example = str(param_data.get("example", ""))
     minimum = str(param_data.get("minimum", ""))
     maximum = str(param_data.get("maximum", ""))
@@ -404,6 +431,32 @@ def databases_postgres_config_view_output(json_data) -> bool:
             for key, val in params.items():
                 param_name = f"{field}.{key}"
                 add_param_row(output, param_name, val)
+
+    console = Console()
+    console.print(output)
+
+    return False
+
+
+def databases_valkey_config_view_output(json_data) -> bool:
+    """
+    Parse and format the Valkey configuration output table.
+    """
+    output = Table(header_style="bold", show_lines=True)
+
+    output.add_column("Parameter", style="bold")
+    output.add_column("Type", justify="center")
+    output.add_column("Example", justify="center")
+    output.add_column("Min", justify="center")
+    output.add_column("Max", justify="center")
+    output.add_column("Min Length", justify="center")
+    output.add_column("Max Length", justify="center")
+    output.add_column("Pattern", justify="center")
+    output.add_column("Requires Restart", justify="center")
+    output.add_column("Description", style="dim")
+
+    for field, params in json_data.items():
+        add_param_row(output, field, params, format_nullable_type=True)
 
     console = Console()
     console.print(output)

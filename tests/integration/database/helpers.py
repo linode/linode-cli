@@ -1,7 +1,44 @@
+import json
+import subprocess
+
 from tests.integration.helpers import (
     BASE_CMDS,
     exec_test_command,
+    wait_for_condition,
 )
+
+
+def database_command(action, *args):
+    return BASE_CMDS["databases"] + [action, *map(str, args)]
+
+
+def database_json(action, *args):
+    return json.loads(
+        exec_test_command(database_command(action, *args, "--json"))
+    )
+
+
+def private_database_json(action, database_id):
+    process = subprocess.run(
+        database_command(action, database_id, "--json"),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        check=False,
+    )
+    assert (
+        process.returncode == 0
+    ), f"{action} failed (exit {process.returncode})"
+    return json.loads(process.stdout)[0]
+
+
+def wait_for_database_status(engine, database_id, status):
+    wait_for_condition(
+        15,
+        900,
+        lambda: database_json(f"{engine}-view", database_id)[0]["status"]
+        == status,
+    )
 
 
 def get_db_type_id():

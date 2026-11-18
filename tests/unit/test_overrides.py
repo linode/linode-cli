@@ -3,7 +3,29 @@ import io
 from unittest.mock import patch
 
 from linodecli import OutputMode
-from linodecli.overrides import OUTPUT_OVERRIDES
+from linodecli.overrides import (
+    OUTPUT_OVERRIDES,
+    databases_valkey_config_view_output,
+)
+
+
+class MockConsole:
+    """
+    Mock rich console that captures the most recently printed table.
+    """
+
+    table = None
+
+    def print(self, output):
+        MockConsole.table = output
+
+
+def _get_printed_parameter_names():
+    return list(MockConsole.table.columns[0]._cells)
+
+
+def _get_printed_parameter_types():
+    return list(MockConsole.table.columns[1]._cells)
 
 
 class TestOverrides:
@@ -115,3 +137,35 @@ class TestOverrides:
         rows = stdout_buf.getvalue().split("\n")
         # assert that the overridden table has the new columns
         assert len(rows[1].split(rows[1][0])) == 15
+
+    def test_valkey_config_output_handles_flat_parameters(self):
+        response_json = {
+            "backup_minute": {
+                "type": ["integer", "null"],
+                "example": 30,
+                "minimum": 0,
+                "maximum": 59,
+                "requires_restart": False,
+                "description": "Backup minute.",
+            },
+            "valkey_persistence": {
+                "type": "string",
+                "enum": ["off", "rdb"],
+                "requires_restart": True,
+                "description": "Persistence mode.",
+            },
+        }
+
+        with patch("linodecli.overrides.Console", return_value=MockConsole()):
+            assert databases_valkey_config_view_output(response_json) is False
+
+        assert _get_printed_parameter_names() == [
+            "backup_minute",
+            "valkey_persistence",
+        ]
+        assert _get_printed_parameter_types() == ["integer | null", "string"]
+        assert (
+            "databases",
+            "valkey-config-view",
+            OutputMode.table,
+        ) in OUTPUT_OVERRIDES
