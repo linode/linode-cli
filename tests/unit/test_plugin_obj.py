@@ -1,9 +1,11 @@
 import time
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
+import pytest
 from pytest import CaptureFixture
 
 from linodecli import CLI, plugins
+from linodecli.exit_codes import ExitCodes
 from linodecli.plugins import obj
 from linodecli.plugins.obj import get_obj_args_parser, helpers, print_help
 
@@ -336,3 +338,40 @@ def test_obj_action_does_not_trigger_cleanup_if_disabled():
         assert (
             not delete_calls
         ), "Cleanup should not be performed when key-cleanup-enabled is False"
+
+
+@pytest.mark.parametrize("botocore_version", ["1.36.0", "1.43.1"])
+def test_check_botocore_version_accepts_supported(botocore_version: str):
+    with patch.object(obj.botocore, "__version__", botocore_version):
+        obj._check_botocore_version()
+
+
+def test_check_botocore_version_rejects_outdated(capsys: CaptureFixture):
+    with (
+        patch.object(obj.botocore, "__version__", "1.35.99"),
+        pytest.raises(SystemExit) as exc,
+    ):
+        obj._check_botocore_version()
+
+    assert exc.value.code == ExitCodes.REQUEST_FAILED
+    err = capsys.readouterr().err
+    assert "requires boto3 1.36.0 or later" in err
+    assert "botocore 1.35.99 is installed" in err
+    assert "pip3 install --upgrade boto3" in err
+
+
+def test_obj_action_with_outdated_botocore_exits_before_client():
+    command = Mock()
+    with (
+        patch.object(obj.botocore, "__version__", "1.35.99"),
+        patch("linodecli.plugins.obj.CLI") as MockCLI,
+        patch.dict(obj.COMMAND_MAP, {"ls": command}),
+        pytest.raises(SystemExit) as exc,
+    ):
+        obj.call(
+            ["ls", "bucket"],
+            plugins.PluginContext("12345", MockCLI.return_value),
+        )
+
+    assert exc.value.code == ExitCodes.REQUEST_FAILED
+    command.assert_not_called()
