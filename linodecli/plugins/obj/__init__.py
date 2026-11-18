@@ -32,6 +32,7 @@ from linodecli.plugins.obj.config import (
     ENV_ACCESS_KEY_NAME,
     ENV_SECRET_KEY_NAME,
     INCOMING_DATE_FORMAT,
+    MAX_SIGNED_URL_EXPIRY,
     MULTIPART_UPLOAD_CHUNK_SIZE_DEFAULT,
     NO_ACCESS_ERROR,
     NO_SCOPES_ERROR,
@@ -101,25 +102,45 @@ def generate_url(get_client, args, **kwargs):  # pylint: disable=unused-argument
         "expiry",
         metavar="EXPIRY",
         type=str,
-        help="When this link should expire.  Treated as an epoch "
-        "time if a number. If starts with a '+' treated as "
-        "an offset.",
+        help="When this link should expire. Treated as a Unix epoch "
+        "time in seconds if a number. If it starts with a '+', treated "
+        "as an offset in seconds from now. The link can be valid for "
+        f"at most {MAX_SIGNED_URL_EXPIRY} seconds (7 days).",
     )
 
-    # TODO:
-    # Add docs for date format and unit for 'expiry' parameter.
-
     parsed = parser.parse_args(args)
-    client = get_client()
 
     now = datetime.now()
 
-    if parsed.expiry.startswith("+"):
-        # this is an offset in seconds
-        offset = int(parsed.expiry[1:])
-    else:
-        expiry = int(parsed.expiry)
-        offset = expiry - ceil(now.timestamp())
+    try:
+        if parsed.expiry.startswith("+"):
+            # this is an offset in seconds
+            offset = int(parsed.expiry[1:])
+        else:
+            expiry = int(parsed.expiry)
+            offset = expiry - ceil(now.timestamp())
+    except ValueError:
+        print(
+            f"Invalid expiry {parsed.expiry!r}: expected an epoch time or "
+            "an offset like +3600, in seconds",
+            file=sys.stderr,
+        )
+        sys.exit(ExitCodes.ARGUMENT_ERROR)
+
+    if offset <= 0:
+        print("The expiry must be in the future", file=sys.stderr)
+        sys.exit(ExitCodes.ARGUMENT_ERROR)
+
+    if offset > MAX_SIGNED_URL_EXPIRY:
+        print(
+            f"The expiry is {offset} seconds from now, but a signed URL "
+            f"can be valid for at most {MAX_SIGNED_URL_EXPIRY} seconds "
+            "(7 days)",
+            file=sys.stderr,
+        )
+        sys.exit(ExitCodes.ARGUMENT_ERROR)
+
+    client = get_client()
 
     bucket = parsed.bucket
     key = parsed.file

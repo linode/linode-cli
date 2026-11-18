@@ -28,6 +28,10 @@ INCOMING_DATE_FORMAT = "%Y-%m-%dT%H:%M:%S.%fZ"
 # for help commands
 PLUGIN_BASE = "linode-cli obj"
 
+# the longest a signed URL can stay valid, in seconds (7 days); a URL
+# signed with Signature Version 4 is refused once its expiry exceeds this
+MAX_SIGNED_URL_EXPIRY = 604800
+
 columns = shutil.get_terminal_size(fallback=(80, 24)).columns
 PROGRESS_BAR_WIDTH = columns - 20 if columns > 30 else columns
 
