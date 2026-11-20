@@ -2,6 +2,7 @@ import pytest
 
 from tests.integration.helpers import (
     BASE_CMDS,
+    Capability,
     delete_target_id,
     exec_test_command,
     get_random_region_with_caps,
@@ -15,7 +16,7 @@ def lke_cluster():
     label = get_random_text(8) + "_cluster"
 
     test_region = get_random_region_with_caps(
-        required_capabilities=["Linodes", "Kubernetes"]
+        required_capabilities=[Capability.Linodes, Capability.Kubernetes]
     )
     lke_version = exec_test_command(
         BASE_CMDS["lke"]
@@ -90,7 +91,7 @@ def lke_cluster_acl():
     label = get_random_text(8) + "_cluster"
 
     test_region = get_random_region_with_caps(
-        required_capabilities=["Linodes", "Kubernetes"]
+        required_capabilities=[Capability.Linodes, Capability.Kubernetes]
     )
     lke_version = exec_test_command(
         BASE_CMDS["lke"]

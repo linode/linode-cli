@@ -5,6 +5,7 @@ from pytest import MonkeyPatch
 
 from tests.integration.helpers import (
     BASE_CMDS,
+    Capability,
     assert_headers_in_lines,
     delete_target_id,
     exec_test_command,
@@ -37,7 +38,10 @@ def test_create_lke_enterprise(monkeypatch: MonkeyPatch):
     monkeypatch.setenv("LINODE_CLI_API_VERSION", "v4beta")
     label = get_random_text(8)
     test_region = get_random_region_with_caps(
-        required_capabilities=["Linodes", "Kubernetes Enterprise"]
+        required_capabilities=[
+            Capability.Linodes,
+            Capability.KubernetesEnterprise,
+        ]
     )
 
     k8s_version = get_lke_enterprise_id()
