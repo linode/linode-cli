@@ -603,3 +603,57 @@ def test_nat_gateway_address_view(create_nat_gateway, create_nat_reserved_ip):
     assert_headers_in_lines(NAT_ADDRESS_HEADERS, [list(result.keys())])
     verify_nat_gateway_address_vals(result, address)
     verify_nat_gateway_view_json(gateway["id"], label)
+
+
+@pytest.mark.skip(reason="Skipped due to subnet-update issue")
+@pytest.mark.parametrize("create_nat_gateway", [False], indirect=True)
+def test_nat_gateway_interfaces_list(
+        create_nat_gateway,
+        create_nat_reserved_ip,
+        linode_interface_vpc
+):
+    headers = ["id", "linode", "addresses", "portsets"]
+    gateway, label = create_nat_gateway
+    address = create_nat_reserved_ip["address"]
+    linode_id, vpc_id, subnet_id = linode_interface_vpc
+
+    assign_address_to_nat_gateway(gateway['id'], address)
+
+    # Link the NAT Gateway to the VPC Subnet
+    exec_test_command(
+        BASE_CMDS["vpcs"]
+        + [
+            "subnet-update",
+            "--natgateway",
+            str(gateway["id"]),
+            str(vpc_id),
+            str(subnet_id)
+        ]
+    )
+
+    commands = [
+        ["natgateways-interfaces-list", str(gateway["id"])],
+        [
+            "natgateways-address-interfaces-list",
+            str(gateway["id"]),
+            address,
+        ],
+    ]
+
+    for args in commands:
+        command = BASE_CMDS["natgateways"] + args
+        result = exec_test_command(
+            command + ["--text", "--delimiter", ","]
+        ).splitlines()
+        assert_headers_in_lines(headers, result)
+
+        result = json.loads(
+            exec_test_command(command + COMMAND_JSON_OUTPUT)
+        )[0]
+        assert_headers_in_lines(headers, [list(result.keys())])
+        assert result["linode"]["id"] == linode_id
+        assert result["addresses"][0] == address
+        assert sorted(list(result["portsets"][0].keys())) == [
+            "address",
+            "ports",
+        ]
