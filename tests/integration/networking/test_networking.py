@@ -7,15 +7,43 @@ from _pytest.monkeypatch import MonkeyPatch
 
 from tests.integration.helpers import (
     BASE_CMDS,
+    COMMAND_JSON_OUTPUT,
     DEFAULT_REGION,
     assert_headers_in_lines,
     delete_target_id,
     exec_test_command,
 )
+from tests.integration.linodes.fixtures import (  # noqa: F401
+    TEST_REGION,
+    linode_interface_vpc,
+)
 from tests.integration.networking.fixtures import (  # noqa: F401
+    create_nat_gateway,
+    create_nat_reserved_ip,
     get_linode_id,
     get_linode_ids_shared_ipv4,
 )
+
+NAT_HEADERS = [
+    "id",
+    "label",
+    "region",
+    "address_autoscale_max",
+    "default_ports_per_interface",
+    "portset_assignments",
+    "portset_capacity",
+    # "addresses",
+    # "vpc_subnet",
+]
+
+NAT_ADDRESS_HEADERS = [
+    "address",
+    "in_use",
+    "interface_count",
+    # "interface_url",
+    "portset_assignments",
+    "portset_capacity"
+]
 
 RESERVED_IP_HEADERS = [
     "address",
@@ -31,6 +59,16 @@ RESERVED_IP_HEADERS = [
     "subnet_mask",
     "tags",
 ]
+
+
+def assign_address_to_nat_gateway(gateway_id, address):
+    return json.loads(
+        exec_test_command(
+            BASE_CMDS["natgateways"]
+            + ["natgateways-addresses-add", "--address", address, str(gateway_id)]
+            + COMMAND_JSON_OUTPUT
+        )
+    )[0]
 
 
 def has_shared_ip(linode_id: int, ip: str) -> bool:
@@ -49,6 +87,48 @@ def has_shared_ip(linode_id: int, ip: str) -> bool:
             return True
 
     return False
+
+
+def verify_nat_gateway_vals(result, label):
+    assert result["label"] == label
+    assert result["region"] == TEST_REGION
+    assert result["default_ports_per_interface"] == 4096
+    assert result["address_autoscale_max"] >= 0
+    assert result["portset_assignments"] >= 0
+    assert result["portset_capacity"] >= 0
+
+    if result["addresses"]:
+        assert all(isinstance(
+            ipaddress.ip_address(addr["address"]), ipaddress.IPv4Address
+        ) for addr in result["addresses"])
+    else:
+        assert result["addresses"] == []
+
+    # assert result["vpc_subnet"] is None
+
+
+def verify_nat_gateway_address_vals(result, address):
+    interface_url = f"/addresses/{address}/interfaces"
+
+    assert result["address"] == address
+    assert result["in_use"] == False
+    assert result["interface_count"] == 0
+    # assert result["interface_url"].endswith(interface_url)
+    assert result["portset_assignments"] >= 0
+    assert result["portset_capacity"] > 0
+
+
+def verify_nat_gateway_view_json(gateway_id, label):
+    result = json.loads(
+        exec_test_command(
+            BASE_CMDS["natgateways"]
+            + ["natgateways-view", str(gateway_id)]
+            + COMMAND_JSON_OUTPUT
+        )
+    )[0]
+    assert_headers_in_lines(NAT_HEADERS, [list(result.keys())])
+    assert result["id"] == gateway_id
+    verify_nat_gateway_vals(result, label)
 
 
 def verify_reserved_ip(result):
@@ -402,3 +482,229 @@ def test_share_ipv4_address(
     )
 
     assert not has_shared_ip(target_linode, ip_address)
+
+
+@pytest.mark.smoke
+def test_nat_gateway_create(create_nat_gateway):
+    gateway, label = create_nat_gateway
+    assert_headers_in_lines(NAT_HEADERS, [list(gateway.keys())])
+    verify_nat_gateway_view_json(gateway["id"], label)
+
+
+def test_nat_gateway_list(create_nat_gateway):
+    gateway, label = create_nat_gateway
+    result = exec_test_command(
+        BASE_CMDS["natgateways"]
+        + ["natgateways-list", "--text", "--delimiter", ","]
+    ).splitlines()
+    assert_headers_in_lines(NAT_HEADERS, result)
+
+    result = json.loads(
+        exec_test_command(
+            BASE_CMDS["natgateways"]
+            + ["natgateways-list"]
+            + COMMAND_JSON_OUTPUT
+        )
+    )
+    matching_gateway = [
+        item for item in result if item["id"] == gateway["id"]
+    ][0]
+    assert_headers_in_lines(NAT_HEADERS, [list(matching_gateway.keys())])
+    verify_nat_gateway_vals(matching_gateway, label)
+
+
+def test_nat_gateway_view(create_nat_gateway):
+    gateway, label = create_nat_gateway
+    result = exec_test_command(
+        BASE_CMDS["natgateways"]
+        + ["natgateways-view", str(gateway["id"]), "--text", "--delimiter", ","]
+    ).splitlines()
+    assert_headers_in_lines(NAT_HEADERS, result)
+    verify_nat_gateway_view_json(gateway["id"], label)
+
+
+def test_nat_gateway_update(create_nat_gateway):
+    gateway, label = create_nat_gateway
+    label_new = label + "-updated"
+
+    result = json.loads(
+        exec_test_command(
+            BASE_CMDS["natgateways"]
+            + ["natgateways-update", "--label", label_new, str(gateway["id"])]
+            + COMMAND_JSON_OUTPUT
+        )
+    )[0]
+    assert_headers_in_lines(NAT_HEADERS, [list(result.keys())])
+    assert result["id"] == gateway["id"]
+    verify_nat_gateway_view_json(gateway["id"], label_new)
+
+
+@pytest.mark.parametrize("create_nat_gateway", [False], indirect=True)
+def test_nat_gateway_address(create_nat_gateway, create_nat_reserved_ip):
+    gateway, label = create_nat_gateway
+    address = create_nat_reserved_ip["address"]
+
+    result = assign_address_to_nat_gateway(gateway['id'], address)
+    assert_headers_in_lines(NAT_ADDRESS_HEADERS, [list(result.keys())])
+    verify_nat_gateway_address_vals(result, address)
+
+    exec_test_command(
+        BASE_CMDS["natgateways"]
+        + ["natgateways-address-delete", str(gateway["id"]), address]
+    )
+    verify_nat_gateway_view_json(gateway["id"], label)
+
+
+@pytest.mark.parametrize("create_nat_gateway", [False], indirect=True)
+def test_nat_gateway_addresses_list(create_nat_gateway, create_nat_reserved_ip):
+    gateway, label = create_nat_gateway
+    address = create_nat_reserved_ip["address"]
+    assign_address_to_nat_gateway(gateway['id'], address)
+
+    result = exec_test_command(
+        BASE_CMDS["natgateways"]
+        + ["natgateways-addresses-list", str(gateway["id"]), "--text", "--delimiter", ","]
+    ).splitlines()
+    assert_headers_in_lines(NAT_ADDRESS_HEADERS, result)
+
+    result = json.loads(
+        exec_test_command(
+            BASE_CMDS["natgateways"]
+            + ["natgateways-addresses-list", str(gateway["id"])]
+            + COMMAND_JSON_OUTPUT
+        )
+    )
+    matching_address = [
+        item for item in result if item["address"] == address
+    ][0]
+    assert_headers_in_lines(NAT_ADDRESS_HEADERS, [list(matching_address.keys())])
+    verify_nat_gateway_address_vals(matching_address, address)
+
+
+@pytest.mark.parametrize("create_nat_gateway", [False], indirect=True)
+def test_nat_gateway_address_view(create_nat_gateway, create_nat_reserved_ip):
+    gateway, label = create_nat_gateway
+    address = create_nat_reserved_ip["address"]
+    assign_address_to_nat_gateway(gateway['id'], address)
+
+    result = exec_test_command(
+        BASE_CMDS["natgateways"]
+        + ["natgateways-address-view", str(gateway["id"]), address, "--text", "--delimiter", ","]
+    ).splitlines()
+    assert_headers_in_lines(NAT_ADDRESS_HEADERS, result)
+
+    result = json.loads(
+        exec_test_command(
+            BASE_CMDS["natgateways"]
+            + ["natgateways-address-view", str(gateway["id"]), address]
+            + COMMAND_JSON_OUTPUT
+        )
+    )[0]
+    assert_headers_in_lines(NAT_ADDRESS_HEADERS, [list(result.keys())])
+    verify_nat_gateway_address_vals(result, address)
+    verify_nat_gateway_view_json(gateway["id"], label)
+
+
+@pytest.mark.skip(reason="Skipped due to subnet-update issue")
+@pytest.mark.parametrize("create_nat_gateway", [False], indirect=True)
+def test_nat_gateway_interfaces_list(
+        create_nat_gateway,
+        create_nat_reserved_ip,
+        linode_interface_vpc
+):
+    headers = ["id", "linode", "addresses", "portsets"]
+    gateway, label = create_nat_gateway
+    address = create_nat_reserved_ip["address"]
+    linode_id, vpc_id, subnet_id = linode_interface_vpc
+
+    assign_address_to_nat_gateway(gateway['id'], address)
+
+    # Link the NAT Gateway to the VPC Subnet
+    exec_test_command(
+        BASE_CMDS["vpcs"]
+        + [
+            "subnet-update",
+            "--natgateway",
+            str(gateway["id"]),
+            str(vpc_id),
+            str(subnet_id)
+        ]
+    )
+
+    commands = [
+        ["natgateways-interfaces-list", str(gateway["id"])],
+        [
+            "natgateways-address-interfaces-list",
+            str(gateway["id"]),
+            address,
+        ],
+    ]
+
+    for args in commands:
+        command = BASE_CMDS["natgateways"] + args
+        result = exec_test_command(
+            command + ["--text", "--delimiter", ","]
+        ).splitlines()
+        assert_headers_in_lines(headers, result)
+
+        result = json.loads(
+            exec_test_command(command + COMMAND_JSON_OUTPUT)
+        )[0]
+        assert_headers_in_lines(headers, [list(result.keys())])
+        assert result["linode"]["id"] == linode_id
+        assert result["addresses"][0] == address
+        assert sorted(list(result["portsets"][0].keys())) == [
+            "address",
+            "ports",
+        ]
+
+
+
+def test_nat_gateway_types(create_nat_gateway):
+    headers = ["id", "label", "price"]
+    result = exec_test_command(
+        BASE_CMDS["natgateways"]
+        + ["natgateways-types-list", "--text", "--delimiter", ","]
+    ).splitlines()
+    assert_headers_in_lines(headers, result)
+
+    result = json.loads(
+        exec_test_command(
+            BASE_CMDS["natgateways"]
+            + ["natgateways-types-list"]
+            + COMMAND_JSON_OUTPUT
+        )
+    )[0]
+    assert_headers_in_lines(headers, [list(result.keys())])
+    prices = [result["price"].get("hourly"), result["price"].get("monthly")]
+    assert result["id"] == "g1-natgateway"
+    assert result["label"] == "NAT Gateway"
+    assert any(price != 0 for price in prices)
+
+
+def test_nat_gateway_settings():
+    headers = [
+        "allowed_ports_per_interface",
+        "maximum_autoscaling_addresses_per_natgateway",
+        "maximum_reserved_addresses_per_natgateway"
+    ]
+    result = exec_test_command(
+        BASE_CMDS["natgateways"]
+        + ["natgateways-settings-view", "--text", "--delimiter", ","]
+    ).splitlines()
+    assert_headers_in_lines(headers, result)
+
+    result = json.loads(
+        exec_test_command(
+            BASE_CMDS["natgateways"]
+            + ["natgateways-settings-view"]
+            + COMMAND_JSON_OUTPUT
+        )
+    )[0]
+    assert_headers_in_lines(headers, [list(result.keys())])
+    assert all(
+        port in [4096, 8192, 16384]
+        for port in result["allowed_ports_per_interface"]
+    )
+    assert result["maximum_autoscaling_addresses_per_natgateway"] > 0
+    assert result["maximum_reserved_addresses_per_natgateway"] > 0

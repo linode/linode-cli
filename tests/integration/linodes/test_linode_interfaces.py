@@ -216,7 +216,7 @@ def test_interface_update(linode_interface_public, monkeypatch: MonkeyPatch):
 def test_interface_view(linode_interface_vpc, monkeypatch: MonkeyPatch):
     monkeypatch.setenv("LINODE_CLI_API_VERSION", "v4beta")
 
-    linode_id = linode_interface_vpc
+    linode_id, _, _ = linode_interface_vpc
     interface_id = get_interface_id(linode_id)
 
     data = json.loads(

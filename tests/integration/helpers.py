@@ -47,6 +47,7 @@ MODULES = [
     "maintenance",
     "managed",
     "monitor",
+    "natgateways",
     "networking",
     "obj",
     "object-storage",
