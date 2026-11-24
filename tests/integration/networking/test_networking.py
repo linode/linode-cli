@@ -13,8 +13,11 @@ from tests.integration.helpers import (
     delete_target_id,
     exec_test_command,
 )
+from tests.integration.linodes.fixtures import (  # noqa: F401
+    TEST_REGION,
+    linode_interface_vpc,
+)
 from tests.integration.networking.fixtures import (  # noqa: F401
-    TEST_REGION_NAT,
     create_nat_gateway,
     create_nat_reserved_ip,
     get_linode_id,
@@ -88,7 +91,7 @@ def has_shared_ip(linode_id: int, ip: str) -> bool:
 
 def verify_nat_gateway_vals(result, label):
     assert result["label"] == label
-    assert result["region"] == TEST_REGION_NAT
+    assert result["region"] == TEST_REGION
     assert result["default_ports_per_interface"] == 4096
     assert result["address_autoscale_max"] >= 0
     assert result["portset_assignments"] >= 0
@@ -600,4 +603,3 @@ def test_nat_gateway_address_view(create_nat_gateway, create_nat_reserved_ip):
     assert_headers_in_lines(NAT_ADDRESS_HEADERS, [list(result.keys())])
     verify_nat_gateway_address_vals(result, address)
     verify_nat_gateway_view_json(gateway["id"], label)
-

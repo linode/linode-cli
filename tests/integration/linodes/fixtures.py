@@ -114,7 +114,7 @@ def snapshot_of_linode(linode_cloud_firewall):
 # Configs
 
 TEST_REGION = get_random_region_with_caps(
-    required_capabilities=[Capability.Linodes, Capability.VPCs]
+    required_capabilities=[Capability.Linodes, Capability.VPCs, Capability.NATGateway]
 )
 
 
@@ -435,7 +435,7 @@ def linode_interface_vpc(linode_cloud_firewall):
                 "--label",
                 get_random_text(5) + "-vpc",
                 "--region",
-                "us-sea",
+                TEST_REGION,
                 "--subnets.ipv4",
                 "10.0.0.0/24",
                 "--subnets.label",
@@ -450,7 +450,7 @@ def linode_interface_vpc(linode_cloud_firewall):
 
     linode_id = create_linode(
         firewall_id=linode_cloud_firewall,
-        test_region="us-sea",
+        test_region=TEST_REGION,
         interface_generation="linode",
         interfaces='[{"default_route":{"ipv4":true},"firewall_id":'
         + str(linode_cloud_firewall)
@@ -459,7 +459,7 @@ def linode_interface_vpc(linode_cloud_firewall):
         + "}}]",
     )
 
-    yield linode_id
+    yield linode_id, vpc_output[0]["id"], subnet_id
 
     delete_target_id(target="linodes", id=linode_id)
     delete_target_id(target="vpcs", id=str(vpc_output[0]["id"]))

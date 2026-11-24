@@ -5,20 +5,14 @@ import pytest
 from tests.integration.helpers import (
     BASE_CMDS,
     COMMAND_JSON_OUTPUT,
-    Capability,
     delete_target_id,
     exec_test_command,
-    get_random_region_with_caps,
 )
 from tests.integration.linodes.helpers import (
     create_linode,
     create_linode_and_wait,
 )
 from tests.integration.linodes.fixtures import TEST_REGION  # noqa: F401
-
-TEST_REGION_NAT = get_random_region_with_caps(
-    [Capability.Linodes, Capability.NATGateway, Capability.VPCs]
-)
 
 
 @pytest.fixture
@@ -33,7 +27,7 @@ def create_nat_gateway(request, name_generator):
                 "--label",
                 label,
                 "--region",
-                TEST_REGION_NAT,
+                TEST_REGION,
                 "--default_ports_per_interface",
                 "4096",
                 "--use_autoscaling",
@@ -55,7 +49,7 @@ def create_nat_reserved_ip(request):
         "networking",
         "reserved-ip-add",
         "--region",
-        TEST_REGION_NAT,
+        TEST_REGION,
         "--json",
     ]
     result = json.loads(exec_test_command(command))[0]
