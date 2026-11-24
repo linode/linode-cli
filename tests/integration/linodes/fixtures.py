@@ -6,6 +6,7 @@ import pytest
 from tests.integration.helpers import (
     BASE_CMDS,
     DEFAULT_REGION,
+    Capability,
     delete_target_id,
     exec_test_command,
     get_random_region_with_caps,
@@ -113,7 +114,7 @@ def snapshot_of_linode(linode_cloud_firewall):
 # Configs
 
 TEST_REGION = get_random_region_with_caps(
-    required_capabilities=["Linodes", "VPCs"]
+    required_capabilities=[Capability.Linodes, Capability.VPCs]
 )
 
 
@@ -250,7 +251,9 @@ def create_vpc_w_subnet():
 # Disks
 @pytest.fixture(scope="module")
 def linode_instance_disk_tests(linode_cloud_firewall):
-    test_region = get_random_region_with_caps(required_capabilities=["Linodes"])
+    test_region = get_random_region_with_caps(
+        required_capabilities=[Capability.Linodes]
+    )
     linode_id = create_linode_and_wait(
         firewall_id=linode_cloud_firewall,
         disk_encryption=False,
@@ -530,7 +533,10 @@ def linode_in_running_state_for_reboot(linode_cloud_firewall):
 @pytest.fixture(scope="module")
 def linode_for_rebuild_tests(linode_cloud_firewall):
     test_region = get_random_region_with_caps(
-        required_capabilities=["Linodes", "Disk Encryption"]
+        required_capabilities=[
+            Capability.Linodes,
+            Capability.DiskEncryption,
+        ]
     )
     linode_id = create_linode_and_wait(
         firewall_id=linode_cloud_firewall,
@@ -666,7 +672,10 @@ def linode_with_label(linode_cloud_firewall):
 def linode_with_authorization_key(linode_cloud_firewall):
     label = "cli" + get_random_text(5)
     test_region = get_random_region_with_caps(
-        required_capabilities=["Linodes", "Disk Encryption"]
+        required_capabilities=[
+            Capability.Linodes,
+            Capability.DiskEncryption,
+        ]
     )
     result = exec_test_command(
         BASE_CMDS["linodes"]
