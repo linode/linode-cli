@@ -657,3 +657,54 @@ def test_nat_gateway_interfaces_list(
             "address",
             "ports",
         ]
+
+
+
+def test_nat_gateway_types(create_nat_gateway):
+    headers = ["id", "label", "price"]
+    result = exec_test_command(
+        BASE_CMDS["natgateways"]
+        + ["natgateways-types-list", "--text", "--delimiter", ","]
+    ).splitlines()
+    assert_headers_in_lines(headers, result)
+
+    result = json.loads(
+        exec_test_command(
+            BASE_CMDS["natgateways"]
+            + ["natgateways-types-list"]
+            + COMMAND_JSON_OUTPUT
+        )
+    )[0]
+    assert_headers_in_lines(headers, [list(result.keys())])
+    prices = [result["price"].get("hourly"), result["price"].get("monthly")]
+    assert result["id"] == "g1-natgateway"
+    assert result["label"] == "NAT Gateway"
+    assert any(price != 0 for price in prices)
+
+
+def test_nat_gateway_settings():
+    headers = [
+        "allowed_ports_per_interface",
+        "maximum_autoscaling_addresses_per_natgateway",
+        "maximum_reserved_addresses_per_natgateway"
+    ]
+    result = exec_test_command(
+        BASE_CMDS["natgateways"]
+        + ["natgateways-settings-view", "--text", "--delimiter", ","]
+    ).splitlines()
+    assert_headers_in_lines(headers, result)
+
+    result = json.loads(
+        exec_test_command(
+            BASE_CMDS["natgateways"]
+            + ["natgateways-settings-view"]
+            + COMMAND_JSON_OUTPUT
+        )
+    )[0]
+    assert_headers_in_lines(headers, [list(result.keys())])
+    assert all(
+        port in [4096, 8192, 16384]
+        for port in result["allowed_ports_per_interface"]
+    )
+    assert result["maximum_autoscaling_addresses_per_natgateway"] > 0
+    assert result["maximum_reserved_addresses_per_natgateway"] > 0
