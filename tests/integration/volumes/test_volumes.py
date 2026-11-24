@@ -1,3 +1,4 @@
+import json as _json
 import os
 import re
 
@@ -6,9 +7,11 @@ import pytest
 from linodecli.exit_codes import ExitCodes
 from tests.integration.helpers import (
     BASE_CMDS,
+    delete_target_id,
     exec_failing_test_command,
     exec_test_command,
     get_random_text,
+    wait_for_condition,
 )
 from tests.integration.volumes.fixtures import volume_instance_id  # noqa: F401
 
@@ -226,3 +229,162 @@ def test_fail_to_update_volume_size(volume_instance_id):
         "linode-cli volumes update: error: unrecognized arguments: --size=15"
         in result
     )
+
+
+def test_attach_volumes_to_extended_device_slots(linode_cloud_firewall):
+    num_volumes = 12
+    device_slots = [
+        "sda", "sdb", "sdc", "sdd", "sde", "sdf", "sdg", "sdh",
+        "sdi", "sdj", "sdk", "sdl",
+    ]
+    regions_data = _json.loads(
+        exec_test_command(
+            ["linode-cli", "regions", "ls", "--json", "--suppress-warnings"]
+        )
+    )
+    eligible = [
+        r["id"]
+        for r in regions_data
+        if r.get("site_type") == "core"
+        and "Linodes" in r.get("capabilities", [])
+        and "Block Storage" in r.get("capabilities", [])
+    ]
+    assert eligible, "No eligible region found with Linodes and Block Storage"
+    test_region = eligible[0]
+    linode_id = exec_test_command(
+        [
+            "linode-cli",
+            "linodes",
+            "create",
+            "--type",
+            "g6-standard-6",
+            "--region",
+            test_region,
+            "--firewall_id",
+            linode_cloud_firewall,
+            "--booted",
+            "true",
+            "--format",
+            "id",
+            "--text",
+            "--no-headers",
+        ]
+    )
+
+    vol_ids = []
+    label_base = "vol-ext-" + get_random_text(4)
+
+    try:
+        for i in range(num_volumes):
+            vol_id = exec_test_command(
+                BASE_CMDS["volumes"]
+                + [
+                    "create",
+                    "--label",
+                    f"{label_base}-{i}",
+                    "--region",
+                    test_region,
+                    "--size",
+                    "10",
+                    "--text",
+                    "--no-headers",
+                    "--format",
+                    "id",
+                ]
+            )
+            vol_ids.append(vol_id)
+
+            def volume_active(vid=vol_id):
+                status = exec_test_command(
+                    BASE_CMDS["volumes"]
+                    + ["view", vid, "--text", "--no-headers", "--format", "status"]
+                )
+                return status.strip() == "active"
+
+            wait_for_condition(10, 240, volume_active)
+
+        configs_result = exec_test_command(
+            BASE_CMDS["linodes"]
+            + ["configs-list", linode_id, "--json", "--suppress-warnings"]
+        )
+        configs = _json.loads(configs_result)
+        assert isinstance(configs, list), "configs-list should return a list"
+
+        config_create_result = exec_test_command(
+            BASE_CMDS["linodes"]
+            + [
+                "config-create",
+                linode_id,
+                "--label",
+                label_base + "-config",
+                "--devices.sda.volume_id",
+                vol_ids[0],
+                "--json",
+                "--suppress-warnings",
+            ]
+        )
+        config_json = _json.loads(config_create_result)[0]
+        config_id = str(config_json["id"])
+
+        view_result = exec_test_command(
+            BASE_CMDS["linodes"]
+            + ["config-view", linode_id, config_id, "--json", "--suppress-warnings"]
+        )
+        viewed = _json.loads(view_result)[0]
+        assert str(viewed["id"]) == config_id, (
+            "config-view should return the correct config"
+        )
+        assert "devices" in viewed, (
+            "config-view response should include a 'devices' field"
+        )
+
+        for slot, vol_id in zip(device_slots[1:], vol_ids[1:]):
+            exec_test_command(
+                BASE_CMDS["linodes"]
+                + [
+                    "config-update",
+                    linode_id,
+                    config_id,
+                    f"--devices.{slot}.volume_id",
+                    vol_id,
+                    "--text",
+                    "--no-headers",
+                ]
+            )
+
+        final_config_result = exec_test_command(
+            BASE_CMDS["linodes"]
+            + ["config-view", linode_id, config_id, "--json", "--suppress-warnings"]
+        )
+        final_config = _json.loads(final_config_result)[0]
+        devices = final_config.get("devices", {})
+
+        for slot in device_slots:
+            assert devices.get(slot) is not None, (
+                f"Extended device slot '{slot}' is unexpectedly empty; "
+                "the plan-based volume limit may not be applied correctly."
+            )
+
+        populated = [slot for slot in device_slots if devices.get(slot) is not None]
+        assert len(populated) == num_volumes, (
+            f"Expected {num_volumes} populated device slots, "
+            f"got {len(populated)}: {populated}"
+        )
+
+    finally:
+        for vol_id in vol_ids:
+            delete_target_id(
+                target="volumes",
+                id=vol_id,
+                use_retry=True,
+                retries=5,
+                delay=15,
+            )
+        delete_target_id(
+            target="linodes",
+            id=linode_id,
+            use_retry=True,
+            retries=5,
+            delay=15,
+        )
+
