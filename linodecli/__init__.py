@@ -16,7 +16,12 @@ from rich.table import Column, Table
 from linodecli import plugins
 from linodecli.exit_codes import ExitCodes
 
-from .arg_helpers import register_args, register_plugin, remove_plugin
+from .arg_helpers import (
+    help_subcommand_to_flag,
+    register_args,
+    register_plugin,
+    remove_plugin,
+)
 from .cli import CLI
 from .completion import get_completions
 from .configuration import ENV_TOKEN_NAME
@@ -68,7 +73,13 @@ def main():  # pylint: disable=too-many-branches,too-many-statements
         formatter_class=SortingHelpFormatter,
         description="The Linode Command Line Interface.\n\nAliases: lin, linode",
     )
-    parsed, args = register_args(parser).parse_known_args()
+    parser = register_args(parser)
+    parsed, args = parser.parse_known_args()
+
+    # argv is changed in place so that plugins, which read it directly,
+    # also see the --help flag
+    if help_subcommand_to_flag(argv, parsed):
+        parsed, args = parser.parse_known_args()
 
     cli.output_handler.configure(parsed, cli.suppress_warnings)
 
