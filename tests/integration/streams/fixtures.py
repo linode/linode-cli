@@ -5,7 +5,6 @@ from typing import Any, Dict
 import pytest
 import requests
 
-from linodecli import ExitCodes
 from linodecli.cli import logger
 from tests.integration.helpers import (
     BASE_CMDS,
@@ -13,6 +12,7 @@ from tests.integration.helpers import (
     exec_test_command,
     get_random_region_with_caps,
     get_random_text,
+    wait_for_condition,
 )
 
 
@@ -21,12 +21,12 @@ def get_object_storage_buckets() -> Dict[str, Any]:
     if token is None:
         raise ValueError("LINODE_CLI_TOKEN environment variable is not set. ")
     host = os.getenv("LINODE_CLI_API_HOST")
-    if token is None:
+    if host is None:
         raise ValueError(
             "LINODE_CLI_API_HOST environment variable is not set. "
         )
     version = os.getenv("LINODE_CLI_API_VERSION")
-    if token is None:
+    if version is None:
         raise ValueError(
             "LINODE_CLI_API_VERSION environment variable is not set. "
         )
@@ -61,7 +61,13 @@ def create_stream(create_destination_akamai_object_storage_type):
     )
     result_create_json = json.loads(result_create)[0]
     yield result_create_json
-    wait_for_stream_status(str(result_create_json["id"]), "active")
+    wait_for_condition(
+        20,
+        3000,
+        is_expected_stream_status,
+        str(result_create_json["id"]),
+        "active",
+    )
     delete_target_id(
         "streams",
         str(result_create_json["id"]),
@@ -155,31 +161,22 @@ def create_destination_akamai_object_storage_type(create_object_storage_keys):
         )
 
 
-def wait_for_stream_status(
-    stream_id: "str", status: "str", timeout=1800, interval=10
-):
-    import time
-
-    must_end = time.time() + timeout
-    while time.time() < must_end:
-        time.sleep(interval)
-        try:
-            result = exec_test_command(
-                BASE_CMDS["streams"]
-                + [
-                    "view",
-                    stream_id,
-                    "--format",
-                    "status",
-                    "--text",
-                    "--no-headers",
-                ]
-            )
-        except RuntimeError as response_error:
-            if "Request failed: 404" in str(response_error):
-                continue
-            else:
-                raise RuntimeError(response_error)
-        if status == result:
-            return True
-    return False
+def is_expected_stream_status(stream_id: "str", status: "str"):
+    try:
+        result = exec_test_command(
+            BASE_CMDS["streams"]
+            + [
+                "view",
+                stream_id,
+                "--format",
+                "status",
+                "--text",
+                "--no-headers",
+            ]
+        )
+    except RuntimeError as response_error:
+        if "Request failed: 404" not in str(response_error):
+            return False
+        else:
+            raise RuntimeError(response_error)
+    return status == result

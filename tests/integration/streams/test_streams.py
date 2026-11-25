@@ -10,11 +10,13 @@ from tests.integration.helpers import (
     assert_help_actions_list,
     exec_failing_test_command,
     exec_test_command,
+    wait_for_condition,
 )
 from tests.integration.streams.fixtures import (  # noqa: F401
     create_destination_akamai_object_storage_type,
     create_object_storage_keys,
     create_stream,
+    is_expected_stream_status,
     wait_for_stream_status,
 )
 
@@ -167,7 +169,9 @@ def test_create_view_stream(
     assert create_stream["status"] == "provisioning"
     assert create_stream["type"] == "audit_logs"
 
-    wait_for_stream_status(str(create_stream["id"]), "active")
+    wait_for_condition(
+        20, 3000, is_expected_stream_status, str(create_stream["id"]), "active"
+    )
     result_view = exec_test_command(
         BASE_CMDS["streams"]
         + [

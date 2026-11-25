@@ -286,7 +286,7 @@ def _redact_args(args: List[str]) -> List[str]:
 
         # handle `--flag=value` form
         if "=" in arg and arg.split("=", 1)[0] in SENSITIVE_ARG_NAMES:
-            flag, _ = arg.split("=", 1)
+            flag = arg.split("=", 1)[0]
             redacted.append(f"{flag}=***REDACTED***")
             continue
 
