@@ -5,6 +5,8 @@ from unittest.mock import patch
 from linodecli import OutputMode
 from linodecli.overrides import (
     OUTPUT_OVERRIDES,
+    databases_mysql_config_view_output,
+    databases_postgres_config_view_output,
     databases_valkey_config_view_output,
 )
 
@@ -157,7 +159,7 @@ class TestOverrides:
         }
 
         with patch("linodecli.overrides.Console", return_value=MockConsole()):
-            assert databases_valkey_config_view_output(response_json) is False
+            assert not databases_valkey_config_view_output(response_json)
 
         assert _get_printed_parameter_names() == [
             "backup_minute",
@@ -169,3 +171,19 @@ class TestOverrides:
             "valkey-config-view",
             OutputMode.table,
         ) in OUTPUT_OVERRIDES
+
+    def test_existing_database_config_output_preserves_list_types(self):
+        response_json = {
+            "settings": {
+                "nullable": {"type": ["null", "string"], "description": ""}
+            }
+        }
+        for output in (
+            databases_mysql_config_view_output,
+            databases_postgres_config_view_output,
+        ):
+            with patch(
+                "linodecli.overrides.Console", return_value=MockConsole()
+            ):
+                output(response_json)
+            assert _get_printed_parameter_types() == ["['null', 'string']"]

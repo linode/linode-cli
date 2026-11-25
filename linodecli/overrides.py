@@ -329,17 +329,6 @@ def pg_view_output(json_data) -> bool:
     return False
 
 
-def _format_param_type(param_type) -> str:
-    """
-    Format a DB Config parameter type, which may be a list for nullable
-    parameters (e.g. ["integer", "null"] -> "integer | null").
-    """
-    if isinstance(param_type, list):
-        return " | ".join(str(t) for t in param_type)
-
-    return str(param_type)
-
-
 def add_param_row(output, param_name, param_data, format_nullable_type=False):
     """
     Construct and add a row to the output table for DB Config view overrides.
@@ -370,6 +359,17 @@ def add_param_row(output, param_name, param_data, format_nullable_type=False):
         requires_restart,
         Align(description, align="left"),
     )
+
+
+def _format_param_type(param_type) -> str:
+    """
+    Format a DB Config parameter type, which may be a list for nullable
+    parameters (e.g. ["integer", "null"] -> "integer | null").
+    """
+    if isinstance(param_type, list):
+        return " | ".join(str(t) for t in param_type)
+
+    return str(param_type)
 
 
 def databases_mysql_config_view_output(json_data) -> bool:

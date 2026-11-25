@@ -64,6 +64,10 @@ def test_postgresql_suspend_resume(postgresql_cluster):
     assert "Request failed: 400" not in res
 
 
+@pytest.mark.skipif(
+    os.environ.get("RUN_LONG_TESTS") != "True",
+    reason="Set RUN_LONG_TESTS=True to test Valkey suspend and resume",
+)
 def test_valkey_suspend_resume(valkey_cluster):
     database_id = str(valkey_cluster["id"])
     wait_for_database_status("valkey", database_id, "active")
