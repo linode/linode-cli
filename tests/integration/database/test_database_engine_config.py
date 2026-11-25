@@ -2,7 +2,10 @@ import json
 
 import pytest
 
+from tests.integration.database.fixtures import valkey_cluster  # noqa: F401
 from tests.integration.database.helpers import (
+    database_command,
+    database_json,
     get_expected_keys_pg_engine_config,
 )
 from tests.integration.helpers import (
@@ -10,7 +13,98 @@ from tests.integration.helpers import (
     delete_target_id,
     exec_test_command,
     get_random_text,
+    wait_for_condition,
 )
+
+
+def test_valkey_engine_config_view(monkeypatch):
+    config = database_json("valkey-config-view")[0]
+    expected_keys = {
+        "backup_hour",
+        "backup_minute",
+        "frequent_snapshots",
+        "valkey_acl_channels_default",
+        "valkey_active_expire_effort",
+        "valkey_activedefrag",
+        "valkey_lfu_decay_time",
+        "valkey_lfu_log_factor",
+        "valkey_maxmemory_policy",
+        "valkey_number_of_databases",
+        "valkey_persistence",
+        "valkey_pubsub_client_output_buffer_limit",
+        "valkey_timeout",
+    }
+    assert expected_keys <= config.keys()
+
+    monkeypatch.setenv("COLUMNS", "240")
+    table = exec_test_command(database_command("valkey-config-view"))
+    for key in expected_keys:
+        assert key in table
+
+
+def _expected_valkey_engine_config(valkey_cluster):
+    config = valkey_cluster["engine_config"]
+    if config is None:
+        pytest.skip("Valkey engine config is uncertain after a failed update")
+    return config
+
+
+def test_valkey_list_with_engine_config(valkey_cluster):
+    expected_config = _expected_valkey_engine_config(valkey_cluster)
+    database_id = valkey_cluster["id"]
+    databases = database_json("valkey-list")
+    listed = next(item for item in databases if item["id"] == database_id)
+    for key, value in expected_config.items():
+        assert listed["engine_config"][key] == value
+
+
+def test_valkey_db_view_with_engine_config(valkey_cluster):
+    expected_config = _expected_valkey_engine_config(valkey_cluster)
+    database = database_json("valkey-view", valkey_cluster["id"])[0]
+    assert database["engine"] == "valkey"
+    assert database["label"] == valkey_cluster["label"]
+    assert database["region"] == valkey_cluster["region"]
+    assert database["type"] == valkey_cluster["type"]
+    for key, value in expected_config.items():
+        assert database["engine_config"][key] == value
+
+
+def test_valkey_db_engine_config_update(valkey_cluster):
+    database_id = valkey_cluster["id"]
+    expected_config = _expected_valkey_engine_config(valkey_cluster).copy()
+    valkey_cluster["engine_config"] = None
+    database_json(
+        "valkey-update",
+        database_id,
+        "--engine_config.valkey_timeout",
+        "302",
+        "--engine_config.valkey_active_expire_effort",
+        "3",
+        "--engine_config.valkey_lfu_decay_time",
+        "3",
+        "--engine_config.valkey_lfu_log_factor",
+        "12",
+        "--engine_config.valkey_maxmemory_policy",
+        "allkeys-lfu",
+        "--no-defaults",
+    )
+    updated_config = {
+        "valkey_timeout": 302,
+        "valkey_active_expire_effort": 3,
+        "valkey_lfu_decay_time": 3,
+        "valkey_lfu_log_factor": 12,
+        "valkey_maxmemory_policy": "allkeys-lfu",
+    }
+
+    def config_matches():
+        config = database_json("valkey-view", database_id)[0]["engine_config"]
+        return all(
+            config.get(key) == value for key, value in updated_config.items()
+        )
+
+    wait_for_condition(15, 900, config_matches)
+    expected_config.update(updated_config)
+    valkey_cluster["engine_config"] = expected_config
 
 
 @pytest.fixture(scope="session")
