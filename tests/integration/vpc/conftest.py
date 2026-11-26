@@ -5,6 +5,7 @@ import pytest
 from tests.integration.conftest import create_vpc_w_subnet
 from tests.integration.helpers import (
     BASE_CMDS,
+    Capability,
     delete_target_id,
     exec_test_command,
     get_random_region_with_caps,
@@ -24,7 +25,9 @@ def get_test_vpc_w_subnet():
 
 @pytest.fixture
 def get_test_vpc_wo_subnet():
-    region = get_random_region_with_caps(required_capabilities=["VPCs"])
+    region = get_random_region_with_caps(
+        required_capabilities=[Capability.VPCs]
+    )
     label = get_random_text(5) + "-label"
 
     vpc_id = exec_test_command(
@@ -51,8 +54,12 @@ def get_test_vpc_wo_subnet():
 @pytest.fixture
 def get_test_vpc_w_rdma_type():
     # GPUDirect RDMA capability not available for now
-    # region = get_random_region_with_caps(required_capabilities=["VPCs", "GPUDirect RDMA"])
-    region = get_random_region_with_caps(required_capabilities=["VPCs"])
+    # region = get_random_region_with_caps(
+    #     required_capabilities=[Capabilities.VPCs, Capabilities.GPUDirectRDMA]
+    # )
+    region = get_random_region_with_caps(
+        required_capabilities=[Capability.VPCs]
+    )
     label = get_random_text(5) + "-test-rdma-vpc"
 
     vpc_id = exec_test_command(
@@ -125,7 +132,10 @@ def create_vpc_with_ipv4(request):
     params = getattr(request, "param", None)
     params = params.split() if params else []
     region = get_random_region_with_caps(
-        required_capabilities=["VPCs", "Custom VPC IPv4 Ranges"]
+        required_capabilities=[
+            Capability.VPCs,
+            Capability.CustomVPCIPv4Ranges,
+        ]
     )
     label = get_random_text(5) + "-label"
 
@@ -146,7 +156,9 @@ def create_vpc_with_ipv6(request):
     ipv6_range = getattr(request, "param", None)
     ipv6_range = ipv6_range if ipv6_range else "auto"
     label = get_random_text(5) + "-vpc-label"
-    region = get_random_region_with_caps(required_capabilities=["VPCs"])
+    region = get_random_region_with_caps(
+        required_capabilities=[Capability.VPCs]
+    )
 
     vpc_data = json.loads(
         exec_test_command(
